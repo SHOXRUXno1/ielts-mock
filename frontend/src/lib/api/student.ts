@@ -1,0 +1,75 @@
+import { api } from '@/lib/axios'
+
+export type DashboardAttempt = {
+  id: string
+  test_id: string
+  test_title: string
+  overall_band: number | null
+  status: string
+  finished_at: string | null
+  created_at: string
+}
+
+export type DashboardResponse = {
+  tests_taken: number
+  avg_band: number | null
+  best_band: number | null
+  recent: DashboardAttempt[]
+}
+
+export type SectionProgress = {
+  score: number | null
+  completed: boolean
+}
+
+export type CatalogTest = {
+  id: string
+  title: string
+  sections: {
+    listening: SectionProgress
+    reading: SectionProgress
+    writing: SectionProgress
+    speaking: SectionProgress
+  }
+  overall_score: number | null
+  in_progress_attempt_id: string | null
+}
+
+export type TestGroup = {
+  name: string
+  tests: CatalogTest[]
+}
+
+export type CatalogResponse = {
+  groups: TestGroup[]
+}
+
+export type StudentResult = {
+  id: string
+  test_id: string
+  test_title: string
+  status: string
+  overall_band: number | null
+  listening_band: number | null
+  reading_band: number | null
+  writing_band: number | null
+  speaking_band: number | null
+  started_at: string | null
+  finished_at: string | null
+  created_at: string
+}
+
+export async function getDashboard(): Promise<DashboardResponse> {
+  const { data } = await api.get<DashboardResponse>('/student/dashboard')
+  return data
+}
+
+export async function getTestCatalog(): Promise<CatalogResponse> {
+  const { data } = await api.get<CatalogResponse>('/student/tests')
+  return data
+}
+
+export async function getMyResults(): Promise<StudentResult[]> {
+  const { data } = await api.get<StudentResult[]>('/student/results')
+  return data
+}

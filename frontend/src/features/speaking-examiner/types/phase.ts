@@ -1,0 +1,11 @@
+export type Phase =
+  | 'loading'
+  | 'idle'
+  | 'playing'
+  | 'ready'
+  | 'recording'
+  | 'transcribing'
+  | 'thinking'
+  | 'prep'
+  | 'scoring'
+  | 'done'
