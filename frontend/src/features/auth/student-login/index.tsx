@@ -58,8 +58,13 @@ export function StudentLogin() {
         void navigate({ to: '/student/dashboard', replace: true })
       }
     },
-    onError: () => {
-      toast.error('Invalid login or password.')
+    onError: (err: unknown) => {
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 401) {
+        toast.error('Invalid login or password.')
+        return
+      }
+      toast.error('Cannot reach the server. Check the URL and try again.')
     },
   })
 

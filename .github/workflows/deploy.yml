@@ -52,7 +52,7 @@ jobs:
           push: true
           tags: 4fan/ielts-mock-frontend:latest
           build-args: |
-            VITE_API_URL=https://mock.shox-software.uz
+            VITE_API_URL=
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
