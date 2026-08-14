@@ -82,7 +82,9 @@ export async function mp3Base64ToPcm16(
     await audioContext.resume()
   }
 
-  const audioBuffer = await audioContext.decodeAudioData(bytes.buffer.slice(0))
+  const copy = new ArrayBuffer(bytes.byteLength)
+  new Uint8Array(copy).set(bytes)
+  const audioBuffer = await audioContext.decodeAudioData(copy)
   const duration = audioBuffer.duration
 
   if (typeof OfflineAudioContext === 'function') {

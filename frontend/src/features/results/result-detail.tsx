@@ -64,6 +64,7 @@ import {
   jobPhase,
   showEvalProgress,
 } from './evaluation-progress'
+import { PracticeResultDetail } from './practice-result-detail'
 import {
   CriteriaGrid,
   FeedbackList,
@@ -193,7 +194,7 @@ export function ResultDetail() {
         <Main className='flex flex-1 flex-col gap-6'>
           <div>
             <Button asChild variant='ghost' size='sm' className='mb-3 -ms-3 gap-1.5 rounded-lg text-muted-foreground hover:text-foreground'>
-              <Link to={role === 'student' ? '/student/results/' : '/results'}>
+              <Link to={role === 'student' ? '/student/results' : '/results'}>
                 <ArrowLeft className='size-4' />
                 Back to results
               </Link>

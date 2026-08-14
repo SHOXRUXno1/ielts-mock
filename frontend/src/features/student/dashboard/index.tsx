@@ -130,8 +130,8 @@ function BandTrend({ points }: { points: DashboardResponse['band_trend'] }) {
             color: 'hsl(var(--card-foreground))',
             boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
           }}
-          formatter={(value: number) => [`Band ${value}`, '']}
-          labelFormatter={(label: string) => label}
+          formatter={(value) => [`Band ${Number(value ?? 0)}`, '']}
+          labelFormatter={(label) => String(label ?? '')}
         />
         <Area
           type='monotone'

@@ -292,7 +292,7 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
 
 function useDebouncedValue(value: string, delayMs: number): string {
   const [debounced, setDebounced] = useState(value)
-  const timer = useRef<ReturnType<typeof setTimeout>>()
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => {
     timer.current = setTimeout(() => setDebounced(value), delayMs)
     return () => clearTimeout(timer.current)
@@ -385,7 +385,7 @@ export function Results() {
 
   const { data: results = [], isLoading } = useQuery({
     queryKey: ['results'],
-    queryFn: fetchResults,
+    queryFn: () => fetchResults(),
   })
 
   const tests = useMemo(() => {

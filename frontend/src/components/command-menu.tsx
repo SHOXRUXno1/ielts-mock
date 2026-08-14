@@ -86,7 +86,7 @@ export function CommandMenu() {
 
   const { data: results = [], isFetching: fetchingResults } = useQuery({
     queryKey: ['results'],
-    queryFn: fetchResults,
+    queryFn: () => fetchResults(),
     enabled,
     staleTime: 60_000,
   })

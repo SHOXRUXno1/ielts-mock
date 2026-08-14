@@ -9,7 +9,6 @@ import {
   Shield,
   TrendingUp,
   Trophy,
-  User,
 } from 'lucide-react'
 import { getDashboard } from '@/lib/api/student'
 import { Button } from '@/components/ui/button'

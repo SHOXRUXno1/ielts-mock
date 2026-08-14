@@ -177,7 +177,7 @@ export function TestWizard({ testId: initialTestId }: Props) {
       const detail = axiosErr?.response?.data?.detail
       if (apiStatus === 401) {
         toast.error('Session expired — please sign in again')
-        void navigate({ to: '/sign-in' })
+        void navigate({ to: '/login' })
       } else {
         toast.error(typeof detail === 'string' ? detail : 'Failed to create test')
       }
@@ -205,7 +205,7 @@ export function TestWizard({ testId: initialTestId }: Props) {
       const detail = axiosErr?.response?.data?.detail
       if (apiStatus === 401) {
         toast.error('Session expired — please sign in again')
-        void navigate({ to: '/sign-in' })
+        void navigate({ to: '/login' })
       } else {
         toast.error(typeof detail === 'string' ? detail : 'Failed to save test')
       }

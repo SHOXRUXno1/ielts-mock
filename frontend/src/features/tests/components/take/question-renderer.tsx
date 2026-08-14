@@ -921,14 +921,6 @@ export function QuestionRenderer({
         : Array.isArray(question.answer_key?.correct)
           ? (question.answer_key!.correct as unknown[]).length
           : undefined
-    const slotEnd =
-      typeof content.display_slot_end === 'number'
-        ? content.display_slot_end
-        : undefined
-    const _numberLabel =
-      slotEnd != null && slotEnd !== question.order
-        ? `${question.order}–${slotEnd}`
-        : String(question.order)
 
     const textToLetter = (val: string) => {
       if (/^[A-Z]$/i.test(val.trim())) return val.trim().toUpperCase()

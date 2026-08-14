@@ -186,7 +186,7 @@ type StatusFilter = 'all' | 'scored' | 'in_progress' | 'abandoned'
 export function StudentResults() {
   const { data: results = [], isLoading } = useQuery({
     queryKey: ['student-results'],
-    queryFn: getMyResults,
+    queryFn: () => getMyResults(),
   })
 
   const [search, setSearch] = useState('')
