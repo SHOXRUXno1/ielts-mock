@@ -20,6 +20,7 @@ services:
     env_file: .env
     environment:
       PYTHONPATH: /app
+    entrypoint: ["sh", "/app/entrypoint.sh"]
     depends_on:
       db:
         condition: service_healthy
