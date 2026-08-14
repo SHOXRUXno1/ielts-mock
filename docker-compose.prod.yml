@@ -18,6 +18,8 @@ services:
     image: 4fan/ielts-mock-backend:latest
     restart: unless-stopped
     env_file: .env
+    environment:
+      PYTHONPATH: /app
     depends_on:
       db:
         condition: service_healthy
