@@ -1,61 +1,26 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { SimliClient } from 'simli-client'
 import { cn } from '@/lib/utils'
+import {
+  forEachPcmChunk,
+  iceServersKey,
+  mp3Base64ToPcm16,
+  PCM_CHUNK_BYTES,
+} from '../lib/simli-pcm'
 import { LottieAvatar } from './lottie-avatar'
 
-const TARGET_SAMPLE_RATE = 16000
-const PCM_CHUNK_BYTES = 6000
 const CLOSE_COOLDOWN_MS = 2000
 const MAX_CONNECT_ATTEMPTS = 2
 const AUDIO_QUEUE_TIMEOUT_MS = 20_000
 
 let sharedAudioContext: AudioContext | null = null
-let simliSessionFirstConnect = true
+let lastSuccessfulCloseAt = 0
 
 function getSharedAudioContext(): AudioContext {
   if (!sharedAudioContext || sharedAudioContext.state === 'closed') {
     sharedAudioContext = new AudioContext()
   }
   return sharedAudioContext
-}
-
-async function base64ToPcm16(
-  base64: string
-): Promise<{ pcm: Uint8Array; duration: number }> {
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-
-  const ctx = getSharedAudioContext()
-  if (ctx.state === 'suspended') {
-    await ctx.resume()
-  }
-
-  const audioBuffer = await ctx.decodeAudioData(bytes.buffer.slice(0))
-  const duration = audioBuffer.duration
-
-  const channelData = audioBuffer.getChannelData(0)
-  let samples: Float32Array
-
-  if (audioBuffer.sampleRate !== TARGET_SAMPLE_RATE) {
-    const ratio = audioBuffer.sampleRate / TARGET_SAMPLE_RATE
-    const newLength = Math.round(channelData.length / ratio)
-    samples = new Float32Array(newLength)
-    for (let i = 0; i < newLength; i++) {
-      samples[i] = channelData[Math.min(Math.floor(i * ratio), channelData.length - 1)]
-    }
-  } else {
-    samples = channelData
-  }
-
-  const pcm = new Uint8Array(samples.length * 2)
-  const view = new DataView(pcm.buffer)
-  for (let i = 0; i < samples.length; i++) {
-    const s = Math.max(-1, Math.min(1, samples[i]))
-    view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true)
-  }
-
-  return { pcm, duration }
 }
 
 function simliLog(...args: unknown[]) {
@@ -85,7 +50,7 @@ type SimliAvatarProps = {
   className?: string
 }
 
-export function SimliAvatar({
+function SimliAvatarInner({
   sessionToken,
   faceId,
   iceServers,
@@ -201,7 +166,10 @@ export function SimliAvatar({
   const sendAudioToSimli = useCallback(
     async (client: SimliClient, b64: string) => {
       try {
-        const { pcm, duration } = await base64ToPcm16(b64)
+        const { pcm, duration } = await mp3Base64ToPcm16(
+          b64,
+          getSharedAudioContext(),
+        )
         const numChunks = Math.ceil(pcm.length / PCM_CHUNK_BYTES)
 
         simliLog('[Simli] Audio duration:', duration, 'seconds')
@@ -215,14 +183,14 @@ export function SimliAvatar({
         speakingDoneRef.current = false
         audioSentRef.current = true
 
-        for (let i = 0; i < pcm.length; i += PCM_CHUNK_BYTES) {
-          const chunk = pcm.slice(i, i + PCM_CHUNK_BYTES)
-          if (i === 0) {
+        await forEachPcmChunk(pcm, PCM_CHUNK_BYTES, (chunk, index) => {
+          if (simliRef.current !== client) return
+          if (index === 0) {
             client.sendAudioDataImmediate(chunk)
           } else {
             client.sendAudioData(chunk)
           }
-        }
+        })
 
         clearEndTimer()
         endTimerRef.current = window.setTimeout(() => {
@@ -249,11 +217,35 @@ export function SimliAvatar({
     await sendAudioToSimli(client, b64)
   }, [sendAudioToSimli])
 
+  const flushQueuedAudioRef = useRef(flushQueuedAudio)
+  const notifySpeakingDoneRef = useRef(notifySpeakingDone)
+  const requestReconnectInternalRef = useRef(requestReconnect)
+
+  useEffect(() => {
+    flushQueuedAudioRef.current = flushQueuedAudio
+  }, [flushQueuedAudio])
+
+  useEffect(() => {
+    notifySpeakingDoneRef.current = notifySpeakingDone
+  }, [notifySpeakingDone])
+
+  useEffect(() => {
+    requestReconnectInternalRef.current = requestReconnect
+  }, [requestReconnect])
+
+  const iceKey = iceServersKey(iceServers)
+  const iceServersRef = useRef(iceServers)
+
+  useEffect(() => {
+    iceServersRef.current = iceServers
+  }, [iceServers])
+
   useEffect(() => {
     if (!sessionToken || !faceId) return
 
     let cancelled = false
     let client: SimliClient | null = null
+    let startedSuccessfully = false
 
     const stopClient = (c: SimliClient) => {
       try {
@@ -264,10 +256,11 @@ export function SimliAvatar({
     }
 
     const startSimli = async () => {
-      const skipCooldown = simliSessionFirstConnect
-      simliSessionFirstConnect = false
-      if (!skipCooldown) {
-        await new Promise((r) => setTimeout(r, CLOSE_COOLDOWN_MS))
+      const wait = lastSuccessfulCloseAt
+        ? Math.max(0, CLOSE_COOLDOWN_MS - (Date.now() - lastSuccessfulCloseAt))
+        : 0
+      if (wait) {
+        await new Promise((r) => setTimeout(r, wait))
       }
       if (cancelled) return
 
@@ -287,7 +280,7 @@ export function SimliAvatar({
             sessionToken,
             video,
             audio,
-            iceServers ?? null,
+            iceServersRef.current ?? null,
             undefined,
             'p2p'
           )
@@ -300,20 +293,24 @@ export function SimliAvatar({
           client.on('silent', () => {
             if (!audioSentRef.current) return
             simliLog('[Simli] Speaking end (silent event)')
-            notifySpeakingDone()
+            notifySpeakingDoneRef.current()
           })
 
           client.on('error', (detail: string) => {
             simliError('[Simli] Error:', detail)
             if (readyRef.current) {
-              requestReconnect(queuedAudioRef.current ?? lastAudioRef.current)
+              requestReconnectInternalRef.current(
+                queuedAudioRef.current ?? lastAudioRef.current,
+              )
             }
           })
 
           client.on('startup_error', (message: string) => {
             simliError('[Simli] Startup error:', message)
             if (readyRef.current) {
-              requestReconnect(queuedAudioRef.current ?? lastAudioRef.current)
+              requestReconnectInternalRef.current(
+                queuedAudioRef.current ?? lastAudioRef.current,
+              )
             }
           })
 
@@ -322,6 +319,7 @@ export function SimliAvatar({
             stopClient(client)
             return
           }
+          startedSuccessfully = true
 
           if (audioRef.current) {
             audioRef.current.volume = 0
@@ -332,7 +330,7 @@ export function SimliAvatar({
           setReady(true)
           onReadyRef.current?.(true)
           if (queuedAudioRef.current) {
-            void flushQueuedAudio()
+            void flushQueuedAudioRef.current()
           }
           return
         } catch (err) {
@@ -368,20 +366,14 @@ export function SimliAvatar({
       window.removeEventListener('pagehide', handleUnload)
       clearEndTimer()
       if (client) stopClient(client)
+      if (startedSuccessfully) {
+        lastSuccessfulCloseAt = Date.now()
+      }
       simliRef.current = null
       setReady(false)
       onReadyRef.current?.(false)
     }
-  }, [
-    sessionToken,
-    faceId,
-    iceServers,
-    clearEndTimer,
-    flushQueuedAudio,
-    notifySpeakingDone,
-    activateLottieFallback,
-    requestReconnect,
-  ])
+  }, [sessionToken, faceId, iceKey, clearEndTimer, activateLottieFallback])
 
   useEffect(() => {
     if (!audioBase64 || audioBase64 === lastAudioRef.current) return
@@ -452,13 +444,15 @@ export function SimliAvatar({
         autoPlay
         playsInline
         muted
+        disablePictureInPicture
+        disableRemotePlayback
         aria-label='Examiner video avatar'
         className={cn(
-          'h-full w-full object-cover transition-opacity duration-500',
+          'h-full w-full object-cover [transform:translateZ(0)] [backface-visibility:hidden] will-change-transform',
           ready ? 'opacity-100' : 'opacity-0',
         )}
       />
-      <audio ref={audioRef} autoPlay />
+      <audio ref={audioRef} autoPlay playsInline />
       {!ready && !suppressConnectingUI && (
         <div className='absolute inset-0 flex items-center justify-center'>
           <div className='flex flex-col items-center gap-2'>
@@ -472,3 +466,23 @@ export function SimliAvatar({
     </div>
   )
 }
+
+function simliAvatarPropsEqual(
+  prev: SimliAvatarProps,
+  next: SimliAvatarProps,
+): boolean {
+  return (
+    prev.sessionToken === next.sessionToken &&
+    prev.faceId === next.faceId &&
+    iceServersKey(prev.iceServers) === iceServersKey(next.iceServers) &&
+    prev.audioBase64 === next.audioBase64 &&
+    prev.isSpeaking === next.isSpeaking &&
+    prev.isListening === next.isListening &&
+    prev.suppressConnectingUI === next.suppressConnectingUI &&
+    prev.className === next.className
+  )
+}
+
+export const SimliAvatar = memo(SimliAvatarInner, simliAvatarPropsEqual)
+
+SimliAvatar.displayName = 'SimliAvatar'

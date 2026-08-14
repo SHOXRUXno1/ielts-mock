@@ -5,15 +5,16 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.question_group import QuestionGroupRead
+from app.services.scoring import scoring_slots_for_question
 
 
 class SectionCreate(BaseModel):
     type: str = Field(pattern=r"^(listening|reading|writing|speaking)$")
-    duration_minutes: int = Field(ge=0, le=180)
     audio_url: str | None = None
     passage: str | None = None
     audioscript: str | None = None
     title: str | None = None
+    passage_subtitle: str | None = None
 
 
 class SectionRead(BaseModel):
@@ -23,11 +24,11 @@ class SectionRead(BaseModel):
     test_id: uuid.UUID
     type: str
     order: int
-    duration_minutes: int
     audio_url: str | None
     passage: str | None = None
     audioscript: str | None = None
     title: str | None = None
+    passage_subtitle: str | None = None
     question_count: int = 0
     question_groups: list[QuestionGroupRead] = []
     created_at: datetime
@@ -42,7 +43,10 @@ class SectionRead(BaseModel):
         if hasattr(data, "_sa_instance_state"):
             try:
                 raw_qs = data.__dict__.get("questions")
-                qc = len(raw_qs) if isinstance(raw_qs, list) else 0
+                if isinstance(raw_qs, list):
+                    qc = sum(scoring_slots_for_question(q) for q in raw_qs)
+                else:
+                    qc = 0
             except Exception:
                 qc = 0
             try:
@@ -54,11 +58,11 @@ class SectionRead(BaseModel):
                 "test_id": data.test_id,
                 "type": data.type,
                 "order": data.order,
-                "duration_minutes": data.duration_minutes,
                 "audio_url": data.audio_url,
                 "passage": data.passage,
                 "audioscript": data.audioscript,
                 "title": data.title,
+                "passage_subtitle": data.passage_subtitle,
                 "question_count": qc,
                 "question_groups": raw_groups,
                 "created_at": data.created_at,
@@ -68,8 +72,8 @@ class SectionRead(BaseModel):
 
 
 class SectionUpdate(BaseModel):
-    duration_minutes: int | None = Field(default=None, ge=0, le=180)
     audio_url: str | None = None
     passage: str | None = None
     audioscript: str | None = None
     title: str | None = None
+    passage_subtitle: str | None = None

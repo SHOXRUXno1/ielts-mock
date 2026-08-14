@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,6 +10,19 @@ from app.core.database import get_db
 from app.models.section import Section, SectionType
 from app.models.test import Test
 from app.schemas.section import SectionCreate, SectionRead, SectionUpdate
+from app.schemas.section_settings import (
+    SectionSettingsRead,
+    SectionSettingsUpdate,
+    SectionSettingsUpdateResponse,
+)
+from app.services import section_settings as settings_service
+from app.services.section_duration import (
+    DurationRangeError,
+    check_duration,
+    recommended_for,
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/admin",
@@ -51,7 +65,6 @@ async def create_section(
     section_type = SectionType(payload.type)
     standard_max = STANDARD_COUNTS[section_type]
 
-    # Count existing sections of this type
     count_result = await db.execute(
         select(func.count()).where(Section.test_id == test_id, Section.type == section_type)
     )
@@ -89,7 +102,6 @@ async def create_section(
         test_id=test_id,
         type=section_type,
         order=new_order,
-        duration_minutes=payload.duration_minutes,
         audio_url=payload.audio_url,
         passage=payload.passage,
         audioscript=payload.audioscript,
@@ -110,12 +122,122 @@ async def update_section(
     if section is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Section not found")
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    updates = payload.model_dump(exclude_unset=True)
+
+    # Listening: passage is deprecated — redirect into audioscript.
+    if section.type == SectionType.LISTENING and "passage" in updates:
+        passage_val = updates.pop("passage")
+        if passage_val is not None:
+            logger.warning(
+                "Deprecated: PATCH listening section %s with 'passage'; "
+                "redirecting to audioscript",
+                section_id,
+            )
+            # Prefer explicit audioscript if both were sent.
+            if "audioscript" not in updates:
+                updates["audioscript"] = passage_val
+
+    for field, value in updates.items():
         setattr(section, field, value)
 
     await db.commit()
     await db.refresh(section)
     return section
+
+
+@router.get(
+    "/tests/{test_id}/section-settings",
+    response_model=list[SectionSettingsRead],
+)
+async def list_section_settings(
+    test_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    test = await db.get(Test, test_id)
+    if test is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test not found")
+
+    rows = await settings_service.ensure_settings(db, test_id)
+    await db.commit()
+    return rows
+
+
+@router.patch(
+    "/tests/{test_id}/section-settings/{section_type}",
+    response_model=SectionSettingsUpdateResponse,
+)
+async def update_section_settings(
+    test_id: uuid.UUID,
+    section_type: str,
+    payload: SectionSettingsUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    if section_type not in {t.value for t in SectionType}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid section type",
+        )
+
+    test = await db.get(Test, test_id)
+    if test is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test not found")
+
+    rows = await settings_service.ensure_settings(db, test_id)
+    row = next((r for r in rows if r.section_type == section_type), None)
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Section settings not found",
+        )
+
+    fields_set = payload.model_fields_set
+    mode = payload.duration_mode
+    # Legacy: duration_minutes alone implies custom (or standard when speaking null).
+    if mode is None and "duration_minutes" in fields_set:
+        if section_type == SectionType.SPEAKING.value and payload.duration_minutes is None:
+            mode = "standard"
+        else:
+            mode = "custom"
+    if mode is None:
+        # Treat legacy audio_length as custom.
+        raw = row.duration_mode or "standard"
+        mode = "standard" if raw == "standard" else "custom"
+
+    warning: str | None = None
+
+    if mode == "standard":
+        minutes = recommended_for(section_type)
+        try:
+            warning = check_duration(section_type, minutes)
+        except DurationRangeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=str(exc),
+            ) from exc
+        row.duration_mode = "standard"
+        row.duration_minutes = minutes
+    else:
+        # custom — keep existing minutes when only switching mode.
+        if "duration_minutes" in fields_set:
+            minutes = payload.duration_minutes
+        else:
+            minutes = row.duration_minutes
+        try:
+            warning = check_duration(section_type, minutes)
+        except DurationRangeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=str(exc),
+            ) from exc
+        row.duration_mode = "custom"
+        row.duration_minutes = minutes
+
+    await db.commit()
+    await db.refresh(row)
+    return SectionSettingsUpdateResponse(
+        settings=SectionSettingsRead.model_validate(row),
+        warning=warning,
+    )
 
 
 @router.delete("/sections/{section_id}", status_code=status.HTTP_204_NO_CONTENT)

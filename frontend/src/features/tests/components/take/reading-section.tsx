@@ -1,8 +1,31 @@
+import { useState } from 'react'
+import { BookOpen, HelpCircle } from 'lucide-react'
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable'
+import { useIsDesktop } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
-import type { Question, QuestionGroup, Section } from '../../data/schema'
+import { highlightCaps, InstructionBlock, renderFormattedText } from './shared/instruction-block'
+import { QuestionRangeTitle } from './shared/question-range-title'
+import { PassageHighlighter } from './shared/passage-highlighter'
+import {
+  asCompoundStructure,
+  isCompoundType,
+  type CompoundStructure,
+} from '../../data/compound'
+import {
+  countScoringSlots,
+  withDisplayOrders,
+  type Question,
+  type QuestionGroup,
+  type Section,
+} from '../../data/schema'
+import { CompoundCompletionRenderer } from './compound-completion-renderer'
 import {
   CompoundTableCompletion,
-  MatchingHeadingsRenderer,
+  MapLabelingRenderer,
   MatchingLetterRenderer,
   NoteCompletionCard,
   QuestionRendererWithFlag,
@@ -18,11 +41,20 @@ type Props = {
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
   passageIndex?: number
   totalPassages?: number
-  /** All reading sections — when provided, Passage tabs are shown inside content */
+  /** Practice mode: force "Passage N" when siblings are scoped to one row. */
+  passageNumberOverride?: number
+  /** All reading sections — used for passage numbering offsets. */
   allSections?: Section[]
-  onSwitchSection?: (sectionId: string) => void
+  /**
+   * Questions keyed by section id. Preferred source for prior-passage slot
+   * offsets (take-test loads questions separately from section.question_groups).
+   */
+  sectionQuestions?: Record<string, Question[]>
   flagged?: Set<string>
   onToggleFlag?: (id: string) => void
+  previewMode?: boolean
+  /** Used to persist passage highlights per attempt */
+  attemptId?: string | null
 }
 
 // ── Legacy runtime-grouping (fallback for questions without question_group_id) ─
@@ -31,7 +63,11 @@ type RuntimeGroup = {
   type: string
   questions: Question[]
   instruction?: string
+  subtitle?: string | null
   options?: string[]
+  structure?: CompoundStructure
+  questionsHeading?: string
+  imageUrl?: string
 }
 
 function groupQuestionsLegacy(sorted: Question[]): RuntimeGroup[] {
@@ -46,7 +82,7 @@ function groupQuestionsLegacy(sorted: Question[]): RuntimeGroup[] {
       'Complete the sentences below. Choose ONE WORD ONLY from the passage for each answer.',
     mcq: 'Choose the correct letter, A, B, C or D.',
     matching: 'Match each statement with the correct option.',
-    map_labeling: 'Label the map below. Choose ONE WORD ONLY from the passage.',
+    map_labeling: 'Label the map below. Choose the correct letter, A-I.',
     notes_card: '',
     table: '',
   }
@@ -113,6 +149,19 @@ function buildRenderGroups(apiGroups: QuestionGroup[], questions: Question[]): R
     const groupQs = [...group.questions].sort((a, b) => a.order - b.order)
     if (groupQs.length === 0) continue
 
+    // New compound model: structure lives on options_shared
+    const compoundStructure = asCompoundStructure(group.options_shared)
+    if (isCompoundType(group.question_type) && compoundStructure) {
+      result.push({
+        type: 'compound',
+        questions: groupQs,
+        instruction: group.instruction || undefined,
+        subtitle: group.subtitle,
+        structure: compoundStructure,
+      })
+      continue
+    }
+
     // Within a group, detect compound sub-types (notes_card, table) using the
     // first question's content as a probe
     const firstNotes = groupQs[0].content?.notes_id as string | undefined
@@ -123,75 +172,124 @@ function buildRenderGroups(apiGroups: QuestionGroup[], questions: Question[]): R
       : undefined
 
     if (firstNotes) {
-      result.push({ type: 'notes_card', questions: groupQs })
+      result.push({ type: 'notes_card', questions: groupQs, subtitle: group.subtitle })
     } else if (firstTable) {
-      result.push({ type: 'table', questions: groupQs })
+      result.push({ type: 'table', questions: groupQs, subtitle: group.subtitle })
     } else if (
       group.question_type === 'matching_headings' ||
       group.question_type === 'matching_information' ||
       group.question_type === 'matching_features'
     ) {
+      const qHeading = (group.options_shared as { questions_heading?: string } | null)?.questions_heading
       result.push({
         type: group.question_type,
         questions: groupQs,
         instruction: group.instruction || undefined,
+        subtitle: group.subtitle,
         options: opts ?? [],
+        questionsHeading: qHeading || undefined,
+      })
+    } else if (group.question_type === 'map_labeling') {
+      const imgUrl =
+        (group.options_shared as { image_url?: string } | null)?.image_url ||
+        (groupQs[0]?.content?.image_url as string | undefined) ||
+        groupQs[0]?.image_url
+      result.push({
+        type: 'map_labeling',
+        questions: groupQs,
+        instruction: group.instruction || undefined,
+        subtitle: group.subtitle,
+        options: opts ?? [],
+        imageUrl: imgUrl || undefined,
       })
     } else {
       result.push({
         type: group.question_type,
         questions: groupQs,
         instruction: group.instruction || undefined,
+        subtitle: group.subtitle,
         options: opts,
       })
     }
   }
 
-  // Also check for any orphan questions (no group) and append them as legacy groups
-  const groupedIds = new Set(apiGroups.flatMap((g) => g.questions.map((q) => q.id)))
-  const orphans = questions.filter((q) => !groupedIds.has(q.id)).sort((a, b) => a.order - b.order)
-  if (orphans.length > 0) {
-    result.push(...groupQuestionsLegacy(orphans))
-  }
-
+  // Orphans (question_group_id null / missing from groups) are data bugs.
+  // Never surface them in the student take UI — they create ghost rows and
+  // skew IELTS numbering (e.g. duplicate "Questions 27–33").
   return result
 }
 
 // ── Group header ──────────────────────────────────────────────────────────────
 
 function GroupHeader({ group }: { group: RuntimeGroup }) {
-  const orders = group.questions.map((q) => q.order)
-  const minQ = Math.min(...orders)
-  const maxQ = Math.max(...orders)
-  const rangeLabel = minQ === maxQ ? `Question ${minQ}` : `Questions ${minQ}–${maxQ}`
+  const starts = group.questions.map((q) => q.order)
+  const ends = group.questions.map((q) => {
+    const e = q.content?.display_slot_end
+    return typeof e === 'number' ? e : q.order
+  })
+  const minQ = Math.min(...starts)
+  const maxQ = Math.max(...ends)
   const instruction = group.instruction ?? ''
+  const subtitle = group.subtitle?.trim() || ''
 
   return (
     <div className='mb-5'>
-      <p className='text-[13px] font-bold text-[#111827]'>{rangeLabel}</p>
-      {instruction &&
-        instruction.split('\n').map((line, i) => (
-          <p key={i} className='mt-1 text-[13px] text-[#6b7280]'>
-            {line}
-          </p>
-        ))}
+      <QuestionRangeTitle min={minQ} max={maxQ} />
+      {instruction && (
+        <InstructionBlock className='mt-2'>
+          {instruction.split('\n').map((line, i) => (
+            <p key={i} className={i > 0 ? 'mt-1' : ''}>
+              {highlightCaps(line)}
+            </p>
+          ))}
+        </InstructionBlock>
+      )}
+      {subtitle &&
+        group.type !== 'matching_headings' &&
+        group.type !== 'matching_information' &&
+        group.type !== 'matching_features' &&
+        group.type !== 'map_labeling' && (
+        <p className='mt-4 mb-5 text-center text-base font-bold text-slate-900'>
+          {subtitle}
+        </p>
+      )}
       {group.type === 'true_false_ng' && (
-        <div className='mt-2 space-y-0.5 text-[13px] text-[#6b7280]'>
+        <div className='mt-2 space-y-0.5 text-[15px] font-[500] leading-7 text-foreground'>
           <p>
-            <span className='font-semibold uppercase text-[#111827]'>TRUE</span>
-            {' '}— if the statement agrees with the information
+            <span className='font-bold uppercase'>TRUE</span>
+            {' '}if the statement agrees with the information
           </p>
           <p>
-            <span className='font-semibold uppercase text-[#111827]'>FALSE</span>
-            {' '}— if the statement contradicts the information
+            <span className='font-bold uppercase'>FALSE</span>
+            {' '}if the statement contradicts the information
           </p>
           <p>
-            <span className='font-semibold uppercase text-[#111827]'>NOT GIVEN</span>
-            {' '}— if there is no information on this
+            <span className='font-bold uppercase'>NOT GIVEN</span>
+            {' '}if there is no information on this
           </p>
         </div>
       )}
-      {group.options && group.options.length > 0 && (
+      {group.type === 'yes_no_ng' && (
+        <div className='mt-2 space-y-0.5 text-[15px] font-[500] leading-7 text-foreground'>
+          <p>
+            <span className='font-bold uppercase'>YES</span>
+            {' '}if the statement agrees with the claims of the writer
+          </p>
+          <p>
+            <span className='font-bold uppercase'>NO</span>
+            {' '}if the statement contradicts the claims of the writer
+          </p>
+          <p>
+            <span className='font-bold uppercase'>NOT GIVEN</span>
+            {' '}if it is impossible to say what the writer thinks about this
+          </p>
+        </div>
+      )}
+      {group.options && group.options.length > 0 &&
+        group.type !== 'matching_headings' &&
+        group.type !== 'matching_information' &&
+        group.type !== 'matching_features' &&
+        group.type !== 'map_labeling' && (
         <div className='mt-3 flex flex-wrap gap-1.5'>
           {group.options.map((opt, i) => (
             <span
@@ -217,211 +315,336 @@ export function ReadingSection({
   onAnswer,
   passageIndex = 0,
   totalPassages: _totalPassages = 1,
+  passageNumberOverride,
   allSections,
-  onSwitchSection,
+  sectionQuestions,
   flagged,
   onToggleFlag,
+  previewMode = false,
+  attemptId = null,
 }: Props) {
-  const sortedQuestions = [...questions].sort((a, b) => a.order - b.order)
+  const readingSiblings = (allSections ?? [])
+    .filter((s) => s.type === 'reading')
+    .sort((a, b) => a.order - b.order)
+  const passageIdxInReading =
+    section != null
+      ? Math.max(0, readingSiblings.findIndex((s) => s.id === section.id))
+      : passageIndex
+
+  const priorQuestions = readingSiblings.slice(0, passageIdxInReading).flatMap((s) => {
+    const fromMap = sectionQuestions?.[s.id]
+    if (fromMap && fromMap.length > 0) return fromMap
+    return (s.question_groups ?? []).flatMap((g) => g.questions)
+  })
+  const numberOffset = countScoringSlots(priorQuestions)
+
+  const displayQuestions =
+    section != null
+      ? withDisplayOrders(section, questions, numberOffset)
+      : questions
+  const remappedById = new Map(displayQuestions.map((q) => [q.id, q]))
+  const displaySection =
+    section != null
+      ? {
+          ...section,
+          question_groups: (section.question_groups ?? []).map((g) => ({
+            ...g,
+            questions: g.questions
+              .map((q) => remappedById.get(q.id) ?? q)
+              .sort((a, b) => a.order - b.order),
+          })),
+        }
+      : undefined
+
+  const sortedQuestions = [...displayQuestions].sort((a, b) => a.order - b.order)
 
   // Build groups: use section.question_groups when available, else runtime-group
-  const apiGroups = section?.question_groups ?? []
+  const apiGroups = displaySection?.question_groups ?? []
   const groups = buildRenderGroups(apiGroups, sortedQuestions)
 
   // Question range for subtitle
-  const orders = sortedQuestions.map((q) => q.order)
-  const minQ = orders.length > 0 ? Math.min(...orders) : 1
-  const maxQ = orders.length > 0 ? Math.max(...orders) : 1
-  const passageNum = passageIndex + 1
+  const starts = sortedQuestions.map((q) => q.order)
+  const ends = sortedQuestions.map((q) => {
+    const e = q.content?.display_slot_end
+    return typeof e === 'number' ? e : q.order
+  })
+  const minQ = starts.length > 0 ? Math.min(...starts) : 1
+  const maxQ = ends.length > 0 ? Math.max(...ends) : 1
+  const passageNum = passageNumberOverride ?? passageIdxInReading + 1
 
-  // Passage title: prefer section.title, else parse from first non-empty line
   const effectivePassage = section?.passage ?? passage ?? ''
-  const lines = effectivePassage.split('\n')
-  const firstLine = lines.find((l) => l.trim().length > 0) ?? ''
-  const parsedTitle = firstLine
-  const body = effectivePassage.replace(firstLine, '').trim()
-  const paragraphs = body.split(/\n{2,}/).filter((p) => p.trim().length > 0)
 
-  const displayTitle = section?.title || parsedTitle
+  // When section.title is set, render the full passage as body.
+  // Otherwise fall back to parsing the first non-empty line as a title.
+  let displayTitle: string
+  let body: string
+  if (section?.title) {
+    displayTitle = section.title
+    body = effectivePassage.trim()
+  } else {
+    const lines = effectivePassage.split('\n')
+    const firstLine = lines.find((l) => l.trim().length > 0) ?? ''
+    displayTitle = firstLine
+    body = effectivePassage.replace(firstLine, '').trim()
+  }
 
-  return (
-    <div className='flex h-full'>
-      {/* ── Left: Passage 50% ──────────────────────────────────────────── */}
-      <div className='w-1/2 overflow-y-auto bg-white px-10 py-8'>
-        {/* Passage switcher tabs */}
-        {allSections && allSections.length > 1 && onSwitchSection && (
-          <div className='mb-6 flex gap-2'>
-            {allSections.map((s, i) => {
-              const isActive = s.id === section?.id
-              return (
-                <button
-                  key={s.id}
-                  type='button'
-                  onClick={() => onSwitchSection(s.id)}
-                  className={cn(
-                    'min-w-[52px] rounded-md border px-4 py-1.5 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'border-slate-900 bg-slate-900 text-white'
-                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
-                  )}
-                >
-                  Passage {i + 1}
-                </button>
-              )
-            })}
+  const [mobileTab, setMobileTab] = useState<'passage' | 'questions'>('passage')
+  const isDesktop = useIsDesktop()
+
+  // Shared passage content
+  const passageContent = (
+    <>
+      <h2 className='text-lg font-medium text-slate-900'>
+        Passage {passageNum}
+      </h2>
+
+      <p className='mt-1 text-[13px] text-slate-400'>
+        You should spend about 20 minutes on Questions {minQ}
+        {minQ !== maxQ ? `–${maxQ}` : ''}, which are based on Reading Passage{' '}
+        {passageNum}.
+      </p>
+
+      {effectivePassage ? (
+        <article className='mt-6'>
+          {displayTitle && (
+            <h3 className='mb-3 text-center text-[22px] font-bold leading-snug tracking-tight text-foreground'>
+              {displayTitle}
+            </h3>
+          )}
+          {section?.passage_subtitle && (
+            <p className='mb-6 text-center text-sm font-semibold italic text-foreground'>
+              {section.passage_subtitle}
+            </p>
+          )}
+          {!section?.passage_subtitle && displayTitle && <div className='mb-5' />}
+          <div className='space-y-5 text-justify'>
+            {renderFormattedText(body || effectivePassage)}
           </div>
-        )}
-
-        {/* PASSAGE N heading */}
-        <h2
-          className='uppercase text-slate-900'
-          style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.3px' }}
-        >
-          Passage {passageNum}
-        </h2>
-
-        {/* Subtitle */}
-        <p className='mt-1 text-[13px] text-[#6b7280]'>
-          You should spend about 20 minutes on Questions {minQ}
-          {minQ !== maxQ ? `–${maxQ}` : ''}, which are based on Reading Passage{' '}
-          {passageNum}.
+        </article>
+      ) : (
+        <p className='mt-6 text-sm italic text-slate-400'>
+          No passage text has been added for this section.
         </p>
+      )}
+    </>
+  )
 
-        {effectivePassage ? (
-          <>
-            {displayTitle && (
-              <h3 className='mb-6 mt-6 text-center text-[18px] font-bold leading-snug text-slate-900'>
-                {displayTitle}
-              </h3>
-            )}
-            <div className='space-y-5'>
-              {paragraphs.length > 0 ? (
-                paragraphs.map((para, i) => (
-                  <p
-                    key={i}
-                    className={
-                      i === 0
-                        ? 'text-[16px] font-bold italic leading-[1.8] text-[#1f2937]'
-                        : 'text-[16px] leading-[1.8] text-[#1f2937]'
-                    }
-                    style={{ fontFamily: 'Georgia, serif' }}
-                  >
-                    {para.trim()}
-                  </p>
-                ))
-              ) : (
-                <p
-                  className='text-[16px] leading-[1.8] text-[#1f2937]'
-                  style={{ fontFamily: 'Georgia, serif' }}
-                >
-                  {body || effectivePassage}
-                </p>
+  // Shared questions content
+  const questionsContent = (
+    <>
+      {sortedQuestions.length === 0 ? (
+        <p className='text-sm text-slate-400'>
+          No questions added to this section yet.
+        </p>
+      ) : (
+        <div>
+          {groups.map((group, gi) => (
+            <div
+              key={gi}
+              className={gi > 0 ? 'mt-8 border-t border-border pt-6' : ''}
+            >
+              <GroupHeader group={group} />
+
+              {group.type === 'compound' && group.structure && (
+                <CompoundCompletionRenderer
+                  structure={group.structure}
+                  questions={group.questions}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type === 'notes_card' && (
+                <NoteCompletionCard
+                  notes={group.questions[0].content.notes as NotesSpec}
+                  questions={group.questions}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                />
+              )}
+
+              {group.type === 'table' && (
+                <CompoundTableCompletion
+                  table={group.questions[0].content.table as TableSpec}
+                  questions={group.questions}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                />
+              )}
+
+              {group.type === 'matching_headings' && (
+                <MatchingLetterRenderer
+                  questions={group.questions}
+                  options={group.options ?? []}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  listTitle='List of Headings'
+                  questionsTitle={group.questionsHeading}
+                  repeatable={false}
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type === 'matching_information' && (
+                <MatchingLetterRenderer
+                  questions={group.questions}
+                  options={group.options ?? []}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  listTitle={group.subtitle || 'List of Sections'}
+                  questionsTitle={group.questionsHeading}
+                  repeatable
+                  showOptionsList={false}
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type === 'matching_features' && (
+                <MatchingLetterRenderer
+                  questions={group.questions}
+                  options={group.options ?? []}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  listTitle={group.subtitle || 'List of People / Places'}
+                  questionsTitle={group.questionsHeading}
+                  repeatable
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type === 'map_labeling' && (
+                <MapLabelingRenderer
+                  questions={group.questions}
+                  options={group.options ?? []}
+                  imageUrl={group.imageUrl}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type !== 'compound' &&
+                group.type !== 'notes_card' &&
+                group.type !== 'table' &&
+                group.type !== 'matching_headings' &&
+                group.type !== 'matching_information' &&
+                group.type !== 'matching_features' &&
+                group.type !== 'map_labeling' && (
+                <div className='space-y-5'>
+                  {group.questions.map((q) => (
+                    <div key={q.id}>
+                      <QuestionRendererWithFlag
+                        question={q}
+                        answer={answers[q.id] ?? {}}
+                        onAnswer={(resp) => onAnswer(q.id, resp)}
+                        flagged={flagged?.has(q.id)}
+                        onToggleFlag={
+                          onToggleFlag ? () => onToggleFlag(q.id) : undefined
+                        }
+                        previewMode={previewMode}
+                      />
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-          </>
-        ) : (
-          <p className='mt-6 text-sm italic text-slate-400'>
-            No passage text has been added for this section.
-          </p>
+          ))}
+        </div>
+      )}
+    </>
+  )
+
+  if (!isDesktop) {
+    return (
+      <div className='flex h-full flex-col'>
+        <div className='flex border-b border-slate-200'>
+          <button
+            type='button'
+            onClick={() => setMobileTab('passage')}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[13px] font-medium transition-colors',
+              mobileTab === 'passage'
+                ? 'border-b-2 border-blue-600 text-blue-600'
+                : 'text-slate-500 hover:text-slate-700',
+            )}
+          >
+            <BookOpen className='size-3.5' />
+            Passage
+          </button>
+          <button
+            type='button'
+            onClick={() => setMobileTab('questions')}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[13px] font-medium transition-colors',
+              mobileTab === 'questions'
+                ? 'border-b-2 border-blue-600 text-blue-600'
+                : 'text-slate-500 hover:text-slate-700',
+            )}
+          >
+            <HelpCircle className='size-3.5' />
+            Questions
+          </button>
+        </div>
+        {mobileTab === 'passage' && (
+          <div className='min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6'>
+            {section?.id ? (
+              <PassageHighlighter attemptId={attemptId} sectionId={section.id}>
+                {passageContent}
+              </PassageHighlighter>
+            ) : (
+              passageContent
+            )}
+          </div>
         )}
-      </div>
-
-      {/* ── Right: Questions 50% ───────────────────────────────────────── */}
-      <div className='w-1/2 overflow-y-auto border-l border-slate-200 bg-white px-8 py-8 pb-24'>
-        {sortedQuestions.length === 0 ? (
-          <p className='text-sm text-slate-400'>
-            No questions added to this section yet.
-          </p>
-        ) : (
-          <div>
-            {groups.map((group, gi) => (
-              <div
-                key={gi}
-                className={gi > 0 ? 'mt-8 border-t border-slate-200 pt-6' : ''}
+        {mobileTab === 'questions' && (
+          <div className='min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6 pb-24'>
+            {section?.id ? (
+              <PassageHighlighter
+                attemptId={attemptId}
+                sectionId={section.id}
+                storageKeySuffix='questions'
               >
-                <GroupHeader group={group} />
-
-                {/* ── Compound notes-card (word-bank summary) ─── */}
-                {group.type === 'notes_card' && (
-                  <NoteCompletionCard
-                    notes={group.questions[0].content.notes as NotesSpec}
-                    questions={group.questions}
-                    answers={answers}
-                    onAnswer={onAnswer}
-                  />
-                )}
-
-                {/* ── Compound table completion ──────────────── */}
-                {group.type === 'table' && (
-                  <CompoundTableCompletion
-                    table={group.questions[0].content.table as TableSpec}
-                    questions={group.questions}
-                    answers={answers}
-                    onAnswer={onAnswer}
-                  />
-                )}
-
-                {/* ── Matching Headings ─────────────────────── */}
-                {group.type === 'matching_headings' && (
-                  <MatchingHeadingsRenderer
-                    questions={group.questions}
-                    options={group.options ?? []}
-                    answers={answers}
-                    onAnswer={onAnswer}
-                  />
-                )}
-
-                {/* ── Matching Information ──────────────────── */}
-                {group.type === 'matching_information' && (
-                  <MatchingLetterRenderer
-                    questions={group.questions}
-                    options={group.options ?? []}
-                    answers={answers}
-                    onAnswer={onAnswer}
-                    listTitle='List of Sections'
-                    repeatable
-                  />
-                )}
-
-                {/* ── Matching Features ─────────────────────── */}
-                {group.type === 'matching_features' && (
-                  <MatchingLetterRenderer
-                    questions={group.questions}
-                    options={group.options ?? []}
-                    answers={answers}
-                    onAnswer={onAnswer}
-                    listTitle='List of People / Places'
-                    repeatable={false}
-                  />
-                )}
-
-                {/* ── Standard per-question rendering ──────────── */}
-                {group.type !== 'notes_card' &&
-                  group.type !== 'table' &&
-                  group.type !== 'matching_headings' &&
-                  group.type !== 'matching_information' &&
-                  group.type !== 'matching_features' && (
-                  <div className='space-y-5'>
-                    {group.questions.map((q) => (
-                      <div key={q.id}>
-                        <QuestionRendererWithFlag
-                          question={q}
-                          answer={answers[q.id] ?? {}}
-                          onAnswer={(resp) => onAnswer(q.id, resp)}
-                          flagged={flagged?.has(q.id)}
-                          onToggleFlag={
-                            onToggleFlag ? () => onToggleFlag(q.id) : undefined
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+                {questionsContent}
+              </PassageHighlighter>
+            ) : (
+              questionsContent
+            )}
           </div>
         )}
       </div>
-    </div>
+    )
+  }
+
+  return (
+    <ResizablePanelGroup orientation='horizontal' className='h-full'>
+      <ResizablePanel defaultSize='50%' minSize='25%'>
+        <div className='h-full overflow-y-auto overflow-x-hidden bg-white px-5 py-6 xl:px-10 xl:py-8'>
+          {section?.id ? (
+            <PassageHighlighter attemptId={attemptId} sectionId={section.id}>
+              {passageContent}
+            </PassageHighlighter>
+          ) : (
+            passageContent
+          )}
+        </div>
+      </ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel defaultSize='50%' minSize='25%'>
+        <div className='h-full overflow-y-auto overflow-x-hidden bg-white px-5 py-6 pb-24 xl:px-8 xl:py-8'>
+          {section?.id ? (
+            <PassageHighlighter
+              attemptId={attemptId}
+              sectionId={section.id}
+              storageKeySuffix='questions'
+            >
+              {questionsContent}
+            </PassageHighlighter>
+          ) : (
+            questionsContent
+          )}
+        </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   )
 }

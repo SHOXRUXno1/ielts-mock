@@ -60,17 +60,23 @@ export async function fetchTests(): Promise<Test[]> {
 }
 
 export async function fetchTest(id: string): Promise<TestDetail> {
+  const { data } = await api.get<TestDetail>(`/tests/${id}`)
+  return data
+}
+
+/** Admin-only detail fetch — never goes through take-mode stripping. */
+export async function fetchAdminTest(id: string): Promise<TestDetail> {
   const { data } = await api.get<TestDetail>(`/admin/tests/${id}`)
   return data
 }
 
 export async function fetchTestBySlug(bookSlug: string, testNumber: number): Promise<TestDetail> {
-  const { data } = await api.get<TestDetail>(`/admin/tests/by-slug/${bookSlug}/${testNumber}`)
+  const { data } = await api.get<TestDetail>(`/tests/by-slug/${bookSlug}/${testNumber}`)
   return data
 }
 
 export async function fetchSlugRedirect(testId: string): Promise<SlugRedirectResult> {
-  const { data } = await api.get<SlugRedirectResult>(`/admin/tests/${testId}/slug-redirect`)
+  const { data } = await api.get<SlugRedirectResult>(`/tests/${testId}/slug-redirect`)
   return data
 }
 
@@ -121,8 +127,10 @@ export async function confirmImport(file: File): Promise<ImportConfirmResult> {
   return data
 }
 
-export async function publishTest(id: string): Promise<import('@/features/tests/data/schema').TestDetail> {
-  const { data } = await api.post(`/admin/tests/${id}/publish`)
+export async function publishTest(id: string, force = false): Promise<import('@/features/tests/data/schema').TestDetail> {
+  const { data } = await api.post(`/admin/tests/${id}/publish`, null, {
+    params: force ? { force: true } : undefined,
+  })
   return data
 }
 

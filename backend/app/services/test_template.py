@@ -199,16 +199,17 @@ def _sheet_reading(ws, num: int) -> None:
     _col_widths(ws, [8, 8, 18, 60, 50, 15, 50])
     ws.freeze_panes = "A4"
 
+    _comment(ws, "A3", "Order = position WITHIN the group (1, 2, 3…). Not the absolute IELTS Q number. Import auto-renumbers to 1..N per group.")
     _comment(ws, "B3", "Group number — questions with the same group number share an instruction block. Leave blank to auto-group by consecutive type.")
     _comment(ws, "E3", "Semicolon-separated options, e.g. A.xxx;B.yyy;C.zzz")
     _comment(ws, "F3", "For MCQ/matching: letter only (A, B, ii, etc.).\nFor gap_fill/sentence_completion/short_answer: the exact answer word(s); use semicolons for multiple variants (e.g. flightless;flightless parrot).\nFor true_false_ng: True / False / Not Given.\nFor yes_no_ng: Yes / No / Not Given.")
-    _comment(ws, "C3", "Allowed types: mcq, true_false_ng, yes_no_ng, gap_fill, sentence_completion, short_answer, matching, matching_headings, matching_information, matching_features\n\nyes_no_ng: statement in 'question', answer = Yes / No / Not Given.\nsentence_completion: sentence with ____ in 'question', max_words in 'options' (default 3).\nshort_answer: question in 'question', max_words in 'options' (default 3).\nmatching_headings: paragraph labels in 'question', headings in 'options' (repeated per row).\nmatching_information: statements in 'question', section letters in 'options'.\nmatching_features: statements in 'question', people/places in 'options'.\nFor matching subtypes: answer = bare prefix only (e.g. 'iii', 'A').")
+    _comment(ws, "C3", "Allowed types: mcq, true_false_ng, yes_no_ng, gap_fill, sentence_completion, short_answer, matching, matching_headings, matching_information, matching_features\n\nyes_no_ng: statement in 'question', answer = Yes / No / Not Given.\nsentence_completion: sentence with ____ in 'question', max_words in 'options' (default 3).\nshort_answer: question in 'question', max_words in 'options' (default 3).\nmatching_headings: paragraph labels in 'question', headings in 'options' (repeated per row).\nmatching_information: statements in 'question', section letters in 'options'.\nmatching_features: statements in 'question', people/places in 'options'.\nFor matching subtypes: answer = bare prefix only (e.g. 'iii', 'A').\n\nCompound types (table_completion / note_completion / form_completion / summary_completion) — create via UI editor, not Excel.")
 
 
 def _sheet_writing(ws) -> None:
     ws.sheet_properties.tabColor = _WRITING_TAB
 
-    headers = ["order", "task_number", "type", "prompt", "instruction", "min_words"]
+    headers = ["order", "task_number", "type", "prompt", "instruction", "min_words", "essay_type"]
     ws.append(headers)
     _style_header_row(ws, 1, len(headers))
 
@@ -220,6 +221,7 @@ def _sheet_writing(ws) -> None:
             "The graph below shows the percentage of households with a computer in three countries between 2000 and 2020. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
             "Write at least 150 words.",
             150,
+            "",
         ),
         (
             2,
@@ -228,15 +230,22 @@ def _sheet_writing(ws) -> None:
             "Some people think that universities should provide graduates with the knowledge and skills needed by employers. Others think that the true function of a university is to give access to knowledge for its own sake. Discuss both views and give your opinion.",
             "Write at least 250 words.",
             250,
+            "discussion",
         ),
     ]
     for r in rows:
         ws.append(r)
 
-    _col_widths(ws, [8, 14, 12, 80, 50, 12])
+    _col_widths(ws, [8, 14, 12, 80, 50, 12, 22])
     ws.freeze_panes = "A2"
 
     _comment(ws, "C1", "Allowed types: task1, essay")
+    _comment(
+        ws,
+        "G1",
+        "Task 2 only. Values: opinion, discussion, problem_solution, "
+        "advantages_disadvantages, double_question. Aliases: op, disc, ps/prob, ad/advdis, dq/double. Leave blank for Task 1.",
+    )
 
 
 def _listening_headers() -> list[str]:
@@ -282,7 +291,7 @@ def _sheet_listening(ws, part: int) -> None:
     ws["A1"].font = Font(bold=True)
     ws["A2"] = (
         f"[Optional audioscript for part {part} — "
-        "paste the full transcript here]"
+        "shown to student after the test]"
     )
     ws["A2"].font = Font(italic=True, color="555555")
 
@@ -299,10 +308,12 @@ def _sheet_listening(ws, part: int) -> None:
     ws.freeze_panes = "A5"
 
     _comment(ws, "A1", "The filename of the MP3 file you will upload after import (e.g. part1.mp3).")
+    _comment(ws, "A2", "Optional audioscript. Will be shown to student after the test.")
+    _comment(ws, "A4", "Order = position WITHIN the group (1, 2, 3…). Not the absolute IELTS Q number. Import auto-renumbers to 1..N per group.")
     _comment(ws, "B4", "Group number — questions with the same group share an instruction block.")
     _comment(ws, "E4", "Semicolon-separated options, e.g. A.xxx;B.yyy;C.zzz")
     _comment(ws, "F4", "Letter (A, B, …) for MCQ, exact text for gap_fill.")
-    _comment(ws, "C4", "Allowed types: mcq, gap_fill, sentence_completion, short_answer, matching, true_false_ng, matching_information, matching_features\nsentence_completion: sentence with ____ in 'question', max_words in 'options' (default 3).\nshort_answer: question in 'question', max_words in 'options' (default 3).\nFor matching_information/features: statement in 'question', options in 'options', answer = bare letter (A, B, ...).")
+    _comment(ws, "C4", "Allowed types: mcq, gap_fill, sentence_completion, short_answer, matching, true_false_ng, matching_information, matching_features\nsentence_completion: sentence with ____ in 'question', max_words in 'options' (default 3).\nshort_answer: question in 'question', max_words in 'options' (default 3).\nFor matching_information/features: statement in 'question', options in 'options', answer = bare letter (A, B, ...).\n\nCompound types (table_completion / note_completion / form_completion / summary_completion) — create via UI editor, not Excel.")
 
 
 # ---------------------------------------------------------------------------

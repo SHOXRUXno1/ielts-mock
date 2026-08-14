@@ -26,9 +26,15 @@ export type WritingFeedbackResult = {
 
 export type WritingFeedbackRequest = {
   task: 1 | 2
-  prompt: string
+  task_description?: string
+  task_statement?: string
+  task_question?: string
+  task_instruction?: string
+  prompt?: string
   text: string
   image_url?: string | null
+  essay_type?: string | null
+  attempt_id?: string | null
 }
 
 export async function requestWritingFeedback(

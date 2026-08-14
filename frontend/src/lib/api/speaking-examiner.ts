@@ -81,6 +81,7 @@ export type SimliTokenReason =
   | 'not_configured'
   | 'simli_credits_exhausted'
   | 'simli_api_error'
+  | 'capacity'
   | 'network_error'
   | 'unauthorized'
 
@@ -117,11 +118,13 @@ export async function getPart2BeginPhrase(): Promise<PhraseResponse> {
 }
 
 export async function startExaminer(
+  attemptId?: string | null,
   signal?: AbortSignal,
 ): Promise<ExaminerTurnResponse> {
+  const body = attemptId ? { attempt_id: attemptId } : {}
   const { data } = await api.post<ExaminerTurnResponse>(
     '/admin/speaking-examiner/start',
-    {},
+    body,
     speakingRequestConfig(signal),
   )
   return data
@@ -230,9 +233,10 @@ async function withSpeakingRetry<T>(
 }
 
 export async function startExaminerWithRetry(
+  attemptId?: string | null,
   signal?: AbortSignal,
 ): Promise<ExaminerTurnResponse> {
-  return withSpeakingRetry(() => startExaminer(signal), signal)
+  return withSpeakingRetry(() => startExaminer(attemptId, signal), signal)
 }
 
 export async function transcribeAndRespondWithRetry(
@@ -344,6 +348,9 @@ export function getSpeakingApiErrorDetail(err: unknown): string {
     if (!err.response) {
       return 'Cannot reach server — check that the backend is running'
     }
+    if (err.response.status >= 500) {
+      return 'Speaking service had an error — try Start again'
+    }
     const detail = err.response.data
     if (detail && typeof detail === 'object' && 'detail' in detail) {
       return String(detail.detail)
@@ -360,6 +367,13 @@ export function formatSimliUnavailable(resp: SimliTokenResponse): string | null 
     const detail =
       resp.detail ??
       'Simli free credits are used up — upgrade at https://app.simli.com'
+    return `${detail} Audio-only mode is active — you can still start the test.`
+  }
+
+  if (resp.reason === 'capacity') {
+    const detail =
+      resp.detail ??
+      'Video avatar slots are full right now'
     return `${detail} Audio-only mode is active — you can still start the test.`
   }
 

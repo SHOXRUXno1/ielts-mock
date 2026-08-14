@@ -10,6 +10,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { handleServerError } from '@/lib/handle-server-error'
+import { isBenignSectionConflict } from '@/features/tests/take/section-conflict'
 import { DirectionProvider } from './context/direction-provider'
 import { FontProvider } from './context/font-provider'
 import { ThemeProvider } from './context/theme-provider'
@@ -38,6 +39,9 @@ const queryClient = new QueryClient({
     },
     mutations: {
       onError: (error) => {
+        // Expected 409s while sealing/entering — callers already recover.
+        if (isBenignSectionConflict(error)) return
+
         handleServerError(error)
 
         if (error instanceof AxiosError) {
@@ -65,7 +69,8 @@ const queryClient = new QueryClient({
           }
         }
         if (error.response?.status === 403) {
-          // router.navigate("/forbidden", { replace: true });
+          toast.error('Access denied!')
+          router.navigate({ to: '/403', replace: true })
         }
       }
     },

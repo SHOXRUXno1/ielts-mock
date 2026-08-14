@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { CueCardContent } from './cue-card-content'
 
-const PREP_SECONDS = 60
+const PREP_SECONDS = 65
 const WARNING_AT = 10
 
 type Part2PrepCardProps = {
@@ -70,8 +70,8 @@ export function Part2PrepCard({
   }, [secondsLeft])
 
   return (
-    <div className='mx-auto w-full max-w-md rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg'>
-      <h2 className='text-center text-base font-semibold uppercase tracking-wide'>
+    <div className='mx-auto w-full max-w-md rounded-lg border-l-[3px] border-blue-500 bg-slate-50 p-6 text-slate-900'>
+      <h2 className='text-center text-base font-medium'>
         Cue Card
       </h2>
 

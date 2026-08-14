@@ -68,13 +68,40 @@ describe('WritingFeedbackView', () => {
   })
 
   it('renders error corrections list', async () => {
+    // Quotes must appear in essayText to survive sanitization
+    const essay =
+      'The chart shows informations about employment. teh data reveals trends.'
     await render(
-      <WritingFeedbackView feedback={SAMPLE_FEEDBACK} essayText='' />,
+      <WritingFeedbackView feedback={SAMPLE_FEEDBACK} essayText={essay} />,
     )
     expect(hasText('informations')).toBe(true)
     expect(hasText('information')).toBe(true)
     expect(hasText('teh')).toBe(true)
     expect(hasText('the')).toBe(true)
+  })
+
+  it('drops error quotes that are not in the essay', async () => {
+    const feedback: WritingFeedbackResult = {
+      ...SAMPLE_FEEDBACK,
+      errors: [
+        {
+          quote: 'not-in-essay',
+          type: 'grammar',
+          correction: 'x',
+          explanation: 'missing',
+        },
+        {
+          quote: 'informations',
+          type: 'grammar',
+          correction: 'information',
+          explanation: 'ok',
+        },
+      ],
+    }
+    const essay = 'The chart shows informations about employment.'
+    await render(<WritingFeedbackView feedback={feedback} essayText={essay} />)
+    expect(hasText('not-in-essay')).toBe(false)
+    expect(hasText('informations')).toBe(true)
   })
 
   it('renders annotated essay when essayText provided', async () => {

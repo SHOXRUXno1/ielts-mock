@@ -3,18 +3,17 @@ import type { Section } from '@/features/tests/data/schema'
 
 export type SectionCreatePayload = {
   type: string
-  duration_minutes: number
   audio_url?: string | null
   passage?: string | null
   audioscript?: string | null
 }
 
 export type SectionUpdatePayload = {
-  duration_minutes?: number
   audio_url?: string | null
   passage?: string | null
   audioscript?: string | null
   title?: string | null
+  passage_subtitle?: string | null
 }
 
 export async function createSection(

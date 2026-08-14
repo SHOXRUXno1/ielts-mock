@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import httpx
 
 from app.core.config import settings
+from app.core.rate_limiter import get_elevenlabs_pool
 from app.services.shared_http import get_http_client
 
 logger = logging.getLogger(__name__)
@@ -83,13 +84,34 @@ async def validate_voice_config() -> tuple[bool, str]:
 
 
 async def text_to_speech(text: str) -> TTSResult:
-    """Convert text to speech via ElevenLabs API with retries."""
+    """Convert text to speech via ElevenLabs API with retries.
+
+    When the concurrency pool is full, fail fast so the caller can fall
+    back to Edge TTS instead of queuing behind other students.
+    """
     if not settings.elevenlabs_api_key:
         return TTSResult(audio=b"", error="ELEVENLABS_API_KEY is not set")
 
     if not text.strip():
         return TTSResult(audio=b"", error="Empty TTS text")
 
+    pool = get_elevenlabs_pool()
+    try:
+        acquired = pool.try_acquire_nowait()
+    except Exception:
+        logger.exception("ElevenLabs concurrency pool failed")
+        return TTSResult(audio=b"", error="ElevenLabs concurrency limiter failed")
+
+    if not acquired:
+        return TTSResult(audio=b"", error="ElevenLabs concurrency limit — use fallback")
+
+    try:
+        return await _text_to_speech_locked(text)
+    finally:
+        pool.release()
+
+
+async def _text_to_speech_locked(text: str) -> TTSResult:
     last_error = "Unknown ElevenLabs error"
 
     for attempt in range(1, _MAX_RETRIES + 1):
@@ -133,8 +155,8 @@ async def text_to_speech(text: str) -> TTSResult:
                 attempt,
                 _MAX_RETRIES,
             )
-        except Exception as exc:
-            last_error = f"ElevenLabs error: {type(exc).__name__}"
+        except Exception:
+            last_error = "ElevenLabs error: unexpected"
             logger.exception(
                 "ElevenLabs TTS unexpected failure voice=%s attempt=%d/%d",
                 settings.elevenlabs_voice_id[:8],

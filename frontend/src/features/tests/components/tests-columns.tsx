@@ -2,7 +2,6 @@ import { type ColumnDef } from '@tanstack/react-table'
 import { Link } from '@tanstack/react-router'
 import { Badge } from '@/components/ui/badge'
 import { DataTableColumnHeader } from '@/components/data-table'
-import { LongText } from '@/components/long-text'
 import { type Test } from '../data/schema'
 import { DataTableRowActions } from './data-table-row-actions'
 
@@ -10,33 +9,45 @@ export const testsColumns: ColumnDef<Test>[] = [
   {
     accessorKey: 'title',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Title' />
+      <DataTableColumnHeader column={column} title='Test' />
     ),
-    cell: ({ row }) => (
-      <Link
-        to='/tests/$testId'
-        params={{ testId: row.original.id }}
-        className='font-medium hover:underline'
-      >
-        <LongText className='max-w-60'>{row.getValue('title')}</LongText>
-      </Link>
-    ),
+    cell: ({ row }) => {
+      const test = row.original
+      const subtitle = [test.book_name, `Test ${test.test_number}`]
+        .filter(Boolean)
+        .join(' \u00b7 ')
+      return (
+        <Link
+          to='/tests/$testId'
+          params={{ testId: test.id }}
+          className='group block'
+        >
+          <span className='font-medium group-hover:underline'>
+            {test.title}
+          </span>
+          {subtitle && (
+            <span className='block text-xs text-muted-foreground'>
+              {subtitle}
+            </span>
+          )}
+        </Link>
+      )
+    },
     meta: { className: 'min-w-48' },
     enableHiding: false,
   },
   {
-    accessorKey: 'description',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Description' />
-    ),
+    accessorKey: 'type',
+    header: 'Type',
     cell: ({ row }) => {
-      const description = row.getValue<string | null>('description')
+      const t = row.getValue<string>('type')
       return (
-        <LongText className='max-w-96 text-muted-foreground'>
-          {description ?? '—'}
-        </LongText>
+        <Badge variant='outline' className='text-xs capitalize'>
+          {t}
+        </Badge>
       )
     },
+    meta: { className: 'w-28' },
   },
   {
     accessorKey: 'is_published',

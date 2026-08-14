@@ -64,15 +64,22 @@ export function StudentsActionDialog() {
     },
     onSuccess: (data) => {
       void qc.invalidateQueries({ queryKey: ['students'] })
+      void qc.invalidateQueries({ queryKey: ['student-results'] })
+      void qc.invalidateQueries({ queryKey: ['results'] })
       setOpen(null)
       if (isAdd && 'password' in data) {
         setCredentials({ login: data.login, password: (data as { login: string; password: string }).password })
         setOpen('show-credentials')
       } else {
-        toast.success(isAdd ? 'Student created.' : 'Student updated.')
+        toast.success(isAdd ? 'Student created' : 'Student updated', {
+          description: isAdd
+            ? 'Share the login credentials with the student.'
+            : 'Profile details were saved successfully.',
+        })
       }
     },
-    onError: (err) => toast.error(apiErrorMessage(err)),
+    onError: (err) =>
+      toast.error(apiErrorMessage(err, isAdd ? 'Could not create student.' : 'Could not update student.')),
   })
 
   return (

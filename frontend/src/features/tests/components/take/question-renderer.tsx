@@ -9,7 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { mediaUrl } from '@/lib/api/attempts'
 import { cn } from '@/lib/utils'
+import { highlightCaps } from './shared/instruction-block'
 import type { Question } from '../../data/schema'
 
 type Props = {
@@ -18,12 +20,27 @@ type Props = {
   onAnswer: (response: Record<string, unknown>) => void
   flagged?: boolean
   onToggleFlag?: () => void
+  /** Teacher preview: show answer key under the question */
+  previewMode?: boolean
+}
+
+function formatAnswerKey(answerKey: Record<string, unknown> | null): string {
+  if (!answerKey) return '—'
+  if (typeof answerKey.correct === 'string') return answerKey.correct
+  if (Array.isArray(answerKey.correct)) return answerKey.correct.map(String).join(', ')
+  if (typeof answerKey.answer === 'string') return answerKey.answer
+  if (Array.isArray(answerKey.answer)) return answerKey.answer.map(String).join(', ')
+  try {
+    return JSON.stringify(answerKey)
+  } catch {
+    return '—'
+  }
 }
 
 // ── Shared tokens ─────────────────────────────────────────────────────────────
 
 const chip =
-  'inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-600'
+  'inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-primary'
 
 // ── Compound table / notes-card types ────────────────────────────────────────
 // Used by ListeningSection when multiple Questions share the same table/notes.
@@ -74,12 +91,12 @@ function renderSegments(
     const value = (answers[q.id]?.answer as string) ?? ''
     return (
       <span key={i} className='inline-flex items-baseline gap-1'>
-        <span className={chip}>{q.order}</span>
+        <span data-q-chip className={chip}>{q.order}</span>
         <input
           type='text'
           value={value}
           onChange={(e) => onAnswer(q.id, { answer: e.target.value })}
-          className='border-0 border-b-2 border-slate-800 bg-transparent px-1 py-0.5 text-center text-[14px] focus:border-blue-600 focus:outline-none'
+          className='border-0 border-b-2 border-primary/40 bg-transparent px-1 py-0.5 text-center text-sm focus:border-primary focus:outline-none'
           style={{ width: '6rem' }}
         />
       </span>
@@ -115,25 +132,29 @@ export function CompoundTableCompletion({
   answers: Record<string, Record<string, unknown>>
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
 }) {
-  const gapToQ = new Map(
-    questions.map((q) => [q.content.gap_key as string, q]),
-  )
+  const gapToQ = new Map<string, Question>()
+  for (const q of questions) {
+    const gapId = q.content.gap_id
+    const gapKey = q.content.gap_key
+    if (typeof gapId === 'string' && gapId) gapToQ.set(gapId, q)
+    if (typeof gapKey === 'string' && gapKey) gapToQ.set(gapKey, q)
+  }
 
   return (
     <div className='overflow-x-auto'>
       {table.title && (
-        <p className='mb-3 text-center text-[15px] font-bold text-slate-900'>
+        <p className='mb-3 text-center text-[15px] font-bold text-foreground'>
           {table.title}
         </p>
       )}
-      <table className='w-full border-collapse border border-slate-900 text-[14px]'>
+      <table className='w-full border-collapse border border-border text-sm'>
         {table.headers.length > 0 && (
           <thead>
             <tr>
               {table.headers.map((h, i) => (
                 <th
                   key={i}
-                  className='border border-slate-900 bg-slate-100 px-3 py-2.5 text-left text-[13px] font-bold text-slate-800'
+                  className='border border-border bg-muted px-3 py-2.5 text-left text-[12px] font-semibold text-foreground'
                 >
                   {h}
                 </th>
@@ -147,7 +168,7 @@ export function CompoundTableCompletion({
               {row.map((cell, ci) => (
                 <td
                   key={ci}
-                  className='border border-slate-900 px-3 py-2.5 align-top text-slate-800'
+                  className='border border-border px-3 py-2.5 align-top text-[13px] text-foreground'
                 >
                   {renderTableCell(cell, gapToQ, answers, onAnswer)}
                 </td>
@@ -174,9 +195,13 @@ export function NoteCompletionCard({
   answers: Record<string, Record<string, unknown>>
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
 }) {
-  const gapToQ = new Map(
-    questions.map((q) => [q.content.gap_key as string, q]),
-  )
+  const gapToQ = new Map<string, Question>()
+  for (const q of questions) {
+    const gapId = q.content.gap_id
+    const gapKey = q.content.gap_key
+    if (typeof gapId === 'string' && gapId) gapToQ.set(gapId, q)
+    if (typeof gapKey === 'string' && gapKey) gapToQ.set(gapKey, q)
+  }
 
   // Group items into runs of [headings + bullets] for flat rendering
   // Headings break out of the <ul> and render as <p> between bullet groups.
@@ -217,19 +242,19 @@ export function NoteCompletionCard({
     <div className='space-y-3'>
       {/* instruction text (above card) */}
       {instructionText && (
-        <p className='text-[13px] text-slate-700'>{instructionText}</p>
+        <p className='text-[13px] text-foreground'>{highlightCaps(instructionText)}</p>
       )}
 
       {/* word bank grid */}
       {wordBankWords.length > 0 && (
-        <div className='rounded border border-slate-300 bg-slate-50 p-3'>
-          <p className='mb-2 text-[12px] font-semibold uppercase tracking-wide text-slate-500'>
+        <div className='rounded border border-border bg-muted p-3'>
+          <p className='mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground'>
             List of Words
           </p>
           <div className='flex flex-wrap gap-x-4 gap-y-1'>
             {wordBankWords.map((word, idx) => (
-              <span key={idx} className='text-[13px] text-slate-800'>
-                <span className='mr-0.5 font-semibold text-slate-500'>
+              <span key={idx} className='text-[13px] text-foreground'>
+                <span className='mr-0.5 font-semibold text-muted-foreground'>
                   {String.fromCharCode(65 + idx)}.
                 </span>{' '}
                 {word}
@@ -240,17 +265,17 @@ export function NoteCompletionCard({
       )}
 
       {/* notes card */}
-      <div className='mx-auto rounded-sm border border-slate-900 bg-white p-5'>
-      <p className='mb-3 text-[14px] font-bold text-slate-900'>{notes.title}</p>
+      <div className='mx-auto rounded-lg border border-border bg-card p-5'>
+      <p className='mb-3 text-center text-base font-medium text-foreground'>{notes.title}</p>
       {blocks.map((block, bi) =>
         block.kind === 'heading' ? (
-          <p key={bi} className='mb-1 mt-3 text-[13px] font-bold text-slate-900'>
+          <p key={bi} className='mb-1 mt-3 text-[13px] font-bold text-foreground'>
             {block.text}
           </p>
         ) : (
           <ul key={bi} className='space-y-1.5 pl-4' style={{ listStyleType: 'disc' }}>
             {block.items.map((item, i) => (
-              <li key={i} className='text-[14px] leading-8 text-slate-800'>
+              <li key={i} className='text-[14px] leading-8 text-foreground'>
                 {typeof item === 'string'
                   ? item
                   : renderSegments(item as CellSegment[], gapToQ, answers, onAnswer)}
@@ -277,10 +302,12 @@ export function CompoundMatchingDropdown({
   questions,
   answers,
   onAnswer,
+  previewMode = false,
 }: {
   questions: Question[]
   answers: Record<string, Record<string, unknown>>
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
+  previewMode?: boolean
 }) {
   const firstQ = questions[0]
   const optionsPool = (firstQ.content.options_pool as string[]) ?? []
@@ -289,9 +316,9 @@ export function CompoundMatchingDropdown({
   return (
     <div>
       {/* Floating options card (top-right) */}
-      <div className='mb-4 ml-auto max-w-xs rounded border border-slate-900 bg-white p-3 text-[13px]'>
+      <div className='mb-4 ml-auto max-w-xs rounded-lg border border-border bg-muted p-3 text-[13px]'>
         {optionsPool.map((opt, i) => (
-          <p key={i} className='leading-6 text-slate-800'>
+          <p key={i} className='leading-6 text-foreground'>
             {opt}
           </p>
         ))}
@@ -299,7 +326,7 @@ export function CompoundMatchingDropdown({
 
       {/* Group title */}
       {groupTitle && (
-        <p className='mb-3 text-[14px] font-bold text-slate-900'>{groupTitle}</p>
+        <p className='mb-3 text-[14px] font-bold text-foreground'>{groupTitle}</p>
       )}
 
       {/* One row per question: chip + label + select */}
@@ -309,22 +336,33 @@ export function CompoundMatchingDropdown({
           const label = (q.content.label as string) ?? ''
           // Extract just the letters from options_pool for the <select>
           const letters = optionsPool.map((opt) => opt.charAt(0))
+          const displayN = q.computed_number ?? q.order
           return (
-            <div key={q.id} className='flex items-center gap-3'>
-              <span className={chip}>{q.order}</span>
-              <span className='flex-1 text-[14px] text-slate-800'>{label}</span>
-              <select
-                value={currentVal}
-                onChange={(e) => onAnswer(q.id, { answer: e.target.value })}
-                className='rounded border border-slate-300 bg-white px-2 py-1 text-[13px] text-slate-800 focus:border-blue-500 focus:outline-none'
-              >
-                <option value=''>—</option>
-                {letters.map((letter) => (
-                  <option key={letter} value={letter}>
-                    {letter}
-                  </option>
-                ))}
-              </select>
+            <div key={q.id} id={`q-${displayN}`} className='scroll-mt-20 space-y-1'>
+              <div className='flex flex-wrap items-center gap-x-2 gap-y-1'>
+                <span data-q-chip className={chip}>{displayN}</span>
+                <span className='text-[14px] text-foreground'>{label}</span>
+                <Select
+                  value={currentVal || undefined}
+                  onValueChange={(v) => onAnswer(q.id, { answer: v })}
+                >
+                  <SelectTrigger className='h-7 w-14 shrink-0 justify-center gap-1 border-border bg-card px-2 text-[13px] font-medium shadow-sm [&>svg]:size-3'>
+                    <SelectValue placeholder='—' />
+                  </SelectTrigger>
+                  <SelectContent align='center' className='min-w-14'>
+                    {letters.map((letter) => (
+                      <SelectItem key={letter} value={letter} className='justify-center text-[13px]'>
+                        {letter}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {previewMode && (
+                <div className='ml-8 rounded border border-border bg-muted px-2 py-1 text-xs text-muted-foreground'>
+                  Answer: {formatAnswerKey(q.answer_key)}
+                </div>
+              )}
             </div>
           )
         })}
@@ -342,10 +380,12 @@ export function CompoundMultiSelectPair({
   questions,
   answers,
   onAnswer,
+  previewMode = false,
 }: {
   questions: Question[]
   answers: Record<string, Record<string, unknown>>
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
+  previewMode?: boolean
 }) {
   const firstQ = questions[0]
   const pairQuestion = (firstQ.content.pair_question as string) ?? ''
@@ -369,7 +409,7 @@ export function CompoundMultiSelectPair({
 
   return (
     <div className='space-y-3'>
-      <p className='text-[15px] font-[500] leading-6 text-slate-900'>{pairQuestion}</p>
+      <p className='text-[15px] font-[500] leading-6 text-foreground'>{pairQuestion}</p>
       <div className='space-y-2'>
         {options.map((opt, i) => {
           const letter = opt.charAt(0)
@@ -381,8 +421,8 @@ export function CompoundMultiSelectPair({
               className={cn(
                 'flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 text-[14px] transition-colors',
                 isChecked
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-slate-200 hover:bg-slate-50',
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:bg-muted',
               )}
               onClick={() => toggle(opt)}
             >
@@ -391,15 +431,20 @@ export function CompoundMultiSelectPair({
                 type='checkbox'
                 checked={isChecked}
                 readOnly
-                className='size-4 cursor-pointer accent-blue-600'
+                className='size-4 cursor-pointer accent-primary'
               />
-              <label htmlFor={optId} className='cursor-pointer text-slate-800'>
+              <label htmlFor={optId} className='cursor-pointer text-foreground'>
                 {opt}
               </label>
             </div>
           )
         })}
       </div>
+      {previewMode && (
+        <div className='rounded border border-border bg-muted px-2.5 py-1.5 text-xs text-muted-foreground'>
+          Answers: {questions.map((q) => `Q${q.order}: ${formatAnswerKey(q.answer_key)}`).join(', ')}
+        </div>
+      )}
     </div>
   )
 }
@@ -430,18 +475,18 @@ function LegacyTableCompletion({
   return (
     <div className='overflow-x-auto'>
       {table.instruction && (
-        <p className='mb-3 text-[14px] font-semibold text-slate-700'>
-          {table.instruction}
+        <p className='mb-3 text-sm text-foreground'>
+          {highlightCaps(table.instruction)}
         </p>
       )}
-      <table className='w-full border-collapse border border-slate-900 text-[14px]'>
+      <table className='w-full border-collapse border border-border text-sm'>
         {table.headers.length > 0 && (
           <thead>
             <tr>
               {table.headers.map((h, i) => (
                 <th
                   key={i}
-                  className='border border-slate-900 bg-slate-100 px-3 py-2 text-left text-[13px] font-bold text-slate-800'
+                  className='border border-border bg-muted px-3 py-2 text-left text-[12px] font-semibold text-foreground'
                 >
                   {h}
                 </th>
@@ -457,14 +502,14 @@ function LegacyTableCompletion({
                   return (
                     <td
                       key={ci}
-                      className='border border-slate-900 px-3 py-2 text-slate-800'
+                      className='border border-border px-3 py-2 text-[13px] text-foreground'
                     >
                       {cell}
                     </td>
                   )
                 }
                 return (
-                  <td key={ci} className='border border-slate-900 px-3 py-2'>
+                  <td key={ci} className='border border-border px-3 py-2'>
                     <div className='flex items-center gap-1.5'>
                       {cell.label && (
                         <span className={chip}>{cell.label}</span>
@@ -473,7 +518,7 @@ function LegacyTableCompletion({
                         type='text'
                         value={(answer[cell.key] as string) ?? ''}
                         onChange={(e) => updateCell(cell.key, e.target.value)}
-                        className='border-0 border-b-2 border-slate-800 bg-transparent px-1 py-0.5 text-[15px] focus:border-blue-600 focus:outline-none'
+                        className='border-0 border-b-2 border-primary/40 bg-transparent px-1 py-0.5 text-sm focus:border-primary focus:outline-none'
                         style={{ width: '6rem' }}
                       />
                     </div>
@@ -506,7 +551,7 @@ function GapFillInline({
     // Legacy fallback: chip + text + input below
     return (
       <div className='space-y-2'>
-        <p className='text-[15px] font-[500] leading-7 text-slate-900'>
+        <p className='text-[15px] font-[500] leading-7 text-foreground'>
           <span className={cn(chip, 'mr-1.5')}>{question.order}</span>
           {text}
         </p>
@@ -514,7 +559,7 @@ function GapFillInline({
           type='text'
           value={(answer.answer as string) ?? ''}
           onChange={(e) => onAnswer({ answer: e.target.value })}
-          className='border-0 border-b-2 border-slate-800 bg-transparent px-1 py-0.5 text-[14px] focus:border-blue-600 focus:outline-none'
+          className='border-0 border-b-2 border-primary/40 bg-transparent px-1 py-0.5 text-sm focus:border-primary focus:outline-none'
           style={{ width: '8rem' }}
           placeholder='...'
         />
@@ -524,14 +569,14 @@ function GapFillInline({
 
   const parts = text.split(/___|\{blank\}/)
   return (
-    <p className='text-[15px] font-[500] leading-8 text-slate-900'>
+    <p className='text-[15px] font-[500] leading-8 text-foreground'>
       {parts[0]}
       <span className={cn(chip, 'mx-1')}>{question.order}</span>
       <input
         type='text'
         value={(answer.answer as string) ?? ''}
         onChange={(e) => onAnswer({ answer: e.target.value })}
-        className='mx-1 inline border-0 border-b-2 border-slate-800 bg-transparent text-center text-[14px] focus:border-blue-600 focus:outline-none'
+        className='mx-1 inline border-0 border-b-2 border-primary/40 bg-transparent text-center text-sm focus:border-primary focus:outline-none'
         style={{ width: '7rem', verticalAlign: 'baseline' }}
         placeholder='...'
       />
@@ -548,6 +593,7 @@ export function QuestionRenderer({
   onAnswer,
   flagged: _flagged,
   onToggleFlag: _onToggleFlag,
+  previewMode: _previewMode = false,
 }: Props) {
   const qType = question.question_type
   const content = question.content
@@ -557,7 +603,7 @@ export function QuestionRenderer({
     return (
       <div className='space-y-3'>
         {!!content.question && (
-          <p className='text-[15px] font-[500] leading-7 text-slate-900'>
+          <p className='text-[15px] font-[500] leading-7 text-foreground'>
             {content.question as string}
           </p>
         )}
@@ -579,26 +625,34 @@ export function QuestionRenderer({
     // "Choose TWO" variant when max_choices > 1
     const maxChoices = (content.max_choices as number | undefined) ?? 1
 
+    // Answers are stored as letters ("A", "B", "C"…). Legacy data may have stored
+    // the full option text — normalise to a letter for comparison/selection.
+    const textToLetter = (val: string) => {
+      if (/^[A-Z]$/.test(val)) return val
+      const idx = options.indexOf(val)
+      return idx >= 0 ? String.fromCharCode(65 + idx) : val
+    }
+
     if (maxChoices > 1) {
-      const selected = (answer.answer as string[]) ?? []
-      const toggle = (opt: string) => {
-        const next = selected.includes(opt)
-          ? selected.filter((s) => s !== opt)
+      const rawSelected = (answer.answer as string[]) ?? []
+      // Normalise legacy full-text selections to letters
+      const selected = rawSelected.map(textToLetter)
+      const toggle = (letter: string) => {
+        const next = selected.includes(letter)
+          ? selected.filter((s) => s !== letter)
           : selected.length < maxChoices
-            ? [...selected, opt]
+            ? [...selected, letter]
             : selected
         onAnswer({ answer: next })
       }
       return (
         <div className='space-y-3'>
           <div className='space-y-1'>
-            <p className='text-[16px] font-bold text-slate-900'>
-              {question.order}
-            </p>
-            <p className='text-[15px] font-[500] text-slate-900'>
+            <p className='text-[15px] font-[500] text-foreground'>
+              <span data-q-chip className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'>{question.order}</span>
               {questionText}
             </p>
-            <p className='text-[13px] text-slate-500'>
+            <p className='text-[13px] text-muted-foreground'>
               Choose {maxChoices === 2 ? 'TWO' : maxChoices} letters,{' '}
               {String.fromCharCode(65)}–
               {String.fromCharCode(64 + options.length)}.
@@ -606,31 +660,30 @@ export function QuestionRenderer({
           </div>
           <div className='space-y-2'>
             {options.map((opt, i) => {
+              const letter = String.fromCharCode(65 + i)
               const id = `${question.id}-chk-${i}`
-              const checked = selected.includes(opt)
+              const checked = selected.includes(letter)
               return (
                 <div
                   key={i}
                   className={cn(
                     'flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 text-[15px] transition-colors',
                     checked
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-slate-200 hover:bg-slate-50',
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:bg-muted',
                   )}
-                  onClick={() => toggle(opt)}
+                  onClick={() => toggle(letter)}
                 >
                   <Checkbox
                     id={id}
                     checked={checked}
-                    onCheckedChange={() => toggle(opt)}
+                    onCheckedChange={() => toggle(letter)}
                   />
                   <Label
                     htmlFor={id}
-                    className='cursor-pointer font-normal text-slate-800'
+                    className='cursor-pointer font-normal text-foreground'
                   >
-                    <span className='mr-1 font-semibold'>
-                      {String.fromCharCode(65 + i)}.
-                    </span>{' '}
+                    <span className={cn('mr-1 text-[13px] font-medium', checked ? 'text-primary' : 'text-muted-foreground')}>{letter}.</span>{' '}
                     {opt}
                   </Label>
                 </div>
@@ -641,44 +694,30 @@ export function QuestionRenderer({
       )
     }
 
-    // Standard single-choice MCQ
+    // Standard single-choice MCQ — value is the letter ("A", "B", …)
+    const selectedLetter = textToLetter((answer.answer as string) ?? '')
     return (
       <div className='space-y-3'>
-        <div className='space-y-1'>
-          <p className='text-[16px] font-bold text-slate-900'>
-            {question.order}
-          </p>
-          <p className='text-[15px] font-[500] leading-6 text-slate-900'>
-            {questionText}
-          </p>
-        </div>
+        <p className='text-[15px] font-[500] leading-6 text-foreground'>
+          <span data-q-chip className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'>{question.order}</span>
+          {questionText}
+        </p>
         <RadioGroup
-          value={(answer.answer as string) ?? ''}
+          value={selectedLetter}
           onValueChange={(v) => onAnswer({ answer: v })}
-          className='space-y-2'
+          className='space-y-1.5 pl-6'
         >
           {options.map((opt, i) => {
+            const letter = String.fromCharCode(65 + i)
             const id = `${question.id}-${i}`
-            const isSelected = answer.answer === opt
             return (
-              <div
-                key={i}
-                className={cn(
-                  'flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-2.5 text-[15px] transition-colors',
-                  isSelected
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-slate-200 hover:bg-slate-50',
-                )}
-                onClick={() => onAnswer({ answer: opt })}
-              >
-                <RadioGroupItem value={opt} id={id} className='mt-0.5' />
+              <div key={i} className='flex cursor-pointer items-center gap-2.5'>
+                <RadioGroupItem value={letter} id={id} />
                 <Label
                   htmlFor={id}
-                  className='cursor-pointer font-normal text-slate-800'
+                  className='cursor-pointer text-[15px] font-normal leading-7 text-foreground'
                 >
-                  <span className='mr-1 font-semibold'>
-                    {String.fromCharCode(65 + i)}.
-                  </span>{' '}
+                  <span className='mr-1 font-medium'>{letter}.</span>
                   {opt}
                 </Label>
               </div>
@@ -694,33 +733,23 @@ export function QuestionRenderer({
     const opts = ['True', 'False', 'Not Given']
     return (
       <div className='space-y-2'>
-        <p className='text-[15px] font-[500] leading-7 text-slate-900'>
-          <span className={cn(chip, 'mr-1.5')}>{question.order}</span>
+        <p className='text-[15px] font-[500] leading-7 text-foreground'>
+          <span data-q-chip className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'>{question.order}</span>
           {content.statement as string}
         </p>
         <RadioGroup
           value={(answer.answer as string) ?? ''}
           onValueChange={(v) => onAnswer({ answer: v })}
-          className='flex gap-2'
+          className='space-y-1.5 pl-6'
         >
           {opts.map((opt) => {
             const id = `${question.id}-${opt}`
-            const selected = answer.answer === opt
             return (
-              <div
-                key={opt}
-                className={cn(
-                  'flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 transition-colors',
-                  selected
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-slate-200 hover:bg-slate-50',
-                )}
-                onClick={() => onAnswer({ answer: opt })}
-              >
+              <div key={opt} className='flex items-center gap-2.5'>
                 <RadioGroupItem value={opt} id={id} />
                 <Label
                   htmlFor={id}
-                  className='cursor-pointer text-[12px] font-semibold uppercase tracking-wide text-slate-700'
+                  className='cursor-pointer text-[15px] font-bold uppercase leading-7 text-foreground'
                 >
                   {opt}
                 </Label>
@@ -737,33 +766,23 @@ export function QuestionRenderer({
     const opts = ['Yes', 'No', 'Not Given']
     return (
       <div className='space-y-2'>
-        <p className='text-[15px] font-[500] leading-7 text-slate-900'>
-          <span className={cn(chip, 'mr-1.5')}>{question.order}</span>
+        <p className='text-[15px] font-[500] leading-7 text-foreground'>
+          <span data-q-chip className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'>{question.order}</span>
           {content.statement as string}
         </p>
         <RadioGroup
           value={(answer.answer as string) ?? ''}
           onValueChange={(v) => onAnswer({ answer: v })}
-          className='flex gap-2'
+          className='space-y-1.5 pl-6'
         >
           {opts.map((opt) => {
             const id = `${question.id}-${opt}`
-            const selected = answer.answer === opt
             return (
-              <div
-                key={opt}
-                className={cn(
-                  'flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 transition-colors',
-                  selected
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-slate-200 hover:bg-slate-50',
-                )}
-                onClick={() => onAnswer({ answer: opt })}
-              >
+              <div key={opt} className='flex items-center gap-2.5'>
                 <RadioGroupItem value={opt} id={id} />
                 <Label
                   htmlFor={id}
-                  className='cursor-pointer text-[12px] font-semibold uppercase tracking-wide text-slate-700'
+                  className='cursor-pointer text-[15px] font-bold uppercase leading-7 text-foreground'
                 >
                   {opt}
                 </Label>
@@ -787,25 +806,23 @@ export function QuestionRenderer({
       const parts = prompt.split(/_{2,}/)
       return (
         <div className='space-y-2'>
-          <p className='text-[15px] font-[500] leading-8 text-slate-900'>
-            <span className={cn(chip, 'mr-1.5')}>{question.order}</span>
+          <p className='text-[15px] font-[500] leading-8 text-foreground'>
+            <span className='mr-1.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground align-middle'>
+              {question.order}
+            </span>
             {parts[0]}
             <input
               type='text'
               value={studentAnswer}
               onChange={(e) => onAnswer({ answer: e.target.value })}
               className={cn(
-                'mx-1 inline border-0 border-b-2 bg-transparent text-center text-[14px] focus:outline-none',
-                overLimit ? 'border-red-500' : 'border-slate-800 focus:border-blue-600',
+                'mx-1 inline-block h-7 w-36 rounded border bg-card px-2 text-center text-sm align-middle focus:outline-none focus:ring-1',
+                overLimit
+                  ? 'border-red-400 focus:border-red-500 focus:ring-red-500'
+                  : 'border-border focus:border-primary focus:ring-primary',
               )}
-              style={{ width: '9rem', verticalAlign: 'baseline' }}
-              placeholder='...'
             />
             {parts.slice(1).join('')}
-          </p>
-          <p className={cn('text-[11px]', overLimit ? 'font-semibold text-red-500' : 'text-slate-400')}>
-            {wordCount} / {maxWords} word{maxWords !== 1 ? 's' : ''}
-            {overLimit && ' — too many words'}
           </p>
         </div>
       )
@@ -813,8 +830,10 @@ export function QuestionRenderer({
 
     return (
       <div className='space-y-2'>
-        <p className='text-[15px] font-[500] leading-7 text-slate-900'>
-          <span className={cn(chip, 'mr-1.5')}>{question.order}</span>
+        <p className='text-[15px] font-[500] leading-7 text-foreground'>
+          <span className='mr-1.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground align-middle'>
+            {question.order}
+          </span>
           {prompt}
         </p>
         <input
@@ -822,17 +841,13 @@ export function QuestionRenderer({
           value={studentAnswer}
           onChange={(e) => onAnswer({ answer: e.target.value })}
           className={cn(
-            'w-full rounded border px-3 py-1.5 text-[14px] focus:outline-none',
+            'w-full rounded border bg-card px-3 py-1.5 text-sm focus:outline-none focus:ring-1',
             overLimit
-              ? 'border-red-400 focus:border-red-500'
-              : 'border-slate-300 focus:border-blue-500',
+              ? 'border-red-400 focus:border-red-500 focus:ring-red-500'
+              : 'border-border focus:border-primary focus:ring-primary',
           )}
           placeholder='Your answer...'
         />
-        <p className={cn('text-[11px]', overLimit ? 'font-semibold text-red-500' : 'text-slate-400')}>
-          {wordCount} / {maxWords} word{maxWords !== 1 ? 's' : ''}
-          {overLimit && ' — too many words'}
-        </p>
       </div>
     )
   }
@@ -844,8 +859,8 @@ export function QuestionRenderer({
     )
   }
 
-  // ── Matching / Map labeling ──────────────────────────────────────────────
-  if (qType === 'matching' || qType === 'map_labeling') {
+  // ── Matching ─────────────────────────────────────────────────────────────
+  if (qType === 'matching') {
     // Support both canonical (left/right) and seed (items/options) field names
     const left =
       ((content.left ?? content.items) as string[] | undefined) ?? []
@@ -857,32 +872,28 @@ export function QuestionRenderer({
     const currentPairs = (answer.answer as Record<string, string>) ?? {}
     return (
       <div className='space-y-4'>
-        <div className='space-y-1'>
-          <p className='text-[16px] font-bold text-slate-900'>
-            {question.order}
-          </p>
-          <p className='text-[15px] font-[500] text-slate-900'>
-            {questionText}
-          </p>
-        </div>
+        <p className='text-[15px] font-[500] text-foreground'>
+          <span data-q-chip className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'>{question.order}</span>
+          {questionText}
+        </p>
         {!!content.image_url && (
           <img
-            src={content.image_url as string}
+            src={mediaUrl(content.image_url as string)}
             alt='Map'
-            className='max-h-64 rounded-md border border-slate-200'
+            className='max-h-64 rounded-md border border-border'
           />
         )}
         <div className='space-y-3'>
           {left.map((item) => (
             <div key={item} className='flex items-center gap-3'>
-              <span className='w-40 text-sm text-slate-700'>{item}</span>
+              <span className='w-40 text-sm text-foreground'>{item}</span>
               <Select
                 value={currentPairs[item] ?? ''}
                 onValueChange={(v) =>
                   onAnswer({ answer: { ...currentPairs, [item]: v } })
                 }
               >
-                <SelectTrigger className='w-48 text-sm'>
+                <SelectTrigger className='w-48 text-sm shadow-sm'>
                   <SelectValue placeholder='Select...' />
                 </SelectTrigger>
                 <SelectContent>
@@ -904,51 +915,71 @@ export function QuestionRenderer({
   if (qType === 'multi_select') {
     const options = (content.options as string[] | undefined) ?? []
     const questionText = (content.question ?? content.prompt) as string | undefined
+    const chooseN =
+      typeof content.choose_n === 'number' && content.choose_n >= 1
+        ? content.choose_n
+        : Array.isArray(question.answer_key?.correct)
+          ? (question.answer_key!.correct as unknown[]).length
+          : undefined
+    const slotEnd =
+      typeof content.display_slot_end === 'number'
+        ? content.display_slot_end
+        : undefined
+    const _numberLabel =
+      slotEnd != null && slotEnd !== question.order
+        ? `${question.order}–${slotEnd}`
+        : String(question.order)
+
+    const textToLetter = (val: string) => {
+      if (/^[A-Z]$/i.test(val.trim())) return val.trim().toUpperCase()
+      const idx = options.indexOf(val)
+      return idx >= 0 ? String.fromCharCode(65 + idx) : val
+    }
     const selected: string[] = Array.isArray(answer.answer)
-      ? (answer.answer as string[])
+      ? (answer.answer as string[]).map(textToLetter)
       : []
 
-    const toggle = (opt: string) => {
-      const next = selected.includes(opt)
-        ? selected.filter((s) => s !== opt)
-        : [...selected, opt]
+    const toggle = (letter: string) => {
+      let next: string[]
+      if (selected.includes(letter)) {
+        next = selected.filter((s) => s !== letter)
+      } else if (chooseN != null && selected.length >= chooseN) {
+        next = selected
+      } else {
+        next = [...selected, letter]
+      }
       onAnswer({ answer: next })
     }
 
+    // Group header already shows "Choose TWO letters, A-E." — do not repeat under the stem.
     return (
       <div className='space-y-3'>
-        <div className='space-y-1'>
-          <p className='text-[16px] font-bold text-slate-900'>{question.order}</p>
-          {questionText && (
-            <p className='text-[15px] font-[500] leading-6 text-slate-900'>{questionText}</p>
-          )}
-          <p className='text-[13px] text-slate-500'>
-            Choose the correct letters. More than one answer may be correct.
-          </p>
-        </div>
+        {questionText && (
+          <p className='text-[15px] font-[500] leading-6 text-foreground'>{questionText}</p>
+        )}
         <div className='space-y-2'>
           {options.map((opt, i) => {
+            const letter = String.fromCharCode(65 + i)
             const id = `${question.id}-ms-${i}`
-            const checked = selected.includes(opt)
+            const checked = selected.includes(letter)
             return (
               <div
                 key={i}
                 className={cn(
                   'flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 text-[15px] transition-colors',
                   checked
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-slate-200 hover:bg-slate-50',
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:bg-muted/50',
                 )}
-                onClick={() => toggle(opt)}
+                onClick={() => toggle(letter)}
               >
                 <Checkbox
                   id={id}
                   checked={checked}
-                  onCheckedChange={() => toggle(opt)}
+                  onCheckedChange={() => toggle(letter)}
                 />
-                <Label htmlFor={id} className='cursor-pointer font-normal text-slate-800'>
-                  <span className='mr-1 font-semibold'>{String.fromCharCode(65 + i)}.</span>{' '}
-                  {opt}
+                <Label htmlFor={id} className='cursor-pointer font-normal text-foreground'>
+                  <span className={cn('mr-1 text-[13px] font-medium', checked ? 'text-primary' : 'text-muted-foreground')}>{letter}.</span> {opt}
                 </Label>
               </div>
             )
@@ -959,26 +990,36 @@ export function QuestionRenderer({
   }
 
   return (
-    <div className='text-sm text-slate-400'>
+    <div className='text-sm text-muted-foreground'>
       Question type "{qType}" (#{question.order})
     </div>
   )
 }
 
-// ── Matching Headings compound renderer ──────────────────────────────────────
-// Group-level: left = paragraph labels (content.question), right = headings list
-// (from group.options_shared). Headings always visible on right.
+// ── Matching Information / Features / Headings renderer ───────────────────────
 
-export function MatchingHeadingsRenderer({
+export function MatchingLetterRenderer({
   questions,
   options,
   answers,
   onAnswer,
+  listTitle = 'List of Options',
+  questionsTitle,
+  repeatable = true,
+  /** When false, options still feed the dropdown but the list card is hidden
+   *  (JumpInto-style Matching Information: letters already in the instruction). */
+  showOptionsList = true,
+  previewMode = false,
 }: {
   questions: Question[]
   options: string[]
   answers: Record<string, Record<string, unknown>>
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
+  listTitle?: string
+  questionsTitle?: string
+  repeatable?: boolean
+  showOptionsList?: boolean
+  previewMode?: boolean
 }) {
   const prefixes = options.map((opt) => {
     const dot = opt.indexOf('.')
@@ -986,44 +1027,65 @@ export function MatchingHeadingsRenderer({
   })
 
   return (
-    <div className='space-y-4'>
-      {/* Always-visible headings list */}
-      {options.length > 0 && (
-        <div className='rounded border border-slate-200 bg-slate-50 p-3'>
-          <p className='mb-2 text-[12px] font-semibold uppercase tracking-wide text-slate-500'>
-            List of Headings
-          </p>
-          <ol className='space-y-1'>
+    <div className='space-y-5'>
+      {showOptionsList && options.length > 0 && (
+        <div className='mx-auto max-w-lg rounded-lg border border-foreground/20'>
+          <div className='border-b border-foreground/20 px-5 py-2.5 text-center text-[15px] font-bold text-foreground'>
+            {listTitle}
+          </div>
+          <div className='space-y-1.5 px-6 py-4'>
             {options.map((opt, i) => (
-              <li key={i} className='text-[13px] text-slate-700'>
-                {opt}
-              </li>
+              <p key={i} className='text-[14px] leading-relaxed text-foreground'>{opt}</p>
             ))}
-          </ol>
+            {repeatable && (
+              <p className='mt-3 text-[12px] italic text-muted-foreground'>
+                NB: You may use any letter more than once.
+              </p>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Paragraph rows */}
-      <div className='space-y-3'>
+      {questionsTitle && (
+        <p className='text-sm font-bold text-foreground'>{questionsTitle}</p>
+      )}
+
+      <div className='space-y-2.5'>
         {questions.map((q) => {
-          const label = (q.content.question as string) ?? `Question ${q.order}`
+          const statement = (q.content.question ?? q.content.stem ?? `Question ${q.order}`) as string
           const currentVal = (answers[q.id]?.answer as string) ?? ''
+          const displayN = q.computed_number ?? q.order
           return (
-            <div key={q.id} className='flex items-center gap-3'>
-              <span className={chip}>{q.order}</span>
-              <span className='w-36 shrink-0 text-[13px] font-medium text-slate-800'>{label}</span>
-              <select
-                value={currentVal}
-                onChange={(e) => onAnswer(q.id, { answer: e.target.value })}
-                className='flex-1 rounded border border-slate-300 bg-white px-2 py-1 text-[13px] text-slate-800 focus:border-blue-500 focus:outline-none'
-              >
-                <option value=''>— select —</option>
-                {options.map((opt, i) => (
-                  <option key={i} value={prefixes[i]}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
+            <div key={q.id} id={`q-${displayN}`} className='scroll-mt-20 space-y-1'>
+              <div className='flex flex-wrap items-center gap-x-2 gap-y-1'>
+                <span
+                  data-q-chip
+                  className='inline-flex min-w-[1.5rem] justify-center text-[14px] font-bold text-foreground'
+                >
+                  {displayN}
+                </span>
+                <span className='text-[14px] text-foreground'>{statement}</span>
+                <Select
+                  value={currentVal || undefined}
+                  onValueChange={(v) => onAnswer(q.id, { answer: v })}
+                >
+                  <SelectTrigger className='h-7 w-14 shrink-0 justify-center gap-1 border-border bg-card px-2 text-[13px] font-medium shadow-sm [&>svg]:size-3'>
+                    <SelectValue placeholder={String(displayN)} />
+                  </SelectTrigger>
+                  <SelectContent align='center' className='min-w-14'>
+                    {prefixes.map((prefix, i) => (
+                      <SelectItem key={i} value={prefix} className='justify-center text-[13px]'>
+                        {prefix}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {previewMode && (
+                <div className='ml-9 rounded border border-border bg-muted px-2 py-1 text-xs text-muted-foreground'>
+                  Answer: {formatAnswerKey(q.answer_key)}
+                </div>
+              )}
             </div>
           )
         })}
@@ -1032,74 +1094,79 @@ export function MatchingHeadingsRenderer({
   )
 }
 
-// ── Matching Information / Features compound renderer ─────────────────────────
-// Shows a "List of Sections/People" plate with all options, then one statement
-// per row with a letter/prefix dropdown.
+// ── Map Labeling renderer (group-level: image + dropdown rows) ──────────────
 
-export function MatchingLetterRenderer({
+export function MapLabelingRenderer({
   questions,
   options,
+  imageUrl,
   answers,
   onAnswer,
-  listTitle = 'List of Options',
-  repeatable = true,
+  previewMode = false,
 }: {
   questions: Question[]
   options: string[]
+  imageUrl?: string
   answers: Record<string, Record<string, unknown>>
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
-  listTitle?: string
-  repeatable?: boolean
+  previewMode?: boolean
 }) {
-  const prefixes = options.map((opt) => {
-    const dot = opt.indexOf('.')
-    return dot > 0 ? opt.slice(0, dot).trim() : opt.trim()
-  })
-
   return (
     <div className='space-y-4'>
-      {/* Options plate */}
-      {options.length > 0 && (
-        <div className='rounded border border-slate-200 bg-slate-50 p-3'>
-          <p className='mb-2 text-[12px] font-semibold uppercase tracking-wide text-slate-500'>
-            {listTitle}
-          </p>
-          <div className='flex flex-wrap gap-x-6 gap-y-1'>
-            {options.map((opt, i) => (
-              <span key={i} className='text-[13px] text-slate-700'>
-                {opt}
-              </span>
-            ))}
-          </div>
-          {repeatable && (
-            <p className='mt-2 text-[11px] italic text-slate-500'>
-              NB: You may use any letter more than once.
-            </p>
-          )}
+      {imageUrl && (
+        <div className='flex justify-center'>
+          <img
+            src={mediaUrl(imageUrl)}
+            alt='Map'
+            className='max-w-lg rounded-lg border border-border'
+            onError={(e) => {
+              ;(e.target as HTMLImageElement).style.display = 'none'
+            }}
+          />
         </div>
       )}
 
-      {/* Statement rows */}
       <div className='space-y-3'>
         {questions.map((q) => {
-          const statement = (q.content.question as string) ?? `Question ${q.order}`
+          const location =
+            (q.content.location as string) ??
+            (q.content.question as string) ??
+            `Location ${q.order}`
           const currentVal = (answers[q.id]?.answer as string) ?? ''
+          const displayN = q.computed_number ?? q.order
           return (
-            <div key={q.id} className='flex items-start gap-3'>
-              <span className={`${chip} mt-0.5`}>{q.order}</span>
-              <span className='flex-1 text-[14px] text-slate-800'>{statement}</span>
-              <select
-                value={currentVal}
-                onChange={(e) => onAnswer(q.id, { answer: e.target.value })}
-                className='rounded border border-slate-300 bg-white px-2 py-1 text-[13px] text-slate-800 focus:border-blue-500 focus:outline-none'
-              >
-                <option value=''>—</option>
-                {prefixes.map((prefix, i) => (
-                  <option key={i} value={prefix}>
-                    {prefix}
-                  </option>
-                ))}
-              </select>
+            <div key={q.id} id={`q-${displayN}`} className='scroll-mt-20 space-y-1'>
+              <div className='flex flex-wrap items-center gap-x-2 gap-y-1'>
+                <span
+                  data-q-chip
+                  className='flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[13px] font-medium text-muted-foreground'
+                >
+                  {displayN}
+                </span>
+                <span className='text-[14px] text-foreground'>
+                  {location}
+                </span>
+                <Select
+                  value={currentVal || undefined}
+                  onValueChange={(v) => onAnswer(q.id, { answer: v })}
+                >
+                  <SelectTrigger className='h-7 w-14 shrink-0 justify-center gap-1 border-border bg-card px-2 text-[13px] font-medium shadow-sm [&>svg]:size-3'>
+                    <SelectValue placeholder='—' />
+                  </SelectTrigger>
+                  <SelectContent align='center' className='min-w-14'>
+                    {options.map((lbl) => (
+                      <SelectItem key={lbl} value={lbl} className='justify-center text-[13px]'>
+                        {lbl}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {previewMode && (
+                <div className='ml-9 rounded border border-border bg-muted px-2 py-1 text-xs text-muted-foreground'>
+                  Answer: {formatAnswerKey(q.answer_key)}
+                </div>
+              )}
             </div>
           )
         })}
@@ -1116,9 +1183,22 @@ export { _QuestionRenderer as QuestionRendererCore }
 
 // Re-export as default wrapper with flag button
 export function QuestionRendererWithFlag(props: Props) {
-  const { onToggleFlag, flagged } = props
+  const { onToggleFlag, flagged, previewMode, question } = props
+  const start = question.computed_number ?? question.order
+  const end =
+    typeof question.computed_number_end === 'number'
+      ? question.computed_number_end
+      : start
   return (
-    <div className='relative'>
+    <div className='relative scroll-mt-20' id={`q-${start}`}>
+      {Array.from({ length: Math.max(0, end - start) }, (_, i) => (
+        <span
+          key={start + i + 1}
+          id={`q-${start + i + 1}`}
+          className='absolute'
+          aria-hidden
+        />
+      ))}
       {onToggleFlag && (
         <button
           type='button'
@@ -1128,13 +1208,18 @@ export function QuestionRendererWithFlag(props: Props) {
             'absolute right-0 top-0 z-10 rounded p-1 transition-colors',
             flagged
               ? 'text-amber-500 hover:text-amber-600'
-              : 'text-slate-300 hover:text-amber-400',
+              : 'text-muted-foreground/40 hover:text-amber-400',
           )}
         >
           <Flag className='size-4' />
         </button>
       )}
       <QuestionRenderer {...props} />
+      {previewMode && (
+        <div className='mt-2 rounded border border-border bg-muted px-2.5 py-1.5 text-xs text-muted-foreground'>
+          Answer: {formatAnswerKey(question.answer_key)}
+        </div>
+      )}
     </div>
   )
 }

@@ -5,13 +5,15 @@ export type QuestionGroupCreatePayload = {
   order?: number
   question_type: string
   instruction?: string
+  subtitle?: string | null
   options_shared?: Record<string, unknown> | null
 }
 
 export type QuestionGroupUpdatePayload = Partial<QuestionGroupCreatePayload>
 
 export type QuestionInGroupPayload = {
-  order: number
+  /** When omitted, backend assigns max(section order)+1 */
+  order?: number
   question_type?: string  // omit to inherit from group
   content: Record<string, unknown>
   answer_key?: Record<string, unknown> | null

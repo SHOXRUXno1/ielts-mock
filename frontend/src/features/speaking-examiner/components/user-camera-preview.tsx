@@ -12,8 +12,9 @@ type UserCameraPreviewProps = {
 const PREVIEW_CONSTRAINTS: MediaStreamConstraints = {
   video: {
     facingMode: 'user',
-    width: { ideal: 640 },
-    height: { ideal: 480 },
+    width: { ideal: 320 },
+    height: { ideal: 240 },
+    frameRate: { ideal: 15 },
   },
   audio: false,
 }
@@ -106,15 +107,24 @@ export function UserCameraPreview({
     let cancelled = false
     clearPreviewReleaseTimer()
     previewRefCount += 1
+    const videoEl = videoRef.current
 
     void acquireSharedPreviewStream()
       .then((stream) => {
         if (cancelled) return
         streamRef.current = stream
-        const el = videoRef.current
+        const el = videoRef.current ?? videoEl
         if (el) {
           el.srcObject = stream
-          void el.play().catch(() => {})
+          const play = () => {
+            el.onloadedmetadata = null
+            void el.play().catch(() => {})
+          }
+          if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+            play()
+          } else {
+            el.onloadedmetadata = play
+          }
         }
       })
       .catch(() => {
@@ -126,6 +136,7 @@ export function UserCameraPreview({
     return () => {
       cancelled = true
       streamRef.current = null
+      if (videoEl) videoEl.onloadedmetadata = null
       releaseSharedPreviewStream()
     }
   }, [enabled])
@@ -151,7 +162,7 @@ export function UserCameraPreview({
         muted
         aria-label='Your camera preview'
         className={cn(
-          'h-full w-full object-cover [transform:scaleX(-1)]',
+          'h-full w-full object-cover [transform:translateZ(0)_scaleX(-1)]',
           variant === 'standalone' && 'aspect-video',
         )}
       />

@@ -27,6 +27,7 @@ from sqlalchemy.orm import sessionmaker
 from app.models.question import Question, QuestionType
 from app.models.section import Section, SectionType
 from app.models.test import Test
+from app.services import section_settings as settings_service
 
 DATABASE_URL = "postgresql+asyncpg://postgres:2770@localhost:5432/ielts_mock"
 TEST_TITLE = "IELTS Academic Mock #1"
@@ -839,28 +840,24 @@ PART_META = {
         "audio_file": "listening_part1.mp3",
         "script": PART1_SCRIPT,
         "passage_title": "Part 1 — Oyster Bay Sailing Club Enquiry",
-        "duration": 40,
     },
     2: {
         "order": 2,
         "audio_file": "listening_part2.mp3",
         "script": PART2_SCRIPT,
         "passage_title": "Part 2 — Working as a Makeup Trainee",
-        "duration": 40,
     },
     3: {
         "order": 3,
         "audio_file": "listening_part3.mp3",
         "script": PART3_SCRIPT,
         "passage_title": "Part 3 — Marine Biodiversity Discussion",
-        "duration": 40,
     },
     4: {
         "order": 4,
         "audio_file": "listening_part4.mp3",
         "script": PART4_SCRIPT,
         "passage_title": "Part 4 — Sources of Rubber (Lecture)",
-        "duration": 40,
     },
 }
 
@@ -933,7 +930,6 @@ async def main() -> None:
                 test_id=test.id,
                 type=SectionType.LISTENING,
                 order=meta["order"],
-                duration_minutes=meta["duration"],
                 audio_url=f"/media/{meta['audio_file']}",
                 passage=passage_text,
             )
@@ -956,6 +952,7 @@ async def main() -> None:
                 f"{len(QUESTIONS[part_num])} questions added."
             )
 
+        await settings_service.ensure_settings(session, test.id)
         await session.commit()
         print(f"\nDONE  Seeded parts {sorted(PARTS_TO_SEED)} successfully.")
 

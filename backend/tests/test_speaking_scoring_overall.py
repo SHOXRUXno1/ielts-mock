@@ -4,7 +4,12 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from app.services.llm import _recompute_overall_band, evaluate_speaking_dialog
+from app.services.llm import (
+    _coerce_speaking_criteria_to_int,
+    _recompute_overall_band,
+    evaluate_speaking,
+    evaluate_speaking_dialog,
+)
 
 
 def _score_result(
@@ -40,6 +45,47 @@ class TestRecomputeOverallBand:
         assert updated["overall_band"] == 5.5
 
 
+class TestCoerceSpeakingCriteriaToInt:
+    """IELTS: individual Speaking criteria must be whole bands 0-9."""
+
+    def test_rounds_half_bands(self):
+        # Python round uses banker's rounding: 6.5 -> 6, 7.5 -> 8.
+        result = _score_result(6.5, 7.4, 7.5, 8.6, 9.0)
+        out = _coerce_speaking_criteria_to_int(result)
+        assert out["fluency_coherence"]["band"] == 6
+        assert out["lexical_resource"]["band"] == 7
+        assert out["grammatical_range"]["band"] == 8
+        assert out["pronunciation"]["band"] == 9
+
+    def test_integers_unchanged(self):
+        result = _score_result(7, 6.0, 8, 5, 6.5)
+        out = _coerce_speaking_criteria_to_int(result)
+        assert out["fluency_coherence"]["band"] == 7
+        assert out["lexical_resource"]["band"] == 6
+        assert out["grammatical_range"]["band"] == 8
+        assert out["pronunciation"]["band"] == 5
+
+    def test_clamps_out_of_range(self):
+        result = _score_result(9.7, -1.2, 10, 0, 5.0)
+        out = _coerce_speaking_criteria_to_int(result)
+        assert out["fluency_coherence"]["band"] == 9
+        assert out["lexical_resource"]["band"] == 0
+        assert out["grammatical_range"]["band"] == 9
+        assert out["pronunciation"]["band"] == 0
+
+    def test_non_numeric_band_skipped(self):
+        result = {
+            "fluency_coherence": {"band": "n/a", "feedback": "bad"},
+            "lexical_resource": {"band": 6.5, "feedback": "ok"},
+            "grammatical_range": {"band": 7, "feedback": "ok"},
+            "pronunciation": {"band": 7, "feedback": "ok"},
+            "overall_band": 7.0,
+        }
+        out = _coerce_speaking_criteria_to_int(result)
+        assert out["fluency_coherence"]["band"] == "n/a"
+        assert out["lexical_resource"]["band"] == 6
+
+
 class TestEvaluateSpeakingDialogOverall:
     @pytest.mark.asyncio
     @patch("app.services.llm._call_gemini", new_callable=AsyncMock)
@@ -55,3 +101,43 @@ class TestEvaluateSpeakingDialogOverall:
 
         assert result["overall_band"] == 6.5
         assert result["transcript"] == "I live in a small city near the mountains."
+
+    @pytest.mark.asyncio
+    @patch("app.services.llm._call_gemini", new_callable=AsyncMock)
+    async def test_evaluate_speaking_dialog_coerces_half_band_criteria(self, mock_gemini):
+        # 6.5, 6.5, 7.0, 7.0 → coerce to 6, 6, 7, 7 → overall 6.5
+        mock_gemini.return_value = _score_result(6.5, 6.5, 7.0, 7.0, 8.0)
+
+        result = await evaluate_speaking_dialog(
+            [
+                {"role": "examiner", "text": "What do you do?"},
+                {"role": "candidate", "text": "I work as a teacher in a local school."},
+            ],
+        )
+
+        assert result["fluency_coherence"]["band"] == 6
+        assert result["lexical_resource"]["band"] == 6
+        assert result["grammatical_range"]["band"] == 7
+        assert result["pronunciation"]["band"] == 7
+        assert result["overall_band"] == 6.5
+
+
+class TestEvaluateSpeaking:
+    @pytest.mark.asyncio
+    @patch("app.services.llm._call_gemini", new_callable=AsyncMock)
+    async def test_evaluate_speaking_coerces_and_recomputes(self, mock_gemini):
+        # Gemini returns half-bands and a lying overall; backend must fix both.
+        mock_gemini.return_value = _score_result(6.5, 7.4, 7.0, 6.0, 9.0)
+
+        result = await evaluate_speaking(
+            "I enjoy reading books in my free time.",
+            questions=["What do you do in your free time?"],
+        )
+
+        # banker's: 6.5 -> 6; 7.4 -> 7; 7.0 -> 7; 6.0 -> 6 → avg 6.5
+        assert result["fluency_coherence"]["band"] == 6
+        assert result["lexical_resource"]["band"] == 7
+        assert result["grammatical_range"]["band"] == 7
+        assert result["pronunciation"]["band"] == 6
+        assert result["overall_band"] == 6.5
+        assert result["transcript"] == "I enjoy reading books in my free time."

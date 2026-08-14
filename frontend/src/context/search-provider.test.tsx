@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, type RenderResult } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SearchProvider } from '@/context/search-provider'
 
 const COMMAND_MENU_PLACEHOLDER = 'Type a command or search...'
@@ -22,10 +23,42 @@ vi.mock('@/context/theme-provider', () => ({
   useTheme: () => ({ setTheme: mocks.setTheme }),
 }))
 
+vi.mock('@/stores/auth-store', () => ({
+  useAuthStore: (selector: (s: unknown) => unknown) =>
+    selector({
+      auth: {
+        user: { role: 'admin', name: 'Admin', login: 'admin' },
+      },
+    }),
+}))
+
+vi.mock('@/lib/api/tests', () => ({
+  fetchTests: () => Promise.resolve([]),
+}))
+
+vi.mock('@/lib/api/attempts', () => ({
+  fetchResults: () => Promise.resolve([]),
+}))
+
+vi.mock('@/lib/api/students', () => ({
+  fetchStudents: () => Promise.resolve([]),
+}))
+
 type ShortcutModifier = 'Control' | 'Meta'
 
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+}
+
 async function renderWithSearchProvider() {
-  return await render(<SearchProvider>{null}</SearchProvider>)
+  const qc = createTestQueryClient()
+  return await render(
+    <QueryClientProvider client={qc}>
+      <SearchProvider>{null}</SearchProvider>
+    </QueryClientProvider>
+  )
 }
 
 /**
@@ -109,9 +142,9 @@ describe('SearchProvider and CommandMenu', () => {
 
     await openCommandPalette(screen)
 
-    await userEvent.click(screen.getByText('Tasks'))
+    await userEvent.click(screen.getByText('Tests'))
 
-    expect(mocks.navigate).toHaveBeenCalledWith({ to: '/tasks' })
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: '/tests' })
     await expect
       .element(screen.getByPlaceholder(COMMAND_MENU_PLACEHOLDER))
       .not.toBeInTheDocument()
@@ -125,7 +158,7 @@ describe('SearchProvider and CommandMenu', () => {
 
     await userEvent.click(getByRole('option', { name: 'Settings Account' }))
 
-    expect(mocks.navigate).toHaveBeenCalledWith({ to: '/settings/account' })
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: '/settings' })
     await expect
       .element(getByPlaceholder(COMMAND_MENU_PLACEHOLDER))
       .not.toBeInTheDocument()

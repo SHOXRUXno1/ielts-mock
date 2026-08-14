@@ -85,3 +85,44 @@
     height: 0;
   }
 }
+
+/* Passage / questions text highlighter (CSS Custom Highlight API) */
+::highlight(passage-yellow),
+::highlight(questions-yellow) {
+  background-color: rgba(254, 240, 138, 0.75);
+}
+::highlight(passage-green),
+::highlight(questions-green) {
+  background-color: rgba(187, 247, 208, 0.75);
+}
+::highlight(passage-blue),
+::highlight(questions-blue) {
+  background-color: rgba(191, 219, 254, 0.75);
+}
+::highlight(passage-pink),
+::highlight(questions-pink) {
+  background-color: rgba(251, 207, 232, 0.75);
+}
+
+@keyframes eval-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+
+@keyframes question-anchor-flash {
+  0% {
+    box-shadow: 0 0 0 2px rgb(37 99 246 / 0.9), 0 0 0 6px rgb(37 99 246 / 0.28);
+  }
+  100% {
+    box-shadow: 0 0 0 2px rgb(37 99 246 / 0), 0 0 0 11px rgb(37 99 246 / 0);
+  }
+}
+
+.question-anchor-flash {
+  border-radius: 9999px;
+  animation: question-anchor-flash 0.7s ease-out 2;
+}

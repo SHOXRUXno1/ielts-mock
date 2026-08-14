@@ -31,5 +31,9 @@ frontend/.vite/
 .DS_Store
 Thumbs.db
 
+# Vitest browser test artifacts
+.vitest-attachments/
+**/__screenshots__/
+
 # Cursor plans (large, not source code)
 .cursor/

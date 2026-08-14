@@ -1,55 +1,101 @@
-import { useState } from 'react'
-import { Loader2, Plus, Trash2 } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { Loader2, Mic, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   createQuestion,
   deleteQuestion,
   updateQuestion,
 } from '@/lib/api/questions'
+import { createSection } from '@/lib/api/sections'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import type { Question, Section } from '../data/schema'
-import { MigrationBanner } from './migration-banner'
+import type { Question, Section, SectionSettings } from '../data/schema'
+import { SectionDurationField } from './section-duration-field'
+import { EmptyState } from './ui/empty-state'
+import { StatusChip } from './ui/status-chip'
+import { StepShell } from './ui/step-shell'
 
 type Props = {
   testId: string
   sections: Section[]
+  sectionSettings: SectionSettings[]
   questionsMap: Record<string, Question[]>
   onRefresh: () => void
 }
 
-export function StepSpeaking({ testId, sections, questionsMap, onRefresh }: Props) {
+export function StepSpeaking({
+  testId,
+  sections,
+  sectionSettings,
+  questionsMap,
+  onRefresh,
+}: Props) {
   const speakingSections = sections
     .filter((s) => s.type === 'speaking')
     .sort((a, b) => a.order - b.order)
 
   const [activeTab, setActiveTab] = useState(speakingSections[0]?.id ?? '')
-
-  const needsMigration = speakingSections.length !== 3
+  const [addingPart, setAddingPart] = useState(false)
 
   const partLabels = ['Part 1 — Introduction', 'Part 2 — Cue Card', 'Part 3 — Discussion']
 
-  return (
-    <div className='space-y-4'>
-      {needsMigration && (
-        <MigrationBanner
-          testId={testId}
-          message={
-            speakingSections.length < 3
-              ? `This test has ${speakingSections.length} speaking part(s). IELTS standard requires exactly 3.`
-              : `This test has ${speakingSections.length} speaking parts. IELTS standard requires exactly 3.`
-          }
-          onRefresh={onRefresh}
-        />
+  const handleAddPart = useCallback(async () => {
+    setAddingPart(true)
+    try {
+      const section = await createSection(testId, { type: 'speaking' })
+      onRefresh()
+      setActiveTab(section.id)
+      toast.success('Speaking part added')
+    } catch (err) {
+      const detail =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail ?? 'Failed to add speaking part'
+      toast.error(detail)
+    } finally {
+      setAddingPart(false)
+    }
+  }, [testId, onRefresh])
+
+  const addButton = speakingSections.length < 3 ? (
+    <Button size='sm' variant='outline' onClick={handleAddPart} disabled={addingPart}>
+      {addingPart ? (
+        <Loader2 className='mr-1 size-3.5 animate-spin' />
+      ) : (
+        <Plus className='mr-1 size-3.5' />
       )}
+      Add Part
+    </Button>
+  ) : undefined
+
+  return (
+    <StepShell
+      title='Speaking'
+      description='IELTS Speaking has 3 parts. Content is managed by the AI Examiner — add prompts as guidance.'
+      counter={<StatusChip current={speakingSections.length} target={3} />}
+      action={addButton}
+    >
+      <SectionDurationField
+        testId={testId}
+        sectionType='speaking'
+        settings={sectionSettings}
+        onSaved={onRefresh}
+      />
 
       {speakingSections.length === 0 ? (
-        <div className='py-8 text-center text-sm text-slate-500'>
-          No speaking sections found. Click "Migrate to IELTS standard" above to create them.
-        </div>
+        <EmptyState
+          icon={Mic}
+          headline='No speaking parts yet'
+          description='Add the first speaking part to start adding prompts.'
+          action={
+            <Button size='sm' onClick={handleAddPart} disabled={addingPart}>
+              {addingPart ? <Loader2 className='mr-1 size-3.5 animate-spin' /> : <Plus className='mr-1 size-3.5' />}
+              Add Part
+            </Button>
+          }
+        />
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -90,26 +136,17 @@ export function StepSpeaking({ testId, sections, questionsMap, onRefresh }: Prop
           })}
         </Tabs>
       )}
-    </div>
+    </StepShell>
   )
 }
 
-// ── Helpers to read canonical or legacy content ───────────────────────────────
-
-/** Extract prompts array from a Part 1/3 question (canonical or legacy). */
 function getPromptList(questions: Question[]): string[] {
   if (questions.length === 0) return []
   const first = questions[0]
   const c = first.content
-
-  // Canonical: { part, questions: [str] }
   if (Array.isArray(c.questions)) return c.questions as string[]
-
-  // Legacy: multiple questions each with { prompt }
   return questions.map((q) => String(q.content.prompt ?? '')).filter(Boolean)
 }
-
-// ── Part 1 & Part 3: manages a single question with { part, questions: [] } ──
 
 function QuestionListEditor({
   section,
@@ -135,17 +172,14 @@ function QuestionListEditor({
     setSaving(true)
     try {
       const content = { part: partNumber, questions: updatedPrompts }
-
       if (canonicalQuestion) {
         await updateQuestion(section.id, canonicalQuestion.id, { content })
       } else {
-        // Create new canonical question (and old legacy ones remain for backward compat — migration will clean them up)
         await createQuestion(section.id, {
           order: 1,
           question_type: 'speaking_part',
           content,
         })
-        // Delete legacy questions now that we have a canonical one
         for (const lq of legacyQuestions) {
           await deleteQuestion(section.id, lq.id)
         }
@@ -182,8 +216,8 @@ function QuestionListEditor({
 
   return (
     <div className='space-y-4'>
-      <h3 className='font-medium text-slate-900'>{label}</h3>
-      <p className='text-xs text-slate-500'>
+      <h3 className='font-medium text-foreground'>{label}</h3>
+      <p className='text-xs text-muted-foreground'>
         Add speaking prompts for this part. Each prompt is one question the examiner will ask.
       </p>
 
@@ -238,8 +272,8 @@ function PromptRow({
   const [draft, setDraft] = useState(value)
 
   return (
-    <div className='flex items-start gap-2 rounded-md border border-slate-200 p-3'>
-      <span className='mt-0.5 text-xs font-medium text-slate-400'>{index + 1}.</span>
+    <div className='flex items-start gap-2 rounded-md border border-border p-3'>
+      <span className='mt-0.5 text-xs font-medium text-muted-foreground'>{index + 1}.</span>
       {editing ? (
         <div className='flex flex-1 items-center gap-2'>
           <Input
@@ -262,7 +296,7 @@ function PromptRow({
       ) : (
         <div className='flex flex-1 items-center justify-between gap-2'>
           <span
-            className='flex-1 cursor-pointer text-sm text-slate-800 hover:text-slate-600'
+            className='flex-1 cursor-pointer text-sm text-foreground hover:text-muted-foreground'
             onClick={() => setEditing(true)}
           >
             {value}
@@ -287,13 +321,9 @@ function PromptRow({
   )
 }
 
-// ── Part 2: Cue card ──────────────────────────────────────────────────────────
-
 function readCueCard(questions: Question[]) {
   if (questions.length === 0) return { topic: '', bullets: '', followUp: '' }
   const c = questions[0].content
-
-  // Canonical: { part: 2, cue_card: { topic, bullets, follow_up } }
   if (c.cue_card && typeof c.cue_card === 'object') {
     const cc = c.cue_card as Record<string, unknown>
     return {
@@ -302,8 +332,6 @@ function readCueCard(questions: Question[]) {
       followUp: String(cc.follow_up ?? ''),
     }
   }
-
-  // Legacy: { topic, bullets }
   return {
     topic: String(c.topic ?? ''),
     bullets: Array.isArray(c.bullets) ? (c.bullets as string[]).join('\n') : '',
@@ -344,7 +372,6 @@ function CueCardEditor({
           follow_up: followUp.trim() || undefined,
         },
       }
-
       if (existingQuestion) {
         await updateQuestion(section.id, existingQuestion.id, { content })
       } else {
@@ -365,12 +392,12 @@ function CueCardEditor({
 
   return (
     <div className='space-y-4'>
-      <h3 className='font-medium text-slate-900'>{label}</h3>
-      <p className='text-xs text-slate-500'>
+      <h3 className='font-medium text-foreground'>{label}</h3>
+      <p className='text-xs text-muted-foreground'>
         Enter the cue card topic and the bullet points the candidate should address.
       </p>
 
-      <div className='space-y-3 rounded-md border border-slate-200 p-4'>
+      <div className='space-y-3 rounded-md border border-border p-4'>
         <div className='space-y-1.5'>
           <Label className='text-sm font-medium'>Topic</Label>
           <Input
@@ -382,7 +409,7 @@ function CueCardEditor({
 
         <div className='space-y-1.5'>
           <Label className='text-sm font-medium'>
-            Bullet points <span className='font-normal text-slate-400'>(one per line)</span>
+            Bullet points <span className='font-normal text-muted-foreground'>(one per line)</span>
           </Label>
           <Textarea
             rows={5}
@@ -394,7 +421,7 @@ function CueCardEditor({
 
         <div className='space-y-1.5'>
           <Label className='text-sm font-medium'>
-            Follow-up question <span className='font-normal text-slate-400'>(optional)</span>
+            Follow-up question <span className='font-normal text-muted-foreground'>(optional)</span>
           </Label>
           <Input
             value={followUp}

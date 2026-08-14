@@ -23,6 +23,7 @@ class ParsedQuestion:
     # writing-only fields
     task_number: int | None = None
     min_words: int | None = None
+    essay_type: str | None = None
     # listening-only
     part: int | None = None
     # grouping
@@ -33,7 +34,7 @@ class ParsedQuestion:
 class ParsedSection:
     sheet_name: str
     section_kind: str        # "reading", "writing", "listening"
-    passage: str | None      # reading passage or listening audioscript
+    passage: str | None      # reading passage; for listening sheets A2 is temporarily here then stored as audioscript
     audio_filename: str | None
     questions: list[ParsedQuestion] = field(default_factory=list)
     # listening part number (1-4)
@@ -368,13 +369,41 @@ def _parse_reading_sheet(ws, sheet_name: str) -> ParsedSection:
     )
 
 
+_ESSAY_TYPE_ALIASES: dict[str, str] = {
+    "opinion": "opinion",
+    "op": "opinion",
+    "discussion": "discussion",
+    "disc": "discussion",
+    "problem_solution": "problem_solution",
+    "ps": "problem_solution",
+    "prob": "problem_solution",
+    "advantages_disadvantages": "advantages_disadvantages",
+    "ad": "advantages_disadvantages",
+    "advdis": "advantages_disadvantages",
+    "double_question": "double_question",
+    "dq": "double_question",
+    "double": "double_question",
+}
+
+
+def _normalize_essay_type(raw: object) -> str | None | object:
+    """Return canonical essay_type, None if empty, or the sentinel InvalidEssayType if unknown."""
+    s = _str(raw).strip().lower().replace(" ", "_").replace("-", "_")
+    if not s:
+        return None
+    mapped = _ESSAY_TYPE_ALIASES.get(s)
+    if mapped is None:
+        return ("__invalid__", _str(raw))
+    return mapped
+
+
 def _parse_writing_sheet(ws, sheet_name: str) -> ParsedSection:
     questions: list[ParsedQuestion] = []
     for row in ws.iter_rows(min_row=2, values_only=True):
         if not row or all(v is None for v in row):
             continue
-        order_raw, task_num_raw, type_raw, prompt_raw, inst_raw, min_words_raw = (
-            (row[i] if i < len(row) else None) for i in range(6)
+        order_raw, task_num_raw, type_raw, prompt_raw, inst_raw, min_words_raw, essay_type_raw = (
+            (row[i] if i < len(row) else None) for i in range(7)
         )
         if prompt_raw is None:
             continue
@@ -382,16 +411,24 @@ def _parse_writing_sheet(ws, sheet_name: str) -> ParsedSection:
         qtype = _normalize_type(_str(type_raw))
         if qtype not in _ALLOWED_WRITING_TYPES:
             qtype = "essay"
+        et = _normalize_essay_type(essay_type_raw)
+        essay_type: str | None = None
+        invalid_essay: str | None = None
+        if isinstance(et, tuple):
+            invalid_essay = et[1]
+        else:
+            essay_type = et
         questions.append(
             ParsedQuestion(
                 order=order,
                 question_type=qtype,
                 question=_str(prompt_raw),
                 options=[],
-                answer="",
+                answer=invalid_essay or "",
                 instruction=_str(inst_raw) or None,
                 task_number=_int_or_none(task_num_raw),
                 min_words=_int_or_none(min_words_raw),
+                essay_type=essay_type,
             )
         )
     return ParsedSection(
@@ -568,6 +605,22 @@ def build_preview(parsed: ParsedTest) -> PreviewResult:
         for d in sorted(dup_orders):
             warnings.append(f"{sec.sheet_name}: duplicate order {d}.")
 
+        # Per-group order should be 1..N (position within group). Absolute
+        # section-wide orders are auto-renumbered on import, but warn so
+        # authors can fix the spreadsheet.
+        by_group: dict[int | None, list[int]] = {}
+        for q in sec.questions:
+            by_group.setdefault(q.group, []).append(q.order)
+        for gnum, g_orders in by_group.items():
+            if gnum is None:
+                continue
+            expected = list(range(1, len(g_orders) + 1))
+            if sorted(g_orders) != expected:
+                warnings.append(
+                    f"{sec.sheet_name} group {gnum}: orders {sorted(g_orders)} "
+                    f"are not 1..{len(g_orders)}; will auto-renumber on import."
+                )
+
         # --- section-level validation ---
         if sec.section_kind == "reading":
             if not sec.passage:
@@ -608,6 +661,16 @@ def build_preview(parsed: ParsedTest) -> PreviewResult:
                 if expected_task == 2 and q.question_type not in ("essay",):
                     warnings.append(
                         f"{sec.sheet_name} q{q.order}: Task 2 type should be 'essay'; got '{q.question_type}'. Will save as 'essay'."
+                    )
+                # essay_type only valid for Task 2
+                if q.answer:  # invalid essay_type raw value stashed in answer during parse
+                    errors.append(
+                        f"{sec.sheet_name} q{q.order}: invalid essay_type '{q.answer}'."
+                    )
+                elif q.essay_type is not None and expected_task == 1:
+                    errors.append(
+                        f"{sec.sheet_name} q{q.order}: essay_type is only allowed for Task 2, "
+                        f"got '{q.essay_type}' on Task 1."
                     )
 
             summaries.append(

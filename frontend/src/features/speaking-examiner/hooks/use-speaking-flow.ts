@@ -13,6 +13,7 @@ import {
   type ExaminerScore,
 } from '@/lib/api/speaking-examiner'
 import { submitSpeakingScore } from '@/lib/api/attempts'
+import { isLiveSpeakingPhase } from '../lib/is-live-phase'
 import type { Phase } from '../types/phase'
 
 export type AudioDoneContext = {
@@ -78,6 +79,7 @@ export function useSpeakingFlow({
             await submitSpeakingScore(attemptId, {
               speaking_band: result.overall_band,
               score_json: result as unknown as Record<string, unknown>,
+              session_id: liveSessionIdRef.current,
             })
             toast.success('Speaking score saved to your test attempt.')
           } catch {
@@ -107,8 +109,9 @@ export function useSpeakingFlow({
   )
 
   const onSimliLoadingComplete = useCallback(() => {
+    if (isLiveSpeakingPhase(phaseRef.current)) return
     if (phaseRef.current === 'loading') setPhase('idle')
-  }, [setPhase])
+  }, [setPhase, phaseRef])
 
   const onStartSession = useCallback(() => {
     setPhase('thinking')
@@ -180,8 +183,10 @@ export function useSpeakingFlow({
   }, [setPhase])
 
   const beginLoading = useCallback(() => {
+    // Autostart / live turns must not be kicked back into the Simli loader.
+    if (isLiveSpeakingPhase(phaseRef.current)) return
     setPhase('loading')
-  }, [setPhase])
+  }, [setPhase, phaseRef])
 
   return {
     phase,

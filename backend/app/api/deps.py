@@ -13,6 +13,16 @@ from app.core.security import decode_access_token
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
+def _parse_session_id(payload: dict) -> uuid.UUID | None:
+    raw = payload.get("sid")
+    if not raw:
+        return None
+    try:
+        return uuid.UUID(str(raw))
+    except (ValueError, AttributeError, TypeError):
+        return None
+
+
 @dataclass
 class Actor:
     """Decoded JWT principal — works for both .env admin and DB users."""
@@ -22,6 +32,7 @@ class Actor:
     login: str
     user_id: uuid.UUID | None = field(default=None)
     db_user: object = field(default=None, repr=False)  # User model or None
+    session_id: uuid.UUID | None = field(default=None)
 
 
 async def get_current_actor(
@@ -44,10 +55,31 @@ async def get_current_actor(
     role = payload.get("role", "student")
     sub = payload.get("sub", "")
     login = payload.get("login", sub)
+    session_id = _parse_session_id(payload)
+
+    async def _require_live_admin_session() -> None:
+        if session_id is None:
+            return
+        from app.models.admin_session import AdminSession
+
+        sess = await db.get(AdminSession, session_id)
+        if sess is None or sess.ended_at is not None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Admin session revoked or expired",
+            )
 
     # .env admin: sub is the login string (not a UUID)
     if role == "admin" and sub == settings.admin_login:
-        return Actor(role="admin", sub=sub, login=sub, user_id=None, db_user=None)
+        await _require_live_admin_session()
+        return Actor(
+            role="admin",
+            sub=sub,
+            login=sub,
+            user_id=None,
+            db_user=None,
+            session_id=session_id,
+        )
 
     # DB user: sub is a UUID
     try:
@@ -68,12 +100,16 @@ async def get_current_actor(
             detail="User not found or inactive",
         )
 
+    if db_user.role == "admin":
+        await _require_live_admin_session()
+
     return Actor(
         role=db_user.role,
         sub=sub,
         login=db_user.login,
         user_id=user_id,
         db_user=db_user,
+        session_id=session_id,
     )
 
 

@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.section import SectionRead
+from app.schemas.section_settings import SectionSettingsRead
 
 
 class TestCreate(BaseModel):
@@ -43,3 +44,4 @@ class TestRead(BaseModel):
 
 class TestDetailRead(TestRead):
     sections: list[SectionRead]
+    section_settings: list[SectionSettingsRead] = []

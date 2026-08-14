@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Eraser, Loader2 } from 'lucide-react'
+import { Eraser, Info, Loader2, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable'
+import { useIsDesktop } from '@/hooks/use-mobile'
 import { mediaUrl } from '@/lib/api/attempts'
 import {
   requestWritingFeedback,
@@ -9,6 +15,7 @@ import {
 } from '@/lib/api/feedback'
 import { cn } from '@/lib/utils'
 import type { Question } from '../../data/schema'
+import { getDefaultInstruction, getDefaultQuestion } from '../../data/writing-presets'
 import { WritingFeedbackView } from './writing-feedback-view'
 
 // ── Types & helpers ──────────────────────────────────────────────────────────
@@ -20,8 +27,9 @@ type Props = {
   attemptId: string | null
   /** Controlled from parent. 0 = Task 1, 1 = Task 2. */
   activeTaskIdx?: number
-  /** Callback to switch task — when provided, Task 1/2 tabs are shown inside content */
-  onSwitchTask?: (idx: number) => void
+  previewMode?: boolean
+  /** Instant AI feedback. Off in a full mock so the exam stays closed-book. */
+  showInstantFeedback?: boolean
 }
 
 function countWords(text: string): number {
@@ -51,12 +59,14 @@ function TaskEditor({
   text,
   onTextChange,
   attemptId,
+  showInstantFeedback,
 }: {
   question: Question
   index: number
   text: string
   onTextChange: (val: string) => void
   attemptId: string | null
+  showInstantFeedback: boolean
 }) {
   // task_number from DB column takes priority; fallback to index for old data
   const taskNumber = question.task_number ?? (index === 0 ? 1 : 2)
@@ -66,7 +76,19 @@ function TaskEditor({
     question.min_words ??
     (question.content.min_words as number | undefined) ??
     (isTask1 ? 150 : 250)
-  const prompt = (question.content.prompt as string) ?? ''
+  const taskStatement =
+    (question.content.task_statement as string) ?? ''
+  const taskDescription =
+    (question.content.task_description as string) ??
+    (question.content.prompt as string) ?? ''
+  const taskQuestion =
+    (question.content.task_question as string) ??
+    (!isTask1 ? (getDefaultQuestion(question.essay_type) ?? '') : '')
+  const taskInstruction =
+    (question.content.task_instruction as string) ??
+    (question.content.instruction as string) ??
+    getDefaultInstruction(taskNumber, question.essay_type)
+  const displayStatement = !isTask1 && taskStatement ? taskStatement : taskDescription
   // image_url from DB column takes priority; fallback to content JSON
   const imageUrl =
     question.image_url ??
@@ -85,6 +107,7 @@ function TaskEditor({
   const [feedback, setFeedback] = useState<WritingFeedbackResult | null>(null)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const isDesktop = useIsDesktop()
 
   const markSaved = () => {
     setLastSavedAt(new Date())
@@ -164,10 +187,15 @@ function TaskEditor({
   const feedbackMutation = useMutation({
     mutationFn: () =>
       requestWritingFeedback({
-        task: (index + 1) as 1 | 2,
-        prompt,
+        task: taskNumber as 1 | 2,
+        task_description: taskDescription,
+        task_statement: taskStatement || undefined,
+        task_question: taskQuestion || undefined,
+        task_instruction: taskInstruction,
         text,
         image_url: hasImage ? imageUrl : null,
+        essay_type: question.essay_type,
+        attempt_id: attemptId,
       }),
     onSuccess: (data) => {
       setFeedback(data)
@@ -181,65 +209,55 @@ function TaskEditor({
     },
   })
 
-  // Word count color: gray (0 words), red (below min), green (at or above min)
   const wordCountColor =
     wordCount === 0
-      ? 'text-slate-500'
+      ? 'text-slate-400'
       : wordCount < minWords
-        ? 'text-[#dc2626]'
-        : 'text-[#22c55e]'
+        ? 'text-amber-500'
+        : 'text-emerald-500'
 
   // ── Left pane ──────────────────────────────────────────────────────────────
   const leftPane = (
     <div className='h-full overflow-y-auto px-10 py-8'>
-      <h2
-        style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.5px' }}
-        className='text-slate-900'
-      >
-        TASK {index + 1}
+      <h2 className='text-lg font-medium text-slate-900'>
+        Task {taskNumber}
       </h2>
-      <p className='mt-1 text-sm text-slate-500'>
+      <p className='mt-1 text-[13px] text-slate-400'>
         You should spend about {isTask1 ? '20' : '40'} minutes on this task.
       </p>
 
       {!isTask1 && (
-        <p className='mt-6 text-sm text-slate-600'>
+        <p className='mt-6 text-[13px] text-slate-500'>
           Write about the following topic:
         </p>
       )}
 
       <div
-        className={cn(isTask1 ? 'mt-6' : 'mt-2')}
-        style={{
-          background: '#fefce8',
-          borderLeft: '4px solid #111827',
-          borderTop: 'none',
-          borderRight: 'none',
-          borderBottom: 'none',
-          borderRadius: 0,
-          padding: '32px 36px',
-          fontFamily: "'Georgia', serif",
-          fontSize: '19px',
-          lineHeight: '2.0',
-          fontWeight: 700,
-          fontStyle: 'italic',
-          color: '#000000',
-          letterSpacing: '0.02em',
-        }}
-      >
-        {prompt.split('\n').map((line, i) =>
-          line.trim() ? (
-            <p key={i} style={{ marginTop: i > 0 ? '14px' : 0 }}>
-              {line}
-            </p>
-          ) : null,
+        className={cn(
+          'rounded-lg border-l-[3px] border-blue-500 bg-slate-50 p-6',
+          isTask1 ? 'mt-6' : 'mt-2',
         )}
+      >
+        <div
+          className='text-[15px] leading-[1.9] text-slate-800'
+          style={!isTask1 ? { fontFamily: 'Georgia, serif' } : undefined}
+        >
+          {displayStatement.split('\n').map((line, i) =>
+            line.trim() ? (
+              <p key={i} className={i > 0 ? 'mt-3' : undefined}>
+                {line}
+              </p>
+            ) : null,
+          )}
+          {!isTask1 && taskQuestion && (
+            <p className='mt-4 font-medium'>{taskQuestion}</p>
+          )}
+        </div>
       </div>
 
-      {!isTask1 && (
-        <p className='mt-3 text-sm italic text-slate-500'>
-          Give reasons for your answer and include any relevant examples from
-          your own knowledge or experience.
+      {taskInstruction && (
+        <p className='mt-3 text-sm italic leading-relaxed text-slate-500'>
+          {taskInstruction}
         </p>
       )}
 
@@ -247,16 +265,21 @@ function TaskEditor({
         <img
           src={mediaUrl(imageUrl)}
           alt='Task 1 chart'
-          className='mt-5 max-w-full rounded'
+          className='mt-5 max-w-full rounded-lg'
         />
       )}
+
+      <div className='mt-6 flex items-center gap-1.5 text-[13px] text-slate-400'>
+        <Info className='size-3.5 shrink-0' />
+        <span>Write at least {minWords} words</span>
+      </div>
     </div>
   )
 
   // ── Right pane ─────────────────────────────────────────────────────────────
   const rightPane = (
-    <div className='flex h-full flex-col border-l border-slate-200'>
-      {/* Autosave row */}
+    <div className='flex h-full min-h-0 flex-col overflow-y-auto border-t border-slate-200 lg:border-t-0'>
+      {/* Autosave + clear row */}
       <div className='flex shrink-0 items-center justify-between px-5 py-3'>
         {lastSavedAt ? (
           <span
@@ -275,7 +298,7 @@ function TaskEditor({
             <button
               type='button'
               onClick={handleClear}
-              className='font-medium text-[#dc2626] hover:underline'
+              className='font-medium text-red-600 hover:underline'
             >
               Yes
             </button>
@@ -312,67 +335,96 @@ function TaskEditor({
         data-gramm='false'
         data-gramm_editor='false'
         data-enable-grammarly='false'
-        className='mx-5 min-h-[60vh] flex-1 resize-y rounded-lg border border-slate-300 bg-white px-5 py-5 text-base text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-[3px] focus:ring-blue-500/10'
+        className='mx-5 h-[min(42vh,360px)] min-h-[200px] shrink-0 resize-y rounded-lg border-[0.5px] border-slate-200 bg-white px-5 py-5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-[3px] focus:ring-blue-500/10'
         style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}
       />
 
-      {/* Word count + Submit for Feedback */}
+      {/* Word count + Get Feedback */}
       <div className='flex shrink-0 items-center justify-between px-5 py-4'>
-        <span className={cn('text-sm font-medium', wordCountColor)}>
-          Words: {wordCount}
+        <span className={cn('text-[13px] font-medium tabular-nums', wordCountColor)}>
+          {wordCount} / {minWords}+ words
         </span>
-        <button
-          type='button'
-          disabled={feedbackMutation.isPending || wordCount === 0}
-          onClick={() => feedbackMutation.mutate()}
-          className='flex items-center gap-2 rounded-md bg-[#dc2626] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#b91c1c] disabled:cursor-not-allowed disabled:opacity-50'
-        >
-          {feedbackMutation.isPending && (
-            <Loader2 className='size-4 animate-spin' />
-          )}
-          Submit for Feedback
-        </button>
-      </div>
-
-      {/* Writing Feedback collapsible */}
-      <div className='mx-5 mb-5 overflow-hidden rounded-lg border border-slate-200'>
-        <button
-          type='button'
-          onClick={() => setFeedbackOpen((v) => !v)}
-          className='flex w-full items-center justify-between bg-slate-50 px-4 py-3 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100'
-        >
-          <span>Writing Feedback</span>
-          <div className='flex items-center gap-2'>
-            {feedback && (
-              <span className='rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700'>
-                Band {feedback.overall_band.toFixed(1)}
-              </span>
-            )}
-            <span className='text-xs text-slate-400'>
-              {feedbackOpen ? '▲' : '▼'}
-            </span>
-          </div>
-        </button>
-        {feedbackOpen && (
-          <div className='max-h-[50vh] overflow-y-auto p-4'>
-            {feedback ? (
-              <WritingFeedbackView feedback={feedback} essayText={text} />
+        {showInstantFeedback && (
+          <button
+            type='button'
+            disabled={feedbackMutation.isPending || wordCount < 10}
+            onClick={() => feedbackMutation.mutate()}
+            className='flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500'
+          >
+            {feedbackMutation.isPending ? (
+              <Loader2 className='size-4 animate-spin' />
             ) : (
-              <p className='text-sm text-slate-400'>
-                Submit your answer above to receive AI feedback.
-              </p>
+              <Sparkles className='size-4' />
             )}
-          </div>
+            Get Feedback
+          </button>
         )}
       </div>
+
+      {showInstantFeedback && (
+        <div className='mx-5 mb-5 shrink-0 overflow-hidden rounded-lg border border-blue-200'>
+          <button
+            type='button'
+            onClick={() => setFeedbackOpen((v) => !v)}
+            className='flex w-full items-center justify-between bg-blue-50 px-4 py-3 text-left text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100'
+          >
+            <div className='flex items-center gap-2'>
+              <Sparkles className='size-4' />
+              <span>AI Feedback</span>
+            </div>
+            <div className='flex items-center gap-2'>
+              {feedback && (
+                <span className='rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700'>
+                  Band {feedback.overall_band.toFixed(1)}
+                </span>
+              )}
+              <span className='text-xs text-blue-400'>
+                {feedbackOpen ? '▲' : '▼'}
+              </span>
+            </div>
+          </button>
+          {feedbackOpen && (
+            <div className='p-4'>
+              {feedback ? (
+                <WritingFeedbackView
+                  feedback={feedback}
+                  essayText={text}
+                  taskNumber={taskNumber === 2 ? 2 : 1}
+                />
+              ) : (
+                <div className='flex items-center gap-2 rounded-lg bg-slate-50 p-4'>
+                  <Sparkles className='size-4 shrink-0 text-slate-400' />
+                  <p className='text-[13px] text-slate-400'>
+                    Submit your essay to receive AI feedback
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 
+  if (!isDesktop) {
+    return (
+      <div className='flex h-full min-h-0 flex-col'>
+        <div className='min-h-0 flex-1 overflow-y-auto'>{leftPane}</div>
+        <div className='min-h-0 flex-1 overflow-y-auto'>{rightPane}</div>
+      </div>
+    )
+  }
+
   return (
-    <div className='flex h-full'>
-      <div className='w-1/2'>{leftPane}</div>
-      <div className='w-1/2'>{rightPane}</div>
-    </div>
+    <ResizablePanelGroup orientation='horizontal' className='h-full min-h-0'>
+      <ResizablePanel defaultSize='50%' minSize='25%'>
+        <div className='h-full min-h-0 overflow-y-auto overflow-x-hidden'>{leftPane}</div>
+      </ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel defaultSize='50%' minSize='25%'>
+        <div className='h-full min-h-0 overflow-y-auto overflow-x-hidden'>{rightPane}</div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   )
 }
 
@@ -384,59 +436,50 @@ export function WritingSection({
   onAnswer,
   attemptId,
   activeTaskIdx = 0,
-  onSwitchTask,
+  previewMode: _previewMode = false,
+  showInstantFeedback = true,
 }: Props) {
   const sortedQuestions = useMemo(
-    () => [...questions].sort((a, b) => a.order - b.order).slice(0, 2),
+    () => [...questions].sort((a, b) => a.order - b.order),
     [questions],
   )
 
-  if (sortedQuestions.length === 0) {
+  // Full mock / whole-section practice: 2 tasks. Single-part practice: 1 task.
+  if (sortedQuestions.length === 0 || sortedQuestions.length > 2) {
     return (
       <div className='flex h-full items-center justify-center'>
-        <p className='text-sm text-slate-400'>
-          No writing tasks added to this section yet.
+        <p className='text-sm text-slate-500'>
+          Writing section misconfigured
         </p>
       </div>
     )
   }
 
+  // Practice may pass only Task 2 while URL still says part=2 → clamp to 0.
+  const safeTaskIdx = Math.min(
+    Math.max(0, activeTaskIdx),
+    sortedQuestions.length - 1,
+  )
+
   return (
-    <div className='flex h-full flex-col bg-white'>
-      {/* Task switcher tabs — only shown when multiple tasks exist */}
-      {sortedQuestions.length > 1 && onSwitchTask && (
-        <div className='flex shrink-0 gap-2 border-b border-slate-200 bg-white px-8 py-3'>
-          {sortedQuestions.map((_, i) => (
-            <button
-              key={i}
-              type='button'
-              onClick={() => onSwitchTask(i)}
-              className={cn(
-                'min-w-[52px] rounded-md border px-4 py-1.5 text-sm font-medium transition-colors',
-                i === activeTaskIdx
-                  ? 'border-slate-900 bg-slate-900 text-white'
-                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
-              )}
-            >
-              Task {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
-      {sortedQuestions.map((q, i) => {
-        if (i !== activeTaskIdx) return null
-        const text = (answers[q.id]?.answer as string) ?? ''
-        return (
-          <TaskEditor
-            key={q.id}
-            question={q}
-            index={i}
-            text={text}
-            onTextChange={(val) => onAnswer(q.id, { answer: val })}
-            attemptId={attemptId}
-          />
-        )
-      })}
+    <div className='flex h-full min-h-0 flex-col bg-white'>
+      <div className='min-h-0 flex-1'>
+        {sortedQuestions.map((q, i) => {
+          if (i !== safeTaskIdx) return null
+          const text = (answers[q.id]?.answer as string) ?? ''
+          return (
+            <TaskEditor
+              key={q.id}
+              question={q}
+              index={i}
+              text={text}
+              onTextChange={(val) => onAnswer(q.id, { answer: val })}
+              attemptId={attemptId}
+              showInstantFeedback={showInstantFeedback}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }

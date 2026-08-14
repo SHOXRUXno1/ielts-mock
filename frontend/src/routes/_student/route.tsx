@@ -8,8 +8,7 @@ export const Route = createFileRoute('/_student')({
     if (!accessToken) {
       throw redirect({ to: '/login' })
     }
-    // If user data is loaded and it's an admin, send to admin panel
-    if (user && user.role === 'admin') {
+    if (user?.role === 'admin') {
       throw redirect({ to: '/' })
     }
   },

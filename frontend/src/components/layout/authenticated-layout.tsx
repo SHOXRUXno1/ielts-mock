@@ -23,14 +23,18 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
     if (!auth.user) {
       authMe()
         .then((me) => {
-          auth.setUser({
+          const user = {
             id: me.id ?? null,
             login: me.login,
             name: me.full_name ?? me.name ?? me.login,
             full_name: me.full_name ?? undefined,
             role: me.role as 'admin' | 'student',
             exp: 0,
-          })
+          }
+          auth.setUser(user)
+          if (user.role === 'student') {
+            void navigate({ to: '/student/dashboard' })
+          }
         })
         .catch(() => {
           auth.reset()

@@ -26,14 +26,14 @@ export function PartIndicator({ currentPart, questionNumber, compact = false }: 
                 isActive
                   ? compact
                     ? 'bg-white/90 text-black'
-                    : 'bg-primary text-primary-foreground'
+                    : 'bg-blue-600 text-white'
                   : num < currentPart
                     ? compact
                       ? 'bg-white/25 text-white'
-                      : 'bg-primary/20 text-primary'
+                      : 'bg-blue-100 text-blue-600'
                     : compact
                       ? 'bg-white/10 text-white/60'
-                      : 'bg-muted text-muted-foreground',
+                      : 'bg-slate-100 text-slate-400',
               )}
             >
               {label}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useSearch as useRouteSearch } from '@tanstack/react-router'
 import { Search as SearchIcon } from 'lucide-react'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
@@ -18,7 +19,8 @@ import { StudentsTable } from './components/students-table'
 type ActiveFilter = 'all' | 'active'
 
 function StudentsPageContent() {
-  const [search, setSearch] = useState('')
+  const { q } = useRouteSearch({ strict: false }) as { q?: string }
+  const [search, setSearch] = useState(q ?? '')
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all')
 
   const { data: students = [], isLoading } = useQuery({

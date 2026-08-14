@@ -35,3 +35,8 @@ export async function authMe(): Promise<MeResponse> {
   const { data } = await api.get<MeResponse>('/auth/me')
   return data
 }
+
+export async function logout(): Promise<void> {
+  await api.post('/auth/logout')
+}
+

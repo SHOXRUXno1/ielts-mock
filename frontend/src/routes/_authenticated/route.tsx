@@ -11,8 +11,7 @@ export const Route = createFileRoute('/_authenticated')({
         search: { redirect: location.href },
       })
     }
-    // Students who land on admin routes get redirected to their portal
-    if (user && user.role === 'student') {
+    if (user?.role === 'student') {
       throw redirect({ to: '/student/dashboard' })
     }
   },

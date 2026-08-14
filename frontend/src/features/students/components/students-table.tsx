@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import {
   type SortingState,
   type VisibilityState,
@@ -27,6 +28,7 @@ type StudentsTableProps = {
 }
 
 export function StudentsTable({ data, isLoading }: StudentsTableProps) {
+  const navigate = useNavigate()
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [sorting, setSorting] = useState<SortingState>([])
   const columns = useStudentsColumns()
@@ -52,8 +54,14 @@ export function StudentsTable({ data, isLoading }: StudentsTableProps) {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} colSpan={header.colSpan} className={cn('bg-background', header.column.columnDef.meta?.className)}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                  <TableHead
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    className={cn('bg-background', header.column.columnDef.meta?.className)}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -62,15 +70,35 @@ export function StudentsTable({ data, isLoading }: StudentsTableProps) {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className='h-24 text-center text-muted-foreground'>
+                <TableCell
+                  colSpan={columns.length}
+                  className='h-24 text-center text-muted-foreground'
+                >
                   Loading…
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className='cursor-pointer transition-colors hover:bg-muted/50'
+                  onClick={() =>
+                    void navigate({
+                      to: '/students/$studentId',
+                      params: { studentId: row.original.id },
+                    })
+                  }
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className={cn('bg-background', cell.column.columnDef.meta?.className)}>
+                    <TableCell
+                      key={cell.id}
+                      className={cn('bg-background', cell.column.columnDef.meta?.className)}
+                      onClick={
+                        cell.column.id === 'actions'
+                          ? (e) => e.stopPropagation()
+                          : undefined
+                      }
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -78,7 +106,10 @@ export function StudentsTable({ data, isLoading }: StudentsTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className='h-24 text-center text-muted-foreground'>
+                <TableCell
+                  colSpan={columns.length}
+                  className='h-24 text-center text-muted-foreground'
+                >
                   No students yet. Add your first student.
                 </TableCell>
               </TableRow>

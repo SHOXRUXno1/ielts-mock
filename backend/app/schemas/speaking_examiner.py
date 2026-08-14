@@ -44,6 +44,7 @@ class ExaminerTurnResponse(BaseModel):
     part: int
     is_end: bool
     question_number: int
+    questions_total: int | None = None
     cue_card: str | None = None
     session_id: str | None = None
     tts_error: str | None = None

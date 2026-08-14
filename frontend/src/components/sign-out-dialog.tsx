@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { ConfirmDialog } from '@/components/confirm-dialog'
+import { logout } from '@/lib/api/auth'
 
 interface SignOutDialogProps {
   open: boolean
@@ -13,14 +14,20 @@ export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
   const { auth } = useAuthStore()
 
   const handleSignOut = () => {
-    auth.reset()
-    // Preserve current location for redirect after sign-in
-    const currentPath = location.href
-    navigate({
-      to: '/login',
-      search: { redirect: currentPath },
-      replace: true,
-    })
+    void (async () => {
+      try {
+        await logout()
+      } catch {
+        // Network failure must not block local sign-out
+      }
+      auth.reset()
+      const currentPath = location.href
+      navigate({
+        to: '/login',
+        search: { redirect: currentPath },
+        replace: true,
+      })
+    })()
   }
 
   return (

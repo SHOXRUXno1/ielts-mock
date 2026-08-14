@@ -17,6 +17,7 @@ from app.models.question import Question, QuestionType
 from app.models.question_group import QuestionGroup
 from app.models.section import Section, SectionType
 from app.models.test import Test
+from app.services import section_settings as settings_service
 from app.services.storage import save_audio
 from app.services.test_import_service import (
     ParsedSection,
@@ -145,6 +146,7 @@ def _build_questions_for_section(sec: ParsedSection) -> list[dict]:
             task_num = q.task_number if q.task_number in (1, 2) else (q.order if q.order in (1, 2) else None)
             row["_task_number"] = task_num
             row["_min_words"] = 150 if task_num == 1 else (250 if task_num == 2 else q.min_words)
+            row["_essay_type"] = q.essay_type if task_num == 2 else None
             # Writing questions are always stored as essay
             row["question_type"] = QuestionType.ESSAY
         rows.append(row)
@@ -274,6 +276,7 @@ async def confirm_import(
         )
         db.add(test)
         await db.flush()
+        db.add_all(settings_service.build_default_rows(test.id))
 
         sections_created = 0
         questions_created = 0
@@ -294,32 +297,32 @@ async def confirm_import(
                 continue
 
             # (section processing continues below)
+            audioscript = None
             if sec.section_kind == "reading":
                 reading_idx += 1
                 order = 9 + reading_idx      # 10, 11, 12 — band-order
-                duration = 20
                 stype = SectionType.READING
                 passage = sec.passage
 
             elif sec.section_kind == "writing":
                 order = 20                   # band-order
-                duration = 60
                 stype = SectionType.WRITING
                 passage = None
 
             else:  # listening
                 listening_idx += 1
                 order = listening_idx        # 1, 2, 3, 4 — band-order
-                duration = 40
                 stype = SectionType.LISTENING
-                passage = sec.passage        # audioscript goes in passage
+                passage = None
+                # A2 audioscript is parsed into ParsedSection.passage; store in audioscript.
+                audioscript = sec.passage
 
             section_obj = Section(
                 test_id=test.id,
                 type=stype,
                 order=order,
-                duration_minutes=duration,
                 passage=passage,
+                audioscript=audioscript,
                 audio_url=None,
             )
             db.add(section_obj)
@@ -345,16 +348,24 @@ async def confirm_import(
                 db.add(group_obj)
                 await db.flush()
 
-                for qd in group_rows:
-                    clean = {k: v for k, v in qd.items() if not k.startswith("_") and k != "group"}
+                for local_idx, qd in enumerate(group_rows, start=1):
+                    clean = {
+                        k: v
+                        for k, v in qd.items()
+                        if not k.startswith("_") and k != "group"
+                    }
+                    # Order is always group-local 1..N (ignore absolute Excel order).
+                    clean["order"] = local_idx
                     # Extract writing-task DB columns from private keys
                     task_number = qd.get("_task_number")
                     min_words = qd.get("_min_words")
+                    essay_type = qd.get("_essay_type")
                     q = Question(
                         section_id=section_obj.id,
                         question_group_id=group_obj.id,
                         task_number=task_number,
                         min_words=min_words,
+                        essay_type=essay_type,
                         **clean,
                     )
                     db.add(q)

@@ -1,17 +1,64 @@
-import { useRef, useState } from 'react'
-import { ImageIcon, Loader2, Trash2 } from 'lucide-react'
+import { useCallback, useRef, useState } from 'react'
+import { Eye, ImageIcon, Loader2, PenLine, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { uploadImage } from '@/lib/api/attempts'
+import { apiErrorMessage } from '@/lib/api/error'
 import { createQuestion, updateQuestion } from '@/lib/api/questions'
+import { createSection } from '@/lib/api/sections'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import type { Question, Section, Test } from '../data/schema'
+import type { Question, Section, SectionSettings, Test } from '../data/schema'
+import { getDefaultInstruction, getDefaultQuestion } from '../data/writing-presets'
+import { SectionDurationField } from './section-duration-field'
+import { EmptyState } from './ui/empty-state'
+
+const ESSAY_TYPE_OPTIONS = [
+  { value: '__none__', label: 'Not specified', hint: 'General essay evaluation criteria will be used.' },
+  {
+    value: 'opinion',
+    label: 'Opinion (Agree/Disagree)',
+    hint: 'Student must take a clear side (agree or disagree) and justify with reasons and examples.',
+  },
+  {
+    value: 'discussion',
+    label: 'Discussion (Both views + opinion)',
+    hint: 'Student must discuss both views fairly, then give their own opinion with reasoning.',
+  },
+  {
+    value: 'problem_solution',
+    label: 'Problem & Solution',
+    hint: 'Student must address both problems and practical solutions.',
+  },
+  {
+    value: 'advantages_disadvantages',
+    label: 'Advantages & Disadvantages',
+    hint: 'Student must present both advantages and disadvantages; may need to give a verdict.',
+  },
+  {
+    value: 'double_question',
+    label: 'Double Question',
+    hint: 'Student must directly answer both questions from the prompt with equal depth.',
+  },
+] as const
+
+const DEFAULT_CUSTOM_OPTIONS = [
+  { value: 'default', label: 'Default (IELTS standard)' },
+  { value: 'custom', label: 'Custom' },
+] as const
 
 type Props = {
   test: Test | null
   sections: Section[]
+  sectionSettings: SectionSettings[]
   questionsMap: Record<string, Question[]>
   onRefresh: () => void
 }
@@ -19,24 +66,101 @@ type Props = {
 type TaskDraft = {
   id?: string
   order: number
-  prompt: string
+  taskDescription: string
+  taskInstruction: string
+  useCustomInstruction: boolean
+  taskStatement: string
+  taskQuestion: string
+  useCustomQuestion: boolean
   imageUrl: string | null
+  essayType: string | null
 }
 
-export function StepWriting({ test, sections, questionsMap, onRefresh }: Props) {
+function loadDraft(q: Question | undefined, taskNum: number): TaskDraft {
+  const content = q?.content ?? {}
+  const desc =
+    (content.task_description as string | undefined) ??
+    (content.prompt as string | undefined) ??
+    ''
+  const instr = (content.task_instruction as string | undefined) ?? ''
+  const instrPreset = getDefaultInstruction(taskNum, q?.essay_type)
+  const isCustomInstr = !!instr && instr !== instrPreset
+
+  const statement = (content.task_statement as string | undefined) ?? ''
+  const question = (content.task_question as string | undefined) ?? ''
+  const questionPreset = getDefaultQuestion(q?.essay_type) ?? ''
+  const isCustomQuestion =
+    (content.use_custom_question as boolean | undefined) ??
+    (!!question && !!questionPreset && question !== questionPreset)
+
+  return {
+    id: q?.id,
+    order: taskNum,
+    taskDescription: taskNum === 2 && statement ? statement : desc,
+    taskInstruction: instr || instrPreset,
+    useCustomInstruction: isCustomInstr,
+    taskStatement: statement || (taskNum === 2 ? desc : ''),
+    taskQuestion: question || questionPreset,
+    useCustomQuestion: isCustomQuestion,
+    imageUrl:
+      taskNum === 1
+        ? (q?.image_url ?? (q?.content.image_url as string | undefined) ?? null)
+        : null,
+    essayType: q?.essay_type ?? null,
+  }
+}
+
+export function StepWriting({
+  test,
+  sections,
+  sectionSettings,
+  questionsMap,
+  onRefresh,
+}: Props) {
   const writingSection = sections.find((s) => s.type === 'writing')
+  const [adding, setAdding] = useState(false)
+
+  const handleAddWriting = useCallback(async () => {
+    if (!test?.id) {
+      toast.error('Test not loaded yet')
+      return
+    }
+    setAdding(true)
+    try {
+      await createSection(test.id, { type: 'writing' })
+      onRefresh()
+      toast.success('Writing section added')
+    } catch (err) {
+      toast.error(apiErrorMessage(err, 'Failed to add writing section'))
+    } finally {
+      setAdding(false)
+    }
+  }, [test?.id, onRefresh])
 
   if (!writingSection) {
     return (
-      <p className='py-12 text-center text-sm text-slate-400'>
-        No writing section found. The test may not have been created yet.
-      </p>
+      <EmptyState
+        icon={PenLine}
+        headline='No writing section yet'
+        description='Add a Writing section to configure Task 1 and Task 2.'
+        action={
+          <Button onClick={() => void handleAddWriting()} disabled={adding || !test?.id}>
+            {adding ? (
+              <Loader2 className='mr-1.5 size-4 animate-spin' />
+            ) : (
+              <Plus className='mr-1.5 size-4' />
+            )}
+            Add Writing Section
+          </Button>
+        }
+      />
     )
   }
 
   return (
     <WritingEditor
       section={writingSection}
+      sectionSettings={sectionSettings}
       questionsMap={questionsMap}
       testType={test?.type ?? 'academic'}
       onRefresh={onRefresh}
@@ -46,11 +170,13 @@ export function StepWriting({ test, sections, questionsMap, onRefresh }: Props) 
 
 function WritingEditor({
   section,
+  sectionSettings,
   questionsMap,
   testType,
   onRefresh,
 }: {
   section: Section
+  sectionSettings: SectionSettings[]
   questionsMap: Record<string, Question[]>
   testType: string
   onRefresh: () => void
@@ -62,25 +188,10 @@ function WritingEditor({
     existing.find((q) => q.task_number === num) ??
     existing.find((q) => q.order === num)
 
-  const [tasks, setTasks] = useState<TaskDraft[]>(() => {
-    const t1 = findTask(1)
-    const t2 = findTask(2)
-    return [
-      {
-        id: t1?.id,
-        order: 1,
-        prompt: String(t1?.content.prompt ?? ''),
-        // Read image_url from new column first, fallback to content JSON
-        imageUrl: t1?.image_url ?? (t1?.content.image_url as string | undefined) ?? null,
-      },
-      {
-        id: t2?.id,
-        order: 2,
-        prompt: String(t2?.content.prompt ?? ''),
-        imageUrl: null, // Task 2 never has an image
-      },
-    ]
-  })
+  const [tasks, setTasks] = useState<TaskDraft[]>(() => [
+    loadDraft(findTask(1), 1),
+    loadDraft(findTask(2), 2),
+  ])
 
   const [saving, setSaving] = useState([false, false])
 
@@ -89,15 +200,33 @@ function WritingEditor({
     const taskNumber = taskIdx + 1
     setSaving((prev) => prev.map((v, i) => (i === taskIdx ? true : v)))
     try {
+      const content: Record<string, unknown> = {}
+
+      if (taskNumber === 2) {
+        const fullDesc = draft.taskQuestion
+          ? `${draft.taskStatement}\n\n${draft.taskQuestion}`
+          : draft.taskStatement
+        content.task_statement = draft.taskStatement
+        content.task_question = draft.taskQuestion
+        content.use_custom_question = draft.useCustomQuestion
+        content.task_description = fullDesc
+        content.task_instruction = draft.taskInstruction
+        content.prompt = `${fullDesc}\n\n${draft.taskInstruction}`.trim()
+      } else {
+        content.task_description = draft.taskDescription
+        content.task_instruction = draft.taskInstruction
+        content.prompt = `${draft.taskDescription}\n\n${draft.taskInstruction}`.trim()
+      }
+
       const payload = {
         order: draft.order,
         question_type: 'essay' as const,
-        content: { prompt: draft.prompt },
+        content,
         answer_key: null,
         task_number: taskNumber,
-        // min_words is enforced by backend; send expected value for new creates
         min_words: taskNumber === 1 ? 150 : 250,
         image_url: taskIdx === 0 ? (draft.imageUrl ?? null) : null,
+        essay_type: taskNumber === 2 ? (draft.essayType ?? null) : null,
       }
 
       let saved: Question
@@ -114,7 +243,7 @@ function WritingEditor({
                 ...t,
                 id: saved.id,
                 imageUrl: saved.image_url ?? null,
-                prompt: String(saved.content.prompt ?? t.prompt),
+                essayType: saved.essay_type ?? null,
               }
             : t
         )
@@ -134,18 +263,25 @@ function WritingEditor({
 
   return (
     <Tabs defaultValue='task1'>
-      <TabsList>
+      <SectionDurationField
+        testId={section.test_id}
+        sectionType='writing'
+        settings={sectionSettings}
+        onSaved={onRefresh}
+      />
+
+      <TabsList className='mt-4'>
         <TabsTrigger value='task1'>Task 1</TabsTrigger>
         <TabsTrigger value='task2'>Task 2</TabsTrigger>
       </TabsList>
 
-      {/* Task 1 */}
       <TabsContent value='task1' className='space-y-5'>
         <TaskEditor
           taskIdx={0}
           label={task1Label}
           minWords={150}
           showImageUpload={isAcademic}
+          showEssayType={false}
           draft={tasks[0]}
           saving={saving[0]}
           onChange={(updated) =>
@@ -155,13 +291,13 @@ function WritingEditor({
         />
       </TabsContent>
 
-      {/* Task 2 */}
       <TabsContent value='task2' className='space-y-5'>
         <TaskEditor
           taskIdx={1}
           label={task2Label}
           minWords={250}
           showImageUpload={false}
+          showEssayType
           draft={tasks[1]}
           saving={saving[1]}
           onChange={(updated) =>
@@ -179,6 +315,7 @@ function TaskEditor({
   label,
   minWords,
   showImageUpload,
+  showEssayType,
   draft,
   saving,
   onChange,
@@ -188,6 +325,7 @@ function TaskEditor({
   label: string
   minWords: number
   showImageUpload: boolean
+  showEssayType: boolean
   draft: TaskDraft
   saving: boolean
   onChange: (d: TaskDraft) => void
@@ -195,10 +333,17 @@ function TaskEditor({
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const taskNumber = taskIdx + 1
+  const isTask2 = taskNumber === 2
 
   const displayImageUrl = draft.imageUrl?.startsWith('/')
     ? `${import.meta.env.VITE_API_URL}${draft.imageUrl}`
     : draft.imageUrl
+
+  const essaySelectValue = draft.essayType ?? '__none__'
+  const essayHint =
+    ESSAY_TYPE_OPTIONS.find((o) => o.value === essaySelectValue)?.hint ??
+    ESSAY_TYPE_OPTIONS[0].hint
 
   const handleImageUpload = async (file: File) => {
     setUploading(true)
@@ -213,38 +358,163 @@ function TaskEditor({
     }
   }
 
-  const promptPlaceholder =
-    taskIdx === 0
-      ? 'The chart below shows the percentage of households in...'
-      : 'Some people think that governments should spend more money on public transport...'
+  const handleEssayTypeChange = (v: string) => {
+    const newType = v === '__none__' ? null : v
+    const updated = { ...draft, essayType: newType }
+    if (!draft.useCustomInstruction) {
+      updated.taskInstruction = getDefaultInstruction(taskNumber, newType)
+    }
+    if (!draft.useCustomQuestion) {
+      updated.taskQuestion = getDefaultQuestion(newType) ?? ''
+    }
+    onChange(updated)
+  }
+
+  const handleInstructionModeChange = (mode: string) => {
+    if (mode === 'default') {
+      onChange({
+        ...draft,
+        useCustomInstruction: false,
+        taskInstruction: getDefaultInstruction(taskNumber, draft.essayType),
+      })
+    } else {
+      onChange({ ...draft, useCustomInstruction: true })
+    }
+  }
+
+  const handleQuestionModeChange = (mode: string) => {
+    if (mode === 'default') {
+      onChange({
+        ...draft,
+        useCustomQuestion: false,
+        taskQuestion: getDefaultQuestion(draft.essayType) ?? '',
+      })
+    } else {
+      onChange({ ...draft, useCustomQuestion: true })
+    }
+  }
+
+  const descPlaceholder = isTask2
+    ? 'The most important aim of science should be to improve people\'s lives.'
+    : 'The chart below shows the percentage of households in...'
 
   return (
     <div className='space-y-4'>
-      {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h3 className='font-medium text-slate-900'>{label}</h3>
-          <p className='mt-0.5 text-xs text-slate-500'>
+          <h3 className='font-medium text-foreground'>{label}</h3>
+          <p className='mt-0.5 text-xs text-muted-foreground'>
             Minimum {minWords} words &nbsp;·&nbsp; Required task
           </p>
         </div>
-        <span className='rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600'>
+        <span className='rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground'>
           min {minWords} words
         </span>
       </div>
 
-      {/* Prompt */}
+      {showEssayType && (
+        <div className='space-y-1.5'>
+          <Label className='text-sm font-medium'>Essay Type</Label>
+          <Select value={essaySelectValue} onValueChange={handleEssayTypeChange}>
+            <SelectTrigger className='w-full'>
+              <SelectValue placeholder='Not specified' />
+            </SelectTrigger>
+            <SelectContent>
+              {ESSAY_TYPE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className='text-xs text-muted-foreground'>{essayHint}</p>
+        </div>
+      )}
+
       <div className='space-y-1.5'>
-        <Label className='text-sm font-medium'>Prompt</Label>
+        <Label className='text-sm font-medium'>
+          {isTask2 ? 'Statement' : 'Task Description'}
+        </Label>
         <Textarea
-          rows={5}
-          value={draft.prompt}
-          onChange={(e) => onChange({ ...draft, prompt: e.target.value })}
-          placeholder={promptPlaceholder}
+          rows={isTask2 ? 3 : 5}
+          value={isTask2 ? draft.taskStatement : draft.taskDescription}
+          onChange={(e) =>
+            isTask2
+              ? onChange({ ...draft, taskStatement: e.target.value })
+              : onChange({ ...draft, taskDescription: e.target.value })
+          }
+          placeholder={descPlaceholder}
         />
       </div>
 
-      {/* Chart/Diagram upload — Academic Task 1 only */}
+      {isTask2 && (
+        <div className='space-y-1.5'>
+          <div className='flex items-center justify-between'>
+            <Label className='text-sm font-medium'>Question</Label>
+            <Select
+              value={draft.useCustomQuestion ? 'custom' : 'default'}
+              onValueChange={handleQuestionModeChange}
+            >
+              <SelectTrigger className='h-7 w-[200px] text-xs'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DEFAULT_CUSTOM_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className='text-xs'>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Textarea
+            rows={2}
+            value={draft.taskQuestion}
+            onChange={(e) => onChange({ ...draft, taskQuestion: e.target.value })}
+            readOnly={!draft.useCustomQuestion}
+            className={!draft.useCustomQuestion ? 'cursor-default bg-muted text-muted-foreground' : ''}
+          />
+          {!draft.useCustomQuestion && !draft.essayType && (
+            <p className='text-xs text-muted-foreground'>
+              Select an essay type above to auto-fill the question.
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className='space-y-1.5'>
+        <div className='flex items-center justify-between'>
+          <Label className='text-sm font-medium'>Instruction</Label>
+          <Select
+            value={draft.useCustomInstruction ? 'custom' : 'default'}
+            onValueChange={handleInstructionModeChange}
+          >
+            <SelectTrigger className='h-7 w-[200px] text-xs'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {DEFAULT_CUSTOM_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className='text-xs'>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Textarea
+          rows={2}
+          value={draft.taskInstruction}
+          onChange={(e) => onChange({ ...draft, taskInstruction: e.target.value })}
+          readOnly={!draft.useCustomInstruction}
+            className={!draft.useCustomInstruction ? 'cursor-default bg-muted text-muted-foreground' : ''}
+          />
+          {!draft.useCustomInstruction && (
+            <p className='text-xs text-muted-foreground'>
+            Standard IELTS instruction. Switch to Custom to edit.
+          </p>
+        )}
+      </div>
+
       {showImageUpload && (
         <div className='space-y-1.5'>
           <Label className='text-sm font-medium'>Chart / Diagram</Label>
@@ -259,13 +529,22 @@ function TaskEditor({
             }}
           />
           {draft.imageUrl ? (
-            <div className='group relative w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-50'>
+            <div className='group relative w-full overflow-hidden rounded-lg border border-border bg-muted'>
               <img
                 src={displayImageUrl ?? ''}
                 alt='Chart / Diagram'
                 className='mx-auto block max-h-64 w-full object-contain p-2'
               />
               <div className='absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100'>
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='secondary'
+                  onClick={() => window.open(displayImageUrl ?? '', '_blank')}
+                >
+                  <Eye className='mr-1 size-3.5' />
+                  View
+                </Button>
                 <Button
                   type='button'
                   size='sm'
@@ -294,7 +573,7 @@ function TaskEditor({
               type='button'
               disabled={uploading}
               onClick={() => fileRef.current?.click()}
-              className='flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-slate-400 transition-colors hover:border-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-60'
+              className='flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/50 px-4 py-8 text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60'
             >
               {uploading
                 ? <Loader2 className='size-6 animate-spin' />
@@ -308,7 +587,6 @@ function TaskEditor({
         </div>
       )}
 
-      {/* Save */}
       <div className='flex justify-end'>
         <Button onClick={onSave} disabled={saving}>
           {saving && <Loader2 className='mr-1 size-4 animate-spin' />}

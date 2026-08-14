@@ -1,5 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { MoreHorizontal, RefreshCw, Pencil, Trash2, UserCheck } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import {
+  Eye,
+  MoreHorizontal,
+  Pencil,
+  RefreshCw,
+  Trash2,
+  UserCheck,
+} from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { updateStudent } from '@/lib/api/students'
@@ -31,9 +39,13 @@ function RowActions({ student }: { student: Student }) {
     mutationFn: () => updateStudent(student.id, { is_active: true }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['students'] })
-      toast.success('Student activated.')
+      void qc.invalidateQueries({ queryKey: ['student-results'] })
+      toast.success('Student activated', {
+        description: 'They can sign in again.',
+      })
     },
-    onError: (err) => toast.error(apiErrorMessage(err, 'Failed to activate student.')),
+    onError: (err) =>
+      toast.error(apiErrorMessage(err, 'Could not activate this student.')),
   })
 
   return (
@@ -46,6 +58,14 @@ function RowActions({ student }: { student: Student }) {
       <DropdownMenuContent align='end'>
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link
+            to='/students/$studentId'
+            params={{ studentId: student.id }}
+          >
+            <Eye size={14} className='mr-2' /> View profile
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => act('edit')}>
           <Pencil size={14} className='mr-2' /> Edit
         </DropdownMenuItem>
@@ -55,7 +75,7 @@ function RowActions({ student }: { student: Student }) {
         <DropdownMenuSeparator />
         {student.is_active ? (
           <DropdownMenuItem onClick={() => act('delete')} className='text-destructive'>
-            <Trash2 size={14} className='mr-2' /> Delete
+            <Trash2 size={14} className='mr-2' /> Deactivate
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem
@@ -78,7 +98,9 @@ export function useStudentsColumns(): ColumnDef<Student>[] {
       header: 'Name',
       cell: ({ row }) => (
         <div>
-          <div className='font-medium'>{row.original.full_name}</div>
+          <div className='font-medium text-foreground group-hover:text-primary'>
+            {row.original.full_name}
+          </div>
           <div className='text-xs text-muted-foreground'>{row.original.phone ?? ''}</div>
         </div>
       ),

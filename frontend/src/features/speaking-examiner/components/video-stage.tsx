@@ -4,7 +4,10 @@ import { cn } from '@/lib/utils'
 import { useFullscreen } from '../hooks/use-fullscreen'
 import type { Phase } from '../types/phase'
 import { transcriptHistorySignature } from '../lib/transcript-history'
-import { ExaminerLoadingOverlay } from './examiner-loading-screen'
+import {
+  ExaminerLoadingOverlay,
+  type ExaminerLoadingStage,
+} from './examiner-loading-screen'
 import { LiveTranscriptPanel } from './live-transcript-panel'
 import { PartIndicator } from './part-indicator'
 import { SimliAvatar } from './simli-avatar'
@@ -21,6 +24,8 @@ type VideoStageProps = {
   isRecording: boolean
   showStatus: boolean
   isLoading: boolean
+  loadingStage?: ExaminerLoadingStage
+  loadingAction?: ReactNode
   simliReady?: boolean
   simliMountKey: number
   simliToken: string
@@ -49,6 +54,8 @@ export function VideoStageInner({
   isRecording,
   showStatus,
   isLoading,
+  loadingStage,
+  loadingAction,
   simliReady = false,
   simliMountKey,
   simliToken,
@@ -75,19 +82,18 @@ export function VideoStageInner({
   const hasControls = Boolean(controlsOverlay)
 
   return (
-    <div className={cn('flex w-full flex-col', expanded ? 'h-full min-h-0' : 'gap-2')}>
+    <div className={cn('flex w-full flex-col', expanded ? 'min-h-0 w-full' : 'gap-2')}>
       <div
         ref={frameRef}
         className={cn(
-          'relative w-full overflow-hidden border transition-opacity duration-500',
+          'relative w-full overflow-hidden border [contain:layout_style]',
           showSimli ? 'bg-black' : 'bg-muted',
-          isLoading ? 'opacity-95' : 'opacity-100',
           isFullscreen
             ? 'h-full w-full rounded-none'
             : cn(
                 'rounded-xl',
                 expanded
-                  ? 'h-full min-h-[min(58vh,680px)]'
+                  ? 'aspect-video max-h-[min(78vh,720px)]'
                   : 'aspect-video max-h-[min(62vh,680px)]',
               ),
         )}
@@ -194,7 +200,11 @@ export function VideoStageInner({
 
         {isLoading && (
           <ExaminerLoadingOverlay
-            simliConnecting={showSimli && !simliReady}
+            stage={
+              loadingStage ??
+              (showSimli && !simliReady ? 'video' : 'examiner')
+            }
+            action={loadingAction}
           />
         )}
       </div>
@@ -211,6 +221,8 @@ function videoStagePropsEqual(prev: VideoStageProps, next: VideoStageProps): boo
     'isRecording',
     'showStatus',
     'isLoading',
+    'loadingStage',
+    'loadingAction',
     'simliReady',
     'simliMountKey',
     'simliToken',

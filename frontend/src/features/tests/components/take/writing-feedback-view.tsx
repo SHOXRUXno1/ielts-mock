@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react'
 import {
   Tooltip,
@@ -10,6 +10,14 @@ import { cn } from '@/lib/utils'
 import type { WritingError, WritingFeedbackResult } from '@/lib/api/feedback'
 
 // ── Error highlight colors ──────────────────────────────────────────────────
+
+const ERROR_TYPES = [
+  'grammar',
+  'lexical',
+  'spelling',
+  'cohesion',
+  'punctuation',
+] as const
 
 const ERROR_COLORS: Record<WritingError['type'], string> = {
   grammar:
@@ -32,14 +40,52 @@ const ERROR_BADGE: Record<WritingError['type'], string> = {
   punctuation: 'bg-violet-100 text-violet-700 border-violet-200',
 }
 
+const KNOWN_ERROR_TYPES = new Set<string>(ERROR_TYPES)
+
+/** Keep only highlightable, non-junk errors (max 12). */
+export function sanitizeWritingErrors(
+  errors: WritingError[],
+  essayText: string,
+): WritingError[] {
+  const seen = new Set<string>()
+  const out: WritingError[] = []
+
+  for (const err of errors) {
+    if (!err || typeof err.quote !== 'string') continue
+    const quote = err.quote
+    if (quote.length < 2) continue
+    if (!KNOWN_ERROR_TYPES.has(err.type)) continue
+    // When essay text is available, quote must appear verbatim
+    if (essayText && !essayText.includes(quote)) continue
+    if (seen.has(quote)) continue
+    seen.add(quote)
+    out.push({
+      quote,
+      type: err.type,
+      correction: typeof err.correction === 'string' ? err.correction : '',
+      explanation: typeof err.explanation === 'string' ? err.explanation : '',
+    })
+    if (out.length >= 12) break
+  }
+
+  return out
+}
+
 // ── Band descriptor tooltips ─────────────────────────────────────────────────
 
-const WRITING_CRITERIA = [
-  [
-    'task_achievement',
-    'Task Achievement',
-    'Band 9: Fully addresses all parts; fully developed position. Band 7: Clear position; relevant main ideas. Band 5: Only partially addresses task.',
-  ],
+const TASK1_FIRST_CRITERION = [
+  'task_achievement',
+  'Task Achievement',
+  'Band 9: Fully covers the requirements of the task; clear overview. Band 7: Covers requirements; key features highlighted. Band 5: Generally addresses the task but format may be inappropriate.',
+] as const
+
+const TASK2_FIRST_CRITERION = [
+  'task_achievement',
+  'Task Response',
+  'Band 9: Fully addresses all parts; fully developed position. Band 7: Clear position; relevant main ideas. Band 5: Only partially addresses task.',
+] as const
+
+const SHARED_CRITERIA = [
   [
     'coherence_cohesion',
     'Coherence & Cohesion',
@@ -57,7 +103,12 @@ const WRITING_CRITERIA = [
   ],
 ] as const
 
-// ── Highlighted essay ────────────────────────────────────────────────────────
+function getWritingCriteria(taskNumber: 1 | 2) {
+  const first = taskNumber === 2 ? TASK2_FIRST_CRITERION : TASK1_FIRST_CRITERION
+  return [first, ...SHARED_CRITERIA] as const
+}
+
+// ── Highlighted essay (click-to-inspect, no hover tooltips) ───────────────────
 
 function HighlightedEssay({
   text,
@@ -66,86 +117,140 @@ function HighlightedEssay({
   text: string
   errors: WritingError[]
 }) {
+  const [activeIdx, setActiveIdx] = useState<number | null>(null)
+
   if (!errors.length) {
     return (
-      <p className='whitespace-pre-wrap text-sm leading-relaxed'>{text}</p>
+      <p className='whitespace-pre-wrap text-sm leading-7 text-slate-800'>
+        {text}
+      </p>
     )
   }
 
   type Seg =
     | { kind: 'text'; content: string }
-    | { kind: 'error'; content: string; error: WritingError }
+    | { kind: 'error'; content: string; error: WritingError; errorIdx: number }
 
   const segments: Seg[] = []
   let remaining = text
-  let pool = [...errors]
+  let pool = errors.map((error, errorIdx) => ({ error, errorIdx }))
 
   while (remaining.length > 0) {
     let bestIdx = Infinity
-    let bestErr: WritingError | null = null
+    let best: { error: WritingError; errorIdx: number } | null = null
 
-    for (const err of pool) {
-      if (!err.quote) continue
-      const idx = remaining.indexOf(err.quote)
+    for (const item of pool) {
+      if (!item.error.quote) continue
+      const idx = remaining.indexOf(item.error.quote)
       if (idx !== -1 && idx < bestIdx) {
         bestIdx = idx
-        bestErr = err
+        best = item
       }
     }
 
-    if (!bestErr) {
+    if (!best) {
       segments.push({ kind: 'text', content: remaining })
       break
     }
     if (bestIdx > 0) {
       segments.push({ kind: 'text', content: remaining.slice(0, bestIdx) })
     }
-    segments.push({ kind: 'error', content: bestErr.quote, error: bestErr })
-    remaining = remaining.slice(bestIdx + bestErr.quote.length)
-    pool = pool.filter((e) => e !== bestErr)
+    segments.push({
+      kind: 'error',
+      content: best.error.quote,
+      error: best.error,
+      errorIdx: best.errorIdx,
+    })
+    remaining = remaining.slice(bestIdx + best.error.quote.length)
+    pool = pool.filter((e) => e.errorIdx !== best!.errorIdx)
   }
 
+  const activeError =
+    activeIdx != null ? (errors[activeIdx] ?? null) : null
+
   return (
-    <p className='whitespace-pre-wrap text-sm leading-relaxed'>
-      {segments.map((seg, i) => {
-        if (seg.kind === 'text') return <Fragment key={i}>{seg.content}</Fragment>
-        return (
-          <Tooltip key={i}>
-            <TooltipTrigger asChild>
-              <mark
-                className={cn(
-                  'cursor-help rounded px-0.5',
-                  ERROR_COLORS[seg.error.type] ?? '',
-                )}
-              >
-                {seg.content}
-              </mark>
-            </TooltipTrigger>
-            <TooltipContent className='max-w-xs'>
-              <p className='font-semibold capitalize'>{seg.error.type}</p>
-              <p className='text-xs'>
-                <span className='text-muted-foreground'>Fix: </span>
-                {seg.error.correction}
-              </p>
-              <p className='mt-0.5 text-xs text-muted-foreground'>
-                {seg.error.explanation}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        )
-      })}
-    </p>
+    <div className='space-y-3'>
+      <p className='overflow-x-hidden whitespace-pre-wrap text-sm leading-7 text-slate-800'>
+        {segments.map((seg, i) => {
+          if (seg.kind === 'text') {
+            return <Fragment key={i}>{seg.content}</Fragment>
+          }
+          const isActive = activeIdx === seg.errorIdx
+          return (
+            <mark
+              key={i}
+              role='button'
+              tabIndex={0}
+              onClick={() =>
+                setActiveIdx((prev) =>
+                  prev === seg.errorIdx ? null : seg.errorIdx,
+                )
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setActiveIdx((prev) =>
+                    prev === seg.errorIdx ? null : seg.errorIdx,
+                  )
+                }
+              }}
+              className={cn(
+                'cursor-pointer rounded px-0.5 outline-none ring-offset-1 focus-visible:ring-2 focus-visible:ring-blue-400',
+                ERROR_COLORS[seg.error.type] ?? '',
+                isActive && 'ring-2 ring-blue-500',
+              )}
+            >
+              {seg.content}
+            </mark>
+          )
+        })}
+      </p>
+
+      {activeError && (
+        <div className='rounded-md border border-slate-200 bg-white p-3 text-xs shadow-sm'>
+          <p className='mb-1 font-semibold capitalize text-slate-800'>
+            {activeError.type}
+          </p>
+          <p className='text-slate-600'>
+            <span className='text-slate-400 line-through'>
+              {activeError.quote}
+            </span>
+            <span className='mx-1.5 text-slate-400'>→</span>
+            <span className='font-medium text-emerald-700'>
+              {activeError.correction}
+            </span>
+          </p>
+          {activeError.explanation && (
+            <p className='mt-1.5 text-slate-500'>{activeError.explanation}</p>
+          )}
+          <button
+            type='button'
+            className='mt-2 text-blue-600 hover:underline'
+            onClick={() => setActiveIdx(null)}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
 // ── Criteria grid ─────────────────────────────────────────────────────────────
 
-function CriteriaGrid({ data }: { data: WritingFeedbackResult }) {
+function CriteriaGrid({
+  data,
+  taskNumber,
+}: {
+  data: WritingFeedbackResult
+  taskNumber: 1 | 2
+}) {
   const [expanded, setExpanded] = useState<string | null>(null)
+  const criteria = getWritingCriteria(taskNumber)
 
   return (
     <div className='grid grid-cols-2 gap-3'>
-      {WRITING_CRITERIA.map(([key, label, descriptor]) => {
+      {criteria.map(([key, label, descriptor]) => {
         const criterion = data[key as keyof WritingFeedbackResult] as
           | { band: number; feedback: string }
           | null
@@ -196,13 +301,20 @@ function CriteriaGrid({ data }: { data: WritingFeedbackResult }) {
 export function WritingFeedbackView({
   feedback,
   essayText,
+  taskNumber = 1,
 }: {
   feedback: WritingFeedbackResult
   essayText: string
+  taskNumber?: 1 | 2
 }) {
+  const errors = useMemo(
+    () => sanitizeWritingErrors(feedback.errors ?? [], essayText),
+    [feedback.errors, essayText],
+  )
+
   return (
     <TooltipProvider>
-      <div className='space-y-4'>
+      <div className='space-y-4 overflow-x-hidden'>
         {/* Overall band */}
         <div className='flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4'>
           <div className='text-center'>
@@ -211,7 +323,7 @@ export function WritingFeedbackView({
               {feedback.overall_band.toFixed(1)}
             </p>
           </div>
-          <div className='flex-1'>
+          <div className='min-w-0 flex-1'>
             {feedback.strengths.length > 0 && (
               <>
                 <p className='mb-1 text-xs font-semibold uppercase text-slate-500'>
@@ -242,7 +354,7 @@ export function WritingFeedbackView({
         )}
 
         {/* Criteria */}
-        <CriteriaGrid data={feedback} />
+        <CriteriaGrid data={feedback} taskNumber={taskNumber} />
 
         {/* Highlighted essay */}
         {essayText && (
@@ -250,39 +362,45 @@ export function WritingFeedbackView({
             <p className='mb-2 text-xs font-semibold uppercase text-slate-500'>
               Your Essay (annotated)
             </p>
-            <div className='max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4'>
-              <HighlightedEssay
-                text={essayText}
-                errors={[...feedback.errors]}
-              />
+            <p className='mb-2 text-[11px] text-slate-400'>
+              Click a highlighted phrase to see the correction.
+            </p>
+            <div className='max-h-64 overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4'>
+              <HighlightedEssay text={essayText} errors={errors} />
             </div>
           </div>
         )}
 
-        {/* Error list */}
-        {feedback.errors.length > 0 && (
+        {/* Error list — vertical cards for narrow column */}
+        {errors.length > 0 && (
           <div>
             <p className='mb-2 text-xs font-semibold uppercase text-slate-500'>
               Errors & Corrections
             </p>
             <div className='space-y-2'>
-              {feedback.errors.map((err, i) => (
+              {errors.map((err, i) => (
                 <div
                   key={i}
-                  className='flex flex-wrap items-start gap-2 rounded-lg border border-slate-200 bg-white p-3 text-xs'
+                  className='space-y-1.5 rounded-lg border border-slate-200 bg-white p-3 text-xs'
                 >
                   <span
                     className={cn(
-                      'rounded border px-1.5 py-0.5 font-medium capitalize',
+                      'inline-block rounded border px-1.5 py-0.5 font-medium capitalize',
                       ERROR_BADGE[err.type] ?? '',
                     )}
                   >
                     {err.type}
                   </span>
-                  <span className='text-slate-400 line-through'>{err.quote}</span>
-                  <span className='text-slate-400'>→</span>
-                  <span className='font-medium text-emerald-700'>{err.correction}</span>
-                  <span className='w-full text-slate-400'>{err.explanation}</span>
+                  <p className='break-words text-slate-700'>
+                    <span className='text-slate-400 line-through'>{err.quote}</span>
+                    <span className='mx-1.5 text-slate-400'>→</span>
+                    <span className='font-medium text-emerald-700'>
+                      {err.correction}
+                    </span>
+                  </p>
+                  {err.explanation && (
+                    <p className='text-slate-400'>{err.explanation}</p>
+                  )}
                 </div>
               ))}
             </div>

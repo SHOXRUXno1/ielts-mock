@@ -9,13 +9,14 @@ export type QuestionCreatePayload = {
   task_number?: number | null
   min_words?: number | null
   image_url?: string | null
+  essay_type?: string | null
 }
 
 export type QuestionUpdatePayload = Partial<QuestionCreatePayload>
 
 export async function fetchQuestions(sectionId: string): Promise<Question[]> {
   const { data } = await api.get<Question[]>(
-    `/admin/sections/${sectionId}/questions/`
+    `/sections/${sectionId}/questions`
   )
   return data
 }

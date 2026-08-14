@@ -56,7 +56,7 @@ export function StepInfo({ test, onFormReady }: Props) {
     <Form {...form}>
       <div className='space-y-5'>
         {isLegacyGeneral && (
-          <div className='flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800'>
+          <div className='flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning-foreground'>
             <AlertTriangle className='mt-0.5 size-4 shrink-0' />
             <span>
               This test is saved as <strong>General Training</strong>, which is temporarily
@@ -125,7 +125,7 @@ export function StepInfo({ test, onFormReady }: Props) {
                 <span className='inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10'>
                   Academic
                 </span>
-                <span className='text-xs text-slate-400'>
+                <span className='text-xs text-muted-foreground'>
                   General Training is temporarily unavailable.
                 </span>
               </div>

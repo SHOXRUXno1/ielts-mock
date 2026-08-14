@@ -1,33 +1,54 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import {
+  AlertTriangle,
   ArrowLeft,
   BookOpen,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
   Clock,
   ExternalLink,
   Headphones,
   LayoutGrid,
+  Loader2,
   Mic,
   Pencil,
   PenLine,
   Play,
   HelpCircle,
+  Upload,
 } from 'lucide-react'
-import { fetchTest } from '@/lib/api/tests'
+import { toast } from 'sonner'
+import { fetchQuestions } from '@/lib/api/questions'
+import { fetchAdminTest, publishTest } from '@/lib/api/tests'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { PracticePartsEditor } from './components/practice-parts-editor'
 import { QuestionList } from './components/question-list'
 import { SectionEditDialog } from './components/section-edit-dialog'
-import { type Section, type SectionType } from './data/schema'
+import {
+  durationByType,
+  estimatedTotalMinutes,
+  formatMinutes,
+  SPEAKING_TYPICAL_MINUTES,
+} from './data/duration-rules'
+import { type Question, type Section, type SectionSettings, type SectionType, type TestDetail as TestDetailType } from './data/schema'
 
 const route = getRouteApi('/_authenticated/tests/$testId')
 
@@ -40,13 +61,6 @@ function sectionLabel(type: SectionType, indexWithinType: number): string {
     case 'writing':   return `Task ${indexWithinType + 1}`
     case 'speaking':  return `Part ${indexWithinType + 1}`
   }
-}
-
-function formatDuration(minutes: number): string {
-  if (minutes < 60) return `${minutes} min`
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
-  return m ? `${h}h ${m}m` : `${h}h`
 }
 
 const TYPE_ORDER: SectionType[] = ['listening', 'reading', 'writing', 'speaking']
@@ -81,11 +95,83 @@ const TYPE_META: Record<
   },
 }
 
+type PublishCheck = {
+  errors: string[]
+  warnings: string[]
+}
+
+function computePublishChecks(
+  test: TestDetailType,
+  writingQs: Question[],
+): PublishCheck {
+  const errors: string[] = []
+  const warnings: string[] = []
+  const isAcademic = (test.type || '').toLowerCase() === 'academic'
+
+  const taskNumbers = new Set(
+    writingQs
+      .map((q) => q.task_number)
+      .filter((n): n is number => n === 1 || n === 2),
+  )
+  if (writingQs.length !== 2 || taskNumbers.size !== 2 || !taskNumbers.has(1) || !taskNumbers.has(2)) {
+    errors.push(
+      `Writing must have exactly 2 tasks with task_number 1 and 2 (found ${writingQs.length} question(s)).`,
+    )
+  }
+
+  const task1 = writingQs.find((q) => q.task_number === 1)
+  const task2 = writingQs.find((q) => q.task_number === 2)
+
+  if (isAcademic && task1 && !task1.image_url) {
+    errors.push('Academic Writing Task 1 requires a chart/diagram image.')
+  }
+
+  for (const q of writingQs) {
+    const prompt = String(q.content?.prompt ?? '').trim()
+    if (!prompt && q.task_number != null) {
+      errors.push(`Writing Task ${q.task_number} is missing a prompt.`)
+    }
+  }
+
+  if (task2 && !task2.essay_type) {
+    warnings.push('Task 2 essay type is not set.')
+  }
+
+  return { errors, warnings }
+}
+
+function extractPublishErrors(err: unknown): string[] {
+  const detail = (err as { response?: { data?: { detail?: unknown } } })?.response
+    ?.data?.detail
+  if (detail && typeof detail === 'object' && !Array.isArray(detail) && 'errors' in detail) {
+    const errors = (detail as { errors: unknown }).errors
+    if (Array.isArray(errors)) return errors.map(String)
+  }
+  if (typeof detail === 'string') return [detail]
+  if (Array.isArray(detail)) {
+    return detail.map((d) =>
+      typeof d === 'object' && d && 'msg' in d
+        ? String((d as { msg: string }).msg)
+        : String(d),
+    )
+  }
+  return ['Failed to publish test']
+}
+
 // ── Summary strip ─────────────────────────────────────────────────────────────
 
-function SummaryStrip({ sections, isPublished }: { sections: Section[]; isPublished: boolean }) {
+function SummaryStrip({
+  sections,
+  sectionSettings,
+  isPublished,
+}: {
+  sections: Section[]
+  sectionSettings: SectionSettings[]
+  isPublished: boolean
+}) {
   const totalQuestions = sections.reduce((s, sec) => s + sec.question_count, 0)
-  const totalMinutes = sections.reduce((s, sec) => s + sec.duration_minutes, 0)
+  const totalMinutes = estimatedTotalMinutes(sectionSettings)
+  const estimated = durationByType(sectionSettings).speaking == null
 
   const typeCounts = TYPE_ORDER.reduce<Record<string, number>>((acc, t) => {
     const n = sections.filter((s) => s.type === t).length
@@ -102,32 +188,34 @@ function SummaryStrip({ sections, isPublished }: { sections: Section[]; isPublis
       label: 'Sections',
       value: sections.length,
       sub: typeStr || '—',
-      color: 'text-blue-600',
-      bg: 'bg-blue-50 dark:bg-blue-950/30',
+      color: 'text-blue-600 dark:text-blue-400',
+      bg: 'bg-blue-500/10',
     },
     {
       icon: HelpCircle,
       label: 'Questions',
       value: totalQuestions,
       sub: 'total',
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bg: 'bg-emerald-500/10',
     },
     {
       icon: Clock,
       label: 'Duration',
-      value: formatDuration(totalMinutes),
-      sub: `${totalMinutes} minutes`,
-      color: 'text-amber-600',
-      bg: 'bg-amber-50 dark:bg-amber-950/30',
+      value: `${estimated ? '~' : ''}${formatMinutes(totalMinutes)}`,
+      sub: `${totalMinutes} minutes total`,
+      color: 'text-amber-600 dark:text-amber-400',
+      bg: 'bg-amber-500/10',
     },
     {
       icon: isPublished ? Play : Pencil,
       label: 'Status',
       value: isPublished ? 'Published' : 'Draft',
       sub: isPublished ? 'visible to students' : 'not visible',
-      color: isPublished ? 'text-emerald-600' : 'text-slate-500',
-      bg: isPublished ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'bg-slate-50 dark:bg-slate-800/30',
+      color: isPublished
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : 'text-muted-foreground',
+      bg: isPublished ? 'bg-emerald-500/10' : 'bg-muted',
     },
   ]
 
@@ -138,16 +226,62 @@ function SummaryStrip({ sections, isPublished }: { sections: Section[]; isPublis
           key={label}
           className='flex items-center gap-3 rounded-xl border bg-card px-4 py-3'
         >
-          <div className={`shrink-0 rounded-lg p-2 ${bg}`}>
-            <Icon className={`size-4 ${color}`} />
-          </div>
+          <span
+            className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${bg}`}
+          >
+            <Icon className={`size-5 ${color}`} />
+          </span>
           <div className='min-w-0'>
-            <p className='text-lg font-bold leading-tight tabular-nums truncate'>{value}</p>
-            <p className='text-xs text-muted-foreground'>{label}</p>
-            <p className='text-xs text-muted-foreground/60 truncate'>{sub}</p>
+            <p className='text-xl font-semibold leading-tight tabular-nums truncate'>
+              {value}
+            </p>
+            <p className='text-xs font-medium text-muted-foreground'>{label}</p>
+            <p className='truncate text-xs text-muted-foreground/60'>{sub}</p>
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+// ── Duration breakdown ────────────────────────────────────────────────────────
+
+function DurationBreakdown({
+  sectionSettings,
+}: {
+  sectionSettings: SectionSettings[]
+}) {
+  const durations = durationByType(sectionSettings)
+  const total = estimatedTotalMinutes(sectionSettings)
+  const estimated = durations.speaking == null
+
+  return (
+    <div className='rounded-xl border bg-card px-5 py-4'>
+      <h3 className='mb-3 flex items-center gap-2 text-sm font-semibold'>
+        <Clock className='size-4 text-muted-foreground' />
+        Total test duration
+      </h3>
+      <dl className='space-y-1.5 text-sm'>
+        {TYPE_ORDER.map((type) => (
+          <div key={type} className='flex justify-between gap-4'>
+            <dt className='text-muted-foreground'>{TYPE_META[type].label}</dt>
+            <dd className='tabular-nums'>
+              {durations[type] != null
+                ? `${durations[type]} min`
+                : type === 'speaking'
+                  ? `~${SPEAKING_TYPICAL_MINUTES} min (AI-paced)`
+                  : 'Untimed'}
+            </dd>
+          </div>
+        ))}
+        <div className='flex justify-between gap-4 border-t pt-1.5 font-medium'>
+          <dt>Total</dt>
+          <dd className='tabular-nums'>
+            {estimated ? '~' : ''}
+            {formatMinutes(total)}
+          </dd>
+        </div>
+      </dl>
     </div>
   )
 }
@@ -186,9 +320,6 @@ function SectionRow({
           <span className='text-sm font-medium'>{label}</span>
         </td>
         <td className='py-3 px-3 text-sm text-muted-foreground tabular-nums'>
-          {section.duration_minutes} min
-        </td>
-        <td className='py-3 px-3 text-sm text-muted-foreground tabular-nums'>
           {section.question_count}
         </td>
         <td className='py-3 px-3 text-sm'>
@@ -224,7 +355,7 @@ function SectionRow({
       </tr>
       {isExpanded && (
         <tr className='border-b border-border/50 last:border-0'>
-          <td colSpan={6} className='bg-muted/20 px-5 py-4'>
+          <td colSpan={5} className='bg-muted/20 px-5 py-4'>
             <QuestionList
               sectionId={section.id}
               sectionType={section.type}
@@ -242,6 +373,7 @@ function SectionRow({
 function TypeGroup({
   type,
   sections,
+  durationMinutes,
   expandedId,
   onToggle,
   onEdit,
@@ -249,6 +381,7 @@ function TypeGroup({
 }: {
   type: SectionType
   sections: Section[]
+  durationMinutes: number | null
   expandedId: string | null
   onToggle: (id: string) => void
   onEdit: (s: Section) => void
@@ -257,13 +390,17 @@ function TypeGroup({
   const meta = TYPE_META[type]
   const Icon = meta.icon
   const totalQ = sections.reduce((s, sec) => s + sec.question_count, 0)
-  const totalMin = sections.reduce((s, sec) => s + sec.duration_minutes, 0)
+  const durationLabel =
+    durationMinutes != null
+      ? formatMinutes(durationMinutes)
+      : type === 'speaking'
+        ? `~${SPEAKING_TYPICAL_MINUTES} min (AI-paced)`
+        : 'untimed'
 
   const sorted = [...sections].sort((a, b) => a.order - b.order)
 
   return (
     <div>
-      {/* Group header */}
       <div className='mb-2 flex items-center gap-3'>
         <div className={`rounded-lg p-1.5 ${meta.bg}`}>
           <Icon className={`size-4 ${meta.color}`} />
@@ -271,12 +408,11 @@ function TypeGroup({
         <div>
           <span className='font-semibold text-sm'>{meta.label}</span>
           <span className='ml-2 text-xs text-muted-foreground'>
-            {sections.length} {sections.length === 1 ? 'section' : 'sections'} · {totalQ} questions · {formatDuration(totalMin)}
+            {sections.length} {sections.length === 1 ? 'section' : 'sections'} · {totalQ} questions · {durationLabel}
           </span>
         </div>
       </div>
 
-      {/* Rows table */}
       <div className='rounded-xl border bg-card overflow-hidden'>
         <table className='w-full'>
           <thead>
@@ -284,9 +420,6 @@ function TypeGroup({
               <th className='py-2 pl-5 pr-3 w-8' />
               <th className='py-2 px-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide'>
                 Section
-              </th>
-              <th className='py-2 px-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide'>
-                Duration
               </th>
               <th className='py-2 px-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide'>
                 Questions
@@ -316,17 +449,136 @@ function TypeGroup({
   )
 }
 
+// ── Publish dialog ────────────────────────────────────────────────────────────
+
+function PublishValidationDialog({
+  open,
+  onOpenChange,
+  checks,
+  loading,
+  publishing,
+  onConfirm,
+}: {
+  open: boolean
+  onOpenChange: (o: boolean) => void
+  checks: PublishCheck
+  loading: boolean
+  publishing: boolean
+  onConfirm: (force: boolean) => void
+}) {
+  const allIssues = [...checks.errors, ...checks.warnings]
+  const hasIssues = allIssues.length > 0
+  const clean = !loading && !hasIssues
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className='max-w-md'>
+        <DialogHeader>
+          <DialogTitle>Publish Test</DialogTitle>
+          <DialogDescription>
+            Review validation results before making this test visible to students.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className='space-y-4 py-2'>
+          {loading ? (
+            <div className='flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground'>
+              <Loader2 className='size-4 animate-spin' />
+              Checking writing tasks…
+            </div>
+          ) : (
+            <>
+              {hasIssues && (
+                <div className='space-y-2'>
+                  <p className='flex items-center gap-1.5 text-sm font-medium text-amber-700'>
+                    <AlertTriangle className='size-4' />
+                    Warnings
+                  </p>
+                  <ul className='space-y-1.5 rounded-md border border-amber-200 bg-amber-50 p-3'>
+                    {allIssues.map((w) => (
+                      <li key={w} className='text-sm text-amber-800'>
+                        {w}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className='text-xs text-muted-foreground'>
+                    You can still publish. Consider fixing these for a better student experience.
+                  </p>
+                </div>
+              )}
+
+              {clean && (
+                <div className='flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800'>
+                  <CheckCircle2 className='size-4 shrink-0' />
+                  All checks passed. Ready to publish.
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant='outline' onClick={() => onOpenChange(false)} disabled={publishing}>
+            Cancel
+          </Button>
+          <Button onClick={() => onConfirm(hasIssues)} disabled={loading || publishing}>
+            {publishing && <Loader2 className='mr-1 size-4 animate-spin' />}
+            {hasIssues ? 'Publish anyway' : 'Publish'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function TestDetail() {
   const { testId } = route.useParams()
+  const queryClient = useQueryClient()
   const [editingSection, setEditingSection] = useState<Section | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [publishOpen, setPublishOpen] = useState(false)
 
   const { data: test, isLoading } = useQuery({
     queryKey: ['tests', testId],
-    queryFn: () => fetchTest(testId),
+    queryFn: () => fetchAdminTest(testId),
+  })
+
+  const writingSectionIds =
+    test?.sections.filter((s) => s.type === 'writing').map((s) => s.id) ?? []
+
+  const { data: writingQuestions = [], isFetching: writingQsLoading } = useQuery({
+    queryKey: ['publish-writing-qs', testId, writingSectionIds],
+    queryFn: async () => {
+      const all: Question[] = []
+      for (const sid of writingSectionIds) {
+        all.push(...(await fetchQuestions(sid)))
+      }
+      return all
+    },
+    enabled: publishOpen && writingSectionIds.length > 0,
+  })
+
+  const publishChecks =
+    test && publishOpen && !writingQsLoading
+      ? computePublishChecks(test, writingQuestions)
+      : { errors: [] as string[], warnings: [] as string[] }
+
+  const publishMutation = useMutation({
+    mutationFn: (force: boolean = false) => publishTest(testId, force),
+    onSuccess: () => {
+      toast.success('Test published')
+      setPublishOpen(false)
+      void queryClient.invalidateQueries({ queryKey: ['tests', testId] })
+      void queryClient.invalidateQueries({ queryKey: ['tests'] })
+    },
+    onError: (err: unknown) => {
+      for (const msg of extractPublishErrors(err)) {
+        toast.error(msg)
+      }
+    },
   })
 
   function toggleExpanded(id: string) {
@@ -338,7 +590,6 @@ export function TestDetail() {
     setDialogOpen(true)
   }
 
-  // Group sections by type, preserving TYPE_ORDER
   const groupedSections = test
     ? TYPE_ORDER.reduce<Record<SectionType, Section[]>>(
         (acc, t) => {
@@ -359,7 +610,6 @@ export function TestDetail() {
       </Header>
 
       <Main className='flex flex-1 flex-col gap-6'>
-        {/* Back link */}
         <div>
           <Button asChild variant='ghost' size='sm' className='mb-3 -ms-3'>
             <Link to='/tests'>
@@ -393,18 +643,18 @@ export function TestDetail() {
                     Edit Test
                   </Link>
                 </Button>
-                <Button asChild>
-                  <Link
-                    to='/take-test/$bookSlug/$testSlug'
-                    params={{
-                      bookSlug: test.book_slug,
-                      testSlug: `test-${test.test_number}`,
-                    }}
-                  >
+                <Button asChild variant='outline'>
+                  <Link to='/tests/$testId/preview' params={{ testId }} target='_blank'>
                     <Play className='size-4' />
-                    Preview Test
+                    Preview as Student
                   </Link>
                 </Button>
+                {!test.is_published && (
+                  <Button onClick={() => setPublishOpen(true)}>
+                    <Upload className='size-4' />
+                    Publish
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
@@ -412,12 +662,16 @@ export function TestDetail() {
           )}
         </div>
 
-        {/* Summary strip */}
         {test && (
-          <SummaryStrip sections={test.sections} isPublished={test.is_published} />
+          <SummaryStrip
+            sections={test.sections}
+            sectionSettings={test.section_settings ?? []}
+            isPublished={test.is_published}
+          />
         )}
 
-        {/* Sections grouped by type */}
+        {test && <DurationBreakdown sectionSettings={test.section_settings ?? []} />}
+
         {test && groupedSections && (
           <div className='space-y-6'>
             <h3 className='text-lg font-semibold'>Sections</h3>
@@ -426,6 +680,9 @@ export function TestDetail() {
                 key={type}
                 type={type}
                 sections={groupedSections[type]}
+                durationMinutes={
+                  durationByType(test.section_settings)[type]
+                }
                 expandedId={expandedId}
                 onToggle={toggleExpanded}
                 onEdit={openEdit}
@@ -433,6 +690,13 @@ export function TestDetail() {
               />
             ))}
           </div>
+        )}
+
+        {test && (
+          <PracticePartsEditor
+            testId={testId}
+            sectionSettings={test.section_settings ?? []}
+          />
         )}
       </Main>
 
@@ -445,6 +709,17 @@ export function TestDetail() {
           if (!o) setTimeout(() => setEditingSection(null), 300)
         }}
       />
+
+      {test && (
+        <PublishValidationDialog
+          open={publishOpen}
+          onOpenChange={setPublishOpen}
+          checks={publishChecks}
+          loading={writingQsLoading}
+          publishing={publishMutation.isPending}
+          onConfirm={(force) => publishMutation.mutate(force)}
+        />
+      )}
     </>
   )
 }

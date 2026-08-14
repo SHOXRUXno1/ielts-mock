@@ -6,6 +6,7 @@ import {
   getSimliToken,
   type SimliTokenResponse,
 } from '@/lib/api/speaking-examiner'
+import { isLiveSpeakingPhase } from '../lib/is-live-phase'
 import type { Phase } from '../types/phase'
 
 export const SIMLI_TOKEN_QUERY_KEY = ['speaking-examiner', 'simli-token'] as const
@@ -114,6 +115,8 @@ export function useSpeakingInit({
 
   useEffect(() => {
     if (!data) return
+    // Never interrupt an in-flight examiner session (autostart / live turns).
+    if (isLiveSpeakingPhase(phaseRef.current)) return
 
     if (applySimliTokenData(data, tokenSetters)) {
       if (initState.loadingFinished) {
@@ -134,7 +137,9 @@ export function useSpeakingInit({
 
     if (!initAppliedRef.current) {
       initAppliedRef.current = true
-      setPhase('idle')
+      if (!isLiveSpeakingPhase(phaseRef.current)) {
+        setPhase('idle')
+      }
       initState.loadingFinished = true
     }
   }, [
@@ -155,6 +160,8 @@ export function useSpeakingInit({
       let innerFrame = 0
       const outerFrame = requestAnimationFrame(() => {
         innerFrame = requestAnimationFrame(() => {
+          // Bail if autostart already moved past loading while we waited for rAF.
+          if (isLiveSpeakingPhase(phaseRef.current)) return
           if (
             phaseRef.current === 'loading' &&
             simliReadyRef.current &&

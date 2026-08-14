@@ -21,6 +21,7 @@ from sqlalchemy.orm import sessionmaker
 from app.models.question import Question, QuestionType
 from app.models.section import Section, SectionType
 from app.models.test import Test
+from app.services import section_settings as settings_service
 
 DATABASE_URL = "postgresql+asyncpg://postgres:2770@localhost:5432/ielts_mock"
 TEST_TITLE = "IELTS Academic Mock #1"
@@ -387,7 +388,6 @@ async def seed() -> None:
                 test_id=test.id,
                 type=SectionType.READING,
                 order=3,
-                duration_minutes=20,
                 passage=PASSAGE_2_TEXT,
             )
             session.add(sec2)
@@ -415,7 +415,6 @@ async def seed() -> None:
                 test_id=test.id,
                 type=SectionType.READING,
                 order=4,
-                duration_minutes=20,
                 passage=PASSAGE_3_TEXT,
             )
             session.add(sec3)
@@ -434,6 +433,7 @@ async def seed() -> None:
 
             print(f"Added Passage 3 (id={sec3.id}) with {len(PASSAGE_3_QUESTIONS)} questions (Q25–40).")
 
+        await settings_service.ensure_settings(session, test.id)
         await session.commit()
         print("\nDone. Total reading passages should now be 3 (orders 2, 3, 4).")
 

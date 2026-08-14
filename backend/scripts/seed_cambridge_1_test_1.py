@@ -36,6 +36,7 @@ from app.core.config import settings
 from app.models.question import Question, QuestionType
 from app.models.section import Section, SectionType
 from app.models.test import Test
+from app.services import section_settings as settings_service
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger(__name__)
@@ -130,10 +131,6 @@ READING_SECTION_UUID = {
 }
 
 WRITING_SECTION_UUID = uuid.uuid5(TEST_UUID, "writing-section")
-
-# ── Section durations (minutes) ───────────────────────────────────────────────
-LISTENING_DURATION = {1: 10, 2: 8, 3: 10, 4: 10}
-READING_DURATION = 20  # per passage
 
 # ══════════════════════════════════════════════════════════════════════════════
 # LISTENING SECTION DATA
@@ -1046,28 +1043,24 @@ def _build_sections() -> dict[int, dict]:
         1: {
             "id": SECTION_UUID[1], "label": "Listening S1",
             "type": SectionType.LISTENING, "order": 1,
-            "duration": LISTENING_DURATION[1],
             "audio_url": _audio_url(1), "passage": None,
             "questions": SECTION1_QUESTIONS,
         },
         2: {
             "id": SECTION_UUID[2], "label": "Listening S2",
             "type": SectionType.LISTENING, "order": 2,
-            "duration": LISTENING_DURATION[2],
             "audio_url": _audio_url(2), "passage": None,
             "questions": SECTION2_QUESTIONS,
         },
         3: {
             "id": SECTION_UUID[3], "label": "Listening S3",
             "type": SectionType.LISTENING, "order": 3,
-            "duration": LISTENING_DURATION[3],
             "audio_url": _audio_url(3), "passage": None,
             "questions": SECTION3_QUESTIONS,
         },
         4: {
             "id": SECTION_UUID[4], "label": "Listening S4",
             "type": SectionType.LISTENING, "order": 4,
-            "duration": LISTENING_DURATION[4],
             "audio_url": _audio_url(4), "passage": None,
             "questions": SECTION4_QUESTIONS,
         },
@@ -1075,21 +1068,18 @@ def _build_sections() -> dict[int, dict]:
         5: {
             "id": READING_SECTION_UUID[1], "label": "Reading P1",
             "type": SectionType.READING, "order": 5,
-            "duration": READING_DURATION,
             "audio_url": None, "passage": _load_passage(1),
             "questions": PASSAGE1_QUESTIONS,
         },
         6: {
             "id": READING_SECTION_UUID[2], "label": "Reading P2",
             "type": SectionType.READING, "order": 6,
-            "duration": READING_DURATION,
             "audio_url": None, "passage": _load_passage(2),
             "questions": PASSAGE2_QUESTIONS,
         },
         7: {
             "id": READING_SECTION_UUID[3], "label": "Reading P3",
             "type": SectionType.READING, "order": 7,
-            "duration": READING_DURATION,
             "audio_url": None, "passage": _load_passage(3),
             "questions": PASSAGE3_QUESTIONS,
         },
@@ -1097,7 +1087,6 @@ def _build_sections() -> dict[int, dict]:
         8: {
             "id": WRITING_SECTION_UUID, "label": "Writing",
             "type": SectionType.WRITING, "order": 8,
-            "duration": 60,
             "audio_url": None, "passage": None,
             "questions": WRITING_QUESTIONS,
         },
@@ -1114,7 +1103,6 @@ async def _upsert_section(
     section_type: SectionType,
     label: str,
     order: int,
-    duration: int,
     audio_url: str | None,
     passage: str | None,
     questions: list[dict],
@@ -1126,7 +1114,6 @@ async def _upsert_section(
             test_id=TEST_UUID,
             type=section_type,
             order=order,
-            duration_minutes=duration,
             audio_url=audio_url,
             passage=passage,
         )
@@ -1136,7 +1123,6 @@ async def _upsert_section(
     else:
         section.type = section_type
         section.order = order
-        section.duration_minutes = duration
         section.audio_url = audio_url
         if passage is not None:
             section.passage = passage
@@ -1192,11 +1178,13 @@ async def seed(db: AsyncSession) -> None:
             section_type=cfg["type"],
             label=cfg["label"],
             order=cfg["order"],
-            duration=cfg["duration"],
             audio_url=cfg["audio_url"],
             passage=cfg["passage"],
             questions=cfg["questions"],
         )
+
+    await settings_service.ensure_settings(db, TEST_UUID)
+    await db.commit()
 
 
 # ── Entrypoint ────────────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import { AxiosError } from 'axios'
 import { toast } from 'sonner'
+import { apiErrorMessage } from '@/lib/api/error'
 
 export function handleServerError(error: unknown) {
   if (import.meta.env.DEV) {
@@ -22,6 +23,8 @@ export function handleServerError(error: unknown) {
     const title = error.response?.data?.title
     if (typeof title === 'string' && title.length > 0) {
       errMsg = title
+    } else {
+      errMsg = apiErrorMessage(error, errMsg)
     }
   }
 

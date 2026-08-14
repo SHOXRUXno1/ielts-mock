@@ -22,10 +22,15 @@ export function StudentsDeleteDialog() {
     mutationFn: () => deleteStudent(currentRow!.id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['students'] })
+      void qc.invalidateQueries({ queryKey: ['student-results'] })
+      void qc.invalidateQueries({ queryKey: ['results'] })
       setOpen(null)
-      toast.success('Student deleted.')
+      toast.success('Student deactivated', {
+        description: 'They can no longer sign in. Past attempts remain in Results.',
+      })
     },
-    onError: (err) => toast.error(apiErrorMessage(err, 'Failed to delete student.')),
+    onError: (err) =>
+      toast.error(apiErrorMessage(err, 'Could not deactivate this student.')),
   })
 
   return (

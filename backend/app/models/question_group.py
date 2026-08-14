@@ -16,6 +16,7 @@ class QuestionGroup(UUIDPrimaryKey, TimestampMixin, Base):
     order: Mapped[int] = mapped_column(SmallInteger)
     question_type: Mapped[str] = mapped_column(String(50))
     instruction: Mapped[str] = mapped_column(Text, default="", server_default="")
+    subtitle: Mapped[str | None] = mapped_column(String(500), nullable=True)
     options_shared: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     section: Mapped["Section"] = relationship(back_populates="question_groups")  # type: ignore[name-defined]

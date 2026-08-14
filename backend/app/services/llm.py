@@ -10,7 +10,8 @@ from collections.abc import Awaitable, Callable
 import httpx
 
 from app.core.config import settings
-from app.core.rate_limiter import KeyRotator
+from app.core.rate_limiter import KeyRotator, get_whisper_pool
+from app.services.scoring import compute_writing_band
 from app.services.shared_http import get_http_client
 from app.services.storage import resolve_local_path
 
@@ -156,12 +157,18 @@ Evaluate the following IELTS Writing **{task_label}** response.
 
 ### Minimum word count
 {min_words} words. If the response is significantly under the minimum, penalise
-{task_criterion_name} accordingly (typically -0.5 to -1.0 band).
+{task_criterion_name} accordingly (typically -1 band).
 
 {image_instruction}
+{essay_type_criteria}
+### Task statement
+{task_statement}
 
-### Task prompt given to the student
-{prompt}
+### Task question
+{task_question}
+
+### Instruction to the student
+{task_instruction}
 
 ### Student's response
 {text}
@@ -189,7 +196,22 @@ Evaluate the following IELTS Writing **{task_label}** response.
    - Band 5: Limited range of structures; attempts complex sentences but errors are frequent.
 
 ### Off-topic penalty
-If the response is largely irrelevant to the prompt, cap {task_criterion_name} at 4.0.
+If the response is largely irrelevant to the prompt, cap {task_criterion_name} at 4.
+
+### Key points extraction (Task 1 with chart/visual)
+{key_points_instruction}
+
+### Sentence-by-sentence analysis
+Split the student's response into individual sentences. For EACH sentence provide:
+- "sentence": the exact sentence text
+- "category": one of "hit_key_point" | "linking_issue" | "grammatical_error" | "lexical_issue" | "off_topic"
+- "comment": brief reason for the classification
+- "reference": (optional) for hit_key_point — which key point or idea it covers
+
+Use "hit_key_point" when the sentence correctly covers a relevant idea/data point.
+Use "linking_issue" for cohesion/transition problems.
+Use "grammatical_error" / "lexical_issue" when that is the dominant problem in the sentence.
+Use "off_topic" when the sentence does not address the task.
 
 ### Inline errors
 Identify up to 12 of the most significant errors or weaknesses in the student's text.
@@ -197,14 +219,26 @@ For each error, provide an EXACT substring that appears verbatim in the student'
 (so it can be highlighted client-side), the error category, a corrected version, and a brief explanation.
 Focus on errors that most impact the band score.
 
+### Overall review
+Write 1–2 short paragraphs summarising the response's main strengths and weaknesses
+and what the student should prioritise next.
+
+### Optimized composition
+Rewrite the student's response at Band 8–9 level while:
+- Keeping the student's main points and overall structure
+- Fixing grammatical and lexical errors
+- Improving cohesion and precision
+- Correcting any data inconsistencies (especially for Task 1)
+- Keeping the rewrite at most 20% longer than the original
+
 ### Output format
 Return ONLY valid JSON (no markdown, no code fences):
 {{
-  "task_achievement": {{"band": <float>, "feedback": "<string>"}},
-  "coherence_cohesion": {{"band": <float>, "feedback": "<string>"}},
-  "lexical_resource": {{"band": <float>, "feedback": "<string>"}},
-  "grammatical_range": {{"band": <float>, "feedback": "<string>"}},
-  "overall_band": <float>,
+  "task_achievement": {{"band": <integer 0-9>, "feedback": "<string>"}},
+  "coherence_cohesion": {{"band": <integer 0-9>, "feedback": "<string>"}},
+  "lexical_resource": {{"band": <integer 0-9>, "feedback": "<string>"}},
+  "grammatical_range": {{"band": <integer 0-9>, "feedback": "<string>"}},
+  "overall_band": <float, multiple of 0.5>,
   "strengths": ["<string>", ...],
   "improvements": ["<string>", ...],
   "errors": [
@@ -214,14 +248,57 @@ Return ONLY valid JSON (no markdown, no code fences):
       "correction": "<corrected version of that phrase>",
       "explanation": "<short reason, max 15 words>"
     }}
-  ]
+  ],
+  "key_points": [
+    {{"point": "<key data point or idea>", "covered": <true|false>}}
+  ],
+  "sentence_analysis": [
+    {{
+      "sentence": "<exact sentence from student response>",
+      "category": "hit_key_point|linking_issue|grammatical_error|lexical_issue|off_topic",
+      "comment": "<brief reason>",
+      "reference": "<optional key point reference>"
+    }}
+  ],
+  "overall_review": "<1-2 paragraph summary>",
+  "optimized_composition": "<full Band 8-9 rewrite>"
 }}
 
 Note: the JSON key is always "task_achievement" regardless of task number, for system compatibility.
-Band scores MUST be in 0.5 increments (e.g. 6.0, 6.5, 7.0).
+For Task 2 (essay), set "key_points" to [] (or omit).
+CRITICAL SCORING RULE:
+Individual criteria scores (Task Achievement/Response, Coherence & Cohesion,
+Lexical Resource, Grammatical Range & Accuracy) MUST be WHOLE NUMBERS ONLY
+(0, 1, 2, 3, 4, 5, 6, 7, 8, 9).
+Half bands like 6.5, 7.5, 8.5 are NOT allowed at the individual criterion level.
+Only the final Task Band (overall_band, average of 4 criteria) may contain .5 values.
+Return integer values for individual criteria in the JSON output.
 overall_band = average of 4 criteria rounded to nearest 0.5.
 Be strict but fair, calibrated to official Cambridge IELTS sample answers.
 Every "quote" in errors MUST be an EXACT substring of the student's response — copy it character-for-character."""
+
+_SENTENCE_CATEGORIES = frozenset({
+    "hit_key_point",
+    "linking_issue",
+    "grammatical_error",
+    "lexical_issue",
+    "off_topic",
+})
+
+_KEY_POINTS_INSTRUCTION_WITH_CHART = """\
+Step 1: Analyse the chart/visual and extract 5–8 key data points
+(trends, peaks, troughs, specific numbers, comparisons, overview).
+Step 2: Evaluate whether the student's response accurately covered each point.
+Return them in "key_points" with covered=true/false."""
+
+_KEY_POINTS_INSTRUCTION_TASK1_NO_CHART = """\
+Extract 5–8 key points the Task 1 response should cover based on the prompt
+(overview, main trends, comparisons, notable figures). Mark each as covered
+or missed relative to the student's text. Return in "key_points"."""
+
+_KEY_POINTS_INSTRUCTION_TASK2 = """\
+This is Task 2 (essay). Do NOT extract chart data points.
+Set "key_points" to an empty array []."""
 
 # Per-task criterion name and band descriptors (official IELTS terminology)
 _TASK1_CRITERION_NAME = "Task Achievement"
@@ -239,6 +316,39 @@ _TASK2_CRITERION_DESCRIPTORS = """\
    - Band 7: Addresses all parts of the task; clear position with relevant main ideas; some ideas may be insufficiently developed.
    - Band 6: Addresses the task, though some parts may be more fully covered; position is relevant but conclusions may be unclear.
    - Band 5: Addresses the task only partially; format may be inappropriate; position may not be consistent."""
+
+_ESSAY_TYPE_CRITERIA: dict[str, str] = {
+    "opinion": (
+        "### Essay subtype: Opinion (Agree/Disagree)\n"
+        "The student must take a clear side in the introduction and maintain that position "
+        "consistently. Supporting reasons should include concrete examples. "
+        "Penalise Task Response if the essay is balanced without a clear stance, "
+        "or if the position shifts mid-essay."
+    ),
+    "discussion": (
+        "### Essay subtype: Discussion (Both views + opinion)\n"
+        "The student must cover both views fairly before giving a clear personal opinion "
+        "with reasoning. Penalise Task Response if one side is missing or if the personal "
+        "opinion is skipped or only vaguely stated."
+    ),
+    "problem_solution": (
+        "### Essay subtype: Problem & Solution\n"
+        "Problems must be clearly identified and solutions must directly address those "
+        "problems with some feasibility. Penalise Task Response for imbalance "
+        "(only problems, or only solutions) or for solutions that do not match the problems."
+    ),
+    "advantages_disadvantages": (
+        "### Essay subtype: Advantages & Disadvantages\n"
+        "Both advantages and disadvantages must be covered in a balanced way. "
+        "If the prompt asks for a verdict or opinion, it must be present with reasoning. "
+        "Penalise Task Response for one-sided coverage or a missing required verdict."
+    ),
+    "double_question": (
+        "### Essay subtype: Double Question\n"
+        "Both questions in the prompt must be answered directly with roughly equal depth. "
+        "Penalise Task Response heavily if one question is skipped or answered only tangentially."
+    ),
+}
 
 # ---------------------------------------------------------------------------
 # Speaking prompt — with descriptors and question context
@@ -294,16 +404,16 @@ Evaluate the following IELTS Speaking transcript.
    - State in feedback that this is an approximate assessment from transcript
 
 ### Relevance check
-If the student's response does not address the given questions/cue card, cap Fluency and Coherence at 4.0.
+If the student's response does not address the given questions/cue card, cap Fluency and Coherence at 4.
 
 ### Output format
 Return ONLY valid JSON (no markdown, no code fences):
 {{
-  "fluency_coherence": {{"band": <float>, "feedback": "<string>"}},
-  "lexical_resource": {{"band": <float>, "feedback": "<string>"}},
-  "grammatical_range": {{"band": <float>, "feedback": "<string>"}},
-  "pronunciation": {{"band": <float>, "feedback": "<string>"}},
-  "overall_band": <float>,
+  "fluency_coherence": {{"band": <integer 0-9>, "feedback": "<string>"}},
+  "lexical_resource": {{"band": <integer 0-9>, "feedback": "<string>"}},
+  "grammatical_range": {{"band": <integer 0-9>, "feedback": "<string>"}},
+  "pronunciation": {{"band": <integer 0-9>, "feedback": "<string>"}},
+  "overall_band": <float, multiple of 0.5>,
   "strengths": ["<string>", ...],
   "improvements": ["<string>", ...],
   "corrections": [
@@ -313,7 +423,13 @@ Return ONLY valid JSON (no markdown, no code fences):
 }}
 
 Provide 3-5 corrections with real quotes from the transcript. Provide 3-5 example_phrases.
-Band scores MUST be in 0.5 increments.
+CRITICAL SCORING RULE:
+Individual criteria scores (Fluency & Coherence, Lexical Resource,
+Grammatical Range & Accuracy, Pronunciation) MUST be WHOLE NUMBERS ONLY
+(0, 1, 2, 3, 4, 5, 6, 7, 8, 9).
+Half bands like 4.5, 5.5, 6.5 are NOT allowed at the individual criterion level.
+Only the final Speaking Band (overall_band, average of 4 criteria) may contain .5 values.
+Return integer values for individual criteria in the JSON output.
 overall_band = average of 4 criteria rounded to nearest 0.5.
 Be strict but fair.
 
@@ -357,7 +473,13 @@ async def _load_image_base64(image_url: str) -> tuple[str, str] | None:
     return base64.b64encode(data).decode(), mime
 
 
-async def _call_gemini(prompt: str, image_parts: list[dict] | None = None) -> dict:
+async def _call_gemini(
+    prompt: str,
+    image_parts: list[dict] | None = None,
+    *,
+    max_output_tokens: int = 4096,
+    max_json_attempts: int = 2,
+) -> dict:
     parts: list[dict] = []
     if image_parts:
         parts.extend(image_parts)
@@ -369,6 +491,7 @@ async def _call_gemini(prompt: str, image_parts: list[dict] | None = None) -> di
             "temperature": 0.2,
             "topP": 0.8,
             "responseMimeType": "application/json",
+            "maxOutputTokens": max_output_tokens,
         },
     }
 
@@ -381,31 +504,179 @@ async def _call_gemini(prompt: str, image_parts: list[dict] | None = None) -> di
             timeout=60.0,
         )
 
-    resp = await _gemini_request_with_rotation(_post)
-    data = resp.json()
-    text = data["candidates"][0]["content"]["parts"][0]["text"]
-    cleaned = _clean_json_response(text)
-    return json.loads(cleaned)
+    last_error: Exception | None = None
+    for attempt in range(max(1, max_json_attempts)):
+        try:
+            resp = await _gemini_request_with_rotation(_post)
+            data = resp.json()
+            candidates = data.get("candidates") or []
+            if not candidates:
+                raise ValueError("Gemini returned no candidates")
+            text = candidates[0]["content"]["parts"][0]["text"]
+            cleaned = _clean_json_response(text)
+            return json.loads(cleaned)
+        except (json.JSONDecodeError, KeyError, IndexError, TypeError, ValueError) as exc:
+            last_error = exc
+            logger.warning(
+                "Gemini JSON parse failed (attempt %s/%s): %s",
+                attempt + 1,
+                max_json_attempts,
+                exc,
+            )
+            if attempt + 1 >= max_json_attempts:
+                break
+
+    raise ValueError(f"Gemini returned invalid JSON after {max_json_attempts} attempts: {last_error}")
+
+
+def _normalize_key_points(raw: object) -> list[dict]:
+    if not isinstance(raw, list):
+        return []
+    out: list[dict] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        point = item.get("point")
+        if not isinstance(point, str) or not point.strip():
+            continue
+        covered = item.get("covered")
+        out.append({
+            "point": point.strip(),
+            "covered": bool(covered) if isinstance(covered, bool) else bool(covered),
+        })
+    return out
+
+
+def _normalize_sentence_analysis(raw: object) -> list[dict]:
+    if not isinstance(raw, list):
+        return []
+    out: list[dict] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        sentence = item.get("sentence")
+        category = item.get("category")
+        comment = item.get("comment")
+        if not isinstance(sentence, str) or not sentence.strip():
+            continue
+        if not isinstance(category, str) or category not in _SENTENCE_CATEGORIES:
+            continue
+        if not isinstance(comment, str):
+            comment = ""
+        entry: dict = {
+            "sentence": sentence.strip(),
+            "category": category,
+            "comment": comment.strip(),
+        }
+        reference = item.get("reference")
+        if isinstance(reference, str) and reference.strip():
+            entry["reference"] = reference.strip()
+        out.append(entry)
+    return out
+
+
+def _normalize_optional_string(raw: object) -> str | None:
+    if not isinstance(raw, str):
+        return None
+    text = raw.strip()
+    return text or None
+
+
+_WRITING_CRITERION_KEYS = (
+    "task_achievement",
+    "task_response",
+    "coherence_cohesion",
+    "lexical_resource",
+    "grammatical_range",
+)
+
+
+def _coerce_writing_criteria_to_int(result: dict) -> dict:
+    """IELTS: individual criteria are whole bands only (0-9).
+
+    Rounds any non-integer band to the nearest integer, clamps to 0-9,
+    and logs a warning for monitoring. Mutates and returns *result*.
+    """
+    for key in _WRITING_CRITERION_KEYS:
+        val = result.get(key)
+        if not isinstance(val, dict) or val.get("band") is None:
+            continue
+        try:
+            raw = float(val["band"])
+        except (TypeError, ValueError):
+            continue
+        rounded = max(0, min(9, int(round(raw))))
+        if rounded != raw:
+            logger.warning(
+                "Gemini returned non-integer Writing criterion %s=%s; "
+                "rounded to %d",
+                key,
+                raw,
+                rounded,
+            )
+        val["band"] = rounded
+    return result
+
+
+def _enrich_writing_result(result: dict, *, is_task1: bool) -> dict:
+    """Sanitize Jumpinto-level fields; omit empty optional sections."""
+    key_points = _normalize_key_points(result.get("key_points"))
+    if is_task1 and key_points:
+        result["key_points"] = key_points
+    else:
+        result.pop("key_points", None)
+
+    sentence_analysis = _normalize_sentence_analysis(result.get("sentence_analysis"))
+    if sentence_analysis:
+        result["sentence_analysis"] = sentence_analysis
+    else:
+        result.pop("sentence_analysis", None)
+
+    overall_review = _normalize_optional_string(result.get("overall_review"))
+    if overall_review:
+        result["overall_review"] = overall_review
+    else:
+        result.pop("overall_review", None)
+
+    optimized = _normalize_optional_string(result.get("optimized_composition"))
+    if optimized:
+        result["optimized_composition"] = optimized
+    else:
+        result.pop("optimized_composition", None)
+
+    return result
 
 
 async def evaluate_writing(
     answers: dict[str, str],
     prompts: dict[str, str],
     images: dict[str, str] | None = None,
+    essay_types: dict[str, str] | None = None,
+    task_descriptions: dict[str, str] | None = None,
+    task_instructions: dict[str, str] | None = None,
+    task_statements: dict[str, str] | None = None,
+    task_questions: dict[str, str] | None = None,
 ) -> dict:
     """Evaluate writing tasks.
 
     answers/prompts keyed by 'task_1', 'task_2'.
     images optionally keyed by 'task_1' -> image_url for chart/diagram.
+    essay_types optionally keyed by 'task_2' -> opinion|discussion|...
+    task_descriptions / task_instructions override prompts when provided.
+    task_statements / task_questions provide finer-grained Task 2 split.
     """
     images = images or {}
-    results = {}
+    essay_types = essay_types or {}
+    task_descriptions = task_descriptions or {}
+    task_instructions = task_instructions or {}
+    task_statements = task_statements or {}
+    task_questions = task_questions or {}
 
-    for task_key in sorted(answers.keys()):
+    async def _eval_one(task_key: str) -> tuple[str, dict] | None:
         text = answers.get(task_key, "")
         prompt = prompts.get(task_key, "")
         if not text.strip():
-            continue
+            return None
 
         is_task1 = "1" in task_key
         task_label = "Task 1" if is_task1 else "Task 2"
@@ -418,7 +689,14 @@ async def evaluate_writing(
         )
         min_words = 150 if is_task1 else 250
         task_criterion_name = _TASK1_CRITERION_NAME if is_task1 else _TASK2_CRITERION_NAME
-        task_criterion_descriptors = _TASK1_CRITERION_DESCRIPTORS if is_task1 else _TASK2_CRITERION_DESCRIPTORS
+        task_criterion_descriptors = (
+            _TASK1_CRITERION_DESCRIPTORS if is_task1 else _TASK2_CRITERION_DESCRIPTORS
+        )
+
+        essay_type = None if is_task1 else essay_types.get(task_key)
+        essay_type_criteria = ""
+        if essay_type and essay_type in _ESSAY_TYPE_CRITERIA:
+            essay_type_criteria = _ESSAY_TYPE_CRITERIA[essay_type] + "\n\n"
 
         image_url = images.get(task_key)
         gemini_image_parts: list[dict] = []
@@ -439,9 +717,23 @@ async def evaluate_writing(
                     "Inaccurate data descriptions should lower Task Achievement."
                 )
             else:
-                image_instruction = "### Note: A chart/image was provided but could not be loaded for verification."
+                image_instruction = (
+                    "### Note: A chart/image was provided but could not be loaded "
+                    "for verification."
+                )
+
+        if is_task1:
+            if gemini_image_parts:
+                key_points_instruction = _KEY_POINTS_INSTRUCTION_WITH_CHART
+            else:
+                key_points_instruction = _KEY_POINTS_INSTRUCTION_TASK1_NO_CHART
         else:
-            image_instruction = ""
+            key_points_instruction = _KEY_POINTS_INSTRUCTION_TASK2
+
+        desc = task_descriptions.get(task_key) or prompt
+        instr = task_instructions.get(task_key) or ""
+        stmt = task_statements.get(task_key) or desc
+        q = task_questions.get(task_key) or ""
 
         full_prompt = WRITING_PROMPT.format(
             task_label=task_label,
@@ -449,25 +741,65 @@ async def evaluate_writing(
             min_words=min_words,
             task_criterion_name=task_criterion_name,
             task_criterion_descriptors=task_criterion_descriptors,
-            prompt=prompt,
+            task_statement=stmt,
+            task_question=q,
+            task_instruction=instr,
             text=text,
             image_instruction=image_instruction,
+            essay_type_criteria=essay_type_criteria,
+            key_points_instruction=key_points_instruction,
         )
 
-        result = await _call_gemini(full_prompt, image_parts=gemini_image_parts or None)
+        result = await _call_gemini(
+            full_prompt,
+            image_parts=gemini_image_parts or None,
+            max_output_tokens=8000,
+        )
         # Gemini always emits task_achievement; for Task 2 rename to task_response
         if not is_task1 and "task_achievement" in result:
             result["task_response"] = result.pop("task_achievement")
+        result = _enrich_writing_result(result, is_task1=is_task1)
+        result = _coerce_writing_criteria_to_int(result)
+
+        # Task Band is always recomputed from the (now integer) criteria —
+        # do not trust Gemini's own overall_band.
+        crit_bands: list[float] = []
+        for key in _WRITING_CRITERION_KEYS:
+            val = result.get(key)
+            if isinstance(val, dict) and val.get("band") is not None:
+                try:
+                    crit_bands.append(float(val["band"]))
+                except (TypeError, ValueError):
+                    pass
+        if crit_bands:
+            result["overall_band"] = round(sum(crit_bands) / len(crit_bands) * 2) / 2
         result["text"] = text
         result["word_count"] = _count_words(text)
-        results[task_key] = result
+        return task_key, result
+
+    task_keys = sorted(answers.keys())
+    evaluated = await asyncio.gather(*[_eval_one(k) for k in task_keys])
+    results: dict[str, dict] = {}
+    for item in evaluated:
+        if item is not None:
+            task_key, task_result = item
+            results[task_key] = task_result
 
     if not results:
-        return {"overall_band": 0, "error": "No writing submitted"}
+        return {"overall_band": None, "error": "No writing submitted"}
 
-    all_bands = [r.get("overall_band", 0) for r in results.values()]
-    overall = round(sum(all_bands) / len(all_bands) * 2) / 2
+    t1_band = results.get("task_1", {}).get("overall_band")
+    t2_band = results.get("task_2", {}).get("overall_band")
+    if "task_1" not in results:
+        t1_band = None
+    if "task_2" not in results:
+        t2_band = None
+    overall = compute_writing_band(
+        float(t1_band) if t1_band is not None else None,
+        float(t2_band) if t2_band is not None else None,
+    )
 
+    # None when either task is missing — never invent 0.0 as a writing overall
     return {
         "tasks": results,
         "overall_band": overall,
@@ -483,37 +815,39 @@ async def transcribe_audio(audio_url: str) -> str:
     if not settings.groq_api_key:
         raise RuntimeError("Groq API key not configured")
 
-    local_path = resolve_local_path(audio_url)
-    if local_path is not None:
-        audio_bytes = local_path.read_bytes()
-    else:
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            audio_resp = await client.get(audio_url)
+    async with get_whisper_pool().acquire():
+        local_path = resolve_local_path(audio_url)
+        if local_path is not None:
+            audio_bytes = local_path.read_bytes()
+        else:
+            client = get_http_client()
+            audio_resp = await client.get(audio_url, timeout=120.0)
             audio_resp.raise_for_status()
             audio_bytes = audio_resp.content
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
+        client = get_http_client()
         resp = await client.post(
             "https://api.groq.com/openai/v1/audio/transcriptions",
             headers={"Authorization": f"Bearer {settings.groq_api_key}"},
             files={"file": ("audio.webm", audio_bytes, "audio/webm")},
             data={"model": "whisper-large-v3", "response_format": "verbose_json"},
+            timeout=120.0,
         )
         resp.raise_for_status()
 
-    data = resp.json()
-    detected_lang = data.get("language", "english").lower()
-    transcript_text = data.get("text", "").strip()
+        data = resp.json()
+        detected_lang = data.get("language", "english").lower()
+        transcript_text = data.get("text", "").strip()
 
-    logger.info("Whisper detected language: %s", detected_lang)
+        logger.info("Whisper detected language: %s", detected_lang)
 
-    if detected_lang != "english":
-        raise NonEnglishError(
-            f"Please record your response in English. "
-            f"Detected language: {detected_lang}."
-        )
+        if detected_lang != "english":
+            raise NonEnglishError(
+                f"Please record your response in English. "
+                f"Detected language: {detected_lang}."
+            )
 
-    return transcript_text
+        return transcript_text
 
 
 async def transcribe_audio_bytes(
@@ -535,46 +869,47 @@ async def transcribe_audio_bytes(
     max_attempts = 3
     last_exc: httpx.HTTPStatusError | None = None
 
-    for attempt in range(max_attempts):
-        resp = await client.post(
-            "https://api.groq.com/openai/v1/audio/transcriptions",
-            headers={"Authorization": f"Bearer {settings.groq_api_key}"},
-            files={"file": (filename, audio_bytes, mime)},
-            data={
-                "model": "whisper-large-v3",
-                "response_format": "json",
-                "language": "en",
-            },
-            timeout=120.0,
-        )
-        if resp.status_code >= 400:
-            logger.error(
-                "Groq transcription failed (%s): %s",
-                resp.status_code,
-                resp.text[:500],
+    async with get_whisper_pool().acquire():
+        for attempt in range(max_attempts):
+            resp = await client.post(
+                "https://api.groq.com/openai/v1/audio/transcriptions",
+                headers={"Authorization": f"Bearer {settings.groq_api_key}"},
+                files={"file": (filename, audio_bytes, mime)},
+                data={
+                    "model": "whisper-large-v3",
+                    "response_format": "json",
+                    "language": "en",
+                },
+                timeout=120.0,
             )
-        if resp.status_code in (429, 500, 502, 503, 504) and attempt < max_attempts - 1:
-            wait = min(2 ** attempt, 8)
-            logger.warning(
-                "Groq transcription %s — retry in %ds (attempt %d/%d)",
-                resp.status_code,
-                wait,
-                attempt + 1,
-                max_attempts,
+            if resp.status_code >= 400:
+                logger.error(
+                    "Groq transcription failed (%s): %s",
+                    resp.status_code,
+                    resp.text[:500],
+                )
+            if resp.status_code in (429, 500, 502, 503, 504) and attempt < max_attempts - 1:
+                wait = min(2 ** attempt, 8)
+                logger.warning(
+                    "Groq transcription %s — retry in %ds (attempt %d/%d)",
+                    resp.status_code,
+                    wait,
+                    attempt + 1,
+                    max_attempts,
+                )
+                await asyncio.sleep(wait)
+                continue
+            try:
+                resp.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                last_exc = exc
+                raise
+            data = resp.json()
+            logger.info(
+                "Whisper (lenient) transcript length: %d chars",
+                len(data.get("text", "")),
             )
-            await asyncio.sleep(wait)
-            continue
-        try:
-            resp.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            last_exc = exc
-            raise
-        data = resp.json()
-        logger.info(
-            "Whisper (lenient) transcript length: %d chars",
-            len(data.get("text", "")),
-        )
-        return data.get("text", "").strip()
+            return data.get("text", "").strip()
 
     raise last_exc or RuntimeError("Groq transcription failed")
 
@@ -640,6 +975,12 @@ async def evaluate_speaking(transcript: str, questions: list[str] | None = None)
     full_prompt = SPEAKING_PROMPT.format(transcript=transcript, questions=questions_text)
     result = await _call_gemini(full_prompt)
     result["transcript"] = transcript
+    _coerce_speaking_criteria_to_int(result)
+    if all(
+        isinstance(result.get(k), dict) and result[k].get("band") is not None
+        for k in _SCORE_CRITERION_KEYS
+    ):
+        _recompute_overall_band(result)
     return result
 
 
@@ -648,38 +989,28 @@ async def evaluate_speaking(transcript: str, questions: list[str] | None = None)
 # ---------------------------------------------------------------------------
 
 EXAMINER_SYSTEM_PROMPT = """\
-You are James Harrison, a professional IELTS Speaking examiner.
+You are James Harrison, an IELTS Speaking examiner.
 
-STRUCTURE — follow this exactly:
+Your role is LIMITED. The server tells you exactly what to do at each turn.
 
-PART 1 (Introduction, 4-5 questions):
-Ask simple personal questions one at a time. Topics: hometown, work/study, hobbies, daily routine, food preferences.
-After each answer, give a brief natural reaction ('Thank you', 'I see', 'Interesting') then ask the next question.
+When given a specific question to ask, ask it EXACTLY as provided.
+Do not rephrase or invent alternatives.
 
-PART 2 (Long Turn):
-Give exactly ONE cue card topic in this format:
-Describe [specific topic]. You should say:
-- [point 1]
-- [point 2]
-- [point 3]
-and explain [final point].
+When asked to give a reaction, provide a brief natural response only:
+'Thank you', 'I see', 'Alright', 'OK'. Nothing more.
 
-Do NOT say 'you have 1 minute to prepare' or 'please begin speaking' — the system handles timing.
-After the candidate finishes speaking, say 'Thank you' and move to Part 3.
+When the server explicitly asks you to generate a cue card or a Part 3
+question, generate it. Otherwise never invent content.
 
-PART 3 (Discussion, 3-4 questions):
-Ask abstract questions related to the Part 2 topic. These should require opinion and analysis.
+Never:
+- Add greetings or introductions (server handles this)
+- Invent questions not provided by the server
+- Explain the test structure to the candidate
+- Provide feedback or scores
 
-END:
-After Part 3, say exactly: 'That is the end of the speaking test. Thank you very much.'
-Then add the tag [END_OF_TEST] at the very end.
-
-RULES:
-- ONE question at a time, never multiple
-- Brief natural reactions between questions
-- Never give feedback or scores during the test
-- Add [PART:1], [PART:2], or [PART:3] tag at the end of each response
-- Respond ONLY with what the examiner says aloud, plus the tag"""
+Respond ONLY with what the examiner says aloud. When generating a cue card
+or question for the server-driven flow, add the appropriate [PART:2] or
+[PART:3] tag at the end."""
 
 
 async def _call_gemini_text(
@@ -753,8 +1084,9 @@ def _build_examiner_gemini_contents(
             "role": "user",
             "parts": [{
                 "text": (
-                    "Begin the IELTS Speaking test now. Greet the candidate "
-                    "and ask the first Part 1 question."
+                    "Continue the IELTS Speaking test. The candidate has just "
+                    "answered your last question. Ask the next appropriate "
+                    "question according to the current part of the test."
                 ),
             }],
         })
@@ -845,6 +1177,57 @@ async def generate_examiner_turn(
         raise
 
 
+async def generate_cue_card(topic_hint: str = "") -> str:
+    """Fallback: ask Gemini for a Part 2 cue card when none is authored."""
+    hint = topic_hint.strip() or "an everyday personal experience"
+    prompt = (
+        "Generate exactly ONE IELTS Speaking Part 2 cue card about "
+        f"{hint}. Use this format exactly:\n"
+        "Describe [specific topic]. You should say:\n"
+        "- [point 1]\n"
+        "- [point 2]\n"
+        "- [point 3]\n"
+        "and explain [final point].\n"
+        "Add [PART:2] tag at the end. Respond ONLY with the cue card text and tag."
+    )
+    contents = [{"role": "user", "parts": [{"text": prompt}]}]
+    try:
+        return await _call_gemini_text(
+            contents,
+            system_instruction=EXAMINER_SYSTEM_PROMPT,
+        )
+    except httpx.HTTPStatusError as exc:
+        status = exc.response.status_code
+        if status in (429, 503) and settings.groq_api_key:
+            logger.warning(
+                "Gemini %s for cue card — falling back to Groq LLM",
+                status,
+            )
+            return await _call_groq_examiner_turn(contents)
+        raise
+
+
+async def generate_part3_question(
+    conversation_history: list[dict],
+    *,
+    cue_topic: str = "",
+    question_index: int = 0,
+) -> str:
+    """Fallback: ask Gemini for one Part 3 discussion question."""
+    topic = cue_topic.strip() or "the Part 2 topic"
+    prompt = (
+        f"Ask Part 3 discussion question number {question_index + 1} "
+        f"related to: {topic}. "
+        "Require opinion and analysis. ONE question only. "
+        "Add [PART:3] tag at the end. Respond ONLY with the question and tag."
+    )
+    return await generate_examiner_turn(
+        conversation_history,
+        None,
+        prompt,
+    )
+
+
 _SCORE_CRITERION_KEYS = (
     "fluency_coherence",
     "lexical_resource",
@@ -855,6 +1238,33 @@ _SCORE_CRITERION_KEYS = (
 
 def _round_band(band: float) -> float:
     return round(band * 2) / 2
+
+
+def _coerce_speaking_criteria_to_int(result: dict) -> dict:
+    """IELTS: individual Speaking criteria are whole bands only (0-9).
+
+    Rounds any non-integer band to the nearest integer, clamps to 0-9,
+    and logs a warning for monitoring. Mutates and returns *result*.
+    """
+    for key in _SCORE_CRITERION_KEYS:
+        val = result.get(key)
+        if not isinstance(val, dict) or val.get("band") is None:
+            continue
+        try:
+            raw = float(val["band"])
+        except (TypeError, ValueError):
+            continue
+        rounded = max(0, min(9, int(round(raw))))
+        if rounded != raw:
+            logger.warning(
+                "Gemini returned non-integer Speaking criterion %s=%s; "
+                "rounded to %d",
+                key,
+                raw,
+                rounded,
+            )
+        val["band"] = rounded
+    return result
 
 
 def _recompute_overall_band(result: dict) -> dict:
@@ -879,4 +1289,5 @@ async def evaluate_speaking_dialog(conversation_history: list[dict]) -> dict:
     full_prompt = SPEAKING_PROMPT.format(questions=questions_text, transcript=transcript)
     result = await _call_gemini(full_prompt)
     result["transcript"] = transcript
+    _coerce_speaking_criteria_to_int(result)
     return _recompute_overall_band(result)

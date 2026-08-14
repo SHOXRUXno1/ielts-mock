@@ -21,3 +21,15 @@ class Test(UUIDPrimaryKey, TimestampMixin, Base):
 
     sections: Mapped[list["Section"]] = relationship(back_populates="test", order_by="Section.order", passive_deletes=True)
     attempts: Mapped[list["Attempt"]] = relationship(back_populates="test", passive_deletes=True)
+    section_settings: Mapped[list["TestSectionSettings"]] = relationship(
+        back_populates="test",
+        order_by="TestSectionSettings.section_type",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    practice_part_settings: Mapped[list["PracticePartSettings"]] = relationship(
+        back_populates="test",
+        order_by="(PracticePartSettings.section_type, PracticePartSettings.part_number)",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )

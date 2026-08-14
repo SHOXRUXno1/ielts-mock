@@ -27,7 +27,7 @@ class Settings(BaseSettings):
 
     # ── Gemini (LLM evaluation) ──────────────────────────
     gemini_api_keys: str = ""  # comma-separated list of API keys for rotation
-    gemini_model: str = "gemini-2.5-flash-lite"
+    gemini_model: str = "gemini-3.1-flash-lite"
     gemini_rpm_limit: int = 15  # requests per minute per key
 
     @property
@@ -37,15 +37,24 @@ class Settings(BaseSettings):
     # ── Groq Whisper (Speech-to-Text) ────────────────────
     groq_api_key: str = ""
     groq_examiner_model: str = "llama-3.3-70b-versatile"
+    whisper_max_concurrent: int = 8
 
     # ── ElevenLabs (Text-to-Speech) ─────────────────────
     elevenlabs_api_key: str = ""
     elevenlabs_voice_id: str = "onwK4e9ZLuTAKqWW03F9"  # Daniel, British
     elevenlabs_model_id: str = "eleven_turbo_v2"  # or eleven_flash_v2_5 for lower latency
+    elevenlabs_max_concurrent: int = 6
 
     # ── Simli (Video Avatar) ─────────────────────────────
     simli_api_key: str = ""
     simli_face_id: str = ""
+    # Soft cap under Simli Pro (10 concurrent). Extra students fall back to audio-only.
+    simli_max_concurrent: int = 8
+
+    # ── Evaluation worker ───────────────────────────────
+    worker_max_concurrent_jobs: int = 4
+    worker_job_max_retries: int = 3
+    worker_stuck_processing_minutes: int = 15
 
     # ── S3 (Timeweb) ────────────────────────────────────
     s3_endpoint_url: str = ""
@@ -59,3 +68,16 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+if not settings.debug:
+    _insecure: list[str] = []
+    if settings.secret_key == "change-me-in-production":
+        _insecure.append("SECRET_KEY is still the default value")
+    if settings.admin_password in ("changeme", "admin"):
+        _insecure.append("ADMIN_PASSWORD is still the default value")
+    if _insecure:
+        raise RuntimeError(
+            "Insecure configuration detected (DEBUG=false):\n  - "
+            + "\n  - ".join(_insecure)
+            + "\nSet proper values in .env before running in production."
+        )

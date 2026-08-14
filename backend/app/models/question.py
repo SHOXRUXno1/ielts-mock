@@ -23,16 +23,22 @@ class QuestionType(str, enum.Enum):
     YES_NO_NG = "yes_no_ng"
     SENTENCE_COMPLETION = "sentence_completion"
     SHORT_ANSWER = "short_answer"
+    TABLE_COMPLETION = "table_completion"
+    NOTE_COMPLETION = "note_completion"
+    FORM_COMPLETION = "form_completion"
+    SUMMARY_COMPLETION = "summary_completion"
+    FLOW_CHART_COMPLETION = "flow_chart_completion"
+    DIAGRAM_LABELING = "diagram_labeling"
 
 
 class Question(UUIDPrimaryKey, TimestampMixin, Base):
     __tablename__ = "questions"
 
     section_id: Mapped["uuid.UUID"] = mapped_column(UUID(as_uuid=True), ForeignKey("sections.id", ondelete="CASCADE"))
-    question_group_id: Mapped["uuid.UUID | None"] = mapped_column(
+    question_group_id: Mapped["uuid.UUID"] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("question_groups.id", ondelete="CASCADE"),
-        nullable=True,
+        nullable=False,
     )
     order: Mapped[int] = mapped_column(SmallInteger)
     question_type: Mapped[QuestionType] = mapped_column(String(50))
@@ -43,7 +49,9 @@ class Question(UUIDPrimaryKey, TimestampMixin, Base):
     task_number: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     min_words: Mapped[int | None] = mapped_column(Integer, nullable=True)
     image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Task 2 essay subtype (NULL for Task 1 and unspecified Task 2)
+    essay_type: Mapped[str | None] = mapped_column(String(30), nullable=True)
 
     section: Mapped["Section"] = relationship(back_populates="questions")
-    group: Mapped["QuestionGroup | None"] = relationship(back_populates="questions")  # type: ignore[name-defined]
+    group: Mapped["QuestionGroup"] = relationship(back_populates="questions")  # type: ignore[name-defined]
     answers: Mapped[list["Answer"]] = relationship(back_populates="question")

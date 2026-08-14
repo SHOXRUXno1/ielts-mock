@@ -1,0 +1,113 @@
+export const TARGET_SAMPLE_RATE = 16_000
+export const PCM_CHUNK_BYTES = 6000
+const YIELD_EVERY_CHUNKS = 4
+
+export function decodeBase64Bytes(base64: string): Uint8Array {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
+}
+
+export function floatToPcm16(samples: Float32Array): Uint8Array {
+  const pcm = new Uint8Array(samples.length * 2)
+  const view = new DataView(pcm.buffer)
+  for (let i = 0; i < samples.length; i++) {
+    const s = Math.max(-1, Math.min(1, samples[i] ?? 0))
+    view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true)
+  }
+  return pcm
+}
+
+export function resampleLinear(
+  channelData: Float32Array,
+  fromRate: number,
+  toRate: number,
+): Float32Array {
+  if (fromRate === toRate) return channelData
+  const ratio = fromRate / toRate
+  const newLength = Math.max(1, Math.round(channelData.length / ratio))
+  const samples = new Float32Array(newLength)
+  const last = channelData.length - 1
+  for (let i = 0; i < newLength; i++) {
+    const src = i * ratio
+    const i0 = Math.min(Math.floor(src), last)
+    const i1 = Math.min(i0 + 1, last)
+    const frac = src - i0
+    const a = channelData[i0] ?? 0
+    const b = channelData[i1] ?? 0
+    samples[i] = a + (b - a) * frac
+  }
+  return samples
+}
+
+export async function yieldToMain(): Promise<void> {
+  const sched = (
+    globalThis as typeof globalThis & {
+      scheduler?: { yield?: () => Promise<void> }
+    }
+  ).scheduler
+  if (typeof sched?.yield === 'function') {
+    await sched.yield()
+    return
+  }
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 0)
+  })
+}
+
+export async function forEachPcmChunk(
+  pcm: Uint8Array,
+  chunkBytes: number,
+  send: (chunk: Uint8Array, index: number) => void,
+): Promise<void> {
+  let index = 0
+  for (let offset = 0; offset < pcm.length; offset += chunkBytes) {
+    send(pcm.subarray(offset, offset + chunkBytes), index)
+    index += 1
+    if (index % YIELD_EVERY_CHUNKS === 0) {
+      await yieldToMain()
+    }
+  }
+}
+
+export async function mp3Base64ToPcm16(
+  base64: string,
+  audioContext: AudioContext,
+): Promise<{ pcm: Uint8Array; duration: number }> {
+  const bytes = decodeBase64Bytes(base64)
+  if (audioContext.state === 'suspended') {
+    await audioContext.resume()
+  }
+
+  const audioBuffer = await audioContext.decodeAudioData(bytes.buffer.slice(0))
+  const duration = audioBuffer.duration
+
+  if (typeof OfflineAudioContext === 'function') {
+    const frameCount = Math.max(1, Math.ceil(duration * TARGET_SAMPLE_RATE))
+    const offline = new OfflineAudioContext(1, frameCount, TARGET_SAMPLE_RATE)
+    const src = offline.createBufferSource()
+    src.buffer = audioBuffer
+    src.connect(offline.destination)
+    src.start()
+    const rendered = await offline.startRendering()
+    return { pcm: floatToPcm16(rendered.getChannelData(0)), duration }
+  }
+
+  return {
+    pcm: floatToPcm16(
+      resampleLinear(
+        audioBuffer.getChannelData(0),
+        audioBuffer.sampleRate,
+        TARGET_SAMPLE_RATE,
+      ),
+    ),
+    duration,
+  }
+}
+
+export function iceServersKey(servers?: RTCIceServer[] | null): string {
+  return servers?.length ? JSON.stringify(servers) : ''
+}

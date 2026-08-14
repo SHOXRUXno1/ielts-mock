@@ -24,9 +24,9 @@ export function SpeakingSessionShell({
 }: SpeakingSessionShellProps) {
   if (isActiveSession) {
     return (
-      <div className={cn('flex min-h-0 flex-1 flex-col', className)}>
+      <div className={cn('flex min-h-0 flex-1 flex-col items-center justify-center', className)}>
         {banner}
-        <div className='min-h-0 flex-1'>{stage}</div>
+        <div className='w-full max-w-6xl'>{stage}</div>
       </div>
     )
   }

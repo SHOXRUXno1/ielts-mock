@@ -51,6 +51,39 @@ describe('handleServerError', () => {
     expect(toastError).toHaveBeenCalledWith('Something went wrong!')
   })
 
+  it('shows FastAPI detail.errors from a 422 publish response', () => {
+    const error = new AxiosError('Unprocessable Entity')
+    error.response = {
+      status: 422,
+      data: {
+        detail: {
+          errors: [
+            'Reading has no questions.',
+            'Listening Part 2 must have exactly 10 questions, got 0.',
+          ],
+        },
+      },
+    } as AxiosError['response']
+
+    handleServerError(error)
+
+    expect(toastError).toHaveBeenCalledWith(
+      'Reading has no questions.\nListening Part 2 must have exactly 10 questions, got 0.',
+    )
+  })
+
+  it('shows FastAPI string detail when present', () => {
+    const error = new AxiosError('Bad request')
+    error.response = {
+      status: 400,
+      data: { detail: 'Only Academic tests are supported.' },
+    } as AxiosError['response']
+
+    handleServerError(error)
+
+    expect(toastError).toHaveBeenCalledWith('Only Academic tests are supported.')
+  })
+
   it('falls back to the generic message when Axios data.title is an empty string', () => {
     const error = new AxiosError('Bad request')
     error.response = {

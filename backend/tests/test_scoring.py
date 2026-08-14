@@ -17,6 +17,7 @@ import pytest
 from app.models.question import QuestionType
 from app.services.scoring import (
     check_answer,
+    compute_writing_band,
     correct_to_listening_band,
     correct_to_reading_band,
     score_answer,
@@ -185,8 +186,8 @@ class TestMatching:
 # ── MultiSelect ────────────────────────────────────────────────────────────────
 
 class TestMultiSelect:
-    """Each multi_select Question holds one correct letter; 1 mark if that
-    letter appears anywhere in the student's chosen list."""
+    """Scalar correct (legacy pair row): 1 mark if letter is in student list.
+    List correct: N marks with partial credit per hit."""
 
     def test_correct_letter_in_list(self):
         q = make_q(QuestionType.MULTI_SELECT, {"correct": "B"})
@@ -213,6 +214,58 @@ class TestMultiSelect:
         a = make_a(q, {"answer": ["a", "b"]})
         c, t = score_answer(q, a)
         assert c == 1
+
+    def test_list_full_match(self):
+        q = make_q(
+            QuestionType.MULTI_SELECT,
+            {"correct": ["A", "C"]},
+            {"options": ["alpha", "bravo", "charlie", "delta"]},
+        )
+        a = make_a(q, {"answer": ["A", "C"]})
+        c, t = score_answer(q, a)
+        assert (c, t) == (2, 2)
+        assert a.is_correct is True
+
+    def test_list_partial_credit(self):
+        q = make_q(
+            QuestionType.MULTI_SELECT,
+            {"correct": ["A", "C"]},
+            {"options": ["alpha", "bravo", "charlie", "delta"]},
+        )
+        a = make_a(q, {"answer": ["A", "B"]})
+        c, t = score_answer(q, a)
+        assert (c, t) == (1, 2)
+        assert a.score == 0.5
+
+    def test_list_none_correct(self):
+        q = make_q(QuestionType.MULTI_SELECT, {"correct": ["A", "C"]})
+        a = make_a(q, {"answer": ["B", "D"]})
+        c, t = score_answer(q, a)
+        assert (c, t) == (0, 2)
+
+    def test_list_letter_matches_option_text(self):
+        q = make_q(
+            QuestionType.MULTI_SELECT,
+            {"correct": ["alpha", "charlie"]},
+            {"options": ["alpha", "bravo", "charlie", "delta"]},
+        )
+        a = make_a(q, {"answer": ["A", "C"]})
+        c, t = score_answer(q, a)
+        assert (c, t) == (2, 2)
+
+    def test_scoring_slots(self):
+        from app.services.scoring import scoring_slots_for_question
+
+        assert scoring_slots_for_question(
+            make_q(QuestionType.MULTI_SELECT, {"correct": ["A", "C"]})
+        ) == 2
+        assert scoring_slots_for_question(
+            make_q(QuestionType.MULTI_SELECT, {"correct": "B"})
+        ) == 1
+        assert scoring_slots_for_question(
+            make_q(QuestionType.MULTI_SELECT, None, {"choose_n": 2})
+        ) == 2
+        assert scoring_slots_for_question(make_q(QuestionType.MCQ, {"correct": "A"})) == 1
 
 
 # ── score_section aggregation ──────────────────────────────────────────────────
@@ -264,26 +317,150 @@ class TestScoreSection:
         assert t == 40
         assert c == 40
 
+    def test_unanswered_count_toward_total(self):
+        """Missing answers must not inflate the score (e.g. orphan gaps)."""
+        questions = [
+            make_q(QuestionType.MCQ, {"correct": "A"}),
+            make_q(QuestionType.NOTE_COMPLETION, {"correct": ["gates"], "max_words": 1}),
+            make_q(QuestionType.NOTE_COMPLETION, {"correct": ["clamp"], "max_words": 1}),
+        ]
+        answers = [make_a(questions[0], {"answer": "A"})]
+        c, t = score_section(questions, answers)
+        assert c == 1
+        assert t == 3
+
 
 # ── Band conversion boundaries ─────────────────────────────────────────────────
 
 class TestBandTables:
     @pytest.mark.parametrize("raw, expected_band", [
-        (40, 9.0), (39, 8.5), (37, 8.0), (36, 7.5), (32, 7.0),
-        (30, 6.5), (26, 6.0), (23, 5.5), (18, 5.0), (0, 0.0),
+        (40, 9.0), (39, 9.0), (38, 8.5), (37, 8.5),
+        (36, 8.0), (35, 8.0), (34, 7.5), (32, 7.5),
+        (31, 7.0), (30, 7.0), (29, 6.5), (26, 6.5),
+        (25, 6.0), (23, 6.0), (22, 5.5), (18, 5.5),
+        (17, 5.0), (16, 5.0), (15, 4.5), (13, 4.5),
+        (12, 4.0), (11, 4.0), (10, 3.5), (8, 3.5),
+        (7, 3.0), (6, 3.0), (5, 2.5), (4, 2.5),
+        (3, 2.0), (2, 2.0), (1, 1.0), (0, 0.0),
     ])
     def test_listening_band(self, raw, expected_band):
         assert correct_to_listening_band(raw) == expected_band
 
     @pytest.mark.parametrize("raw, expected_band", [
-        (40, 9.0), (39, 8.5), (37, 8.0), (35, 7.5), (33, 7.0),
-        (30, 6.5), (27, 6.0), (23, 5.5), (19, 5.0), (0, 0.0),
+        (40, 9.0), (39, 9.0), (38, 8.5), (37, 8.5),
+        (36, 8.0), (35, 8.0), (34, 7.5), (33, 7.5),
+        (32, 7.0), (30, 7.0), (29, 6.5), (27, 6.5),
+        (26, 6.0), (23, 6.0), (22, 5.5), (19, 5.5),
+        (18, 5.0), (15, 5.0), (14, 4.5), (13, 4.5),
+        (12, 4.0), (10, 4.0), (9, 3.5), (8, 3.5),
+        (7, 3.0), (6, 3.0), (5, 2.5), (4, 2.5),
+        (3, 2.0), (2, 1.0), (1, 1.0), (0, 0.0),
     ])
     def test_reading_band(self, raw, expected_band):
         assert correct_to_reading_band(raw) == expected_band
 
-    def test_listening_40_is_band9(self):
-        assert correct_to_listening_band(40) == 9.0
 
-    def test_reading_40_is_band9(self):
-        assert correct_to_reading_band(40) == 9.0
+class TestComputeWritingBand:
+    def test_weighted_formula(self):
+        # (6.0*1 + 7.0*2) / 3 = 6.666... → round to nearest 0.5 → 6.5
+        assert compute_writing_band(6.0, 7.0) == 6.5
+
+    def test_equal_bands(self):
+        assert compute_writing_band(7.0, 7.0) == 7.0
+
+    def test_missing_task1(self):
+        assert compute_writing_band(None, 7.0) is None
+
+    def test_missing_task2(self):
+        assert compute_writing_band(6.0, None) is None
+
+    def test_both_missing(self):
+        assert compute_writing_band(None, None) is None
+
+    def test_rounds_to_half(self):
+        # (5.0*1 + 6.5*2) / 3 = 6.0 exactly
+        assert compute_writing_band(5.0, 6.5) == 6.0
+
+
+class TestAssignGroupsSlotNumbers:
+    """Section-wide Q numbers when each group reuses local order 1..n."""
+
+    def test_passage2_three_groups(self):
+        from app.services.scoring import assign_groups_slot_numbers
+
+        g1_qs = [
+            SimpleNamespace(
+                id=f"g1q{i}",
+                order=i,
+                question_type=QuestionType.MATCHING_INFORMATION,
+                content={},
+                answer_key={"correct": "A"},
+            )
+            for i in range(1, 6)
+        ]
+        g2_qs = [
+            SimpleNamespace(
+                id=f"g2q{i}",
+                order=i,
+                question_type=QuestionType.MATCHING_FEATURES,
+                content={},
+                answer_key={"correct": "A"},
+            )
+            for i in range(1, 6)
+        ]
+        g3_qs = [
+            SimpleNamespace(
+                id=f"g3q{i}",
+                order=i,
+                question_type=QuestionType.SUMMARY_COMPLETION,
+                content={},
+                answer_key={"correct": "word"},
+            )
+            for i in range(1, 4)
+        ]
+        groups = [
+            SimpleNamespace(id="g1", order=1, questions=g1_qs),
+            SimpleNamespace(id="g2", order=2, questions=g2_qs),
+            SimpleNamespace(id="g3", order=3, questions=g3_qs),
+        ]
+        # Passage 2 starts at Q14 → base_offset 13
+        ranges = assign_groups_slot_numbers(groups, base_offset=13)
+        assert ranges["g1q1"] == (14, 14)
+        assert ranges["g1q5"] == (18, 18)
+        assert ranges["g2q1"] == (19, 19)  # not 18!
+        assert ranges["g2q5"] == (23, 23)
+        assert ranges["g3q1"] == (24, 24)
+        assert ranges["g3q3"] == (26, 26)
+
+    def test_multi_select_spans_slots(self):
+        from app.services.scoring import assign_groups_slot_numbers
+
+        g1 = SimpleNamespace(
+            id="g1",
+            order=1,
+            questions=[
+                SimpleNamespace(
+                    id="ms1",
+                    order=1,
+                    question_type=QuestionType.MULTI_SELECT,
+                    content={"choose_n": 2},
+                    answer_key={"correct": ["A", "B"]},
+                ),
+            ],
+        )
+        g2 = SimpleNamespace(
+            id="g2",
+            order=2,
+            questions=[
+                SimpleNamespace(
+                    id="mcq1",
+                    order=1,
+                    question_type=QuestionType.MCQ,
+                    content={},
+                    answer_key={"correct": "A"},
+                ),
+            ],
+        )
+        ranges = assign_groups_slot_numbers([g1, g2], base_offset=0)
+        assert ranges["ms1"] == (1, 2)
+        assert ranges["mcq1"] == (3, 3)

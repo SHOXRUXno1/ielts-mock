@@ -1,12 +1,34 @@
-import { useEffect, useRef, useState } from 'react'
-import { AlertCircle, Pause, Play, Volume2 } from 'lucide-react'
+import { useState } from 'react'
+import { AlertCircle, Headphones, HelpCircle } from 'lucide-react'
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable'
+import { useIsDesktop } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
-import { mediaUrl } from '@/lib/api/attempts'
-import type { Question, QuestionGroup, Section } from '../../data/schema'
+import { ListeningAudioPlayer } from './listening-audio-player'
+import { highlightCaps, InstructionBlock } from './shared/instruction-block'
+import { QuestionRangeTitle } from './shared/question-range-title'
+import { PassageHighlighter } from './shared/passage-highlighter'
+import {
+  asCompoundStructure,
+  isCompoundType,
+  type CompoundStructure,
+} from '../../data/compound'
+import {
+  withDisplayOrders,
+  normaliseQuestionType,
+  type Question,
+  type QuestionGroup,
+  type Section,
+} from '../../data/schema'
+import { CompoundCompletionRenderer } from './compound-completion-renderer'
 import {
   CompoundMatchingDropdown,
   CompoundMultiSelectPair,
   CompoundTableCompletion,
+  MapLabelingRenderer,
   MatchingLetterRenderer,
   NoteCompletionCard,
   QuestionRendererWithFlag,
@@ -20,7 +42,12 @@ type RenderGroup = {
   type: string
   questions: Question[]
   instruction?: string
+  subtitle?: string | null
   options?: string[]
+  structure?: CompoundStructure
+  questionsHeading?: string
+  optionsHeading?: string
+  imageUrl?: string
 }
 
 // ── Legacy runtime-grouping (fallback when no question_group_id) ──────────────
@@ -32,7 +59,7 @@ const LISTENING_INSTRUCTIONS: Record<string, string> = {
   gap_fill:
     'Complete the notes below. Write ONE WORD AND/OR A NUMBER for each answer.',
   matching: 'Match each statement with the correct option.',
-  map_labeling: 'Label the map below. Choose ONE WORD ONLY from the recording.',
+  map_labeling: 'Label the map below. Choose the correct letter, A-I.',
   table: 'Complete the table below. Write ONE WORD AND/OR A NUMBER for each answer.',
   notes_card: 'Complete the notes below. Write ONE WORD ONLY for each answer.',
   matching_dropdown: '',
@@ -124,6 +151,19 @@ function buildRenderGroups(apiGroups: QuestionGroup[], questions: Question[]): R
     const groupQs = [...group.questions].sort((a, b) => a.order - b.order)
     if (groupQs.length === 0) continue
 
+    const qType = normaliseQuestionType(group.question_type)
+    const compoundStructure = asCompoundStructure(group.options_shared)
+    if (isCompoundType(qType) && compoundStructure) {
+      result.push({
+        type: 'compound',
+        questions: groupQs,
+        instruction: group.instruction || undefined,
+        subtitle: group.subtitle,
+        structure: compoundStructure,
+      })
+      continue
+    }
+
     const firstMatchingId = groupQs[0].content?.matching_id as string | undefined
     const firstPairId = groupQs[0].content?.pair_id as string | undefined
     const firstTableId = groupQs[0].content?.table_id as string | undefined
@@ -134,73 +174,126 @@ function buildRenderGroups(apiGroups: QuestionGroup[], questions: Question[]): R
       : undefined
 
     if (firstMatchingId) {
-      result.push({ type: 'matching_dropdown', questions: groupQs })
+      result.push({
+        type: 'matching_dropdown',
+        questions: groupQs,
+        subtitle: group.subtitle,
+      })
     } else if (firstPairId) {
-      result.push({ type: 'multi_select_pair', questions: groupQs })
+      result.push({
+        type: 'multi_select_pair',
+        questions: groupQs,
+        subtitle: group.subtitle,
+      })
     } else if (firstTableId) {
-      result.push({ type: 'table', questions: groupQs })
+      result.push({ type: 'table', questions: groupQs, subtitle: group.subtitle })
     } else if (firstNotesId) {
-      result.push({ type: 'notes_card', questions: groupQs })
+      result.push({ type: 'notes_card', questions: groupQs, subtitle: group.subtitle })
     } else if (
       group.question_type === 'matching_information' ||
       group.question_type === 'matching_features'
     ) {
       const instruction = group.instruction || ''
-      result.push({ type: group.question_type, questions: groupQs, instruction, options: opts ?? [] })
+      const qHeading = (group.options_shared as { questions_heading?: string } | null)?.questions_heading
+      result.push({
+        type: group.question_type,
+        questions: groupQs,
+        instruction,
+        subtitle: group.subtitle,
+        options: opts ?? [],
+        questionsHeading: qHeading || undefined,
+      })
+    } else if (group.question_type === 'map_labeling') {
+      const instruction = group.instruction || LISTENING_INSTRUCTIONS.map_labeling || ''
+      const imgUrl =
+        (group.options_shared as { image_url?: string } | null)?.image_url ||
+        (groupQs[0]?.content?.image_url as string | undefined) ||
+        groupQs[0]?.image_url
+      result.push({
+        type: 'map_labeling',
+        questions: groupQs,
+        instruction,
+        subtitle: group.subtitle,
+        options: opts ?? [],
+        imageUrl: imgUrl || undefined,
+      })
     } else {
       const instruction = group.instruction ||
         (groupQs[0]?.content?.instruction as string | undefined) ||
         LISTENING_INSTRUCTIONS[group.question_type] ||
         ''
-      result.push({ type: group.question_type, questions: groupQs, instruction, options: opts })
+      const optHead = (group.options_shared as { options_heading?: string } | null)?.options_heading
+      result.push({
+        type: group.question_type,
+        questions: groupQs,
+        instruction,
+        subtitle: group.subtitle,
+        options: opts,
+        optionsHeading: optHead || undefined,
+      })
     }
   }
 
-  // Handle orphan questions (no question_group_id set)
-  const groupedIds = new Set(apiGroups.flatMap((g) => g.questions.map((q) => q.id)))
-  const orphans = questions.filter((q) => !groupedIds.has(q.id)).sort((a, b) => a.order - b.order)
-  if (orphans.length > 0) {
-    result.push(...groupQuestionsLegacy(orphans))
-  }
-
+  // Orphans (question_group_id null / missing from groups) are data bugs.
+  // Never surface them in the student take UI — they create ghost rows and
+  // skew IELTS numbering.
   return result
 }
 
 // ── Group header ──────────────────────────────────────────────────────────────
 
 function ListeningGroupHeader({ group }: { group: RenderGroup }) {
-  const orders = group.questions.map((q) => q.order)
-  const minQ = Math.min(...orders)
-  const maxQ = Math.max(...orders)
-  const rangeLabel = minQ === maxQ ? `Question ${minQ}` : `Questions ${minQ}–${maxQ}`
+  const starts = group.questions.map((q) => q.order)
+  const ends = group.questions.map((q) => {
+    const e = q.content?.display_slot_end
+    return typeof e === 'number' ? e : q.order
+  })
+  const minQ = Math.min(...starts)
+  const maxQ = Math.max(...ends)
 
-  const COMPOUND_TYPES = new Set([
-    'notes_card', 'table', 'matching_dropdown', 'multi_select_pair',
-    'matching_information', 'matching_features',
-  ])
-  const rawInstruction = COMPOUND_TYPES.has(group.type) ? '' : (group.instruction ?? '')
-  const sectionTitle = (group.questions[0]?.content?.section_title as string | undefined) ?? ''
+  // Show group.instruction for new-model compound groups; suppress only legacy compound cards
+  // that embed instruction inside notes/table content.
+  const rawInstruction =
+    group.type === 'notes_card' || group.type === 'table'
+      ? ''
+      : (group.instruction ?? '')
+  const subtitle = group.subtitle?.trim() || ''
+  // Legacy per-question section_title (prefer group.subtitle when set)
+  const sectionTitle =
+    subtitle ||
+    ((group.questions[0]?.content?.section_title as string | undefined) ?? '')
 
   return (
     <div className='mb-4'>
-      <p className='text-[13px] font-bold text-[#111827]'>{rangeLabel}</p>
-      {rawInstruction &&
-        rawInstruction.split('\n').map((line, i) => (
-          <p key={i} className='mt-0.5 text-[13px] text-[#6b7280]'>
-            {line}
-          </p>
-        ))}
-      {sectionTitle && (
-        <p className='mt-2 text-center text-[15px] font-bold text-slate-900'>
+      <QuestionRangeTitle min={minQ} max={maxQ} />
+      {rawInstruction && (
+        <InstructionBlock className='mt-2'>
+          {rawInstruction.split('\n').map((line, i) => (
+            <p key={i} className={i > 0 ? 'mt-1' : ''}>
+              {highlightCaps(line)}
+            </p>
+          ))}
+        </InstructionBlock>
+      )}
+      {sectionTitle &&
+        group.type !== 'matching_information' &&
+        group.type !== 'matching_features' &&
+        group.type !== 'matching' &&
+        group.type !== 'map_labeling' && (
+        <p className='mt-4 mb-5 text-center text-base font-bold text-foreground'>
           {sectionTitle}
         </p>
       )}
-      {group.options && group.options.length > 0 && (
+      {group.options && group.options.length > 0 &&
+        group.type !== 'matching_information' &&
+        group.type !== 'matching_features' &&
+        group.type !== 'matching' &&
+        group.type !== 'map_labeling' && (
         <div className='mt-3 flex flex-wrap gap-1.5'>
           {group.options.map((opt, i) => (
             <span
               key={i}
-              className='rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[12px] text-slate-700'
+              className='rounded border border-border bg-muted px-2 py-0.5 text-[12px] text-foreground'
             >
               {opt}
             </span>
@@ -218,140 +311,25 @@ type Props = {
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
   /** Index of the active part (0-based), controlled from outside */
   activePart?: number
-  /** All listening sections for the part switcher (Part 1/2/3/4 tabs) */
+  /**
+   * When the shell has already scoped to a single practice part, force the
+   * visible "Part N" label (avoids legacy content.part fallback showing Part 1).
+   */
+  partNumberOverride?: number
+  /** All listening sections — used to resolve the visible Part number. */
   allSections?: Section[]
-  /** Callback to switch to a different listening section/part */
-  onSwitchSection?: (sectionId: string) => void
   /** Show audioscript — only in review/admin mode, hidden during live test */
   reviewMode?: boolean
   flagged?: Set<string>
   onToggleFlag?: (id: string) => void
+  previewMode?: boolean
+  attemptId?: string | null
 }
 
 function getPartNumber(q: Question): number {
   const p = q.content.part
   if (typeof p === 'number') return p
   return 1
-}
-
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-  const s = Math.floor(seconds % 60)
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
-// ── Custom audio player ──────────────────────────────────────────────────────
-
-function AudioPlayer({ src }: { src: string }) {
-  const audioRef = useRef<HTMLAudioElement>(null)
-  const [hasPlayed, setHasPlayed] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(1)
-
-  useEffect(() => {
-    const el = audioRef.current
-    if (!el) return
-    const onLoaded = () => setDuration(el.duration || 0)
-    const onTime = () => setCurrentTime(el.currentTime)
-    const onEnded = () => { setIsPlaying(false); setHasPlayed(true) }
-    const onPause = () => setIsPlaying(false)
-    const onPlay = () => setIsPlaying(true)
-    el.addEventListener('loadedmetadata', onLoaded)
-    el.addEventListener('timeupdate', onTime)
-    el.addEventListener('ended', onEnded)
-    el.addEventListener('pause', onPause)
-    el.addEventListener('play', onPlay)
-    return () => {
-      el.removeEventListener('loadedmetadata', onLoaded)
-      el.removeEventListener('timeupdate', onTime)
-      el.removeEventListener('ended', onEnded)
-      el.removeEventListener('pause', onPause)
-      el.removeEventListener('play', onPlay)
-    }
-  }, [])
-
-  const togglePlay = () => {
-    const el = audioRef.current
-    if (!el || hasPlayed) return
-    if (isPlaying) {
-      el.pause()
-    } else {
-      el.play()
-    }
-  }
-
-  const handleVolume = (v: number) => {
-    setVolume(v)
-    if (audioRef.current) audioRef.current.volume = v
-  }
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
-
-  return (
-    <div className='rounded-xl border border-slate-200 bg-white p-5'>
-      <audio ref={audioRef} src={src} preload='metadata' />
-
-      <div className='flex items-center gap-4'>
-        {/* Play / Pause */}
-        <button
-          type='button'
-          onClick={togglePlay}
-          disabled={hasPlayed}
-          title={hasPlayed ? 'Audio already played' : isPlaying ? 'Pause' : 'Play'}
-          className={cn(
-            'flex size-10 shrink-0 items-center justify-center rounded-full transition-colors',
-            hasPlayed
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-              : 'bg-slate-900 text-white hover:bg-slate-700',
-          )}
-        >
-          {isPlaying ? (
-            <Pause className='size-4' />
-          ) : (
-            <Play className='size-4 translate-x-0.5' />
-          )}
-        </button>
-
-        <div className='flex flex-1 flex-col gap-1.5'>
-          {/* Progress bar */}
-          <div className='relative h-1.5 w-full overflow-hidden rounded-full bg-slate-200'>
-            <div
-              className='h-full rounded-full bg-slate-900 transition-all'
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          {/* Times */}
-          <div className='flex justify-between text-xs text-slate-400'>
-            <span>{formatTime(currentTime)}</span>
-            <span>{duration > 0 ? formatTime(duration) : '--:--'}</span>
-          </div>
-        </div>
-
-        {/* Volume */}
-        <div className='flex items-center gap-1.5'>
-          <Volume2 className='size-4 shrink-0 text-slate-400' />
-          <input
-            type='range'
-            min={0}
-            max={1}
-            step={0.05}
-            value={volume}
-            onChange={(e) => handleVolume(Number(e.target.value))}
-            className='w-16 accent-slate-800'
-          />
-        </div>
-      </div>
-
-      {hasPlayed && (
-        <p className='mt-3 text-xs text-amber-600'>
-          Audio has been played. You cannot replay it in a real exam.
-        </p>
-      )}
-    </div>
-  )
 }
 
 // ── Main section ─────────────────────────────────────────────────────────────
@@ -362,31 +340,62 @@ export function ListeningSection({
   answers,
   onAnswer,
   activePart,
+  partNumberOverride,
   allSections,
-  onSwitchSection,
   reviewMode = false,
   flagged,
   onToggleFlag,
+  previewMode = false,
+  attemptId = null,
 }: Props) {
-  const sortedQuestions = [...questions].sort((a, b) => a.order - b.order)
+  // Multi-section mode: each IELTS Part is its own Section row (preferred).
+  // Legacy mode: one section with questions tagged via content.part.
+  const multiSectionMode = Boolean(allSections && allSections.length > 1)
+
+  // Single source of truth for the visible part: the section currently rendered.
+  const activePartIndex = multiSectionMode
+    ? Math.max(0, allSections!.findIndex((s) => s.id === section.id))
+    : (activePart ?? 0)
+  const displayPartNumber = multiSectionMode
+    ? activePartIndex + 1
+    : undefined
+
+  // IELTS Listening: show Q11–Q20 in Part 2, etc.
+  const displayQuestions = withDisplayOrders(section, questions)
+  const remappedById = new Map(displayQuestions.map((q) => [q.id, q]))
+  const displaySection: Section = {
+    ...section,
+    question_groups: (section.question_groups ?? []).map((g) => ({
+      ...g,
+      questions: g.questions
+        .map((q) => remappedById.get(q.id) ?? q)
+        .sort((a, b) => a.order - b.order),
+    })),
+  }
+
+  const sortedQuestions = [...displayQuestions].sort((a, b) => a.order - b.order)
 
   const parts = Array.from(
     new Set(sortedQuestions.map(getPartNumber)),
   ).sort((a, b) => a - b)
 
-  // If caller controls activePart (0-based index), convert to part number
-  const activePartNumber =
+  // Legacy single-section: filter by content.part using activePart index.
+  // Multi-section: the parent already swapped `section`/`questions` — show all.
+  const legacyPartNumber =
     activePart !== undefined && parts.length > 0
       ? (parts[activePart] ?? parts[0])
       : (parts[0] ?? 1)
 
+  const activePartNumber =
+    partNumberOverride ?? displayPartNumber ?? legacyPartNumber
+
   const visibleQuestions =
-    parts.length > 1
+    !multiSectionMode && parts.length > 1
       ? sortedQuestions.filter((q) => getPartNumber(q) === activePartNumber)
       : sortedQuestions
 
   // Build render groups: prefer section.question_groups, fallback to runtime grouping
-  const apiGroups = section.question_groups ?? []
+  const apiGroups = displaySection.question_groups ?? []
   // Filter API groups whose questions are in the visible set
   const visibleIds = new Set(visibleQuestions.map((q) => q.id))
   const visibleApiGroups = apiGroups.filter((g) =>
@@ -398,173 +407,264 @@ export function ListeningSection({
 
   const renderGroups = buildRenderGroups(visibleApiGroups, visibleQuestions)
 
-  return (
-    <div className='flex h-full'>
-      {/* ── Left 50%: audio + audioscript ───────────────────────────── */}
-      <div className='w-1/2 overflow-y-auto bg-white px-8 py-8'>
-        {/* Part switcher tabs — only shown when multiple listening sections exist */}
-        {allSections && allSections.length > 1 && onSwitchSection && (
-          <div className='mb-6 flex gap-2'>
-            {allSections.map((s, i) => {
-              const isActive = s.id === section.id
-              return (
-                <button
-                  key={s.id}
-                  type='button'
-                  onClick={() => onSwitchSection(s.id)}
-                  className={cn(
-                    'min-w-[52px] rounded-md border px-4 py-1.5 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'border-slate-900 bg-slate-900 text-white'
-                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
-                  )}
-                >
-                  Part {i + 1}
-                </button>
-              )
-            })}
+  const [mobileTab, setMobileTab] = useState<'audio' | 'questions'>('audio')
+  const isDesktop = useIsDesktop()
+
+  const audioContent = (
+    <>
+      <h2 className='mb-6 text-lg font-medium text-slate-900'>
+        Part {activePartNumber}
+      </h2>
+
+      {section.audio_url ? (
+        <ListeningAudioPlayer section={section} partNumber={activePartNumber} />
+      ) : (
+        <div className='flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600'>
+          <AlertCircle className='size-4 shrink-0' />
+          No audio file has been uploaded for this section.
+        </div>
+      )}
+
+      {section.audioscript && reviewMode && (
+        <details className='mt-6 rounded-lg border border-slate-200'>
+          <summary className='cursor-pointer select-none px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50'>
+            Audioscript
+          </summary>
+          <div
+            className='px-4 pb-4 pt-2 text-[14px] leading-relaxed text-slate-700'
+            style={{ fontFamily: 'Georgia, serif' }}
+          >
+            {section.audioscript}
           </div>
-        )}
+        </details>
+      )}
+    </>
+  )
 
-        {/* PART heading */}
-        <h2
-          style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.3px' }}
-          className='mb-6 uppercase text-slate-900'
-        >
-          Part {activePartNumber}
-        </h2>
-
-        {section.audio_url ? (
-          <AudioPlayer src={mediaUrl(section.audio_url)} />
-        ) : (
-          <div className='flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600'>
-            <AlertCircle className='size-4 shrink-0' />
-            No audio file has been uploaded for this section.
-          </div>
-        )}
-
-        {/* Audioscript — only visible in review/admin mode, never during the test */}
-        {section.passage && reviewMode && (
-          <details className='mt-6 rounded-lg border border-slate-200'>
-            <summary className='cursor-pointer select-none px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50'>
-              Audioscript
-            </summary>
+  const questionsContent = (
+    <>
+      {visibleQuestions.length === 0 ? (
+        <p className='text-sm text-slate-400'>
+          No questions added to this section yet.
+        </p>
+      ) : (
+        <div>
+          {renderGroups.map((group, gi) => (
             <div
-              className='px-4 pb-4 pt-2 text-[14px] leading-relaxed text-slate-700'
-              style={{ fontFamily: 'Georgia, serif' }}
+              key={gi}
+              className={gi > 0 ? 'mt-8 border-t border-border pt-6' : ''}
             >
-              {section.passage}
+              <ListeningGroupHeader group={group} />
+
+              {group.type === 'compound' && group.structure && (
+                <CompoundCompletionRenderer
+                  structure={group.structure}
+                  questions={group.questions}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type === 'matching_dropdown' && (
+                <CompoundMatchingDropdown
+                  questions={group.questions}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type === 'multi_select_pair' && (
+                <CompoundMultiSelectPair
+                  questions={group.questions}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type === 'table' && (
+                <CompoundTableCompletion
+                  table={group.questions[0].content.table as TableSpec}
+                  questions={group.questions}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                />
+              )}
+
+              {group.type === 'notes_card' && (
+                <NoteCompletionCard
+                  notes={group.questions[0].content.notes as NotesSpec}
+                  questions={group.questions}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                />
+              )}
+
+              {group.type === 'matching_information' && (
+                <MatchingLetterRenderer
+                  questions={group.questions}
+                  options={group.options ?? []}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  listTitle={group.subtitle || 'List of Sections'}
+                  questionsTitle={group.questionsHeading}
+                  repeatable
+                  showOptionsList={false}
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type === 'matching_features' && (
+                <MatchingLetterRenderer
+                  questions={group.questions}
+                  options={group.options ?? []}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  listTitle={group.subtitle || 'List of People / Places'}
+                  questionsTitle={group.questionsHeading}
+                  repeatable={false}
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type === 'matching' && (
+                <MatchingLetterRenderer
+                  questions={group.questions}
+                  options={group.options ?? []}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  listTitle={group.optionsHeading || 'Options'}
+                  questionsTitle={group.subtitle || undefined}
+                  repeatable
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type === 'map_labeling' && (
+                <MapLabelingRenderer
+                  questions={group.questions}
+                  options={group.options ?? []}
+                  imageUrl={group.imageUrl}
+                  answers={answers}
+                  onAnswer={onAnswer}
+                  previewMode={previewMode}
+                />
+              )}
+
+              {group.type !== 'compound' &&
+                group.type !== 'table' &&
+                group.type !== 'notes_card' &&
+                group.type !== 'matching_dropdown' &&
+                group.type !== 'multi_select_pair' &&
+                group.type !== 'matching_information' &&
+                group.type !== 'matching_features' &&
+                group.type !== 'matching' &&
+                group.type !== 'map_labeling' && (
+                <div className='space-y-6'>
+                  {group.questions.map((q) => (
+                    <div key={q.id}>
+                      <QuestionRendererWithFlag
+                        question={q}
+                        answer={answers[q.id] ?? {}}
+                        onAnswer={(resp) => onAnswer(q.id, resp)}
+                        flagged={flagged?.has(q.id)}
+                        onToggleFlag={
+                          onToggleFlag ? () => onToggleFlag(q.id) : undefined
+                        }
+                        previewMode={previewMode}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </details>
+          ))}
+        </div>
+      )}
+    </>
+  )
+
+  if (!isDesktop) {
+    return (
+      <div className='flex h-full flex-col'>
+        <div className='flex border-b border-slate-200'>
+          <button
+            type='button'
+            onClick={() => setMobileTab('audio')}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[13px] font-medium transition-colors',
+              mobileTab === 'audio'
+                ? 'border-b-2 border-blue-600 text-blue-600'
+                : 'text-slate-500 hover:text-slate-700',
+            )}
+          >
+            <Headphones className='size-3.5' />
+            Audio
+          </button>
+          <button
+            type='button'
+            onClick={() => setMobileTab('questions')}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[13px] font-medium transition-colors',
+              mobileTab === 'questions'
+                ? 'border-b-2 border-blue-600 text-blue-600'
+                : 'text-slate-500 hover:text-slate-700',
+            )}
+          >
+            <HelpCircle className='size-3.5' />
+            Questions
+          </button>
+        </div>
+        {mobileTab === 'audio' && (
+          <div className='min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6'>
+            {audioContent}
+          </div>
         )}
-      </div>
-
-      {/* ── Right 50%: questions ─────────────────────────────────────── */}
-      <div className='w-1/2 overflow-y-auto border-l border-slate-200 bg-white px-8 py-8 pb-24'>
-        {visibleQuestions.length === 0 ? (
-          <p className='text-sm text-slate-400'>
-            No questions added to this section yet.
-          </p>
-        ) : (
-          <div>
-            {renderGroups.map((group, gi) => (
-              <div
-                key={gi}
-                className={gi > 0 ? 'mt-8 border-t border-slate-200 pt-6' : ''}
+        {mobileTab === 'questions' && (
+          <div className='min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6 pb-24'>
+            {section?.id ? (
+              <PassageHighlighter
+                attemptId={attemptId}
+                sectionId={section.id}
+                storageKeySuffix='questions'
               >
-                <ListeningGroupHeader group={group} />
-
-                {/* ── Matching dropdown group ─────────────────── */}
-                {group.type === 'matching_dropdown' && (
-                  <CompoundMatchingDropdown
-                    questions={group.questions}
-                    answers={answers}
-                    onAnswer={onAnswer}
-                  />
-                )}
-
-                {/* ── Multi-select pair group ──────────────────── */}
-                {group.type === 'multi_select_pair' && (
-                  <CompoundMultiSelectPair
-                    questions={group.questions}
-                    answers={answers}
-                    onAnswer={onAnswer}
-                  />
-                )}
-
-                {/* ── Compound table group ─────────────────────── */}
-                {group.type === 'table' && (
-                  <CompoundTableCompletion
-                    table={group.questions[0].content.table as TableSpec}
-                    questions={group.questions}
-                    answers={answers}
-                    onAnswer={onAnswer}
-                  />
-                )}
-
-                {/* ── Compound notes-card group ────────────────── */}
-                {group.type === 'notes_card' && (
-                  <NoteCompletionCard
-                    notes={group.questions[0].content.notes as NotesSpec}
-                    questions={group.questions}
-                    answers={answers}
-                    onAnswer={onAnswer}
-                  />
-                )}
-
-                {/* ── Matching Information ──────────────────── */}
-                {group.type === 'matching_information' && (
-                  <MatchingLetterRenderer
-                    questions={group.questions}
-                    options={group.options ?? []}
-                    answers={answers}
-                    onAnswer={onAnswer}
-                    listTitle='List of Sections'
-                    repeatable
-                  />
-                )}
-
-                {/* ── Matching Features ─────────────────────── */}
-                {group.type === 'matching_features' && (
-                  <MatchingLetterRenderer
-                    questions={group.questions}
-                    options={group.options ?? []}
-                    answers={answers}
-                    onAnswer={onAnswer}
-                    listTitle='List of People / Places'
-                    repeatable={false}
-                  />
-                )}
-
-                {/* ── Standard per-question rendering ─────────── */}
-                {group.type !== 'table' &&
-                  group.type !== 'notes_card' &&
-                  group.type !== 'matching_dropdown' &&
-                  group.type !== 'multi_select_pair' &&
-                  group.type !== 'matching_information' &&
-                  group.type !== 'matching_features' && (
-                  <div className='space-y-6'>
-                    {group.questions.map((q) => (
-                      <div key={q.id}>
-                        <QuestionRendererWithFlag
-                          question={q}
-                          answer={answers[q.id] ?? {}}
-                          onAnswer={(resp) => onAnswer(q.id, resp)}
-                          flagged={flagged?.has(q.id)}
-                          onToggleFlag={
-                            onToggleFlag ? () => onToggleFlag(q.id) : undefined
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+                {questionsContent}
+              </PassageHighlighter>
+            ) : (
+              questionsContent
+            )}
           </div>
         )}
       </div>
-    </div>
+    )
+  }
+
+  return (
+    <ResizablePanelGroup orientation='horizontal' className='h-full'>
+      <ResizablePanel defaultSize='50%' minSize='25%'>
+        <div className='h-full overflow-y-auto overflow-x-hidden bg-white px-5 py-6 xl:px-8 xl:py-8'>
+          {audioContent}
+        </div>
+      </ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel defaultSize='50%' minSize='25%'>
+        <div className='h-full overflow-y-auto overflow-x-hidden bg-white px-5 py-6 pb-24 xl:px-8 xl:py-8'>
+          {section?.id ? (
+            <PassageHighlighter
+              attemptId={attemptId}
+              sectionId={section.id}
+              storageKeySuffix='questions'
+            >
+              {questionsContent}
+            </PassageHighlighter>
+          ) : (
+            questionsContent
+          )}
+        </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   )
 }
 

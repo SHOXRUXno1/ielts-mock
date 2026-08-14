@@ -29,11 +29,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { type Section } from '../data/schema'
 
 const formSchema = z.object({
-  duration_minutes: z
-    .number()
-    .int()
-    .min(1, 'Must be at least 1 minute.')
-    .max(180, 'Must be 180 minutes or less.'),
   audio_url: z.string().optional(),
   passage: z.string().optional(),
 })
@@ -60,7 +55,6 @@ export function SectionEditDialog({
   const form = useForm<SectionForm>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      duration_minutes: 30,
       audio_url: '',
       passage: '',
     },
@@ -69,7 +63,6 @@ export function SectionEditDialog({
   useEffect(() => {
     if (open && section) {
       form.reset({
-        duration_minutes: section.duration_minutes,
         audio_url: section.audio_url ?? '',
         passage: section.passage ?? '',
       })
@@ -80,7 +73,6 @@ export function SectionEditDialog({
     mutationFn: (values: SectionForm) => {
       if (!section) throw new Error('No section')
       return updateSection(section.id, {
-        duration_minutes: values.duration_minutes,
         audio_url: values.audio_url?.trim() || null,
         passage: isReading ? (values.passage?.trim() || null) : undefined,
       })
@@ -100,9 +92,10 @@ export function SectionEditDialog({
             Edit {section?.type ?? 'section'}
           </DialogTitle>
           <DialogDescription>
-            Update the section settings
+            Update the section content
             {isListening ? ' and audio URL' : ''}
-            {isReading ? ' and passage text' : ''}.
+            {isReading ? ' and passage text' : ''}. Timing is set per section
+            type in the test editor.
           </DialogDescription>
         </DialogHeader>
 
@@ -112,29 +105,6 @@ export function SectionEditDialog({
             onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
             className='grid gap-4'
           >
-            <FormField
-              control={form.control}
-              name='duration_minutes'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Duration (minutes)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='number'
-                      min={1}
-                      max={180}
-                      value={field.value ?? ''}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value === '' ? undefined : e.target.valueAsNumber
-                        )
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name='audio_url'

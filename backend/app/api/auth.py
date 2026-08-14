@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,17 +8,33 @@ from app.core.database import get_db
 from app.core.security import create_access_token, verify_password
 from app.models.user import User
 from app.schemas.auth import LoginBody, LoginResponse, MeResponse, TokenUser
+from app.services.admin_sessions import end_session, start_session
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(body: LoginBody, db: AsyncSession = Depends(get_db)):
+async def login(
+    body: LoginBody,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
     # 1. Check .env admin first
     if body.login == settings.admin_login and body.password == settings.admin_password:
+        sid = await start_session(
+            db,
+            login=settings.admin_login,
+            name=settings.admin_name,
+            user_id=None,
+            request=request,
+        )
         token = create_access_token(
             subject=settings.admin_login,
-            extra={"role": "admin", "login": settings.admin_login},
+            extra={
+                "role": "admin",
+                "login": settings.admin_login,
+                "sid": str(sid),
+            },
         )
         return LoginResponse(
             access_token=token,
@@ -41,10 +57,18 @@ async def login(body: LoginBody, db: AsyncSession = Depends(get_db)):
             detail="Invalid login or password",
         )
 
-    token = create_access_token(
-        subject=str(user.id),
-        extra={"role": user.role, "login": user.login},
-    )
+    extra: dict = {"role": user.role, "login": user.login}
+    if user.role == "admin":
+        sid = await start_session(
+            db,
+            login=user.login,
+            name=user.full_name or user.login,
+            user_id=user.id,
+            request=request,
+        )
+        extra["sid"] = str(sid)
+
+    token = create_access_token(subject=str(user.id), extra=extra)
     return LoginResponse(
         access_token=token,
         user=TokenUser(
@@ -54,6 +78,17 @@ async def login(body: LoginBody, db: AsyncSession = Depends(get_db)):
             role=user.role,
         ),
     )
+
+
+@router.post("/logout")
+async def logout(
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+):
+    """Close the current admin session if present. Always succeeds."""
+    if actor.session_id is not None:
+        await end_session(db, actor.session_id, reason="logout")
+    return {"ok": True}
 
 
 @router.get("/me", response_model=MeResponse)
