@@ -70,7 +70,7 @@ async def get_current_actor(
             )
 
     # .env admin: sub is the login string (not a UUID)
-    if role == "admin" and sub == settings.admin_login:
+    if role == "admin" and sub.casefold() == settings.admin_login.casefold():
         await _require_live_admin_session()
         return Actor(
             role="admin",

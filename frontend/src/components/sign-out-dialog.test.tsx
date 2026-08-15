@@ -28,7 +28,7 @@ describe('SignOutDialog', () => {
     vi.clearAllMocks()
   })
 
-  it('calls auth.reset and navigates to sign-in with current location as redirect', async () => {
+  it('calls auth.reset and navigates to login with current location as redirect', async () => {
     const { getByRole } = await render(
       <SignOutDialog open onOpenChange={vi.fn()} />
     )
@@ -37,7 +37,7 @@ describe('SignOutDialog', () => {
 
     expect(reset).toHaveBeenCalledOnce()
     expect(navigate).toHaveBeenCalledWith({
-      to: '/sign-in',
+      to: '/login',
       search: { redirect: MOCK_HREF },
       replace: true,
     })

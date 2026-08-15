@@ -72,6 +72,8 @@ describe('ConfigDrawer (integration)', () => {
 
   describe('theme preference', () => {
     it('applies light theme to <html> and cookie', async () => {
+      // Default theme is already light; seed dark so selecting Light writes the cookie.
+      setCookie('vite-ui-theme', 'dark')
       const screen = await renderConfigDrawer()
       await openDrawer(screen)
       await userEvent.click(
@@ -182,7 +184,7 @@ describe('ConfigDrawer (integration)', () => {
           name: /reset theme preference to default/i,
         })
       )
-      await vi.waitFor(() => expect(getCookie('vite-ui-theme')).toBe('system'))
+      await vi.waitFor(() => expect(getCookie('vite-ui-theme')).toBe('light'))
     })
 
     it('resets direction via section control after choosing RTL', async () => {

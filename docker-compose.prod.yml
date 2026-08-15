@@ -45,7 +45,14 @@ services:
     image: 4fan/ielts-mock-nginx:latest
     restart: unless-stopped
     ports:
+      - "80:80"
+      - "443:443"
       - "8080:8080"
+    volumes:
+      - ./deploy/production.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/proxy_locations.conf:/etc/nginx/proxy_locations.inc:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
     depends_on:
       - backend
       - frontend

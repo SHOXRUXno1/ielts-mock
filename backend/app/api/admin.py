@@ -24,7 +24,10 @@ async def admin_login(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    if body.email != settings.admin_login or body.password != settings.admin_password:
+    if (
+        body.email.casefold() != settings.admin_login.casefold()
+        or body.password != settings.admin_password
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid login or password",
@@ -37,7 +40,7 @@ async def admin_login(
         request=request,
     )
     token = create_access_token(
-        subject=body.email,
+        subject=settings.admin_login,
         extra={"role": "admin", "login": settings.admin_login, "sid": str(sid)},
     )
     return AdminTokenResponse(access_token=token)

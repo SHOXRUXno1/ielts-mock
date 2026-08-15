@@ -24,7 +24,6 @@
     "^globals$",
     "^zod$",
     "^axios$",
-    "^date-fns$",
     "^react-hook-form$",
     "^use-intl$",
     "^@radix-ui/(.*)$",

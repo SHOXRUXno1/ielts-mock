@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import Actor, get_current_actor
@@ -20,7 +20,10 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ):
     # 1. Check .env admin first
-    if body.login == settings.admin_login and body.password == settings.admin_password:
+    if (
+        body.login.casefold() == settings.admin_login.casefold()
+        and body.password == settings.admin_password
+    ):
         sid = await start_session(
             db,
             login=settings.admin_login,
@@ -48,7 +51,10 @@ async def login(
 
     # 2. DB lookup
     result = await db.execute(
-        select(User).where(User.login == body.login, User.is_active == True)  # noqa: E712
+        select(User).where(
+            func.lower(User.login) == body.login.casefold(),
+            User.is_active == True,  # noqa: E712
+        )
     )
     user = result.scalar_one_or_none()
     if user is None or not verify_password(body.password, user.hashed_password):
