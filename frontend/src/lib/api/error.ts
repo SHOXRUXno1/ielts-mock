@@ -19,6 +19,15 @@ function isTimeoutError(err: AxiosError): boolean {
   )
 }
 
+/** Transient failures that are safe to retry once (not 4xx validation). */
+export function isRetryableUploadError(err: unknown): boolean {
+  const axiosErr = err as AxiosError
+  if (!axiosErr?.isAxiosError) return false
+  if (axiosErr.code === 'ERR_CANCELED') return false
+  if (isTimeoutError(axiosErr) || !axiosErr.response) return true
+  return [502, 503, 504].includes(axiosErr.response.status)
+}
+
 export function apiErrorMessage(err: unknown, fallback = 'Something went wrong.'): string {
   const axiosErr = err as AxiosError<{ detail?: FastApiDetail }>
   if (axiosErr?.isAxiosError && isTimeoutError(axiosErr)) {
@@ -76,6 +85,9 @@ export function apiUploadErrorMessage(
   }
   if (axiosErr?.isAxiosError && !axiosErr.response) {
     return 'Connection lost during upload. Please try again.'
+  }
+  if (err instanceof Error && !axiosErr?.isAxiosError) {
+    return err.message
   }
   return apiErrorMessage(err, fallback)
 }

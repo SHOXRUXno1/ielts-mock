@@ -3,6 +3,7 @@ import { ChevronDown, Headphones, Loader2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { createQuestionGroup } from '@/lib/api/question-groups'
 import { createSection, updateSection } from '@/lib/api/sections'
+import { apiUploadErrorMessage } from '@/lib/api/error'
 import { uploadSectionAudio } from '@/lib/api/tests'
 import { Button } from '@/components/ui/button'
 import {
@@ -309,9 +310,13 @@ function PartEditor({
       setLocalAudioUrl(url)
       toast.success('Audio uploaded')
       setAudioOpen(false)
-      onRefresh()
-    } catch {
-      toast.error('Failed to upload audio')
+      try {
+        await onRefresh()
+      } catch {
+        /* File is already saved — a refresh miss must not look like a failed upload. */
+      }
+    } catch (err) {
+      toast.error(apiUploadErrorMessage(err, 'Failed to upload audio'))
     } finally {
       setUploading(false)
     }

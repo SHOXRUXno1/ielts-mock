@@ -1,4 +1,4 @@
-import { api } from '@/lib/axios'
+import { api, MEDIA_UPLOAD_TIMEOUT_MS } from '@/lib/axios'
 
 export type AttemptMode = 'full_mock' | 'single_part' | 'single_section'
 
@@ -254,7 +254,8 @@ export async function uploadAudio(file: Blob): Promise<string> {
   formData.append('file', file, 'recording.webm')
   const { data } = await api.post<{ url: string }>(
     '/admin/upload/audio',
-    formData
+    formData,
+    { timeout: MEDIA_UPLOAD_TIMEOUT_MS },
   )
   return data.url
 }
@@ -264,7 +265,8 @@ export async function uploadImage(file: File): Promise<string> {
   formData.append('file', file)
   const { data } = await api.post<{ url: string }>(
     '/admin/upload/image',
-    formData
+    formData,
+    { timeout: MEDIA_UPLOAD_TIMEOUT_MS },
   )
   return data.url
 }

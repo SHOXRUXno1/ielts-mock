@@ -1,4 +1,5 @@
-import { api } from '@/lib/axios'
+import { isRetryableUploadError } from '@/lib/api/error'
+import { api, MEDIA_UPLOAD_TIMEOUT_MS } from '@/lib/axios'
 import type { Test, TestDetail } from '@/features/tests/data/schema'
 
 export type TestCreatePayload = {
@@ -116,14 +117,22 @@ export async function downloadTemplate(): Promise<void> {
 export async function previewImport(file: File): Promise<ImportPreview> {
   const form = new FormData()
   form.append('file', file)
-  const { data } = await api.post<ImportPreview>('/admin/tests/import/preview', form)
+  const { data } = await api.post<ImportPreview>(
+    '/admin/tests/import/preview',
+    form,
+    { timeout: MEDIA_UPLOAD_TIMEOUT_MS },
+  )
   return data
 }
 
 export async function confirmImport(file: File): Promise<ImportConfirmResult> {
   const form = new FormData()
   form.append('file', file)
-  const { data } = await api.post<ImportConfirmResult>('/admin/tests/import/confirm', form)
+  const { data } = await api.post<ImportConfirmResult>(
+    '/admin/tests/import/confirm',
+    form,
+    { timeout: MEDIA_UPLOAD_TIMEOUT_MS },
+  )
   return data
 }
 
@@ -139,14 +148,49 @@ export async function normalizeSections(id: string): Promise<import('@/features/
   return data
 }
 
+export const MAX_AUDIO_UPLOAD_BYTES = 50 * 1024 * 1024
+
+const AUDIO_FILENAME = /\.(mp3|mpeg|ogg|mp4|m4a|wav|webm|aac)$/i
+
+export function assertAudioUpload(file: File): void {
+  if (file.size === 0) {
+    throw new Error('Empty audio file.')
+  }
+  if (file.size > MAX_AUDIO_UPLOAD_BYTES) {
+    throw new Error('Audio is too large (max 50 MB).')
+  }
+  if (!file.type.startsWith('audio/') && !AUDIO_FILENAME.test(file.name)) {
+    throw new Error(
+      'Unsupported audio format. Use MP3, OGG, MP4, WAV, WebM or AAC.',
+    )
+  }
+}
+
+async function postAudioForm(
+  testId: string,
+  form: FormData,
+): Promise<{ url: string }> {
+  const { data } = await api.post<{ url: string }>(
+    `/admin/tests/${testId}/audio`,
+    form,
+    { timeout: MEDIA_UPLOAD_TIMEOUT_MS },
+  )
+  return data
+}
+
 export async function uploadSectionAudio(
   testId: string,
   sectionId: string,
   file: File
 ): Promise<{ url: string }> {
+  assertAudioUpload(file)
   const form = new FormData()
   form.append('section_id', sectionId)
   form.append('file', file)
-  const { data } = await api.post<{ url: string }>(`/admin/tests/${testId}/audio`, form)
-  return data
+  try {
+    return await postAudioForm(testId, form)
+  } catch (err) {
+    if (!isRetryableUploadError(err)) throw err
+    return await postAudioForm(testId, form)
+  }
 }

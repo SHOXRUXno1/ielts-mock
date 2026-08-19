@@ -15,20 +15,44 @@ def _s3_configured() -> bool:
     return bool(settings.s3_endpoint_url and settings.s3_access_key and settings.s3_secret_key)
 
 
-def _audio_ext(content_type: str) -> str:
+_FILENAME_AUDIO_EXT = {
+    ".mp3": "mp3",
+    ".mpeg": "mp3",
+    ".ogg": "ogg",
+    ".mp4": "mp4",
+    ".m4a": "m4a",
+    ".wav": "wav",
+    ".webm": "webm",
+    ".aac": "aac",
+}
+
+
+def _audio_ext(content_type: str, filename: str = "") -> str:
+    name = (filename or "").lower()
+    for suffix, ext in _FILENAME_AUDIO_EXT.items():
+        if name.endswith(suffix):
+            return ext
     ct = content_type.lower()
     if "mpeg" in ct or "mp3" in ct:
         return "mp3"
     if "ogg" in ct:
         return "ogg"
-    if "mp4" in ct:
+    if "mp4" in ct or "m4a" in ct:
         return "mp4"
+    if "wav" in ct:
+        return "wav"
+    if "aac" in ct:
+        return "aac"
     return "webm"
 
 
-def save_audio(file_bytes: bytes, content_type: str = "audio/webm") -> tuple[str, str]:
+def save_audio(
+    file_bytes: bytes,
+    content_type: str = "audio/webm",
+    filename: str = "",
+) -> tuple[str, str]:
     """Save audio and return (relative_url_path, local_path)."""
-    ext = _audio_ext(content_type)
+    ext = _audio_ext(content_type, filename)
     filename = f"{uuid.uuid4()}.{ext}"
 
     if _s3_configured():

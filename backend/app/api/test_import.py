@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import uuid
 
-from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -399,32 +399,40 @@ async def confirm_import(
     )
 
 
+MAX_AUDIO_BYTES = 50 * 1024 * 1024
+_ALLOWED_AUDIO_EXTS = {".mp3", ".ogg", ".mp4", ".m4a", ".wav", ".webm", ".aac"}
+
+
 @router.post("/{test_id}/audio", response_model=AudioUploadOut)
 async def upload_section_audio(
     test_id: uuid.UUID,
     section_id: uuid.UUID = Form(...),
-    file: UploadFile = None,
+    file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
 ):
-    """Upload an MP3 for a listening section; sets section.audio_url."""
-    if file is None:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="file is required.",
-        )
-
+    """Upload audio for a listening section; sets section.audio_url."""
     content_type = file.content_type or ""
     filename = file.filename or ""
-    _ALLOWED_AUDIO_EXTS = {".mp3", ".ogg", ".mp4", ".m4a", ".wav", ".webm", ".aac"}
-    _ALLOWED_AUDIO_TYPES = {"audio/"}
     ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if not (
         ext in _ALLOWED_AUDIO_EXTS
-        or any(t in content_type.lower() for t in _ALLOWED_AUDIO_TYPES)
+        or content_type.lower().startswith("audio/")
     ):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Unsupported audio format '{ext or content_type}'. Accepted: MP3, OGG, MP4, WAV, WebM, AAC.",
+        )
+
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Empty audio file.",
+        )
+    if len(file_bytes) > MAX_AUDIO_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Audio is too large (max 50 MB).",
         )
 
     section = await db.get(Section, section_id)
@@ -434,8 +442,11 @@ async def upload_section_audio(
             detail="Section not found for this test.",
         )
 
-    file_bytes = await file.read()
-    url, _ = save_audio(file_bytes, content_type=content_type or "audio/mpeg")
+    url, _ = save_audio(
+        file_bytes,
+        content_type=content_type or "audio/mpeg",
+        filename=filename,
+    )
 
     section.audio_url = url
     await db.commit()

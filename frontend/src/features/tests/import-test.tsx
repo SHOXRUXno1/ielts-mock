@@ -21,6 +21,7 @@ import {
   previewImport,
   uploadSectionAudio,
 } from '@/lib/api/tests'
+import { apiUploadErrorMessage } from '@/lib/api/error'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -146,9 +147,7 @@ function AudioUploadStep({
       toast.success('Audio uploaded.')
     },
     onError: (err: unknown) => {
-      const msg =
-        err instanceof Error ? err.message : 'Upload failed'
-      toast.error(msg)
+      toast.error(apiUploadErrorMessage(err, 'Upload failed'))
     },
   })
 
