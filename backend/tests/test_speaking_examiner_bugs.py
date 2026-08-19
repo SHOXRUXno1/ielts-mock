@@ -8,9 +8,18 @@ import pytest
 
 from app.services.llm import (
     _groq_upload_file,
+    _normalize_stt_text,
     generate_examiner_turn,
+    reset_groq_stt_circuit,
     transcribe_audio_bytes,
 )
+
+
+@pytest.fixture(autouse=True)
+def _reset_groq_stt():
+    reset_groq_stt_circuit()
+    yield
+    reset_groq_stt_circuit()
 
 
 class TestScoreHistoryPreference:
@@ -97,6 +106,41 @@ class TestGroqTranscribeRetry:
 
         assert text == "hello there"
         assert mock_client.post.await_count == 2
+
+    @pytest.mark.asyncio
+    @patch("app.services.llm.settings")
+    @patch("app.services.llm.get_http_client")
+    async def test_falls_back_to_gemini_on_403(self, mock_get_client, mock_settings):
+        mock_settings.groq_api_key = "gsk_test"
+        mock_settings.gemini_key_list = ["gem-test"]
+
+        request = httpx.Request(
+            "POST", "https://api.groq.com/openai/v1/audio/transcriptions"
+        )
+        fail_resp = httpx.Response(403, request=request, text='{"error":{"message":"Forbidden"}}')
+
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=fail_resp)
+        mock_get_client.return_value = mock_client
+
+        with patch(
+            "app.services.llm._transcribe_with_gemini",
+            new=AsyncMock(return_value="gemini transcript"),
+        ) as mock_gemini:
+            first = await transcribe_audio_bytes(b"x" * 1024)
+            second = await transcribe_audio_bytes(b"y" * 1024)
+
+        assert first == "gemini transcript"
+        assert second == "gemini transcript"
+        assert mock_gemini.await_count == 2
+        assert mock_client.post.await_count == 1
+
+
+class TestNormalizeSttText:
+    def test_empty_markers_become_blank(self):
+        assert _normalize_stt_text("EMPTY") == ""
+        assert _normalize_stt_text('"empty"') == ""
+        assert _normalize_stt_text("  Hello there  ") == "Hello there"
 
 
 class TestGroqExaminerFallback:

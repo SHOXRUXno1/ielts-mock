@@ -2,14 +2,19 @@ import { Fragment, useState } from 'react'
 import {
   CheckCircle,
   ChevronDown,
-  ChevronUp,
   FileText,
   HelpCircle,
   XCircle,
 } from 'lucide-react'
 import type { EvaluationJobRead } from '@/lib/api/attempts'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Tooltip,
@@ -17,11 +22,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-
-function formatBand(band: number | null | undefined): string {
-  if (band == null) return '—'
-  return band.toFixed(1)
-}
+import { formatBand } from './lib/band'
+import { BandMeter } from './components/band-meter'
 
 export function WritingFeedbackPanel({
   jobs,
@@ -126,8 +128,6 @@ export function writingBandFromJobs(jobs: EvaluationJobRead[]): number | null {
   return null
 }
 
-/* ── Writing-specific result component ── */
-
 type WritingError = {
   quote: string
   type: 'grammar' | 'lexical' | 'spelling' | 'cohesion' | 'punctuation'
@@ -152,11 +152,11 @@ type SentenceAnalysisItem = {
 }
 
 const SENTENCE_BORDER: Record<SentenceCategory, string> = {
-  hit_key_point: 'border-l-emerald-500',
-  linking_issue: 'border-l-amber-500',
-  lexical_issue: 'border-l-amber-500',
-  grammatical_error: 'border-l-red-500',
-  off_topic: 'border-l-red-500',
+  hit_key_point: 'border-l-success-foreground',
+  linking_issue: 'border-l-warning-foreground',
+  lexical_issue: 'border-l-warning-foreground',
+  grammatical_error: 'border-l-destructive',
+  off_topic: 'border-l-destructive',
 }
 
 const SENTENCE_CATEGORY_LABEL: Record<SentenceCategory, string> = {
@@ -220,12 +220,12 @@ function KeyPointsAnalysis({ points }: { points: KeyPoint[] }) {
         {points.map((kp, i) => (
           <li
             key={i}
-            className='flex items-start gap-2 rounded-md border px-3 py-2 text-sm'
+            className='flex items-start gap-2 rounded-lg border px-3 py-2 text-sm'
           >
             {kp.covered ? (
-              <CheckCircle className='mt-0.5 size-4 shrink-0 text-emerald-600' />
+              <CheckCircle className='mt-0.5 size-4 shrink-0 text-success-foreground' />
             ) : (
-              <XCircle className='mt-0.5 size-4 shrink-0 text-red-500' />
+              <XCircle className='mt-0.5 size-4 shrink-0 text-destructive' />
             )}
             <span className={kp.covered ? 'text-foreground' : 'text-muted-foreground'}>
               {kp.point}
@@ -235,8 +235,8 @@ function KeyPointsAnalysis({ points }: { points: KeyPoint[] }) {
               className={cn(
                 'ml-auto shrink-0 text-[10px]',
                 kp.covered
-                  ? 'border-emerald-200 text-emerald-700'
-                  : 'border-red-200 text-red-600',
+                  ? 'border-success-foreground/30 text-success-foreground'
+                  : 'border-destructive/30 text-destructive',
               )}
             >
               {kp.covered ? 'covered' : 'missed'}
@@ -258,7 +258,7 @@ function SentenceAnalysisList({ items }: { items: SentenceAnalysisItem[] }) {
             <TooltipTrigger asChild>
               <div
                 className={cn(
-                  'cursor-default rounded-md border border-l-4 bg-muted/20 px-3 py-2',
+                  'cursor-default rounded-lg border border-l-4 bg-muted/20 px-3 py-2',
                   SENTENCE_BORDER[item.category],
                 )}
               >
@@ -295,63 +295,58 @@ function SentenceAnalysisList({ items }: { items: SentenceAnalysisItem[] }) {
 }
 
 function OptimizedCompositionCard({ text }: { text: string }) {
-  const [open, setOpen] = useState(false)
   return (
-    <div className='rounded-md border border-emerald-200 bg-emerald-50/40'>
-      <button
-        type='button'
-        className='flex w-full items-center justify-between px-4 py-3 text-left'
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className='text-sm font-medium text-emerald-900'>
-          Optimized Composition
-        </span>
-        <span className='flex items-center gap-2 text-xs text-emerald-700'>
-          {open ? 'Hide' : 'Show'}
-          {open ? (
-            <ChevronUp className='size-3.5' />
-          ) : (
-            <ChevronDown className='size-3.5' />
-          )}
-        </span>
-      </button>
-      {open && (
-        <div className='border-t border-emerald-200 px-4 py-3'>
-          <p
-            className='whitespace-pre-wrap text-sm leading-relaxed text-foreground'
-            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
-          >
-            {text}
-          </p>
-        </div>
-      )}
-    </div>
+    <Collapsible className='rounded-lg border border-success-foreground/20 bg-success/40'>
+      <CollapsibleTrigger className='flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-success-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'>
+        Optimized Composition
+        <ChevronDown className='size-3.5 transition-transform duration-200 [[data-state=open]_&]:rotate-180' />
+      </CollapsibleTrigger>
+      <CollapsibleContent className='border-t border-success-foreground/20 px-4 py-3'>
+        <p className='font-serif whitespace-pre-wrap text-sm leading-relaxed text-foreground'>
+          {text}
+        </p>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }
 
 const ERROR_COLORS: Record<WritingError['type'], string> = {
-  grammar: 'bg-red-100 text-red-800 underline decoration-red-400 decoration-wavy',
-  lexical: 'bg-amber-100 text-amber-800 underline decoration-amber-400 decoration-wavy',
-  spelling: 'bg-orange-100 text-orange-800 underline decoration-orange-500 decoration-wavy',
-  cohesion: 'bg-blue-100 text-blue-800 underline decoration-blue-400 decoration-wavy',
-  punctuation: 'bg-violet-100 text-violet-800 underline decoration-violet-400 decoration-wavy',
+  grammar:
+    'bg-destructive/15 text-destructive underline decoration-destructive/50 decoration-wavy',
+  lexical:
+    'bg-warning/40 text-warning-foreground underline decoration-warning-foreground/40 decoration-wavy',
+  spelling:
+    'bg-warning/50 text-warning-foreground underline decoration-warning-foreground/60 decoration-wavy',
+  cohesion:
+    'bg-skill-reading/15 text-skill-reading underline decoration-skill-reading/50 decoration-wavy',
+  punctuation:
+    'bg-skill-listening/15 text-skill-listening underline decoration-skill-listening/50 decoration-wavy',
 }
 
 const ERROR_BADGE_COLORS: Record<WritingError['type'], string> = {
-  grammar: 'bg-red-100 text-red-700 border-red-200',
-  lexical: 'bg-amber-100 text-amber-700 border-amber-200',
-  spelling: 'bg-orange-100 text-orange-700 border-orange-200',
-  cohesion: 'bg-blue-100 text-blue-700 border-blue-200',
-  punctuation: 'bg-violet-100 text-violet-700 border-violet-200',
+  grammar: 'border-destructive/30 bg-destructive/10 text-destructive',
+  lexical: 'border-warning-foreground/30 bg-warning/40 text-warning-foreground',
+  spelling: 'border-warning-foreground/30 bg-warning/50 text-warning-foreground',
+  cohesion: 'border-skill-reading/30 bg-skill-reading/10 text-skill-reading',
+  punctuation: 'border-skill-listening/30 bg-skill-listening/10 text-skill-listening',
 }
 
-/** Split essay text into segments, wrapping error quotes with Tooltip marks. */
+const ERROR_LEGEND: { type: WritingError['type']; label: string }[] = [
+  { type: 'grammar', label: 'Grammar' },
+  { type: 'lexical', label: 'Lexical' },
+  { type: 'spelling', label: 'Spelling' },
+  { type: 'cohesion', label: 'Cohesion' },
+  { type: 'punctuation', label: 'Punctuation' },
+]
+
 function HighlightedEssay({
   text,
   errors,
+  highlightType = null,
 }: {
   text: string
   errors: WritingError[]
+  highlightType?: WritingError['type'] | null
 }) {
   if (!errors.length) {
     return (
@@ -359,19 +354,19 @@ function HighlightedEssay({
     )
   }
 
-  // Build non-overlapping segments greedily (first-match wins)
   type Segment =
     | { kind: 'text'; content: string }
     | { kind: 'error'; content: string; error: WritingError }
 
   const segments: Segment[] = []
   let remaining = text
+  let leftover = errors
 
   while (remaining.length > 0) {
     let bestIdx = Infinity
     let bestError: WritingError | null = null
 
-    for (const err of errors) {
+    for (const err of leftover) {
       if (!err.quote) continue
       const idx = remaining.indexOf(err.quote)
       if (idx !== -1 && idx < bestIdx) {
@@ -394,9 +389,7 @@ function HighlightedEssay({
       error: bestError,
     })
     remaining = remaining.slice(bestIdx + bestError.quote.length)
-
-    // Remove matched error to avoid re-matching the same span
-    errors = errors.filter((e) => e !== bestError)
+    leftover = leftover.filter((e) => e !== bestError)
   }
 
   return (
@@ -406,10 +399,17 @@ function HighlightedEssay({
           return <Fragment key={i}>{seg.content}</Fragment>
         }
         const colorClass = ERROR_COLORS[seg.error.type] ?? ''
+        const dimmed = highlightType != null && highlightType !== seg.error.type
         return (
           <Tooltip key={i}>
             <TooltipTrigger asChild>
-              <mark className={cn('cursor-help rounded px-0.5', colorClass)}>
+              <mark
+                className={cn(
+                  'cursor-help rounded px-0.5',
+                  colorClass,
+                  dimmed && 'opacity-20 no-underline',
+                )}
+              >
                 {seg.content}
               </mark>
             </TooltipTrigger>
@@ -430,68 +430,61 @@ function HighlightedEssay({
   )
 }
 
-export function WritingResult({
-  tasks,
+function WritingTaskCard({
+  taskKey,
+  taskData,
 }: {
-  tasks: Record<string, Record<string, unknown>>
+  taskKey: string
+  taskData: Record<string, unknown>
 }) {
-  const taskEntries = Object.entries(tasks).sort(([a], [b]) =>
-    a.localeCompare(b),
+  const [highlightType, setHighlightType] = useState<WritingError['type'] | null>(
+    null,
   )
+  const isTask1 = taskKey.includes('1')
+  const label = isTask1 ? 'Task 1 — Report' : 'Task 2 — Essay'
+  const overallBand = taskData.overall_band as number | undefined
+  const wordCount = taskData.word_count as number | undefined
+  const essayText = (taskData.text as string | undefined) ?? ''
+  const strengths = taskData.strengths as string[] | undefined
+  const improvements = taskData.improvements as string[] | undefined
+  const rawErrors = (taskData.errors ?? []) as WritingError[]
+  const keyPoints = parseKeyPoints(taskData.key_points)
+  const sentenceAnalysis = parseSentenceAnalysis(taskData.sentence_analysis)
+  const overallReview =
+    typeof taskData.overall_review === 'string'
+      ? taskData.overall_review.trim()
+      : ''
+  const optimized =
+    typeof taskData.optimized_composition === 'string'
+      ? taskData.optimized_composition.trim()
+      : ''
 
   return (
-    <div className='space-y-6'>
-      {taskEntries.map(([taskKey, taskData]) => {
-        const isTask1 = taskKey.includes('1')
-        const label = isTask1 ? 'Task 1 — Report' : 'Task 2 — Essay'
-        const overallBand = taskData.overall_band as number | undefined
-        const wordCount = taskData.word_count as number | undefined
-        const essayText = (taskData.text as string | undefined) ?? ''
-        const strengths = taskData.strengths as string[] | undefined
-        const improvements = taskData.improvements as string[] | undefined
-        const rawErrors = (taskData.errors ?? []) as WritingError[]
-        const keyPoints = parseKeyPoints(taskData.key_points)
-        const sentenceAnalysis = parseSentenceAnalysis(taskData.sentence_analysis)
-        const overallReview =
-          typeof taskData.overall_review === 'string'
-            ? taskData.overall_review.trim()
-            : ''
-        const optimized =
-          typeof taskData.optimized_composition === 'string'
-            ? taskData.optimized_composition.trim()
-            : ''
-
-        return (
-          <div key={taskKey} className='space-y-4 rounded-lg border p-4'>
-            {/* Task header */}
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-2'>
-                <h4 className='font-semibold'>{label}</h4>
-                {wordCount != null && (
-                  <Badge variant='outline' className='text-xs'>
-                    <FileText className='mr-1 size-3' />
-                    {wordCount} words
-                  </Badge>
-                )}
-              </div>
-              {overallBand != null && (
-                <div className='text-right'>
-                  <p className='text-xs text-muted-foreground'>Task Band</p>
-                  <p className='text-xl font-bold'>
-                    {formatBand(overallBand)}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <CriteriaGrid
-              data={taskData}
-              sectionType='writing'
-              isTask1={isTask1}
-              sentenceAnalysis={sentenceAnalysis}
-              errors={rawErrors}
-            />
-
+    <Card>
+      <CardHeader className='flex flex-row items-center justify-between gap-3 space-y-0'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <CardTitle className='text-base'>{label}</CardTitle>
+          {wordCount != null && (
+            <Badge variant='outline' className='text-xs'>
+              <FileText className='mr-1 size-3' />
+              {wordCount} words
+            </Badge>
+          )}
+        </div>
+        {overallBand != null && (
+          <div className='text-right'>
+            <p className='text-[10px] tracking-wider text-muted-foreground uppercase'>
+              Task Band
+            </p>
+            <p className='text-xl font-semibold tabular-nums'>
+              {formatBand(overallBand)}
+            </p>
+          </div>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]'>
+          <div className='space-y-4'>
             {keyPoints.length > 0 && <KeyPointsAnalysis points={keyPoints} />}
 
             {strengths && strengths.length > 0 && (
@@ -505,51 +498,85 @@ export function WritingResult({
               <SentenceAnalysisList items={sentenceAnalysis} />
             )}
 
-            {/* Student essay with inline error highlights */}
             {essayText && (
               <div>
-                <p className='mb-2 text-sm font-medium'>Student's Essay</p>
-                <div className='max-h-80 overflow-y-auto rounded-md border bg-muted/20 p-4'>
-                  <HighlightedEssay
-                    text={essayText}
-                    errors={[...rawErrors]}
-                  />
+                <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
+                  <p className='text-sm font-medium'>Student's Essay</p>
+                  {rawErrors.length > 0 && (
+                    <div className='flex flex-wrap gap-1.5'>
+                      {ERROR_LEGEND.filter((item) =>
+                        rawErrors.some((e) => e.type === item.type),
+                      ).map((item) => {
+                        const pressed = highlightType === item.type
+                        return (
+                          <button
+                            key={item.type}
+                            type='button'
+                            aria-pressed={pressed}
+                            onClick={() =>
+                              setHighlightType((prev) =>
+                                prev === item.type ? null : item.type,
+                              )
+                            }
+                            className={cn(
+                              'rounded border px-1.5 py-0.5 text-[10px] font-medium transition-opacity',
+                              'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                              ERROR_BADGE_COLORS[item.type],
+                              highlightType != null && !pressed && 'opacity-40',
+                            )}
+                          >
+                            {item.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
+                <ScrollArea className='h-80 rounded-lg border bg-muted/20'>
+                  <div className='p-4'>
+                    <HighlightedEssay
+                      text={essayText}
+                      errors={[...rawErrors]}
+                      highlightType={highlightType}
+                    />
+                  </div>
+                </ScrollArea>
               </div>
             )}
 
-            {/* Errors & corrections list */}
             {rawErrors.length > 0 && (
               <div>
-                <p className='mb-2 text-sm font-medium'>
-                  Errors & Corrections
-                </p>
+                <p className='mb-2 text-sm font-medium'>Errors & Corrections</p>
                 <div className='space-y-2'>
-                  {rawErrors.map((err, i) => (
-                    <div
-                      key={i}
-                      className='flex flex-wrap items-start gap-2 rounded-md border p-3 text-sm'
-                    >
-                      <span
-                        className={cn(
-                          'shrink-0 rounded border px-1.5 py-0.5 text-xs font-medium capitalize',
-                          ERROR_BADGE_COLORS[err.type] ?? '',
-                        )}
+                  {rawErrors
+                    .filter(
+                      (err) => highlightType == null || err.type === highlightType,
+                    )
+                    .map((err, i) => (
+                      <div
+                        key={i}
+                        className='flex flex-wrap items-start gap-2 rounded-lg border p-3 text-sm'
                       >
-                        {err.type}
-                      </span>
-                      <span className='line-through text-muted-foreground'>
-                        {err.quote}
-                      </span>
-                      <span className='text-muted-foreground'>→</span>
-                      <span className='font-medium text-green-700'>
-                        {err.correction}
-                      </span>
-                      <span className='w-full text-xs text-muted-foreground'>
-                        {err.explanation}
-                      </span>
-                    </div>
-                  ))}
+                        <span
+                          className={cn(
+                            'shrink-0 rounded border px-1.5 py-0.5 text-xs font-medium capitalize',
+                            ERROR_BADGE_COLORS[err.type] ?? '',
+                          )}
+                        >
+                          {err.type}
+                        </span>
+                        <span className='text-muted-foreground line-through'>
+                          {err.quote}
+                        </span>
+                        <span className='text-muted-foreground'>→</span>
+                        <span className='font-medium text-success-foreground'>
+                          {err.correction}
+                        </span>
+                        <span className='w-full text-xs text-muted-foreground'>
+                          {err.explanation}
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -565,13 +592,40 @@ export function WritingResult({
 
             {optimized && <OptimizedCompositionCard text={optimized} />}
           </div>
-        )
-      })}
-    </div>
+
+          <aside className='lg:sticky lg:top-32 lg:self-start'>
+            <CriteriaGrid
+              data={taskData}
+              sectionType='writing'
+              isTask1={isTask1}
+              sentenceAnalysis={sentenceAnalysis}
+              errors={rawErrors}
+              variant='rail'
+            />
+          </aside>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
-/* ── Criteria grid ── */
+export function WritingResult({
+  tasks,
+}: {
+  tasks: Record<string, Record<string, unknown>>
+}) {
+  const taskEntries = Object.entries(tasks).sort(([a], [b]) =>
+    a.localeCompare(b),
+  )
+
+  return (
+    <div className='space-y-6'>
+      {taskEntries.map(([taskKey, taskData]) => (
+        <WritingTaskCard key={taskKey} taskKey={taskKey} taskData={taskData} />
+      ))}
+    </div>
+  )
+}
 
 const WRITING_TASK1_FIRST_CRITERION = [
   'task_achievement',
@@ -616,19 +670,20 @@ export function CriteriaGrid({
   isTask1 = true,
   sentenceAnalysis = [],
   errors = [],
+  variant = 'grid',
 }: {
   data: Record<string, unknown>
   sectionType: string
   isTask1?: boolean
   sentenceAnalysis?: SentenceAnalysisItem[]
   errors?: WritingError[]
+  variant?: 'grid' | 'rail'
 }) {
-  const [expandedKey, setExpandedKey] = useState<string | null>(null)
-
   const writingFirstCriterion = isTask1
     ? WRITING_TASK1_FIRST_CRITERION
-    // Backward-compat: if new task_response key missing, fall back to task_achievement
-    : ('task_response' in data ? WRITING_TASK2_FIRST_CRITERION : WRITING_TASK1_FIRST_CRITERION)
+    : 'task_response' in data
+      ? WRITING_TASK2_FIRST_CRITERION
+      : WRITING_TASK1_FIRST_CRITERION
 
   const criteriaKeys =
     sectionType === 'writing'
@@ -650,18 +705,27 @@ export function CriteriaGrid({
   }
 
   return (
-    <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+    <div
+      className={cn(
+        variant === 'rail'
+          ? 'space-y-2'
+          : 'grid grid-cols-2 gap-3 sm:grid-cols-4',
+      )}
+    >
       {criteriaKeys.map(([key, label, descriptor]) => {
         const criterion = data[key] as
           | { band: number; feedback: string }
           | undefined
         if (!criterion) return null
-        const isExpanded = expandedKey === key
         const badge = criterionBadges[key]
+        const longFeedback = criterion.feedback && criterion.feedback.length > 120
         return (
-          <div
+          <Collapsible
             key={key}
-            className='rounded-md border p-3'
+            className={cn(
+              'rounded-xl ring-1 ring-border',
+              variant === 'rail' ? 'bg-card p-3' : 'border p-3',
+            )}
           >
             <div className='mb-1 flex items-center justify-between gap-1'>
               <p className='text-xs text-muted-foreground'>{label}</p>
@@ -679,42 +743,42 @@ export function CriteriaGrid({
             {badge && (
               <Badge
                 variant='outline'
-                className='mb-1 text-[10px] text-amber-700 border-amber-200'
+                className='mb-1 border-warning-foreground/30 text-[10px] text-warning-foreground'
               >
                 {badge}
               </Badge>
             )}
-            <p className='text-center text-lg font-bold'>
-              {formatBand(criterion.band)}
-            </p>
             <p
               className={cn(
-                'mt-1 text-xs text-muted-foreground',
-                !isExpanded && 'line-clamp-3',
+                'font-semibold tabular-nums',
+                variant === 'rail' ? 'text-lg' : 'text-center text-lg',
               )}
             >
-              {criterion.feedback}
+              {formatBand(criterion.band)}
             </p>
-            {criterion.feedback && criterion.feedback.length > 120 && (
-              <button
-                type='button'
-                onClick={() =>
-                  setExpandedKey(isExpanded ? null : key)
-                }
-                className='mt-1 flex items-center gap-0.5 text-xs text-primary hover:underline'
-              >
-                {isExpanded ? (
-                  <>
-                    <ChevronUp className='size-3' /> Show less
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className='size-3' /> Show more
-                  </>
-                )}
-              </button>
+            <BandMeter
+              variant='linear'
+              band={criterion.band}
+              label={label}
+              className='mt-2'
+            />
+            {variant !== 'rail' && (
+              <p className='mt-2 line-clamp-3 text-xs text-muted-foreground'>
+                {criterion.feedback}
+              </p>
             )}
-          </div>
+            {(longFeedback || variant === 'rail') && criterion.feedback && (
+              <>
+                <CollapsibleTrigger className='mt-1 flex items-center gap-0.5 text-xs text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'>
+                  <ChevronDown className='size-3 transition-transform duration-200 [[data-state=open]_&]:rotate-180' />
+                  {variant === 'rail' ? 'Feedback' : 'Show more'}
+                </CollapsibleTrigger>
+                <CollapsibleContent className='mt-1 text-xs leading-relaxed text-muted-foreground'>
+                  {criterion.feedback}
+                </CollapsibleContent>
+              </>
+            )}
+          </Collapsible>
         )
       })}
     </div>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Check, Loader2, PenLine, Mic, AlertCircle } from 'lucide-react'
+import { Check, Loader2, AlertCircle } from 'lucide-react'
 import type { EvaluationJobRead } from '@/lib/api/attempts'
 import { cn } from '@/lib/utils'
+import { SKILL_META } from './lib/skill'
 
 export type EvalPhase = 'queued' | 'scoring' | 'ready' | 'failed' | 'none'
 
@@ -103,7 +104,13 @@ function copyFor(
   }
 }
 
-function IndeterminateBar({ className }: { className?: string }) {
+function IndeterminateBar({
+  className,
+  barClass,
+}: {
+  className?: string
+  barClass: string
+}) {
   return (
     <div
       className={cn(
@@ -112,12 +119,25 @@ function IndeterminateBar({ className }: { className?: string }) {
       )}
       aria-hidden
     >
-      <div className='absolute inset-y-0 w-1/3 rounded-full bg-violet-500 motion-safe:animate-[eval-indeterminate_1.4s_ease-in-out_infinite]' />
+      <div
+        className={cn(
+          'absolute inset-y-0 w-1/3 rounded-full motion-safe:animate-[eval-indeterminate_1.4s_ease-in-out_infinite]',
+          barClass,
+        )}
+      />
     </div>
   )
 }
 
-function Stepper({ current, failed }: { current: number; failed?: boolean }) {
+function Stepper({
+  current,
+  failed,
+  activeClass,
+}: {
+  current: number
+  failed?: boolean
+  activeClass: string
+}) {
   return (
     <ol className='flex items-center gap-0' aria-label='Scoring progress'>
       {STEPS.map((label, i) => {
@@ -131,7 +151,7 @@ function Stepper({ current, failed }: { current: number; failed?: boolean }) {
                 className={cn(
                   'flex size-6 items-center justify-center rounded-full text-[11px] font-semibold',
                   done && 'bg-emerald-500 text-white',
-                  active && 'bg-violet-600 text-white',
+                  active && cn(activeClass, 'text-white'),
                   isFail && 'bg-destructive text-white',
                   !done && !active && !isFail && 'bg-muted text-muted-foreground',
                 )}
@@ -182,7 +202,8 @@ export function EvaluationProgressCard({
   if (phase === 'none' || phase === 'ready') return null
 
   const copy = copyFor(section, phase, retryCount)
-  const Icon = section === 'writing' ? PenLine : Mic
+  const meta = SKILL_META[section]
+  const Icon = meta.icon
   const failed = phase === 'failed'
 
   return (
@@ -199,7 +220,7 @@ export function EvaluationProgressCard({
         <div
           className={cn(
             'flex size-10 shrink-0 items-center justify-center rounded-xl',
-            failed ? 'bg-destructive/10 text-destructive' : 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+            failed ? 'bg-destructive/10 text-destructive' : cn(meta.surface, meta.accent),
           )}
         >
           {failed ? (
@@ -226,10 +247,14 @@ export function EvaluationProgressCard({
         </div>
       </div>
 
-      {!failed && <IndeterminateBar className='mt-4' />}
+      {!failed && <IndeterminateBar className='mt-4' barClass={meta.bar} />}
 
       <div className='mt-5'>
-        <Stepper current={stepIndex(phase)} failed={failed} />
+        <Stepper
+          current={stepIndex(phase)}
+          failed={failed}
+          activeClass={meta.bar}
+        />
       </div>
     </div>
   )
@@ -245,12 +270,12 @@ export function SectionEvalBadge({
   const phase = jobPhase(jobs)
   if (phase === 'queued') {
     return (
-      <p className='text-sm font-medium text-violet-600 dark:text-violet-400'>In queue</p>
+      <p className='text-sm font-medium text-skill-writing'>In queue</p>
     )
   }
   if (phase === 'scoring') {
     return (
-      <p className='flex items-center gap-1.5 text-sm font-medium text-violet-600 dark:text-violet-400'>
+      <p className='flex items-center gap-1.5 text-sm font-medium text-skill-writing'>
         <Loader2 className='size-3.5 animate-spin' />
         Scoring…
       </p>

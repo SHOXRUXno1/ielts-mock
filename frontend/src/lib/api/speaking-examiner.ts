@@ -348,12 +348,12 @@ export function getSpeakingApiErrorDetail(err: unknown): string {
     if (!err.response) {
       return 'Cannot reach server — check that the backend is running'
     }
-    if (err.response.status >= 500) {
-      return 'Speaking service had an error — try Start again'
-    }
     const detail = err.response.data
     if (detail && typeof detail === 'object' && 'detail' in detail) {
       return String(detail.detail)
+    }
+    if (err.response.status >= 500) {
+      return 'Speaking service had an error — try Start again'
     }
   }
   return err instanceof Error ? err.message : 'Unknown error'

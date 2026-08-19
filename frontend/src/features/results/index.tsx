@@ -16,9 +16,9 @@ import {
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { fetchResults } from '@/lib/api/attempts'
-import type { AttemptListItem } from '@/lib/api/attempts'
+import { fetchResults, type AttemptListItem } from '@/lib/api/attempts'
 import { AttemptRowActions } from '@/features/results/components/attempt-row-actions'
+import { bandTone, bandToneClasses, formatBand } from '@/features/results/lib/band'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -44,27 +44,6 @@ const SCORED_STATUSES = new Set([
 ])
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function bandColor(band: number | null): string {
-  if (band === null) return 'text-muted-foreground'
-  if (band >= 7.5) return 'text-emerald-600 dark:text-emerald-400'
-  if (band >= 6.0) return 'text-blue-600 dark:text-blue-400'
-  if (band >= 5.0) return 'text-amber-600 dark:text-amber-400'
-  return 'text-red-500 dark:text-red-400'
-}
-
-function bandBg(band: number | null): string {
-  if (band === null) return 'bg-muted/50'
-  if (band >= 7.5) return 'bg-emerald-50 dark:bg-emerald-950/40'
-  if (band >= 6.0) return 'bg-blue-50 dark:bg-blue-950/40'
-  if (band >= 5.0) return 'bg-amber-50 dark:bg-amber-950/40'
-  return 'bg-red-50 dark:bg-red-950/40'
-}
-
-function formatBand(band: number | null): string {
-  if (band === null) return '—'
-  return band % 1 === 0 ? band.toFixed(1) : String(band)
-}
 
 function relativeDate(iso: string): string {
   const now = Date.now()
@@ -159,9 +138,10 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function BandPill({ band }: { band: number | null }) {
+  const tone = bandToneClasses(bandTone(band))
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-md px-2.5 py-0.5 text-sm font-semibold tabular-nums ${bandBg(band)} ${bandColor(band)}`}
+      className={`inline-flex items-center justify-center rounded-md px-2.5 py-0.5 text-sm font-semibold tabular-nums ${tone.bg} ${tone.text}`}
     >
       {formatBand(band)}
     </span>
@@ -408,18 +388,23 @@ export function Results() {
     [sortKey],
   )
 
-  useEffect(() => setPage(0), [
+  const pageResetKey = [
     filter,
     debouncedSearch,
     sortKey,
     sortDir,
-    selectedTestIds,
+    [...selectedTestIds].sort().join(','),
     datePreset,
     customFrom,
     customTo,
     bandMin,
     bandMax,
-  ])
+  ].join('\0')
+  const [prevPageResetKey, setPrevPageResetKey] = useState(pageResetKey)
+  if (pageResetKey !== prevPageResetKey) {
+    setPrevPageResetKey(pageResetKey)
+    setPage(0)
+  }
 
   const processed = useMemo(() => {
     let list = results

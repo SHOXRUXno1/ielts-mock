@@ -3,13 +3,9 @@ import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
   Award,
-  BookOpen,
   Calendar,
   ChevronRight,
   FileText,
-  Headphones,
-  MessageSquare,
-  Mic,
   Search,
   TrendingUp,
 } from 'lucide-react'
@@ -25,43 +21,9 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-
-function bandColor(band: number | null): string {
-  if (band === null) return 'text-muted-foreground'
-  if (band >= 7) return 'text-emerald-600 dark:text-emerald-400'
-  if (band >= 5.5) return 'text-amber-600 dark:text-amber-400'
-  return 'text-red-500 dark:text-red-400'
-}
-
-function bandBg(band: number | null): string {
-  if (band === null) return 'bg-muted'
-  if (band >= 7) return 'bg-emerald-50 dark:bg-emerald-950'
-  if (band >= 5.5) return 'bg-amber-50 dark:bg-amber-950'
-  return 'bg-red-50 dark:bg-red-950'
-}
-
-function formatBand(band: number | null): string {
-  if (band === null) return '—'
-  return band % 1 === 0 ? band.toFixed(1) : String(band)
-}
-
-const STATUS_CONFIG: Record<string, { label: string; dot: string; text: string }> = {
-  in_progress: { label: 'In Progress', dot: 'bg-amber-500', text: 'text-amber-700 dark:text-amber-400' },
-  completed: { label: 'Evaluating', dot: 'bg-blue-500', text: 'text-blue-700 dark:text-blue-400' },
-  auto_scored: { label: 'Scored', dot: 'bg-emerald-500', text: 'text-emerald-700 dark:text-emerald-400' },
-  fully_scored: { label: 'Fully Scored', dot: 'bg-emerald-500', text: 'text-emerald-700 dark:text-emerald-400' },
-  speaking_in_progress: { label: 'Speaking…', dot: 'bg-violet-500', text: 'text-violet-700 dark:text-violet-400' },
-  completed_without_speaking: { label: 'Completed', dot: 'bg-emerald-500', text: 'text-emerald-700 dark:text-emerald-400' },
-  partial: { label: 'Partial', dot: 'bg-orange-500', text: 'text-orange-700 dark:text-orange-400' },
-  abandoned: { label: 'Abandoned', dot: 'bg-slate-400', text: 'text-muted-foreground' },
-}
-
-const SECTION_ICONS = {
-  listening: Headphones,
-  reading: BookOpen,
-  writing: MessageSquare,
-  speaking: Mic,
-}
+import { bandTone, bandToneClasses, formatBand } from '@/features/results/lib/band'
+import { SKILL_KEYS, SKILL_META } from '@/features/results/lib/skill'
+import { attemptStatusMeta } from '@/features/results/lib/status'
 
 interface ResultItem {
   id: string
@@ -77,36 +39,26 @@ interface ResultItem {
 }
 
 function ResultCard({ result }: { result: ResultItem }) {
-  const statusCfg = STATUS_CONFIG[result.status] ?? {
-    label: result.status,
-    dot: 'bg-slate-400',
-    text: 'text-muted-foreground',
-  }
+  const statusCfg = attemptStatusMeta(result.status)
+  const tone = bandToneClasses(bandTone(result.overall_band))
 
   const date = result.finished_at
     ? new Date(result.finished_at)
     : new Date(result.created_at)
 
-  const sections = [
-    { key: 'listening', band: result.listening_band },
-    { key: 'reading', band: result.reading_band },
-    { key: 'writing', band: result.writing_band },
-    { key: 'speaking', band: result.speaking_band },
-  ] as const
-
   return (
     <Link
       to='/student/results/$attemptId'
       params={{ attemptId: result.id }}
-      className='group relative block cursor-pointer rounded-2xl border border-border bg-card transition-all duration-200 hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800/50'
+      className='group relative block cursor-pointer rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-sm'
     >
       <div className='flex flex-col sm:flex-row sm:items-center gap-4 p-5'>
         {/* Overall band circle */}
         <div className={cn(
-          'flex size-16 shrink-0 flex-col items-center justify-center rounded-2xl',
-          bandBg(result.overall_band),
+          'flex size-16 shrink-0 flex-col items-center justify-center rounded-xl',
+          tone.bg,
         )}>
-          <span className={cn('text-xl font-bold', bandColor(result.overall_band))}>
+          <span className={cn('text-xl font-bold tabular-nums', tone.text)}>
             {formatBand(result.overall_band)}
           </span>
           {result.overall_band != null && (
@@ -116,7 +68,7 @@ function ResultCard({ result }: { result: ResultItem }) {
 
         {/* Main info */}
         <div className='flex-1 min-w-0'>
-          <h3 className='text-sm font-semibold text-foreground leading-snug group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors truncate'>
+          <h3 className='truncate text-sm font-semibold leading-snug text-foreground transition-colors duration-150 group-hover:text-primary'>
             {result.test_title}
           </h3>
 
@@ -133,16 +85,25 @@ function ResultCard({ result }: { result: ResultItem }) {
 
           {/* Section bands */}
           <div className='mt-3 flex flex-wrap gap-2'>
-            {sections.map(({ key, band }) => {
-              const Icon = SECTION_ICONS[key]
+            {SKILL_KEYS.map((key) => {
+              const Icon = SKILL_META[key].icon
+              const band =
+                key === 'listening'
+                  ? result.listening_band
+                  : key === 'reading'
+                    ? result.reading_band
+                    : key === 'writing'
+                      ? result.writing_band
+                      : result.speaking_band
+              const skillTone = bandToneClasses(bandTone(band))
               return (
                 <div
                   key={key}
                   className='inline-flex items-center gap-1.5 rounded-lg bg-muted/60 px-2.5 py-1 text-xs'
                 >
-                  <Icon size={12} className='text-muted-foreground' />
-                  <span className='capitalize text-muted-foreground'>{key}</span>
-                  <span className={cn('font-semibold', bandColor(band))}>
+                  <Icon size={12} className={SKILL_META[key].accent} />
+                  <span className='text-muted-foreground'>{SKILL_META[key].label}</span>
+                  <span className={cn('font-semibold tabular-nums', skillTone.text)}>
                     {formatBand(band)}
                   </span>
                 </div>
@@ -152,7 +113,7 @@ function ResultCard({ result }: { result: ResultItem }) {
         </div>
 
         {/* Arrow indicator */}
-        <div className='shrink-0 flex items-center text-muted-foreground/50 group-hover:text-blue-500 transition-colors'>
+        <div className='flex shrink-0 items-center text-muted-foreground/50 transition-colors duration-150 group-hover:text-primary'>
           <ChevronRight size={20} />
         </div>
       </div>
@@ -253,13 +214,13 @@ export function StudentResults() {
               {stats.total} attempts
             </span>
             {stats.avg != null && (
-              <span className='inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-blue-700 dark:bg-blue-950 dark:text-blue-400'>
+              <span className='inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1.5 text-primary'>
                 <TrendingUp size={13} />
                 Avg {stats.avg.toFixed(1)}
               </span>
             )}
             {stats.best != null && (
-              <span className='inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'>
+              <span className='inline-flex items-center gap-1.5 rounded-lg bg-success px-2.5 py-1.5 text-success-foreground'>
                 <Award size={13} />
                 Best {stats.best.toFixed(1)}
               </span>

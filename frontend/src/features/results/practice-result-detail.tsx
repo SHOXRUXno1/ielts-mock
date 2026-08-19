@@ -1,15 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import {
-  ArrowLeft,
-  BookOpen,
-  Headphones,
-  Mic,
-  PenLine,
-  RotateCcw,
-  Timer,
-} from 'lucide-react'
+import { ArrowLeft, RotateCcw, Timer } from 'lucide-react'
 import { toast } from 'sonner'
 import type { AttemptDetailRead } from '@/lib/api/attempts'
 import {
@@ -40,40 +32,12 @@ import {
   writingBandFromJobs,
 } from './writing-feedback-panel'
 import { EvaluationProgressCard, isJobActive } from './evaluation-progress'
-
-const SECTION_META: Record<
-  SectionType,
-  { label: string; icon: typeof Headphones; ring: string; text: string; bg: string }
-> = {
-  listening: {
-    label: 'Listening',
-    icon: Headphones,
-    ring: 'stroke-blue-500',
-    text: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-500/10',
-  },
-  reading: {
-    label: 'Reading',
-    icon: BookOpen,
-    ring: 'stroke-emerald-500',
-    text: 'text-emerald-600 dark:text-emerald-400',
-    bg: 'bg-emerald-500/10',
-  },
-  writing: {
-    label: 'Writing',
-    icon: PenLine,
-    ring: 'stroke-violet-500',
-    text: 'text-violet-600 dark:text-violet-400',
-    bg: 'bg-violet-500/10',
-  },
-  speaking: {
-    label: 'Speaking',
-    icon: Mic,
-    ring: 'stroke-amber-500',
-    text: 'text-amber-600 dark:text-amber-400',
-    bg: 'bg-amber-500/10',
-  },
-}
+import {
+  formatCorrectAnswer,
+  formatStudentAnswer,
+} from './lib/answers'
+import { formatBand } from './lib/band'
+import { SKILL_META, type SkillMeta } from './lib/skill'
 
 type Props = { attempt: AttemptDetailRead }
 
@@ -109,7 +73,7 @@ export function PracticeResultDetail({ attempt }: Props) {
       : null)
   ) as SectionType | null
 
-  const meta = sectionType ? SECTION_META[sectionType] : null
+  const meta = sectionType ? SKILL_META[sectionType] : null
   const partNumber = attempt.practice_part_number ?? null
   const band = bandForAttempt(attempt, sectionType)
   const writingJobs = attempt.evaluation_jobs.filter(
@@ -304,7 +268,7 @@ export function PracticeResultDetail({ attempt }: Props) {
         </Button>
 
         <Card className='overflow-hidden border-border'>
-          <div className={cn('h-1.5', meta?.bg ?? 'bg-primary/10')} />
+          <div className={cn('h-1.5', meta?.surface ?? 'bg-primary/10')} />
           <CardContent className='flex flex-col gap-6 py-6 sm:flex-row sm:items-center'>
             {sectionType === 'writing' ? (
               writingBand != null ? (
@@ -328,7 +292,7 @@ export function PracticeResultDetail({ attempt }: Props) {
             <div className='min-w-0 flex-1 space-y-2'>
               <div className='flex flex-wrap items-center gap-2'>
                 {meta && (
-                  <Badge variant='outline' className={cn('rounded-lg', meta.text)}>
+                  <Badge variant='outline' className={cn('rounded-lg', meta.accent)}>
                     <meta.icon className='me-1 size-3' />
                     {isWholeSection
                       ? `Full ${meta.label}`
@@ -375,7 +339,7 @@ export function PracticeResultDetail({ attempt }: Props) {
                       >
                         Next skill
                         <span className='text-muted-foreground'>
-                          · {SECTION_META[nextSkill.section_type].label}
+                          · {SKILL_META[nextSkill.section_type].label}
                         </span>
                       </Button>
                     )}
@@ -398,7 +362,7 @@ export function PracticeResultDetail({ attempt }: Props) {
                       >
                         Next part
                         <span className='text-muted-foreground'>
-                          · {SECTION_META[nextPart.section_type].label} Part{' '}
+                          · {SKILL_META[nextPart.section_type].label} Part{' '}
                           {nextPart.part_number}
                         </span>
                       </Button>
@@ -437,7 +401,7 @@ export function PracticeResultDetail({ attempt }: Props) {
                 <TableBody>
                   {filteredAnswers.map((a) => {
                     const isCorrect = a.is_correct === true
-                    const student = formatAnswer(a.response)
+                    const student = formatStudentAnswer(a.response)
                     const skipped = student === '(no answer)'
                     const correctText = formatCorrectAnswer(
                       a.question?.answer_key ?? null,
@@ -446,12 +410,12 @@ export function PracticeResultDetail({ attempt }: Props) {
                       <TableRow
                         key={a.id}
                         className={cn(
-                          'border-l-4',
+                          'border-l-2',
                           isCorrect
-                            ? 'border-l-green-500 bg-green-50/40 dark:bg-green-950/20'
+                            ? 'border-l-transparent'
                             : skipped
-                              ? 'border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20'
-                              : 'border-l-red-500 bg-red-50/40 dark:bg-red-950/20',
+                              ? 'border-l-warning-foreground/60 bg-warning/20'
+                              : 'border-l-destructive bg-destructive/5',
                         )}
                       >
                         <TableCell className='py-2 font-medium tabular-nums text-muted-foreground'>
@@ -471,7 +435,7 @@ export function PracticeResultDetail({ attempt }: Props) {
                           className={cn(
                             'py-2',
                             correctText
-                              ? 'font-medium text-green-700 dark:text-green-400'
+                              ? 'font-medium text-success-foreground'
                               : 'text-muted-foreground',
                           )}
                         >
@@ -509,7 +473,7 @@ function BandHero({
   total,
 }: {
   band: number
-  meta: (typeof SECTION_META)[SectionType] | null
+  meta: SkillMeta | null
   correct: number
   total: number
 }) {
@@ -542,8 +506,8 @@ function BandHero({
         />
       </svg>
       <div className='relative flex flex-col items-center'>
-        <span className='text-2xl font-bold text-foreground tabular-nums'>
-          {band.toFixed(1)}
+        <span className='text-2xl font-bold tabular-nums text-foreground'>
+          {formatBand(band)}
         </span>
         <span className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>
           Band
@@ -562,14 +526,14 @@ function EvaluatingHero({
   meta,
   pending,
 }: {
-  meta: (typeof SECTION_META)[SectionType] | null
+  meta: SkillMeta | null
   pending?: boolean
 }) {
   return (
     <div
       className={cn(
         'flex size-32 shrink-0 flex-col items-center justify-center rounded-full border-4',
-        meta?.bg ?? 'bg-muted',
+        meta?.surface ?? 'bg-muted',
         'border-muted',
       )}
     >
@@ -589,7 +553,7 @@ function ScoreRing({
   correct: number
   total: number
   pct: number
-  meta: (typeof SECTION_META)[SectionType] | null
+  meta: SkillMeta | null
 }) {
   const circumference = 2 * Math.PI * 48
   const dash = (pct / 100) * circumference
@@ -640,14 +604,14 @@ function BreakdownCard({
   title: string
   children: ReactNode
 }) {
-  const meta = sectionType ? SECTION_META[sectionType] : null
+  const meta = sectionType ? SKILL_META[sectionType] : null
   return (
     <Card>
       <CardContent className='py-5'>
         <div className='mb-4 flex items-center gap-2'>
           {meta && (
-            <div className={cn('rounded-lg p-1.5', meta.bg)}>
-              <meta.icon className={cn('size-4', meta.text)} />
+            <div className={cn('rounded-lg p-1.5', meta.surface)}>
+              <meta.icon className={cn('size-4', meta.accent)} />
             </div>
           )}
           <h2 className='text-base font-semibold'>{title}</h2>
@@ -678,37 +642,3 @@ function RetryButton({
   )
 }
 
-function formatAnswer(response: Record<string, unknown>): string {
-  const val = response.answer
-  if (val == null || val === '') return '(no answer)'
-  if (Array.isArray(val)) return val.join(', ')
-  if (typeof val === 'object' && val !== null) {
-    return Object.entries(val as Record<string, unknown>)
-      .map(([k, v]) => `${k} → ${v}`)
-      .join('; ')
-  }
-  return String(val)
-}
-
-function formatCorrectAnswer(
-  answerKey: Record<string, unknown> | null,
-): string {
-  if (!answerKey) return ''
-  const accepted = answerKey.accepted_answers
-  if (Array.isArray(accepted) && accepted.length > 0) {
-    return accepted.join(' | ')
-  }
-  const correct = answerKey.correct ?? answerKey.answer
-  if (correct == null) {
-    const legacy = answerKey.answers
-    if (Array.isArray(legacy) && legacy.length > 0) return legacy.join(' | ')
-    return ''
-  }
-  if (Array.isArray(correct)) return correct.join(' | ')
-  if (typeof correct === 'object' && correct !== null) {
-    return Object.entries(correct as Record<string, unknown>)
-      .map(([_k, v]) => String(v))
-      .join(' | ')
-  }
-  return String(correct)
-}

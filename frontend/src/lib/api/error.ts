@@ -11,8 +11,22 @@ type FastApiDetail =
  * FastAPI returns `{ detail: string }`, `{ detail: [{msg}] }`, or
  * `{ detail: { errors: string[] } }` (publish validation).
  */
+function isTimeoutError(err: AxiosError): boolean {
+  return (
+    err.code === 'ECONNABORTED' ||
+    err.code === 'ETIMEDOUT' ||
+    /timeout/i.test(err.message ?? '')
+  )
+}
+
 export function apiErrorMessage(err: unknown, fallback = 'Something went wrong.'): string {
   const axiosErr = err as AxiosError<{ detail?: FastApiDetail }>
+  if (axiosErr?.isAxiosError && isTimeoutError(axiosErr)) {
+    return 'Request timed out. Please try again.'
+  }
+  if (axiosErr?.isAxiosError && !axiosErr.response) {
+    return 'Network error. Check your connection and try again.'
+  }
   const detail = axiosErr?.response?.data?.detail
   if (!detail) return fallback
   if (typeof detail === 'string') return detail
@@ -49,4 +63,19 @@ export function apiErrorMessages(err: unknown, fallback = 'Something went wrong.
     return detail.errors.map(String)
   }
   return [fallback]
+}
+
+/** Timeout / network copy for media uploads (listening audio, images). */
+export function apiUploadErrorMessage(
+  err: unknown,
+  fallback = 'Failed to upload file.',
+): string {
+  const axiosErr = err as AxiosError
+  if (axiosErr?.isAxiosError && isTimeoutError(axiosErr)) {
+    return 'Upload timed out. The file may be large — please try again.'
+  }
+  if (axiosErr?.isAxiosError && !axiosErr.response) {
+    return 'Connection lost during upload. Please try again.'
+  }
+  return apiErrorMessage(err, fallback)
 }

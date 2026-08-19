@@ -18,6 +18,40 @@ from app.services.storage import resolve_local_path
 logger = logging.getLogger(__name__)
 
 _rotator: KeyRotator | None = None
+# Groq STT is currently 403 from some VPS regions / revoked keys. Skip after
+# the first hard reject so every speaking turn does not wait on a dead provider.
+_groq_stt_blocked: bool = False
+_EMPTY_STT_MARKERS = frozenset(
+    {
+        "",
+        "empty",
+        "(empty)",
+        "[empty]",
+        "no speech",
+        "(no speech)",
+        "no speech detected",
+        "[no speech]",
+    }
+)
+
+
+def reset_groq_stt_circuit() -> None:
+    global _groq_stt_blocked
+    _groq_stt_blocked = False
+
+
+def _block_groq_stt(reason: str) -> None:
+    global _groq_stt_blocked
+    if not _groq_stt_blocked:
+        logger.error("Disabling Groq STT for this process (%s)", reason)
+    _groq_stt_blocked = True
+
+
+def _normalize_stt_text(text: str) -> str:
+    cleaned = text.strip().strip('"').strip()
+    if cleaned.lower() in _EMPTY_STT_MARKERS:
+        return ""
+    return cleaned
 
 
 def _gemini_url() -> str:
@@ -811,43 +845,19 @@ class NonEnglishError(ValueError):
 
 
 async def transcribe_audio(audio_url: str) -> str:
-    """Transcribe audio using Groq Whisper API. Supports local files and remote URLs."""
-    if not settings.groq_api_key:
-        raise RuntimeError("Groq API key not configured")
-
-    async with get_whisper_pool().acquire():
-        local_path = resolve_local_path(audio_url)
-        if local_path is not None:
-            audio_bytes = local_path.read_bytes()
-        else:
-            client = get_http_client()
-            audio_resp = await client.get(audio_url, timeout=120.0)
-            audio_resp.raise_for_status()
-            audio_bytes = audio_resp.content
-
+    """Transcribe audio. Groq Whisper first, Gemini if Groq is blocked."""
+    local_path = resolve_local_path(audio_url)
+    if local_path is not None:
+        audio_bytes = local_path.read_bytes()
+        content_type = "audio/webm"
+    else:
         client = get_http_client()
-        resp = await client.post(
-            "https://api.groq.com/openai/v1/audio/transcriptions",
-            headers={"Authorization": f"Bearer {settings.groq_api_key}"},
-            files={"file": ("audio.webm", audio_bytes, "audio/webm")},
-            data={"model": "whisper-large-v3", "response_format": "verbose_json"},
-            timeout=120.0,
-        )
-        resp.raise_for_status()
+        audio_resp = await client.get(audio_url, timeout=120.0)
+        audio_resp.raise_for_status()
+        audio_bytes = audio_resp.content
+        content_type = audio_resp.headers.get("content-type") or "audio/webm"
 
-        data = resp.json()
-        detected_lang = data.get("language", "english").lower()
-        transcript_text = data.get("text", "").strip()
-
-        logger.info("Whisper detected language: %s", detected_lang)
-
-        if detected_lang != "english":
-            raise NonEnglishError(
-                f"Please record your response in English. "
-                f"Detected language: {detected_lang}."
-            )
-
-        return transcript_text
+    return await transcribe_audio_bytes(audio_bytes, content_type=content_type)
 
 
 async def transcribe_audio_bytes(
@@ -855,15 +865,39 @@ async def transcribe_audio_bytes(
     *,
     content_type: str | None = None,
 ) -> str:
-    """Transcribe raw audio bytes via Groq Whisper. Lenient: never raises NonEnglishError."""
-    if not settings.groq_api_key:
-        raise RuntimeError("Groq API key not configured")
+    """Transcribe raw audio. Groq Whisper first; Gemini fallback on 401/403.
 
+    Lenient: never raises NonEnglishError.
+    """
     if len(audio_bytes) < 1024:
         raise ValueError(
             "Recording too short or empty — please speak for at least a few seconds"
         )
 
+    groq_error: Exception | None = None
+    if settings.groq_api_key and not _groq_stt_blocked:
+        try:
+            return await _transcribe_with_groq(audio_bytes, content_type)
+        except httpx.HTTPStatusError as exc:
+            groq_error = exc
+            if exc.response.status_code in (401, 403):
+                _block_groq_stt(f"HTTP {exc.response.status_code}")
+            else:
+                raise
+
+    if settings.gemini_key_list:
+        logger.warning("Transcribing via Gemini STT fallback")
+        return await _transcribe_with_gemini(audio_bytes, content_type)
+
+    if groq_error is not None:
+        raise groq_error
+    raise RuntimeError("No speech-to-text provider configured")
+
+
+async def _transcribe_with_groq(
+    audio_bytes: bytes,
+    content_type: str | None,
+) -> str:
     filename, mime = _groq_upload_file(content_type)
     client = get_http_client()
     max_attempts = 3
@@ -909,9 +943,62 @@ async def transcribe_audio_bytes(
                 "Whisper (lenient) transcript length: %d chars",
                 len(data.get("text", "")),
             )
-            return data.get("text", "").strip()
+            return _normalize_stt_text(data.get("text", ""))
 
     raise last_exc or RuntimeError("Groq transcription failed")
+
+
+async def _transcribe_with_gemini(
+    audio_bytes: bytes,
+    content_type: str | None,
+) -> str:
+    _filename, mime = _groq_upload_file(content_type)
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "inline_data": {
+                            "mime_type": mime,
+                            "data": base64.b64encode(audio_bytes).decode(),
+                        }
+                    },
+                    {
+                        "text": (
+                            "Transcribe this spoken English recording verbatim. "
+                            "Return only the transcript text, with no quotes or "
+                            "commentary. If there is no intelligible speech, "
+                            "return EMPTY."
+                        )
+                    },
+                ]
+            }
+        ],
+        "generationConfig": {"temperature": 0.0, "maxOutputTokens": 2048},
+    }
+
+    async def _post(api_key: str) -> httpx.Response:
+        client = get_http_client()
+        return await client.post(
+            _gemini_url(),
+            json=payload,
+            params={"key": api_key},
+            timeout=60.0,
+        )
+
+    resp = await _gemini_request_with_rotation(_post)
+    data = resp.json()
+    candidates = data.get("candidates") or []
+    if not candidates:
+        raise ValueError("Gemini STT returned no candidates")
+    parts = (candidates[0].get("content") or {}).get("parts") or []
+    text = ""
+    for part in parts:
+        if isinstance(part, dict) and isinstance(part.get("text"), str):
+            text += part["text"]
+    transcript = _normalize_stt_text(text)
+    logger.info("Gemini STT transcript length: %d chars", len(transcript))
+    return transcript
 
 
 def _groq_upload_file(content_type: str | None) -> tuple[str, str]:

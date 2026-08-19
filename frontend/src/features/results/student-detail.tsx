@@ -28,6 +28,7 @@ import { apiErrorMessage } from '@/lib/api/error'
 import { deleteStudent, updateStudent } from '@/lib/api/students'
 import type { Student } from '@/features/students/data/schema'
 import { AttemptRowActions } from '@/features/results/components/attempt-row-actions'
+import { formatBand } from '@/features/results/lib/band'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,11 +78,6 @@ function relativeDate(iso: string | null): string {
     month: 'short',
     year: 'numeric',
   })
-}
-
-function formatBand(band: number | null): string {
-  if (band === null) return '—'
-  return band % 1 === 0 ? band.toFixed(1) : String(band)
 }
 
 function StatusBadge({ status }: { status: string }) {

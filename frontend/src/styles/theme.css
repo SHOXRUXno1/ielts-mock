@@ -29,6 +29,16 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
 
+  --surface-raised: oklch(0.99 0.002 247.858);
+  --skill-listening: oklch(0.55 0.2 292.7);
+  --skill-reading: oklch(0.55 0.19 258.3);
+  --skill-writing: oklch(0.55 0.145 163.2);
+  --skill-speaking: oklch(0.65 0.16 75.8);
+  --skill-listening-soft: oklch(0.96 0.02 292.7);
+  --skill-reading-soft: oklch(0.96 0.02 258.3);
+  --skill-writing-soft: oklch(0.96 0.02 163.2);
+  --skill-speaking-soft: oklch(0.97 0.02 75.8);
+
   --sidebar: var(--background);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
@@ -68,6 +78,16 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+
+  --surface-raised: oklch(0.18 0.03 259.21);
+  --skill-listening: oklch(0.72 0.16 292.7);
+  --skill-reading: oklch(0.72 0.14 258.3);
+  --skill-writing: oklch(0.72 0.12 163.2);
+  --skill-speaking: oklch(0.78 0.14 75.8);
+  --skill-listening-soft: oklch(0.22 0.04 292.7);
+  --skill-reading-soft: oklch(0.22 0.04 258.3);
+  --skill-writing-soft: oklch(0.22 0.03 163.2);
+  --skill-speaking-soft: oklch(0.24 0.04 75.8);
 }
 
 @theme inline {
@@ -101,6 +121,15 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-surface-raised: var(--surface-raised);
+  --color-skill-listening: var(--skill-listening);
+  --color-skill-reading: var(--skill-reading);
+  --color-skill-writing: var(--skill-writing);
+  --color-skill-speaking: var(--skill-speaking);
+  --color-skill-listening-soft: var(--skill-listening-soft);
+  --color-skill-reading-soft: var(--skill-reading-soft);
+  --color-skill-writing-soft: var(--skill-writing-soft);
+  --color-skill-speaking-soft: var(--skill-speaking-soft);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-success: var(--success);

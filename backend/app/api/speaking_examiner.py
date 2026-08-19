@@ -197,6 +197,11 @@ def _groq_error_detail(exc: Exception) -> str:
             return body_msg or "Transcription rate limit exceeded — try again in a minute"
         if status == 400:
             return body_msg or "Could not transcribe audio — try recording again"
+        if status in (401, 403):
+            return (
+                body_msg
+                or "Speech recognition is unavailable — try Start again in a moment"
+            )
         return body_msg or f"Transcription failed (HTTP {status})"
     return "Transcription failed — try speaking again"
 
