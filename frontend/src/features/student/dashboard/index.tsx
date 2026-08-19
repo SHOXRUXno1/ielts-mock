@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -14,14 +15,7 @@ import {
   TrendingUp,
   Trophy,
 } from 'lucide-react'
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { Area, AreaChart, Tooltip, XAxis, YAxis } from 'recharts'
 import { getDashboard, type DashboardResponse } from '@/lib/api/student'
 import {
   fetchPracticeResults,
@@ -81,7 +75,29 @@ function BandRing({ band }: { band: number | null }) {
   )
 }
 
+function useHostWidth() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(0)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const apply = () => setWidth(el.clientWidth)
+    const frame = window.requestAnimationFrame(apply)
+    const observer = new ResizeObserver(apply)
+    observer.observe(el)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      observer.disconnect()
+    }
+  }, [])
+
+  return { ref, width }
+}
+
 function BandTrend({ points }: { points: DashboardResponse['band_trend'] }) {
+  const { ref, width } = useHostWidth()
+
   if (points.length < 2) {
     return (
       <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>
@@ -100,8 +116,14 @@ function BandTrend({ points }: { points: DashboardResponse['band_trend'] }) {
   }))
 
   return (
-    <ResponsiveContainer width='100%' height={110}>
-      <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+    <div ref={ref} className='h-[110px] w-full'>
+      {width > 0 && (
+        <AreaChart
+          width={width}
+          height={110}
+          data={chartData}
+          margin={{ top: 4, right: 4, bottom: 0, left: -20 }}
+        >
         <defs>
           <linearGradient id='dashGrad' x1='0' y1='0' x2='0' y2='1'>
             <stop offset='0%' stopColor='#3b82f6' stopOpacity={0.25} />
@@ -142,8 +164,9 @@ function BandTrend({ points }: { points: DashboardResponse['band_trend'] }) {
           dot={{ r: 3.5, fill: '#3b82f6', strokeWidth: 0 }}
           activeDot={{ r: 5.5, fill: '#2563eb' }}
         />
-      </AreaChart>
-    </ResponsiveContainer>
+        </AreaChart>
+      )}
+    </div>
   )
 }
 
@@ -399,7 +422,7 @@ export function StudentDashboard() {
             <BandRing band={data?.avg_band ?? null} />
             <div className='min-w-0 flex-1'>
               <p className='mb-2 text-xs text-muted-foreground'>
-                Last {data?.band_trend.length ?? 0} attempts
+                Last {data?.band_trend?.length ?? 0} attempts
               </p>
               <BandTrend points={data?.band_trend ?? []} />
             </div>
