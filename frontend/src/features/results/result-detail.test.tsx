@@ -123,5 +123,8 @@ describe('ResultDetail', () => {
     await expect
       .element(screen.getByRole('link', { name: /Writing/ }))
       .toBeInTheDocument()
+    await expect.element(screen.getByText('Score shape')).toBeInTheDocument()
+    await expect.element(screen.getByText('Skills')).toBeInTheDocument()
+    await expect.element(screen.getByText('Insights')).toBeInTheDocument()
   })
 })

@@ -11,10 +11,12 @@ import type {
 } from '@/lib/api/attempts'
 import { cn } from '@/lib/utils'
 import { EvaluationProgressCard, jobPhase } from '../evaluation-progress'
+import { ENTER } from '../lib/motion'
 import { CriteriaGrid, FeedbackList } from '../writing-feedback-panel'
 import { AdminBandOverride } from './admin-band-override'
-import { ReportHeader } from './report-header'
 import { ResultEmptyState } from './result-empty-state'
+import { SkillReportHeader } from './skill-report-header'
+import { Panel, PanelHeader, PanelTitle } from './ui/panel'
 
 type SpeakingReportPanelProps = {
   attempt: AttemptDetailRead
@@ -39,6 +41,7 @@ export function SpeakingReportPanel({
   const scoreJson =
     (job?.result as Record<string, unknown> | null) ?? session?.score_json ?? null
   const speakingPhase = jobPhase(jobs)
+  const turns = session?.history_json ?? []
 
   if (
     speakingPhase === 'queued' ||
@@ -51,7 +54,7 @@ export function SpeakingReportPanel({
   if (hasBand || scoreJson) {
     return (
       <div className='space-y-4'>
-        <ReportHeader
+        <SkillReportHeader
           skill='speaking'
           band={attempt.speaking_band ?? session?.overall_band}
           action={
@@ -61,77 +64,84 @@ export function SpeakingReportPanel({
           }
         />
         <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]'>
-          <div className='space-y-5 rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border'>
-            {Array.isArray(scoreJson?.strengths) && (
-              <FeedbackList
-                title='Strengths'
-                items={scoreJson.strengths as string[]}
-              />
-            )}
-            {Array.isArray(scoreJson?.improvements) && (
-              <FeedbackList
-                title='Areas for Improvement'
-                items={scoreJson.improvements as string[]}
-              />
-            )}
-            {typeof scoreJson?.transcript === 'string' && scoreJson.transcript && (
-              <div>
-                <p className='mb-2 text-sm font-medium'>Transcript</p>
-                <ScrollArea className='h-56 rounded-lg border bg-muted/30'>
-                  <p className='whitespace-pre-wrap p-3 text-sm leading-relaxed'>
-                    {scoreJson.transcript}
-                  </p>
-                </ScrollArea>
-              </div>
-            )}
-            {session?.history_json && session.history_json.length > 0 && (
-              <div>
-                <p className='mb-2 text-sm font-medium'>Conversation</p>
-                <ScrollArea className='h-80 rounded-lg border p-3'>
-                  <div className='space-y-3'>
-                    {session.history_json.map((turn, i) => {
-                      const isExaminer = turn.role === 'examiner'
-                      return (
-                        <div
-                          key={i}
-                          className={cn(
-                            'flex items-end gap-2',
-                            isExaminer ? 'justify-start' : 'flex-row-reverse',
-                          )}
-                        >
-                          <Avatar className='size-7'>
-                            <AvatarFallback
-                              className={cn(
-                                'text-[10px] font-semibold',
-                                isExaminer
-                                  ? 'bg-muted text-muted-foreground'
-                                  : 'bg-primary text-primary-foreground',
-                              )}
-                            >
-                              {isExaminer ? 'EX' : 'YOU'}
-                            </AvatarFallback>
-                          </Avatar>
+          <Panel className={ENTER} padding='sm'>
+            <div className='space-y-5'>
+              {Array.isArray(scoreJson?.strengths) && (
+                <FeedbackList
+                  title='Strengths'
+                  items={scoreJson.strengths as string[]}
+                />
+              )}
+              {Array.isArray(scoreJson?.improvements) && (
+                <FeedbackList
+                  title='Areas for Improvement'
+                  items={scoreJson.improvements as string[]}
+                />
+              )}
+              {typeof scoreJson?.transcript === 'string' && scoreJson.transcript && (
+                <div>
+                  <p className='mb-2 text-sm font-medium'>Transcript</p>
+                  <ScrollArea className='h-56 rounded-lg border bg-surface-sunken'>
+                    <p className='whitespace-pre-wrap p-3 text-sm leading-relaxed'>
+                      {scoreJson.transcript}
+                    </p>
+                  </ScrollArea>
+                </div>
+              )}
+              {turns.length > 0 && (
+                <div>
+                  <PanelHeader className='mb-2 items-baseline'>
+                    <PanelTitle className='text-sm'>Conversation</PanelTitle>
+                    <p className='text-[11px] tabular-nums text-muted-foreground'>
+                      {turns.length} {turns.length === 1 ? 'turn' : 'turns'}
+                    </p>
+                  </PanelHeader>
+                  <ScrollArea className='h-80 rounded-lg border bg-surface-sunken p-3'>
+                    <div className='space-y-3'>
+                      {turns.map((turn, i) => {
+                        const isExaminer = turn.role === 'examiner'
+                        return (
                           <div
+                            key={i}
                             className={cn(
-                              'max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed',
-                              isExaminer
-                                ? 'rounded-bl-md bg-muted text-foreground'
-                                : 'rounded-br-md bg-primary text-primary-foreground',
+                              'flex items-end gap-2',
+                              isExaminer ? 'justify-start' : 'flex-row-reverse',
                             )}
                           >
-                            <span className='mb-0.5 block text-[10px] font-medium tracking-wide uppercase opacity-70'>
-                              {turn.role}
-                            </span>
-                            {turn.text}
+                            <Avatar className='size-7'>
+                              <AvatarFallback
+                                className={cn(
+                                  'text-[10px] font-semibold',
+                                  isExaminer
+                                    ? 'bg-muted text-muted-foreground'
+                                    : 'bg-primary text-primary-foreground',
+                                )}
+                              >
+                                {isExaminer ? 'EX' : 'YOU'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div
+                              className={cn(
+                                'max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed',
+                                isExaminer
+                                  ? 'rounded-bl-md bg-muted text-foreground'
+                                  : 'rounded-br-md bg-primary text-primary-foreground',
+                              )}
+                            >
+                              <span className='mb-0.5 block text-[10px] font-medium tracking-wide uppercase opacity-70'>
+                                {turn.role}
+                              </span>
+                              {turn.text}
+                            </div>
                           </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </ScrollArea>
-              </div>
-            )}
-          </div>
+                        )
+                      })}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
+            </div>
+          </Panel>
           {scoreJson && (
             <aside className='lg:sticky lg:top-32 lg:self-start'>
               <CriteriaGrid

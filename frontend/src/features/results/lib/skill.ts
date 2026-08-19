@@ -4,6 +4,26 @@ export const SKILL_KEYS = ['listening', 'reading', 'writing', 'speaking'] as con
 
 export type SkillKey = (typeof SKILL_KEYS)[number]
 
+export type SkillBandField =
+  | 'listening_band'
+  | 'reading_band'
+  | 'writing_band'
+  | 'speaking_band'
+
+export const SKILL_BAND_FIELD: Record<SkillKey, SkillBandField> = {
+  listening: 'listening_band',
+  reading: 'reading_band',
+  writing: 'writing_band',
+  speaking: 'speaking_band',
+}
+
+export const SKILL_CSS_VAR: Record<SkillKey, string> = {
+  listening: 'var(--skill-listening)',
+  reading: 'var(--skill-reading)',
+  writing: 'var(--skill-writing)',
+  speaking: 'var(--skill-speaking)',
+}
+
 export type SkillMeta = {
   key: SkillKey
   label: string

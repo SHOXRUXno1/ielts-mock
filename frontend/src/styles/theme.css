@@ -30,6 +30,7 @@
   --chart-5: oklch(0.769 0.188 70.08);
 
   --surface-raised: oklch(0.99 0.002 247.858);
+  --surface-sunken: oklch(0.965 0.006 247.858);
   --skill-listening: oklch(0.55 0.2 292.7);
   --skill-reading: oklch(0.55 0.19 258.3);
   --skill-writing: oklch(0.55 0.145 163.2);
@@ -80,6 +81,7 @@
   --chart-5: oklch(0.645 0.246 16.439);
 
   --surface-raised: oklch(0.18 0.03 259.21);
+  --surface-sunken: oklch(0.11 0.03 259.21);
   --skill-listening: oklch(0.72 0.16 292.7);
   --skill-reading: oklch(0.72 0.14 258.3);
   --skill-writing: oklch(0.72 0.12 163.2);
@@ -122,6 +124,7 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
   --color-skill-listening: var(--skill-listening);
   --color-skill-reading: var(--skill-reading);
   --color-skill-writing: var(--skill-writing);

@@ -1,10 +1,9 @@
 import { useRef, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
-import { ArrowLeft, CircleAlert, FileQuestion, RotateCcw } from 'lucide-react'
+import { ArrowLeft, FileQuestion } from 'lucide-react'
 import { toast } from 'sonner'
 import { fetchResultDetail, finalizeAttempt } from '@/lib/api/attempts'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -21,8 +20,9 @@ import { AnswerReviewPanel } from './components/answer-review-panel'
 import { OverviewPanel } from './components/overview-panel'
 import { ResultDetailSkeleton } from './components/result-detail-skeleton'
 import { ResultEmptyState } from './components/result-empty-state'
-import { ResultHero } from './components/result-hero'
-import { ResultTabsBar } from './components/result-tabs-bar'
+import { ResultErrorState } from './components/result-error-state'
+import { ResultNav } from './components/result-nav'
+import { ScoreSummary } from './components/score-summary'
 import { SpeakingReportPanel } from './components/speaking-report-panel'
 import { WritingReportPanel } from './components/writing-report-panel'
 import { RESULT_TABS, type ResultTab } from './lib/tabs'
@@ -100,16 +100,7 @@ export function ResultDetail() {
     return (
       <PageShell>
         <Main>
-          <Alert variant='destructive'>
-            <CircleAlert />
-            <AlertTitle>Could not load result</AlertTitle>
-            <AlertDescription className='flex flex-col items-start gap-3'>
-              <p>The attempt failed to load. Check your connection and try again.</p>
-              <Button size='sm' variant='outline' onClick={() => void refetch()}>
-                Try again
-              </Button>
-            </AlertDescription>
-          </Alert>
+          <ResultErrorState onRetry={() => void refetch()} />
         </Main>
       </PageShell>
     )
@@ -175,37 +166,6 @@ export function ResultDetail() {
     </Button>
   ) : null
 
-  const heroActions = (
-    <div className='flex flex-wrap gap-2'>
-      {role === 'student' && attempt.test_id && (
-        <Button
-          variant='outline'
-          size='sm'
-          className='gap-1.5 rounded-lg'
-          onClick={() => {
-            void navigate({
-              to: '/take-test/$testId',
-              params: { testId: attempt.test_id },
-            })
-          }}
-        >
-          <RotateCcw className='size-3.5' />
-          Retake Test
-        </Button>
-      )}
-      {showSpeakingCta && (
-        <>
-          <Button asChild size='sm' className='rounded-lg'>
-            <Link to='/speaking-examiner' search={{ attemptId }}>
-              Continue to Speaking
-            </Link>
-          </Button>
-          {finalizeButton}
-        </>
-      )}
-    </div>
-  )
-
   return (
     <TooltipProvider>
       <PageShell>
@@ -222,10 +182,19 @@ export function ResultDetail() {
                 Back to results
               </Link>
             </Button>
-            <ResultHero
+            <ScoreSummary
               attempt={attempt}
               scoringActive={scoringActive}
-              actions={heroActions}
+              showRetake={role === 'student' && !!attempt.test_id}
+              showSpeakingCta={showSpeakingCta}
+              onRetake={() => {
+                void navigate({
+                  to: '/take-test/$testId',
+                  params: { testId: attempt.test_id },
+                })
+              }}
+              onFinalize={() => finalizeMut.mutate()}
+              finalizePending={finalizeMut.isPending}
             />
           </div>
 
@@ -241,7 +210,7 @@ export function ResultDetail() {
           )}
 
           <Tabs value={tab} onValueChange={setTab} className='gap-4'>
-            <ResultTabsBar attempt={attempt} role={role} />
+            <ResultNav attempt={attempt} role={role} />
 
             <TabsContent value='overview'>
               <OverviewPanel attempt={attempt} />

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BAND_MAX, bandPercent, bandTone, formatBand } from './band'
+import { BAND_MAX, BAND_SEGMENT_COUNT, bandPercent, bandSegments, bandTone, formatBand } from './band'
 
 describe('formatBand', () => {
   it('returns an em dash for empty values', () => {
@@ -24,6 +24,26 @@ describe('bandPercent', () => {
   it('clamps out-of-range values', () => {
     expect(bandPercent(12)).toBe(100)
     expect(bandPercent(-1)).toBe(0)
+  })
+})
+
+describe('bandSegments', () => {
+  it('returns zero for empty bands', () => {
+    expect(bandSegments(null)).toBe(0)
+    expect(bandSegments(undefined)).toBe(0)
+  })
+
+  it('maps half-band steps onto 18 segments', () => {
+    expect(bandSegments(0)).toBe(0)
+    expect(bandSegments(0.5)).toBe(1)
+    expect(bandSegments(4.5)).toBe(9)
+    expect(bandSegments(7)).toBe(14)
+    expect(bandSegments(9)).toBe(BAND_SEGMENT_COUNT)
+  })
+
+  it('clamps out-of-range values', () => {
+    expect(bandSegments(12)).toBe(BAND_SEGMENT_COUNT)
+    expect(bandSegments(-2)).toBe(0)
   })
 })
 

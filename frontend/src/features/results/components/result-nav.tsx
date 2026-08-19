@@ -2,27 +2,25 @@ import { LayoutGrid } from 'lucide-react'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { AttemptDetailRead, EvaluationJobRead } from '@/lib/api/attempts'
 import { cn } from '@/lib/utils'
+import { jobPhase } from '../evaluation-progress'
 import { formatBand } from '../lib/band'
-import { SKILL_META, type SkillKey } from '../lib/skill'
+import { SKILL_BAND_FIELD, SKILL_META, type SkillKey } from '../lib/skill'
 import { isSectionNotAttempted } from '../lib/status'
 import { RESULT_TABS } from '../lib/tabs'
-import { jobPhase } from '../evaluation-progress'
 
-type ResultTabsBarProps = {
+type ResultNavProps = {
   attempt: AttemptDetailRead
   role?: string | null
 }
 
-const SKILL_BAND: Record<SkillKey, keyof AttemptDetailRead> = {
-  listening: 'listening_band',
-  reading: 'reading_band',
-  writing: 'writing_band',
-  speaking: 'speaking_band',
+const NAV_STICKY_TOP: Record<string, string> = {
+  student: 'top-14 lg:top-16',
+  admin: 'top-16',
 }
 
 function jobsFor(attempt: AttemptDetailRead, skill: SkillKey): EvaluationJobRead[] {
   if (skill === 'listening' || skill === 'reading') return []
-  return attempt.evaluation_jobs.filter((j) => j.section_type === skill)
+  return attempt.evaluation_jobs.filter((job) => job.section_type === skill)
 }
 
 function TabMeta({
@@ -32,7 +30,7 @@ function TabMeta({
   attempt: AttemptDetailRead
   skill: SkillKey
 }) {
-  const band = attempt[SKILL_BAND[skill]] as number | null
+  const band = attempt[SKILL_BAND_FIELD[skill]]
   const phase = jobPhase(jobsFor(attempt, skill))
   const scoring = phase === 'queued' || phase === 'scoring'
   const empty = isSectionNotAttempted(band, attempt.status) || (band == null && !scoring)
@@ -54,23 +52,23 @@ function TabMeta({
     )
   }
   return (
-    <span className='text-[11px] font-medium tabular-nums text-muted-foreground'>
+    <span className='font-manrope text-[11px] font-medium tabular-nums text-muted-foreground'>
       {formatBand(band)}
     </span>
   )
 }
 
-export function ResultTabsBar({ attempt, role }: ResultTabsBarProps) {
-  const stickyTop = role === 'student' ? 'top-14 lg:top-16' : 'top-16'
+export function ResultNav({ attempt, role }: ResultNavProps) {
+  const stickyTop = NAV_STICKY_TOP[role ?? ''] ?? NAV_STICKY_TOP.admin
 
   return (
     <div
       className={cn(
-        'sticky z-20 -mx-4 bg-background/80 px-4 py-2 backdrop-blur-lg',
+        'sticky z-20 -mx-4 border-b border-border bg-background/80 px-4 backdrop-blur-lg',
         stickyTop,
       )}
     >
-      <TabsList className='no-scrollbar h-auto w-full justify-start overflow-x-auto rounded-xl bg-muted/50 p-1'>
+      <TabsList className='scroll-fade-x no-scrollbar h-auto w-full justify-start gap-1 overflow-x-auto rounded-none bg-transparent p-0'>
         {RESULT_TABS.map((value) => {
           const skill = value as SkillKey
           const isOverview = value === 'overview'
@@ -80,7 +78,12 @@ export function ResultTabsBar({ attempt, role }: ResultTabsBarProps) {
             <TabsTrigger
               key={value}
               value={value}
-              className='gap-2 rounded-lg px-3 capitalize'
+              className={cn(
+                'relative h-auto flex-none rounded-none border-0 bg-transparent px-3 py-2.5 shadow-none',
+                'text-muted-foreground capitalize after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent',
+                'hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:after:bg-foreground',
+                'dark:data-[state=active]:border-transparent dark:data-[state=active]:bg-transparent',
+              )}
             >
               <Icon className='hidden size-3.5 sm:block' />
               {value}

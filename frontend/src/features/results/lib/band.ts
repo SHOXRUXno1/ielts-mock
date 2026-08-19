@@ -1,4 +1,10 @@
 export const BAND_MAX = 9
+export const BAND_SEGMENT_COUNT = 18
+
+export function bandSegments(band: number | null | undefined): number {
+  if (band == null) return 0
+  return Math.max(0, Math.min(BAND_SEGMENT_COUNT, Math.round(band * 2)))
+}
 
 export type BandTone = 'strong' | 'fair' | 'weak' | 'empty'
 

@@ -19,11 +19,14 @@ import {
   groupAnswersByPart,
   type AnswerOutcome,
 } from '../lib/answers'
+import { accuracyByPart } from '../lib/insights'
+import { ENTER } from '../lib/motion'
 import { type SkillKey, skillMeta } from '../lib/skill'
 import { isSectionNotAttempted } from '../lib/status'
-import { AnswerOutcomeBar } from './answer-outcome-bar'
-import { ReportHeader } from './report-header'
+import { OutcomeBar } from './outcome-bar'
 import { ResultEmptyState } from './result-empty-state'
+import { SkillReportHeader } from './skill-report-header'
+import { Panel, PanelBody, PanelHeader, PanelToolbar } from './ui/panel'
 
 type FilterKey = AnswerOutcome
 
@@ -83,6 +86,11 @@ export function AnswerReviewPanel({
     return { correct, incorrect, skipped }
   }, [rows])
 
+  const partAccuracy = useMemo(
+    () => accuracyByPart(answers, skill),
+    [answers, skill],
+  )
+
   const visible = rows.filter((row) => {
     if (filter == null) return true
     return answerOutcome(row) === filter
@@ -114,7 +122,7 @@ export function AnswerReviewPanel({
 
   return (
     <div className='space-y-4'>
-      <ReportHeader
+      <SkillReportHeader
         skill={skill}
         band={band}
         extra={
@@ -124,15 +132,16 @@ export function AnswerReviewPanel({
         }
       />
 
-      <div className='rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border'>
-        <div className='flex flex-wrap items-center justify-between gap-3'>
-          <AnswerOutcomeBar
+      <Panel className={ENTER} padding='sm'>
+        <PanelHeader className='items-center'>
+          <OutcomeBar
             correct={counts.correct}
             incorrect={counts.incorrect}
             skipped={counts.skipped}
+            showLegend
             className='min-w-[12rem] flex-1'
           />
-          <div className='flex flex-wrap items-center gap-1'>
+          <PanelToolbar className='gap-1'>
             {FILTERS.map(({ value, label }) => {
               const count = counts[value]
               const pressed = filter === value
@@ -155,72 +164,96 @@ export function AnswerReviewPanel({
                 </button>
               )
             })}
-          </div>
-        </div>
+          </PanelToolbar>
+        </PanelHeader>
 
-        <div className='mt-4 hidden max-h-[32rem] overflow-auto rounded-xl ring-1 ring-border sm:block'>
-          <Table>
-            <TableHeader className='sticky top-0 z-10 bg-card'>
-              <TableRow className='hover:bg-transparent'>
-                <TableHead className='h-9 w-16 text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-                  Status
-                </TableHead>
-                <TableHead className='h-9 w-24 text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-                  Question
-                </TableHead>
-                <TableHead className='h-9 text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-                  My Answer
-                </TableHead>
-                <TableHead className='h-9 text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-                  Correct Answer
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            {groups.map((group) => (
-              <TableBody key={group.key}>
-                <TableRow className='bg-muted/40 hover:bg-muted/40'>
-                  <TableCell
-                    colSpan={4}
-                    className='py-1.5 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'
-                  >
-                    {group.label}
-                  </TableCell>
+        {partAccuracy.length > 0 && (
+          <div className='mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+            {partAccuracy.map((part) => (
+              <div key={part.key} className='space-y-2'>
+                <div className='flex items-baseline justify-between gap-2'>
+                  <p className='text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                    {part.label}
+                  </p>
+                  <p className='text-[11px] tabular-nums text-muted-foreground'>
+                    {part.correct}/{part.total}
+                  </p>
+                </div>
+                <OutcomeBar
+                  correct={part.correct}
+                  incorrect={part.incorrect}
+                  skipped={part.skipped}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        <PanelBody>
+          <div className='hidden max-h-[32rem] overflow-auto rounded-xl bg-surface-sunken sm:block'>
+            <Table>
+              <TableHeader className='sticky top-0 z-10 bg-card'>
+                <TableRow className='hover:bg-transparent'>
+                  <TableHead className='h-11 w-16 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                    Status
+                  </TableHead>
+                  <TableHead className='h-11 w-24 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                    Question
+                  </TableHead>
+                  <TableHead className='h-11 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                    My Answer
+                  </TableHead>
+                  <TableHead className='h-11 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                    Correct Answer
+                  </TableHead>
                 </TableRow>
+              </TableHeader>
+              {groups.map((group) => (
+                <TableBody key={group.key}>
+                  <TableRow className='bg-muted/40 hover:bg-muted/40'>
+                    <TableCell
+                      colSpan={4}
+                      className='py-1.5 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'
+                    >
+                      {group.label}
+                    </TableCell>
+                  </TableRow>
+                  {group.answers.map((a) => (
+                    <AnswerTableRow
+                      key={a.id}
+                      answer={a}
+                      number={displayNumbers.get(a.id) ?? String(a.question?.order ?? '?')}
+                    />
+                  ))}
+                </TableBody>
+              ))}
+            </Table>
+          </div>
+
+          <div className='space-y-3 sm:hidden'>
+            {groups.map((group) => (
+              <div key={group.key} className='space-y-2'>
+                <p className='text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                  {group.label}
+                </p>
                 {group.answers.map((a) => (
-                  <AnswerTableRow
+                  <AnswerCard
                     key={a.id}
                     answer={a}
                     number={displayNumbers.get(a.id) ?? String(a.question?.order ?? '?')}
                   />
                 ))}
-              </TableBody>
+              </div>
             ))}
-          </Table>
-        </div>
+          </div>
 
-        <div className='mt-4 space-y-3 sm:hidden'>
-          {groups.map((group) => (
-            <div key={group.key} className='space-y-2'>
-              <p className='text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
-                {group.label}
-              </p>
-              {group.answers.map((a) => (
-                <AnswerCard
-                  key={a.id}
-                  answer={a}
-                  number={displayNumbers.get(a.id) ?? String(a.question?.order ?? '?')}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
-
-        {visible.length === 0 && (
-          <p className='py-6 text-center text-sm text-muted-foreground'>
-            No answers match this filter.
-          </p>
-        )}
-      </div>
+          {visible.length === 0 && (
+            <p className='py-6 text-center text-sm text-muted-foreground'>
+              No answers match this filter.
+            </p>
+          )}
+        </PanelBody>
+      </Panel>
     </div>
   )
 }
@@ -237,14 +270,14 @@ function AnswerTableRow({
   const correct = formatCorrectAnswer(answer.question?.answer_key ?? null)
 
   return (
-    <TableRow className={cn('border-l-2', outcomeRowClass(outcome))}>
-      <TableCell className='py-2'>
+    <TableRow className={cn('h-11 border-l-[3px]', outcomeRowClass(outcome))}>
+      <TableCell className='py-0'>
         <OutcomeIcon outcome={outcome} />
       </TableCell>
-      <TableCell className='py-2 font-medium tabular-nums text-muted-foreground'>
+      <TableCell className='py-0 font-medium tabular-nums text-muted-foreground'>
         {number}
       </TableCell>
-      <TableCell className='py-2 font-mono text-[13px]'>
+      <TableCell className='py-0 font-mono text-[13px]'>
         {outcome === 'skipped' ? (
           <span className='text-muted-foreground'>—</span>
         ) : outcome === 'incorrect' ? (
@@ -255,7 +288,7 @@ function AnswerTableRow({
       </TableCell>
       <TableCell
         className={cn(
-          'py-2 font-mono text-[13px]',
+          'py-0 font-mono text-[13px]',
           correct ? 'font-medium text-success-foreground' : 'text-muted-foreground',
         )}
       >
@@ -277,7 +310,7 @@ function AnswerCard({
   const correct = formatCorrectAnswer(answer.question?.answer_key ?? null)
 
   return (
-    <div className={cn('rounded-xl border border-l-2 p-3', outcomeRowClass(outcome))}>
+    <div className={cn('rounded-xl border border-l-[3px] p-3', outcomeRowClass(outcome))}>
       <div className='mb-2 flex items-center justify-between gap-2'>
         <span className='text-xs font-medium tabular-nums text-muted-foreground'>
           Question {number}

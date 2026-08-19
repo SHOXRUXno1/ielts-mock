@@ -2,7 +2,7 @@ import type { EvaluationJobRead } from '@/lib/api/attempts'
 import { EvaluationProgressCard, jobPhase } from '../evaluation-progress'
 import { writingBandFromJobs, WritingFeedbackPanel } from '../writing-feedback-panel'
 import { AdminBandOverride } from './admin-band-override'
-import { ReportHeader } from './report-header'
+import { SkillReportHeader } from './skill-report-header'
 
 type WritingReportPanelProps = {
   jobs: EvaluationJobRead[]
@@ -21,7 +21,7 @@ export function WritingReportPanel({
 
   return (
     <div className='space-y-4'>
-      <ReportHeader
+      <SkillReportHeader
         skill='writing'
         band={band}
         action={

@@ -8,7 +8,6 @@ import {
 } from 'lucide-react'
 import type { EvaluationJobRead } from '@/lib/api/attempts'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Collapsible,
   CollapsibleContent,
@@ -22,8 +21,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { BandScale } from './components/ui/band-scale'
+import { Panel, PanelBody, PanelHeader, PanelTitle } from './components/ui/panel'
 import { formatBand } from './lib/band'
-import { BandMeter } from './components/band-meter'
 
 export function WritingFeedbackPanel({
   jobs,
@@ -36,11 +36,9 @@ export function WritingFeedbackPanel({
   const job = jobs.find((j) => j.status === 'done') ?? jobs[0]
   if (!job) {
     return (
-      <Card>
-        <CardContent className='py-8 text-sm text-muted-foreground'>
-          No writing evaluation yet.
-        </CardContent>
-      </Card>
+      <Panel padding='md'>
+        <p className='text-sm text-muted-foreground'>No writing evaluation yet.</p>
+      </Panel>
     )
   }
 
@@ -66,11 +64,9 @@ export function WritingFeedbackPanel({
 
   if (available.length === 0) {
     return (
-      <Card>
-        <CardContent className='py-8 text-sm text-muted-foreground'>
-          No writing evaluation yet.
-        </CardContent>
-      </Card>
+      <Panel padding='md'>
+        <p className='text-sm text-muted-foreground'>No writing evaluation yet.</p>
+      </Panel>
     )
   }
 
@@ -91,22 +87,18 @@ export function WritingFeedbackPanel({
           {task1 ? (
             <WritingResult tasks={{ task_1: task1 }} />
           ) : (
-            <Card>
-              <CardContent className='py-8 text-sm text-muted-foreground'>
-                Task 1 not attempted
-              </CardContent>
-            </Card>
+            <Panel padding='md'>
+              <p className='text-sm text-muted-foreground'>Task 1 not attempted</p>
+            </Panel>
           )}
         </TabsContent>
         <TabsContent value='task_2' className='mt-4'>
           {task2 ? (
             <WritingResult tasks={{ task_2: task2 }} />
           ) : (
-            <Card>
-              <CardContent className='py-8 text-sm text-muted-foreground'>
-                Task 2 not attempted
-              </CardContent>
-            </Card>
+            <Panel padding='md'>
+              <p className='text-sm text-muted-foreground'>Task 2 not attempted</p>
+            </Panel>
           )}
         </TabsContent>
       </Tabs>
@@ -460,10 +452,10 @@ function WritingTaskCard({
       : ''
 
   return (
-    <Card>
-      <CardHeader className='flex flex-row items-center justify-between gap-3 space-y-0'>
+    <Panel padding='md'>
+      <PanelHeader className='items-center'>
         <div className='flex flex-wrap items-center gap-2'>
-          <CardTitle className='text-base'>{label}</CardTitle>
+          <PanelTitle>{label}</PanelTitle>
           {wordCount != null && (
             <Badge variant='outline' className='text-xs'>
               <FileText className='mr-1 size-3' />
@@ -473,16 +465,16 @@ function WritingTaskCard({
         </div>
         {overallBand != null && (
           <div className='text-right'>
-            <p className='text-[10px] tracking-wider text-muted-foreground uppercase'>
+            <p className='text-[11px] tracking-wider text-muted-foreground uppercase'>
               Task Band
             </p>
-            <p className='text-xl font-semibold tabular-nums'>
+            <p className='font-manrope text-xl font-semibold tracking-tight tabular-nums'>
               {formatBand(overallBand)}
             </p>
           </div>
         )}
-      </CardHeader>
-      <CardContent>
+      </PanelHeader>
+      <PanelBody>
         <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]'>
           <div className='space-y-4'>
             {keyPoints.length > 0 && <KeyPointsAnalysis points={keyPoints} />}
@@ -532,7 +524,7 @@ function WritingTaskCard({
                     </div>
                   )}
                 </div>
-                <ScrollArea className='h-80 rounded-lg border bg-muted/20'>
+                <ScrollArea className='h-80 rounded-lg border bg-surface-sunken'>
                   <div className='p-4'>
                     <HighlightedEssay
                       text={essayText}
@@ -604,8 +596,8 @@ function WritingTaskCard({
             />
           </aside>
         </div>
-      </CardContent>
-    </Card>
+      </PanelBody>
+    </Panel>
   )
 }
 
@@ -756,8 +748,7 @@ export function CriteriaGrid({
             >
               {formatBand(criterion.band)}
             </p>
-            <BandMeter
-              variant='linear'
+            <BandScale
               band={criterion.band}
               label={label}
               className='mt-2'
