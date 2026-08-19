@@ -4,11 +4,14 @@ WORKDIR /app
 ENV PYTHONPATH=/app
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc libpq-dev curl && \
+    apt-get install -y --no-install-recommends \
+      gcc libpq-dev curl \
+      libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 \
+      fonts-dejavu-core fonts-liberation && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --default-timeout=180 -r requirements.txt
 
 COPY . .
 

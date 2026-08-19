@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
-import { Clock, Copy, Ellipsis, Flag, Play, Printer, RotateCcw, Timer } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { Clock, Copy, Download, Ellipsis, Flag, Loader2, Play, RotateCcw, Timer } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
-import type { AttemptDetailRead } from '@/lib/api/attempts'
+import { downloadResultPdf, type AttemptDetailRead } from '@/lib/api/attempts'
 import { ENTER } from '../lib/motion'
 import { attemptStatusMeta, formatAttemptDate, formatAttemptDuration } from '../lib/status'
 import { BandScale, BandValue, Metric, Panel } from '@/components/report'
@@ -41,6 +42,11 @@ export function ScoreSummary({
     scoringActive && attempt.overall_band == null ? null : attempt.overall_band
   const dialLabel =
     scoringActive && attempt.overall_band == null ? 'Pending' : 'Overall'
+
+  const download = useMutation({
+    mutationFn: () => downloadResultPdf(attempt.id),
+    onError: () => toast.error('Could not generate the PDF'),
+  })
 
   const copyLink = async () => {
     try {
@@ -108,6 +114,20 @@ export function ScoreSummary({
                 Retake Test
               </Button>
             )}
+            <Button
+              variant='outline'
+              size='sm'
+              className='gap-1.5 rounded-lg'
+              disabled={download.isPending}
+              onClick={() => download.mutate()}
+            >
+              {download.isPending ? (
+                <Loader2 className='size-3.5 animate-spin' />
+              ) : (
+                <Download className='size-3.5' />
+              )}
+              Download PDF
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -120,10 +140,6 @@ export function ScoreSummary({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end'>
-                <DropdownMenuItem onClick={() => window.print()}>
-                  <Printer />
-                  Print
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => void copyLink()}>
                   <Copy />
                   Copy link

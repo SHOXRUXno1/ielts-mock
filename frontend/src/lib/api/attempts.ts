@@ -191,6 +191,40 @@ export async function fetchResultDetail(
   return data
 }
 
+const PDF_TIMEOUT_MS = 60_000
+
+function filenameFromDisposition(
+  header: string | undefined,
+  fallback: string,
+): string {
+  if (!header) return fallback
+  const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(header)
+  if (utf8?.[1]) {
+    try {
+      return decodeURIComponent(utf8[1])
+    } catch {
+      // fall through to the quoted filename
+    }
+  }
+  const ascii = /filename="([^"]+)"/i.exec(header)
+  return ascii?.[1] ?? fallback
+}
+
+export async function downloadResultPdf(attemptId: string): Promise<void> {
+  const response = await api.get(`/results/${attemptId}/pdf`, {
+    responseType: 'blob',
+    timeout: PDF_TIMEOUT_MS,
+  })
+  const header = response.headers['content-disposition'] as string | undefined
+  const filename = filenameFromDisposition(header, 'ielts-result.pdf')
+  const url = URL.createObjectURL(response.data as Blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 export async function deleteAttempt(attemptId: string): Promise<void> {
   await api.delete(`/results/${attemptId}`)
 }

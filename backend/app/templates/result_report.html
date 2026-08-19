@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ test_title }} — Score report</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm 14mm 18mm 14mm;
+      @bottom-left {
+        content: "IELTS Mock · Score report";
+        font-size: 8pt;
+        color: #71717a;
+      }
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 8pt;
+        color: #71717a;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: #18181b;
+      font-family: "Liberation Sans", "DejaVu Sans", sans-serif;
+      font-size: 10pt;
+      line-height: 1.45;
+    }
+
+    h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.02em; }
+    h1 { font-size: 18pt; }
+    h2 { font-size: 13pt; margin-bottom: 10px; }
+    h3 { font-size: 11pt; margin: 14px 0 6px; }
+
+    p { margin: 0 0 8px; }
+    .muted { color: #71717a; }
+    .small { font-size: 8.5pt; }
+
+    .kicker {
+      font-size: 8pt;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #71717a;
+      margin-bottom: 4px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e4e4e7;
+    }
+
+    .band-block { text-align: right; min-width: 120px; }
+    .band-value {
+      font-size: 42pt;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+    .band-meta { margin-top: 6px; font-size: 9pt; color: #52525b; }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 28px;
+      margin: 16px 0 20px;
+    }
+    .meta-item .label {
+      display: block;
+      font-size: 8pt;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #71717a;
+    }
+    .meta-item .value { font-weight: 600; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.5pt;
+    }
+    th, td {
+      text-align: left;
+      padding: 6px 8px;
+      border-bottom: 1px solid #e4e4e7;
+      vertical-align: top;
+    }
+    th {
+      font-size: 8pt;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #71717a;
+      font-weight: 600;
+    }
+    tr { page-break-inside: avoid; }
+
+    .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .center { text-align: center; }
+
+    .section { page-break-before: always; }
+    .card { page-break-inside: avoid; margin-bottom: 14px; }
+
+    .pill {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .pill-correct { background: #dcfce7; color: #15803d; }
+    .pill-incorrect { background: #fee2e2; color: #b91c1c; }
+    .pill-skipped { background: #fef9c3; color: #a16207; }
+
+    .empty {
+      padding: 14px 12px;
+      background: #f4f4f5;
+      color: #71717a;
+      border-radius: 6px;
+    }
+
+    .summary {
+      margin: 0 0 10px;
+      font-size: 9pt;
+      color: #52525b;
+    }
+
+    ul { margin: 4px 0 10px 18px; padding: 0; }
+    li { margin-bottom: 3px; }
+
+    .essay, .transcript {
+      white-space: pre-wrap;
+      background: #fafafa;
+      border: 1px solid #e4e4e7;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 9.5pt;
+    }
+
+    .feedback { color: #3f3f46; font-size: 9.5pt; }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <p class="kicker">IELTS Mock · Score report</p>
+      <h1>{{ test_title }}</h1>
+      <p class="muted" style="margin-top:6px;">{{ student_name }}</p>
+    </div>
+    <div class="band-block">
+      <div class="band-value">{{ overall.band_label }}</div>
+      <div class="band-meta">
+        Overall
+        {% if overall.descriptor %} · {{ overall.descriptor }}{% endif %}
+        {% if overall.cefr %} · {{ overall.cefr }}{% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div class="meta">
+    <div class="meta-item">
+      <span class="label">Status</span>
+      <span class="value">{{ status }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="label">Started</span>
+      <span class="value">{{ started }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="label">Finished</span>
+      <span class="value">{{ finished }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="label">Duration</span>
+      <span class="value">{{ duration }}</span>
+    </div>
+  </div>
+
+  <h2>Skills</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Skill</th>
+        <th class="center">Band</th>
+        <th class="center">CEFR</th>
+        <th>Level</th>
+        <th class="center">Raw</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for skill in skills %}
+      <tr>
+        <td>{{ skill.label }}</td>
+        <td class="num center">{{ skill.band_label }}</td>
+        <td class="center">{{ skill.cefr or "—" }}</td>
+        <td>{{ skill.descriptor or "Not attempted" }}</td>
+        <td class="num center">
+          {% if skill.raw is not none %}{{ skill.raw }}/40{% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <section class="section">
+    <h2>Listening</h2>
+    {% if listening %}
+      {% for group in listening %}
+      <div class="card">
+        <h3>{{ group.label }}</h3>
+        <p class="summary">
+          {{ group.correct }} correct · {{ group.incorrect }} incorrect · {{ group.skipped }} skipped
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th class="num">#</th>
+              <th>Your answer</th>
+              <th>Correct answer</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in group.rows %}
+            <tr>
+              <td class="num">{{ row.number }}</td>
+              <td>{{ row.student }}</td>
+              <td>{{ row.correct }}</td>
+              <td><span class="pill pill-{{ row.outcome }}">{{ row.outcome }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="empty">Not attempted</p>
+    {% endif %}
+  </section>
+
+  <section class="section">
+    <h2>Reading</h2>
+    {% if reading %}
+      {% for group in reading %}
+      <div class="card">
+        <h3>{{ group.label }}</h3>
+        <p class="summary">
+          {{ group.correct }} correct · {{ group.incorrect }} incorrect · {{ group.skipped }} skipped
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th class="num">#</th>
+              <th>Your answer</th>
+              <th>Correct answer</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in group.rows %}
+            <tr>
+              <td class="num">{{ row.number }}</td>
+              <td>{{ row.student }}</td>
+              <td>{{ row.correct }}</td>
+              <td><span class="pill pill-{{ row.outcome }}">{{ row.outcome }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="empty">Not attempted</p>
+    {% endif %}
+  </section>
+
+  <section class="section">
+    <h2>Writing</h2>
+    {% if writing.state == "scoring" %}
+      <p class="empty">Scoring in progress</p>
+    {% elif not writing.ready %}
+      <p class="empty">Not attempted</p>
+    {% else %}
+      {% for task in writing.tasks %}
+      <div class="card">
+        <h3>{{ task.title }} · {{ task.band_label }}{% if task.word_count %} · {{ task.word_count }} words{% endif %}</h3>
+        {% if task.criteria %}
+        <table>
+          <thead>
+            <tr>
+              <th>Criterion</th>
+              <th class="center">Band</th>
+              <th>Feedback</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in task.criteria %}
+            <tr>
+              <td>{{ item.label }}</td>
+              <td class="num center">{{ item.band_label }}</td>
+              <td class="feedback">{{ item.feedback }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        {% if task.strengths %}
+        <h3>Strengths</h3>
+        <ul>
+          {% for item in task.strengths %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+        {% if task.improvements %}
+        <h3>Improvements</h3>
+        <ul>
+          {% for item in task.improvements %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% endif %}
+  </section>
+
+  <section class="section">
+    <h2>Speaking</h2>
+    {% if speaking.state == "scoring" %}
+      <p class="empty">Scoring in progress</p>
+    {% elif not speaking.ready %}
+      <p class="empty">Not attempted</p>
+    {% else %}
+      <p class="summary">Band {{ speaking.band_label }}</p>
+      {% if speaking.criteria %}
+      <table>
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th class="center">Band</th>
+            <th>Feedback</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in speaking.criteria %}
+          <tr>
+            <td>{{ item.label }}</td>
+            <td class="num center">{{ item.band_label }}</td>
+            <td class="feedback">{{ item.feedback }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      {% if speaking.strengths %}
+      <h3>Strengths</h3>
+      <ul>
+        {% for item in speaking.strengths %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+      {% if speaking.improvements %}
+      <h3>Improvements</h3>
+      <ul>
+        {% for item in speaking.improvements %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    {% endif %}
+  </section>
+
+  <section class="section">
+    <h2>Appendix</h2>
+    {% set essays = writing.tasks | selectattr("essay") | list if writing.ready else [] %}
+    {% if essays %}
+      {% for task in writing.tasks %}
+        {% if task.essay %}
+        <h3>{{ task.title }} — student text</h3>
+        <div class="essay">{{ task.essay }}</div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    {% if speaking.ready and speaking.transcript %}
+      <h3>Speaking transcript</h3>
+      <div class="transcript">{{ speaking.transcript }}</div>
+    {% endif %}
+    {% if (not essays) and not (speaking.ready and speaking.transcript) %}
+      <p class="empty">No written or spoken text to include.</p>
+    {% endif %}
+    <p class="small muted" style="margin-top:16px;">Generated {{ generated_at }} UTC</p>
+  </section>
+</body>
+</html>

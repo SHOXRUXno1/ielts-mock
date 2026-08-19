@@ -1,7 +1,10 @@
+import asyncio
+import io
 import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,6 +31,12 @@ from app.schemas.attempt import (
     SpeakingSessionSummary,
 )
 from app.services.band_calc import compute_overall_band, derive_scored_status
+from app.services.result_report import (
+    build_report_context,
+    content_disposition,
+    render_report_pdf,
+    report_filenames,
+)
 from app.services.question_numbering import annotate_questions_list, question_numbers_for_test
 from app.services.scoring import (
     correct_to_listening_band,
@@ -575,6 +584,44 @@ async def get_result_detail(
             if test is not None
             else None
         ),
+    )
+
+
+async def _attempt_student_name(
+    db: AsyncSession,
+    attempt_id: uuid.UUID,
+    actor: Actor,
+) -> str:
+    if actor.role == "student" and actor.db_user is not None:
+        name = getattr(actor.db_user, "full_name", None)
+        if name:
+            return str(name)
+        if actor.login:
+            return actor.login
+    stmt = (
+        select(User.full_name)
+        .join(Attempt, Attempt.user_id == User.id)
+        .where(Attempt.id == attempt_id)
+    )
+    name = (await db.execute(stmt)).scalar_one_or_none()
+    return name or "Student"
+
+
+@router.get("/{attempt_id}/pdf")
+async def download_result_pdf(
+    attempt_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+):
+    detail = await get_result_detail(attempt_id, db, actor)
+    student_name = await _attempt_student_name(db, attempt_id, actor)
+    context = build_report_context(detail, student_name)
+    pdf = await asyncio.to_thread(render_report_pdf, context)
+    ascii_name, utf8_name = report_filenames(detail)
+    return StreamingResponse(
+        io.BytesIO(pdf),
+        media_type="application/pdf",
+        headers={"Content-Disposition": content_disposition(ascii_name, utf8_name)},
     )
 
 
