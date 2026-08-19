@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -15,7 +14,6 @@ import {
   TrendingUp,
   Trophy,
 } from 'lucide-react'
-import { Area, AreaChart, Tooltip, XAxis, YAxis } from 'recharts'
 import { getDashboard, type DashboardResponse } from '@/lib/api/student'
 import {
   fetchPracticeResults,
@@ -75,30 +73,8 @@ function BandRing({ band }: { band: number | null }) {
   )
 }
 
-function useHostWidth() {
-  const ref = useRef<HTMLDivElement>(null)
-  const [width, setWidth] = useState(0)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const apply = () => setWidth(el.clientWidth)
-    const frame = window.requestAnimationFrame(apply)
-    const observer = new ResizeObserver(apply)
-    observer.observe(el)
-    return () => {
-      window.cancelAnimationFrame(frame)
-      observer.disconnect()
-    }
-  }, [])
-
-  return { ref, width }
-}
-
 function BandTrend({ points }: { points: DashboardResponse['band_trend'] }) {
-  const { ref, width } = useHostWidth()
-
-  if (points.length < 2) {
+  if (!Array.isArray(points) || points.length < 2) {
     return (
       <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>
         <span className='text-center'>Complete more tests to see your trend</span>
@@ -106,67 +82,32 @@ function BandTrend({ points }: { points: DashboardResponse['band_trend'] }) {
     )
   }
 
-  const chartData = points.map((p, i) => ({
-    idx: i + 1,
-    band: p.band,
-    label: new Date(p.date).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-    }),
-  }))
+  const width = 560
+  const height = 110
+  const pad = 16
+  const xs = points.map(
+    (_, i) => pad + (i * (width - pad * 2)) / Math.max(1, points.length - 1),
+  )
+  const ys = points.map((p) => {
+    const pct = Math.max(0, Math.min(1, Number(p.band ?? 0) / 9))
+    return height - pad - pct * (height - pad * 2)
+  })
+  const line = xs
+    .map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${ys[i].toFixed(1)}`)
+    .join(' ')
 
   return (
-    <div ref={ref} className='h-[110px] w-full'>
-      {width > 0 && (
-        <AreaChart
-          width={width}
-          height={110}
-          data={chartData}
-          margin={{ top: 4, right: 4, bottom: 0, left: -20 }}
-        >
-        <defs>
-          <linearGradient id='dashGrad' x1='0' y1='0' x2='0' y2='1'>
-            <stop offset='0%' stopColor='#3b82f6' stopOpacity={0.25} />
-            <stop offset='100%' stopColor='#3b82f6' stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <XAxis
-          dataKey='label'
-          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          domain={[0, 9]}
-          ticks={[3, 5, 7, 9]}
-          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <Tooltip
-          contentStyle={{
-            fontSize: 12,
-            borderRadius: 10,
-            border: '1px solid hsl(var(--border))',
-            background: 'hsl(var(--card))',
-            color: 'hsl(var(--card-foreground))',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-          }}
-          formatter={(value) => [`Band ${Number(value ?? 0)}`, '']}
-          labelFormatter={(label) => String(label ?? '')}
-        />
-        <Area
-          type='monotone'
-          dataKey='band'
-          stroke='#3b82f6'
-          strokeWidth={2.5}
-          fill='url(#dashGrad)'
-          dot={{ r: 3.5, fill: '#3b82f6', strokeWidth: 0 }}
-          activeDot={{ r: 5.5, fill: '#2563eb' }}
-        />
-        </AreaChart>
-      )}
-    </div>
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className='h-[110px] w-full'
+      role='img'
+      aria-label='Band progress'
+    >
+      <path d={line} fill='none' stroke='#3b82f6' strokeWidth='2.5' />
+      {xs.map((x, i) => (
+        <circle key={i} cx={x} cy={ys[i]} r='3.5' fill='#3b82f6' />
+      ))}
+    </svg>
   )
 }
 
@@ -307,7 +248,7 @@ function PracticeBlock({ rows }: { rows: PracticeResultRow[] }) {
 export function StudentDashboard() {
   const firstName =
     useAuthStore((s) => s.auth.user?.full_name ?? s.auth.user?.name) ?? 'Student'
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['student-dashboard'],
     queryFn: getDashboard,
   })
@@ -318,8 +259,25 @@ export function StudentDashboard() {
 
   if (isLoading) return <DashboardSkeleton />
 
+  if (isError) {
+    return (
+      <div className='flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-muted/20 py-16 text-center'>
+        <p className='text-base font-medium text-foreground'>
+          Could not load your dashboard
+        </p>
+        <p className='max-w-sm text-sm text-muted-foreground'>
+          Please try again in a moment.
+        </p>
+        <Button className='mt-2 rounded-lg' onClick={() => void refetch()}>
+          Retry
+        </Button>
+      </div>
+    )
+  }
+
   const hasAttempts = (data?.tests_taken ?? 0) > 0
-  const practiceRows = practiceQuery.data ?? []
+  const practiceRows = Array.isArray(practiceQuery.data) ? practiceQuery.data : []
+  const recentRows = Array.isArray(data?.recent) ? data.recent : []
 
   return (
     <div className='space-y-6'>
@@ -473,7 +431,7 @@ export function StudentDashboard() {
       <PracticeBlock rows={practiceRows} />
 
       {/* Recent attempts */}
-      {data?.recent && data.recent.length > 0 && (
+      {recentRows.length > 0 && (
         <div>
           <div className='mb-3 flex items-center justify-between'>
             <h3 className='text-sm font-medium text-muted-foreground'>
@@ -487,7 +445,7 @@ export function StudentDashboard() {
             </Button>
           </div>
           <div className='space-y-2'>
-            {data.recent.map((a) => (
+            {recentRows.map((a) => (
               <Link
                 key={a.id}
                 to='/student/results/$attemptId'
