@@ -1,12 +1,8 @@
 import type { ReactNode } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { userEvent } from 'vitest/browser'
+import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DirectionProvider } from '@/context/direction-provider'
-import { FontProvider } from '@/context/font-provider'
-import { ThemeProvider } from '@/context/theme-provider'
-import { removeCookie } from '@/lib/cookies'
 import type { DashboardResponse } from '@/lib/api/student'
 import { StudentProfile } from './index'
 
@@ -78,25 +74,15 @@ vi.mock('@tanstack/react-router', async () => {
 function renderProfile() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <ThemeProvider>
-      <FontProvider>
-        <DirectionProvider>
-          <QueryClientProvider client={qc}>
-            <StudentProfile />
-          </QueryClientProvider>
-        </DirectionProvider>
-      </FontProvider>
-    </ThemeProvider>,
+    <DirectionProvider>
+      <QueryClientProvider client={qc}>
+        <StudentProfile />
+      </QueryClientProvider>
+    </DirectionProvider>,
   )
 }
 
 describe('StudentProfile', () => {
-  afterEach(() => {
-    removeCookie('vite-ui-theme')
-    document.documentElement.classList.remove('dark')
-    document.documentElement.classList.add('light')
-  })
-
   it('renders identity, skill averages, and lifetime stats', async () => {
     const screen = await renderProfile()
 
@@ -107,17 +93,6 @@ describe('StudentProfile', () => {
     await expect.element(screen.getByText('Strongest')).toBeInTheDocument()
     await expect.element(screen.getByText('Focus on')).toBeInTheDocument()
     await expect.element(screen.getByText('Mock tests')).toBeInTheDocument()
-    await expect
-      .element(screen.getByRole('heading', { name: 'Preferences' }))
-      .toBeInTheDocument()
     await expect.element(screen.getByText('Sign out')).toBeInTheDocument()
-  })
-
-  it('applies the selected theme immediately', async () => {
-    const screen = await renderProfile()
-
-    await expect.element(screen.getByText('Appearance')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('radio', { name: 'Dark' }))
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
   })
 })

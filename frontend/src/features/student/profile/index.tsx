@@ -7,7 +7,6 @@ import { getDashboard, getMyResults } from '@/lib/api/student'
 import { getDisplayNameInitials } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import { LifetimePanel } from './components/lifetime-panel'
-import { PreferencesPanel } from './components/preferences-panel'
 import { ProfileHeader } from './components/profile-header'
 import { ProfileSkeleton } from './components/profile-skeleton'
 import { SignOutCard } from './components/sign-out-card'
@@ -79,7 +78,7 @@ export function StudentProfile() {
           Profile
         </h1>
         <p className='mt-1 text-sm text-muted-foreground'>
-          Your account, lifetime progress, and display preferences
+          Your account and lifetime progress
         </p>
       </div>
 
@@ -102,7 +101,6 @@ export function StudentProfile() {
           />
         </div>
         <div className='space-y-6'>
-          <PreferencesPanel />
           <SignOutCard onConfirm={handleLogout} />
         </div>
       </div>

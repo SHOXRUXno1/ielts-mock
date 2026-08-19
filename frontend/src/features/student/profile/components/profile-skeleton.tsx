@@ -41,11 +41,6 @@ export function ProfileSkeleton() {
           </div>
         </div>
         <div className='space-y-6'>
-          <Panel>
-            <Skeleton className='mb-4 h-5 w-28' />
-            <Skeleton className='h-10 w-full rounded-lg' />
-            <Skeleton className='mt-4 h-10 w-full rounded-lg' />
-          </Panel>
           <Skeleton className='h-16 rounded-2xl' />
         </div>
       </div>
