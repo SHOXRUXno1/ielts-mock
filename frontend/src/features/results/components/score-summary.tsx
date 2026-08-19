@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
-import { Clock, Copy, Download, Ellipsis, Flag, Loader2, Play, RotateCcw, Timer } from 'lucide-react'
+import { Clock, Download, Ellipsis, Flag, Loader2, Play, RotateCcw, Timer } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
@@ -47,15 +46,6 @@ export function ScoreSummary({
     mutationFn: () => downloadResultPdf(attempt.id),
     onError: () => toast.error('Could not generate the PDF'),
   })
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      toast.success('Link copied')
-    } catch {
-      toast.error('Could not copy link')
-    }
-  }
 
   return (
     <Panel className={ENTER}>
@@ -128,35 +118,28 @@ export function ScoreSummary({
               )}
               Download PDF
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className='rounded-lg'
-                  aria-label='More actions'
-                >
-                  <Ellipsis className='size-4' />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                <DropdownMenuItem onClick={() => void copyLink()}>
-                  <Copy />
-                  Copy link
-                </DropdownMenuItem>
-                {showSpeakingCta && onFinalize && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      disabled={finalizePending}
-                      onClick={onFinalize}
-                    >
-                      Complete without Speaking
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {showSpeakingCta && onFinalize && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='rounded-lg'
+                    aria-label='More actions'
+                  >
+                    <Ellipsis className='size-4' />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuItem
+                    disabled={finalizePending}
+                    onClick={onFinalize}
+                  >
+                    Complete without Speaking
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </div>
