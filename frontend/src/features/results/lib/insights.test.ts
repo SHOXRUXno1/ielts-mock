@@ -121,6 +121,7 @@ describe('accuracyByPart', () => {
         section: { id: 's2', type: 'listening', order: 2 },
       }),
     ]
+    expect(accuracyByPart(null as unknown as AnswerRead[], 'listening')).toEqual([])
     const parts = accuracyByPart(rows, 'listening')
     expect(parts).toEqual([
       {

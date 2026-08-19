@@ -79,6 +79,7 @@ export function accuracyByPart(
   answers: AnswerRead[],
   skill: 'listening' | 'reading',
 ): PartAccuracy[] {
+  if (!Array.isArray(answers)) return []
   const scored = answers.filter(
     (answer) => answer.is_correct !== null && answer.section?.type === skill,
   )

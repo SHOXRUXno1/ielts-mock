@@ -120,16 +120,22 @@ export function ResultDetail() {
     )
   }
 
-  if (attempt.mode !== 'full_mock') {
+  const answers = Array.isArray(attempt.answers) ? attempt.answers : []
+  const evaluationJobs = Array.isArray(attempt.evaluation_jobs)
+    ? attempt.evaluation_jobs
+    : []
+  const report = { ...attempt, answers, evaluation_jobs: evaluationJobs }
+
+  if (report.mode !== 'full_mock') {
     return (
       <PageShell>
-        <PracticeResultDetail attempt={attempt} />
+        <PracticeResultDetail attempt={report} />
       </PageShell>
     )
   }
 
-  const writingJobs = attempt.evaluation_jobs.filter((j) => j.section_type === 'writing')
-  const speakingJobs = attempt.evaluation_jobs.filter((j) => j.section_type === 'speaking')
+  const writingJobs = evaluationJobs.filter((j) => j.section_type === 'writing')
+  const speakingJobs = evaluationJobs.filter((j) => j.section_type === 'speaking')
   const writingActive = isJobActive(writingJobs)
   const speakingActive = isJobActive(speakingJobs)
   const scoringActive = writingActive || speakingActive
@@ -138,7 +144,7 @@ export function ResultDetail() {
   const isAdmin = role === 'admin'
   const showSpeakingCta =
     isAdmin &&
-    (attempt.status === 'auto_scored' || attempt.status === 'speaking_in_progress')
+    (report.status === 'auto_scored' || report.status === 'speaking_in_progress')
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ['results', attemptId] })
@@ -183,14 +189,14 @@ export function ResultDetail() {
               </Link>
             </Button>
             <ScoreSummary
-              attempt={attempt}
+              attempt={report}
               scoringActive={scoringActive}
-              showRetake={role === 'student' && !!attempt.test_id}
+              showRetake={role === 'student' && !!report.test_id}
               showSpeakingCta={showSpeakingCta}
               onRetake={() => {
                 void navigate({
                   to: '/take-test/$testId',
-                  params: { testId: attempt.test_id },
+                  params: { testId: report.test_id },
                 })
               }}
               onFinalize={() => finalizeMut.mutate()}
@@ -210,27 +216,27 @@ export function ResultDetail() {
           )}
 
           <Tabs value={tab} onValueChange={setTab} className='gap-4'>
-            <ResultNav attempt={attempt} role={role} />
+            <ResultNav attempt={report} role={role} />
 
             <TabsContent value='overview'>
-              <OverviewPanel attempt={attempt} />
+              <OverviewPanel attempt={report} />
             </TabsContent>
             <TabsContent value='listening'>
               <AnswerReviewPanel
                 skill='listening'
-                band={attempt.listening_band}
-                raw={attempt.listening_raw}
-                answers={attempt.answers}
-                attemptStatus={attempt.status}
+                band={report.listening_band}
+                raw={report.listening_raw}
+                answers={report.answers}
+                attemptStatus={report.status}
               />
             </TabsContent>
             <TabsContent value='reading'>
               <AnswerReviewPanel
                 skill='reading'
-                band={attempt.reading_band}
-                raw={attempt.reading_raw}
-                answers={attempt.answers}
-                attemptStatus={attempt.status}
+                band={report.reading_band}
+                raw={report.reading_raw}
+                answers={report.answers}
+                attemptStatus={report.status}
               />
             </TabsContent>
             <TabsContent value='writing'>
@@ -242,7 +248,7 @@ export function ResultDetail() {
             </TabsContent>
             <TabsContent value='speaking'>
               <SpeakingReportPanel
-                attempt={attempt}
+                attempt={report}
                 attemptId={attemptId}
                 jobs={speakingJobs}
                 isAdmin={isAdmin}
