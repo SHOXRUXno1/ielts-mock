@@ -11,7 +11,7 @@ import { formatBand } from '../lib/band'
 import { formatRoundingExample, profileInsights } from '../lib/insights'
 import { ENTER, staggerStyle } from '../lib/motion'
 import { SKILL_META } from '../lib/skill'
-import { Panel, PanelBody, PanelHeader, PanelTitle } from './ui/panel'
+import { Panel, PanelBody, PanelHeader, PanelTitle } from '@/components/report'
 
 type InsightsPanelProps = {
   attempt: AttemptDetailRead

@@ -2,7 +2,7 @@ import type { AttemptDetailRead } from '@/lib/api/attempts'
 import { BAND_MAX } from '../lib/band'
 import { ENTER } from '../lib/motion'
 import { SKILL_BAND_FIELD, SKILL_CSS_VAR, SKILL_KEYS, type SkillKey } from '../lib/skill'
-import { Panel, PanelBody, PanelHeader, PanelTitle } from './ui/panel'
+import { Panel, PanelBody, PanelHeader, PanelTitle } from '@/components/report'
 
 type SkillRadarProps = {
   attempt: AttemptDetailRead

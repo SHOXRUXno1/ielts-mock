@@ -2,8 +2,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { ENTER } from '../lib/motion'
 import { type SkillKey, skillMeta } from '../lib/skill'
-import { BandValue } from './ui/band-value'
-import { Panel } from './ui/panel'
+import { BandValue, Panel } from '@/components/report'
 
 type SkillReportHeaderProps = {
   skill: SkillKey

@@ -1,5 +1,10 @@
 import { cn } from '@/lib/utils'
-import { BAND_MAX, BAND_SEGMENT_COUNT, bandSegments, formatBand } from '../../lib/band'
+import {
+  BAND_MAX,
+  BAND_SEGMENT_COUNT,
+  bandSegments,
+  formatBand,
+} from '@/features/results/lib/band'
 
 type BandScaleProps = {
   band: number | null | undefined
@@ -54,7 +59,7 @@ export function BandScale({
           ))}
       </div>
       {showTicks && (
-        <div className='mt-1 flex justify-between text-[11px] tabular-nums text-muted-foreground'>
+        <div className='mt-1 flex justify-between text-xs tabular-nums text-muted-foreground'>
           <span>0</span>
           <span>4.5</span>
           <span>9</span>

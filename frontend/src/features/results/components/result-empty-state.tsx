@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { ENTER } from '../lib/motion'
-import { Panel } from './ui/panel'
+import { Panel } from '@/components/report'
 
 type ResultEmptyStateProps = {
   icon: LucideIcon

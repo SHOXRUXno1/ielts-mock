@@ -14,10 +14,7 @@ import { Separator } from '@/components/ui/separator'
 import type { AttemptDetailRead } from '@/lib/api/attempts'
 import { ENTER } from '../lib/motion'
 import { attemptStatusMeta, formatAttemptDate, formatAttemptDuration } from '../lib/status'
-import { BandScale } from './ui/band-scale'
-import { BandValue } from './ui/band-value'
-import { Metric } from './ui/metric'
-import { Panel } from './ui/panel'
+import { BandScale, BandValue, Metric, Panel } from '@/components/report'
 
 export type ScoreSummaryProps = {
   attempt: AttemptDetailRead

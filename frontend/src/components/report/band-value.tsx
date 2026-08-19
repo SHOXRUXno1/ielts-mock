@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { BAND_MAX, formatBand } from '../../lib/band'
-import { bandDescriptor, cefrLevel } from '../../lib/cefr'
+import { BAND_MAX, formatBand } from '@/features/results/lib/band'
+import { bandDescriptor, cefrLevel } from '@/features/results/lib/cefr'
 
 type BandValueSize = 'display' | 'lg' | 'sm'
 
@@ -46,7 +46,7 @@ export function BandValue({
         {formatBand(band)}
       </p>
       {label && size === 'display' && (
-        <p className='mt-1 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+        <p className='mt-1 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
           {label}
         </p>
       )}
@@ -61,7 +61,7 @@ export function BandValue({
             <span className='text-sm text-muted-foreground'>{descriptor}</span>
           )}
           {showCefr && cefr && (
-            <Badge variant='outline' className='rounded-md text-[11px]'>
+            <Badge variant='outline' className='rounded-md text-xs'>
               {cefr}
             </Badge>
           )}

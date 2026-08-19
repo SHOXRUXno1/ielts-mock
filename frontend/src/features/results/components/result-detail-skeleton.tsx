@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
-import { Panel } from './ui/panel'
+import { Panel } from '@/components/report'
 
 export function ResultDetailSkeleton() {
   return (

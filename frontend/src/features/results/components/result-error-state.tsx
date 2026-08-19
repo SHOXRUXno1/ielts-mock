@@ -1,7 +1,7 @@
 import { CircleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ENTER } from '../lib/motion'
-import { Panel } from './ui/panel'
+import { Panel } from '@/components/report'
 
 type ResultErrorStateProps = {
   onRetry: () => void

@@ -21,8 +21,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { BandScale } from './components/ui/band-scale'
-import { Panel, PanelBody, PanelHeader, PanelTitle } from './components/ui/panel'
+import { BandScale, Panel, PanelBody, PanelHeader, PanelTitle } from '@/components/report'
 import { formatBand } from './lib/band'
 
 export function WritingFeedbackPanel({

@@ -26,7 +26,7 @@ import { isSectionNotAttempted } from '../lib/status'
 import { OutcomeBar } from './outcome-bar'
 import { ResultEmptyState } from './result-empty-state'
 import { SkillReportHeader } from './skill-report-header'
-import { Panel, PanelBody, PanelHeader, PanelToolbar } from './ui/panel'
+import { Panel, PanelBody, PanelHeader, PanelToolbar } from '@/components/report'
 
 type FilterKey = AnswerOutcome
 

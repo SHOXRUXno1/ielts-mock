@@ -3,7 +3,7 @@ import { accuracyByPart } from '../lib/insights'
 import { ENTER, staggerStyle } from '../lib/motion'
 import { SKILL_META } from '../lib/skill'
 import { OutcomeBar } from './outcome-bar'
-import { Panel, PanelBody, PanelHeader, PanelTitle } from './ui/panel'
+import { Panel, PanelBody, PanelHeader, PanelTitle } from '@/components/report'
 
 type AccuracyByPartProps = {
   attempt: AttemptDetailRead

@@ -16,7 +16,7 @@ import { CriteriaGrid, FeedbackList } from '../writing-feedback-panel'
 import { AdminBandOverride } from './admin-band-override'
 import { ResultEmptyState } from './result-empty-state'
 import { SkillReportHeader } from './skill-report-header'
-import { Panel, PanelHeader, PanelTitle } from './ui/panel'
+import { Panel, PanelHeader, PanelTitle } from '@/components/report'
 
 type SpeakingReportPanelProps = {
   attempt: AttemptDetailRead

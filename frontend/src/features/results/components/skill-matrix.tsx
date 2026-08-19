@@ -9,8 +9,7 @@ import { cefrLevel } from '../lib/cefr'
 import { ENTER, staggerStyle } from '../lib/motion'
 import { SKILL_BAND_FIELD, SKILL_KEYS, SKILL_META, type SkillKey } from '../lib/skill'
 import { isSectionNotAttempted } from '../lib/status'
-import { BandScale } from './ui/band-scale'
-import { Panel, PanelBody, PanelHeader, PanelTitle } from './ui/panel'
+import { BandScale, Panel, PanelBody, PanelHeader, PanelTitle } from '@/components/report'
 
 type SkillMatrixProps = {
   attempt: AttemptDetailRead
