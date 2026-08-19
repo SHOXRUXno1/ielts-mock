@@ -1,5 +1,5 @@
 import { LogOut } from 'lucide-react'
-import { Panel } from '@/components/report'
+import { Panel, SectionLabel } from '@/components/report'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +21,7 @@ type SignOutCardProps = {
 export function SignOutCard({ onConfirm }: SignOutCardProps) {
   return (
     <Panel className={ENTER} padding='sm'>
+      <SectionLabel className='mb-3'>Account</SectionLabel>
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button

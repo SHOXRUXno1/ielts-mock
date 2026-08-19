@@ -12,19 +12,10 @@ import {
 import { ThemeSwitch } from '@/components/theme-switch'
 import { isStudentNavActive, STUDENT_NAV } from '@/components/layout/data/student-nav'
 import { useAuthStore } from '@/stores/auth-store'
-import { cn } from '@/lib/utils'
+import { cn, getDisplayNameInitials } from '@/lib/utils'
 
 function displayName(fullName?: string, name?: string): string {
   return fullName ?? name ?? 'Student'
-}
-
-function initialsFrom(name: string): string {
-  return name
-    .split(' ')
-    .map((word) => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
 }
 
 export function StudentLayout() {
@@ -32,7 +23,7 @@ export function StudentLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const name = displayName(auth.user?.full_name, auth.user?.name)
-  const initials = initialsFrom(name)
+  const initials = getDisplayNameInitials(name)
   const pathname = location.pathname
 
   const handleLogout = () => {
