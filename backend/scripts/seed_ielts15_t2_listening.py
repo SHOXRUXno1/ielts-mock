@@ -1,10 +1,10 @@
-"""Seed Cambridge IELTS 14 Test 1 Listening (Q1–40).
+"""Seed Cambridge IELTS 15 Test 2 Listening (Q1–40).
 
-Creates the test if needed. Idempotent on listening parts: wipes groups/
-questions, keeps audio_url. Copies the Minster Park map into /media/images.
+Creates or reuses the Test 2 record. Idempotent on listening parts: wipes
+groups/questions, keeps audio_url. Copies the Minster Park map into /media/images.
 
 Usage:
-    python /app/scripts/seed_ielts14_t1_listening.py
+    python /app/scripts/seed_ielts15_t2_listening.py
 """
 
 from __future__ import annotations
@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from app.api.tests import DEFAULT_SECTIONS
 from app.core.config import settings
 from app.models.answer import Answer
+from app.models.attempt import Attempt
 from app.models.question import Question, QuestionType
 from app.models.question_group import QuestionGroup
 from app.models.section import Section, SectionType
@@ -29,9 +30,13 @@ from app.services.scoring import scoring_slots_for_question
 from app.services.section_settings import build_default_rows, ensure_settings
 from app.services.seed_compound import gap_answer_key, next_group_order
 
-BOOK_SLUG = "cambridge-ielts-14"
-TEST_NUMBER = 1
-TEST_TITLE = "Cambridge IELTS 14 – Test 1"
+BOOK_SLUG = "cambridge-ielts-15"
+TEST_NUMBER = 2
+TEST_TITLE = "Cambridge IELTS 15 – Test 2"
+BOOK_NAME = "Cambridge IELTS 15"
+# Existing admin draft on production (audio already uploaded).
+TEST_ID = uuid.UUID("6074d5f2-70b8-4f31-9b59-10f861a3eadf")
+MISTAKEN_IELTS14_ID = uuid.UUID("49494c86-90ee-4eb3-b021-c5f787215500")
 MAP_URL = "/media/images/minster-park.png"
 MAP_ASSET = Path(__file__).resolve().parent / "assets" / "minster-park.png"
 
@@ -587,29 +592,45 @@ async def _add_gaps(
     return order
 
 
+async def _first_test(db: AsyncSession, stmt) -> Test | None:
+    return (await db.execute(stmt)).scalar_one_or_none()
+
+
 async def _get_or_create_test(db: AsyncSession) -> Test:
-    test = (
-        await db.execute(
+    test = await _first_test(db, select(Test).where(Test.id == TEST_ID))
+    if test is None:
+        test = await _first_test(
+            db,
             select(Test).where(
                 Test.book_slug == BOOK_SLUG,
                 Test.test_number == TEST_NUMBER,
-            )
+            ),
         )
-    ).scalar_one_or_none()
+    if test is None:
+        test = await _first_test(db, select(Test).where(Test.title == TEST_TITLE))
+    if test is None:
+        test = await _first_test(
+            db,
+            select(Test).where(Test.book_slug == "cambridge-ielts-15-test-2"),
+        )
+
     if test is not None:
         test.title = TEST_TITLE
-        test.book_name = "Cambridge IELTS 14"
+        test.book_name = BOOK_NAME
+        test.book_slug = BOOK_SLUG
+        test.test_number = TEST_NUMBER
+        test.description = "Cambridge IELTS 15 Academic, Test 2"
         print(f"Found existing test: {test.title} ({test.id})")
         return test
 
     test = Test(
-        id=uuid.uuid4(),
+        id=TEST_ID,
         title=TEST_TITLE,
-        description="Cambridge IELTS 14 Academic, Test 1",
+        description="Cambridge IELTS 15 Academic, Test 2",
         is_published=False,
         type="academic",
         book_slug=BOOK_SLUG,
-        book_name="Cambridge IELTS 14",
+        book_name=BOOK_NAME,
         test_number=TEST_NUMBER,
     )
     db.add(test)
@@ -620,6 +641,30 @@ async def _get_or_create_test(db: AsyncSession) -> Test:
     await db.flush()
     print(f"Created test: {test.title} ({test.id})")
     return test
+
+
+async def _delete_mistaken_ielts14(db: AsyncSession) -> None:
+    seen: set[uuid.UUID] = set()
+    candidates: list[Test] = []
+    by_id = await db.get(Test, MISTAKEN_IELTS14_ID)
+    if by_id is not None:
+        candidates.append(by_id)
+    extras = (
+        await db.execute(select(Test).where(Test.book_slug == "cambridge-ielts-14"))
+    ).scalars().all()
+    candidates.extend(extras)
+    for mistaken in candidates:
+        if mistaken.id in seen or mistaken.id == TEST_ID:
+            continue
+        seen.add(mistaken.id)
+        attempts = (
+            await db.execute(select(Attempt.id).where(Attempt.test_id == mistaken.id))
+        ).scalars().all()
+        if attempts:
+            print(f"Keeping mistaken test {mistaken.id}: has {len(attempts)} attempt(s)")
+            continue
+        await db.delete(mistaken)
+        print(f"Deleted mistaken {mistaken.title} ({mistaken.id})")
 
 
 async def _listening_parts(db: AsyncSession, test: Test) -> dict[int, Section]:
@@ -855,9 +900,9 @@ async def main() -> None:
             if slots != 10:
                 raise SystemExit(f"Part {part} must have 10 slots, got {slots}")
 
+        await _delete_mistaken_ielts14(db)
         await db.commit()
         print(f"\nDone. {TEST_TITLE} listening Q1–40 seeded. Map: {map_url}")
-        print("Test is unpublished until Reading/Writing/Speaking are added.")
 
     await engine.dispose()
 
