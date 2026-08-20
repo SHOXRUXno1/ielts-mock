@@ -1,5 +1,35 @@
 import { describe, expect, it } from 'vitest'
-import { splitPassageParagraphs } from './instruction-block'
+import {
+  hasTfngKeyLegend,
+  hasYnngKeyLegend,
+  splitPassageParagraphs,
+} from './instruction-block'
+
+describe('hasTfngKeyLegend', () => {
+  it('detects the official TRUE/FALSE/NG key already in the instruction', () => {
+    expect(
+      hasTfngKeyLegend(
+        'TRUE if the statement agrees with the information\nFALSE if the statement contradicts the information',
+      ),
+    ).toBe(true)
+  })
+
+  it('is false when the group only has a short lead-in', () => {
+    expect(
+      hasTfngKeyLegend(
+        'Do the following statements agree with the information given in Reading Passage?',
+      ),
+    ).toBe(false)
+  })
+})
+
+describe('hasYnngKeyLegend', () => {
+  it('detects the official YES/NO/NG key already in the instruction', () => {
+    expect(
+      hasYnngKeyLegend('YES if the statement agrees with the claims of the writer'),
+    ).toBe(true)
+  })
+})
 
 describe('splitPassageParagraphs', () => {
   it('splits on a single newline (seeded Cambridge copy)', () => {

@@ -7,7 +7,13 @@ import {
 } from '@/components/ui/resizable'
 import { useIsDesktop } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
-import { highlightCaps, InstructionBlock, renderFormattedText } from './shared/instruction-block'
+import {
+  hasTfngKeyLegend,
+  hasYnngKeyLegend,
+  highlightCaps,
+  InstructionBlock,
+  renderFormattedText,
+} from './shared/instruction-block'
 import { QuestionRangeTitle } from './shared/question-range-title'
 import { PassageHighlighter } from './shared/passage-highlighter'
 import {
@@ -253,7 +259,7 @@ function GroupHeader({ group }: { group: RuntimeGroup }) {
           {subtitle}
         </p>
       )}
-      {group.type === 'true_false_ng' && (
+      {group.type === 'true_false_ng' && !hasTfngKeyLegend(instruction) && (
         <div className='mt-2 space-y-0.5 text-[15px] font-[500] leading-7 text-foreground'>
           <p>
             <span className='font-bold uppercase'>TRUE</span>
@@ -269,7 +275,7 @@ function GroupHeader({ group }: { group: RuntimeGroup }) {
           </p>
         </div>
       )}
-      {group.type === 'yes_no_ng' && (
+      {group.type === 'yes_no_ng' && !hasYnngKeyLegend(instruction) && (
         <div className='mt-2 space-y-0.5 text-[15px] font-[500] leading-7 text-foreground'>
           <p>
             <span className='font-bold uppercase'>YES</span>

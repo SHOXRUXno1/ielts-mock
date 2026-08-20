@@ -28,6 +28,16 @@ export function InstructionBlock({ children, className }: Props) {
  */
 const SINGLE_CAPS_KEYWORDS = new Set(['TRUE', 'FALSE', 'YES', 'NO'])
 
+/** Seeded group.instruction already lists the TFNG key — don't render it again. */
+export function hasTfngKeyLegend(instruction: string): boolean {
+  return /TRUE if the statement/i.test(instruction)
+}
+
+/** Seeded group.instruction already lists the YNNG key — don't render it again. */
+export function hasYnngKeyLegend(instruction: string): boolean {
+  return /YES if the statement/i.test(instruction)
+}
+
 export function highlightCaps(text: string): ReactNode[] {
   // Multi-word ALL-CAPS phrases, plus single IELTS keywords (TRUE/FALSE/YES/NO/…).
   const re =
