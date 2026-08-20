@@ -227,3 +227,47 @@ class TestListeningDefaults:
         assert data["passage"] is None or data["passage"] == ""
 
         client.delete(f"/admin/tests/{test_data['id']}")
+
+
+class TestPublishSpeakingAuthored:
+    def test_empty_speaking_shells_are_not_complete(self):
+        errors = _collect_publish_errors(_full_skeleton())
+        assert any(e.startswith("Speaking is missing") for e in errors)
+
+    def test_authored_three_parts_ok(self):
+        skeleton = _full_skeleton()
+        skeleton.sections[-3] = _section(
+            SectionType.SPEAKING,
+            30,
+            questions=[
+                _q(
+                    question_type="speaking_part",
+                    content={"part": 1, "questions": ["How many languages can you speak?"]},
+                )
+            ],
+        )
+        skeleton.sections[-2] = _section(
+            SectionType.SPEAKING,
+            31,
+            questions=[
+                _q(
+                    question_type="speaking_part",
+                    content={
+                        "part": 2,
+                        "cue_card": {"topic": "a website you bought from", "bullets": []},
+                    },
+                )
+            ],
+        )
+        skeleton.sections[-1] = _section(
+            SectionType.SPEAKING,
+            32,
+            questions=[
+                _q(
+                    question_type="speaking_part",
+                    content={"part": 3, "questions": ["Why is online shopping popular?"]},
+                )
+            ],
+        )
+        errors = _collect_publish_errors(skeleton)
+        assert not any(e.startswith("Speaking") for e in errors)

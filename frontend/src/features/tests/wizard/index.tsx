@@ -21,9 +21,7 @@ import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { cn } from '@/lib/utils'
 import type { Question, Section, SectionSettings, Test } from '../data/schema'
-import { countScoringSlots } from '../data/schema'
 import { WizardProgressBar } from './progress-bar'
-import type { StepStatus } from './progress-bar'
 import { StepInfo } from './step-info'
 import type { StepInfoValues } from './step-info'
 import { StepListening } from './step-listening'
@@ -31,65 +29,29 @@ import { StepReading } from './step-reading'
 import { StepReview } from './step-review'
 import { StepSpeaking } from './step-speaking'
 import { StepWriting } from './step-writing'
+import { computeWizardStatuses } from './wizard-status'
 
 const TOTAL_STEPS = 6
+
+function questionsFromGroups(sections: Section[]): Record<string, Question[]> {
+  const map: Record<string, Question[]> = {}
+  for (const s of sections) {
+    if (s.type !== 'writing' && s.type !== 'speaking') continue
+    const qs = (s.question_groups ?? []).flatMap((g) => g.questions ?? [])
+    if (qs.length > 0) map[s.id] = qs
+  }
+  return map
+}
 
 function useWizardStatus(
   test: Test | null,
   sections: Section[],
   questionsMap: Record<string, Question[]>,
-): StepStatus[] {
-  return useMemo(() => {
-    const infoStatus: StepStatus = test ? 'complete' : 'empty'
-
-    function sectionStatus(type: string, expectedParts: number, expectedQPerPart?: number): StepStatus {
-      if (!test) return 'locked'
-      const ofType = sections.filter((s) => s.type === type)
-      if (ofType.length === 0) return 'empty'
-      // Count IELTS scoring slots (multi_select spans choose_n), not raw DB rows.
-      const totalQ = ofType.reduce((acc, s) => {
-        const fromGroups = (s.question_groups ?? []).flatMap((g) => g.questions)
-        const qs =
-          fromGroups.length > 0
-            ? fromGroups
-            : (questionsMap[s.id] ?? [])
-        if (qs.length > 0) return acc + countScoringSlots(qs)
-        return acc + (s.question_count ?? 0)
-      }, 0)
-      if (ofType.length < expectedParts) return 'partial'
-      if (totalQ === 0) return 'partial'
-      if (expectedQPerPart && totalQ < expectedParts * expectedQPerPart) return 'partial'
-      return 'complete'
-    }
-
-    const listeningStatus = sectionStatus('listening', 4, 10)
-    const readingStatus = sectionStatus('reading', 3)
-    const writingStatus: StepStatus = (() => {
-      if (!test) return 'locked'
-      const ws = sections.find((s) => s.type === 'writing')
-      if (!ws) return 'empty'
-      const qs = questionsMap[ws.id] ?? []
-      if (qs.length >= 2) return 'complete'
-      if (qs.length === 1) return 'partial'
-      return 'empty'
-    })()
-    const speakingStatus: StepStatus = (() => {
-      if (!test) return 'locked'
-      const sp = sections.filter((s) => s.type === 'speaking')
-      if (sp.length === 0) return 'empty'
-      if (sp.length < 3) return 'partial'
-      return 'complete'
-    })()
-
-    const sectionStatuses = [listeningStatus, readingStatus, writingStatus, speakingStatus]
-    const reviewStatus: StepStatus = sectionStatuses.every((s) => s === 'complete')
-      ? 'complete'
-      : sectionStatuses.some((s) => s === 'partial' || s === 'complete')
-        ? 'partial'
-        : !test ? 'locked' : 'empty'
-
-    return [infoStatus, listeningStatus, readingStatus, writingStatus, speakingStatus, reviewStatus]
-  }, [test, sections, questionsMap])
+) {
+  return useMemo(
+    () => computeWizardStatuses(test, sections, questionsMap),
+    [test, sections, questionsMap],
+  )
 }
 
 type Props = {
@@ -102,7 +64,7 @@ export function TestWizard({ testId: initialTestId }: Props) {
 
   const [step, setStep] = useState(1)
   const [testId, setTestId] = useState<string | undefined>(initialTestId)
-  const [questionsMap, setQuestionsMap] = useState<Record<string, Question[]>>({})
+  const [fetchedQuestions, setFetchedQuestions] = useState<Record<string, Question[]>>({})
 
   const getStepInfoValues = useRef<(() => StepInfoValues) | null>(null)
   const validateStepInfo = useRef<(() => Promise<boolean>) | null>(null)
@@ -119,6 +81,10 @@ export function TestWizard({ testId: initialTestId }: Props) {
     () => testDetail?.section_settings ?? [],
     [testDetail],
   )
+  const questionsMap = useMemo(
+    () => ({ ...questionsFromGroups(sections), ...fetchedQuestions }),
+    [sections, fetchedQuestions],
+  )
 
   useEffect(() => {
     if (sections.length === 0) return
@@ -127,11 +93,18 @@ export function TestWizard({ testId: initialTestId }: Props) {
     const load = async () => {
       const entries = await Promise.all(
         targetSections.map(async (s) => {
-          const qs = await fetchQuestions(s.id)
-          return [s.id, qs] as [string, Question[]]
+          try {
+            const qs = await fetchQuestions(s.id)
+            return [s.id, qs] as [string, Question[]]
+          } catch {
+            return [s.id, []] as [string, Question[]]
+          }
         })
       )
-      setQuestionsMap(Object.fromEntries(entries))
+      const loaded = Object.fromEntries(
+        entries.filter(([, qs]) => qs.length > 0),
+      )
+      if (Object.keys(loaded).length > 0) setFetchedQuestions(loaded)
     }
     void load()
   }, [sections])
@@ -143,11 +116,18 @@ export function TestWizard({ testId: initialTestId }: Props) {
     if (targetSections.length > 0) {
       const entries = await Promise.all(
         targetSections.map(async (s) => {
-          const qs = await fetchQuestions(s.id)
-          return [s.id, qs] as [string, Question[]]
+          try {
+            const qs = await fetchQuestions(s.id)
+            return [s.id, qs] as [string, Question[]]
+          } catch {
+            return [s.id, []] as [string, Question[]]
+          }
         })
       )
-      setQuestionsMap(Object.fromEntries(entries))
+      const loaded = Object.fromEntries(
+        entries.filter(([, qs]) => qs.length > 0),
+      )
+      if (Object.keys(loaded).length > 0) setFetchedQuestions(loaded)
     }
   }
 

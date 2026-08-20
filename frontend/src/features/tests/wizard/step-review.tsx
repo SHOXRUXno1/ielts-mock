@@ -3,6 +3,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { countScoringSlots, type Question, type Section, type Test } from '../data/schema'
+import {
+  countAuthoredSpeakingParts,
+  questionsForSection,
+} from '../lib/speaking-content'
 
 type Props = {
   test: Test
@@ -46,8 +50,19 @@ function summarise(sections: Section[], questionsMap: Record<string, Question[]>
       }
     }
     if (type === 'writing') {
-      const q = ofType.reduce((acc, s) => acc + (questionsMap[s.id]?.length ?? s.question_count), 0)
+      const q = ofType.reduce(
+        (acc, s) => acc + questionsForSection(s, questionsMap).length,
+        0,
+      )
       if (q < 2) warnings.push('Writing needs Task 1 and Task 2')
+    }
+    if (type === 'speaking') {
+      const authored = countAuthoredSpeakingParts(ofType, questionsMap)
+      if (ofType.length === 0) warnings.push('No speaking parts added')
+      else if (authored === 0) warnings.push('No speaking prompts')
+      else if (authored < 3) {
+        warnings.push(`Only ${authored} of 3 speaking parts have prompts`)
+      }
     }
 
     return { type, count: ofType.length, questions: totalQ, warnings }
@@ -55,10 +70,10 @@ function summarise(sections: Section[], questionsMap: Record<string, Question[]>
 }
 
 const TYPE_META = {
-  listening: { label: 'Listening', icon: Headphones, aiManaged: false },
-  reading: { label: 'Reading', icon: BookOpen, aiManaged: false },
-  writing: { label: 'Writing', icon: PenLine, aiManaged: false },
-  speaking: { label: 'Speaking', icon: Mic, aiManaged: true },
+  listening: { label: 'Listening', icon: Headphones },
+  reading: { label: 'Reading', icon: BookOpen },
+  writing: { label: 'Writing', icon: PenLine },
+  speaking: { label: 'Speaking', icon: Mic },
 }
 
 export function StepReview({ test, sections, questionsMap }: Props) {
@@ -85,7 +100,7 @@ export function StepReview({ test, sections, questionsMap }: Props) {
       {/* Section summaries */}
       <div className='space-y-2'>
         {summaries.map(({ type, count, questions, warnings }) => {
-          const { label, icon: Icon, aiManaged } = TYPE_META[type as keyof typeof TYPE_META]
+          const { label, icon: Icon } = TYPE_META[type as keyof typeof TYPE_META]
           const ok = warnings.length === 0
           return (
             <div
@@ -106,15 +121,10 @@ export function StepReview({ test, sections, questionsMap }: Props) {
                 <div className='flex items-center gap-2'>
                   <Icon className='size-3.5 text-muted-foreground' />
                   <span className='text-sm font-medium text-foreground'>{label}</span>
-                  {aiManaged && (
-                    <span className='text-xs text-muted-foreground'>— managed by AI Examiner</span>
-                  )}
                 </div>
-                {!aiManaged && (
-                  <p className='mt-0.5 text-xs text-muted-foreground'>
-                    {count} {count === 1 ? 'section' : 'sections'} · {questions} questions
-                  </p>
-                )}
+                <p className='mt-0.5 text-xs text-muted-foreground'>
+                  {count} {count === 1 ? 'section' : 'sections'} · {questions} questions
+                </p>
                 {warnings.map((w, i) => (
                   <p key={i} className='mt-0.5 text-xs text-warning-foreground'>⚠ {w}</p>
                 ))}

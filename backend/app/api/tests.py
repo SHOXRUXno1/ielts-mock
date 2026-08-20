@@ -17,6 +17,7 @@ from app.services.compound import check_compound_group_completeness, is_compound
 from app.services.question_integrity import orphan_question_errors
 from app.services.question_numbering import annotate_question_numbers
 from app.services.scoring import count_questions_in_section
+from app.services.speaking_plan import plan_from_sections
 from app.utils.slug import generate_book_slug
 
 router = APIRouter(
@@ -232,6 +233,19 @@ def _collect_publish_errors(test: Test) -> list[str]:
                 prompt = (content.get("prompt") or "").strip()
                 if not prompt:
                     errors.append(f"Writing Task {q.task_number} is missing a prompt.")
+
+    speaking = [s for s in test.sections if s.type == SectionType.SPEAKING]
+    if speaking:
+        plan = plan_from_sections(speaking)
+        missing: list[str] = []
+        if not plan.part1_authored:
+            missing.append("Part 1 questions")
+        if not plan.cue_card_authored:
+            missing.append("a Part 2 cue card")
+        if not plan.part3_authored:
+            missing.append("Part 3 questions")
+        if missing:
+            errors.append("Speaking is missing " + ", ".join(missing) + ".")
 
     for section in test.sections:
         for group in getattr(section, "question_groups", []) or []:

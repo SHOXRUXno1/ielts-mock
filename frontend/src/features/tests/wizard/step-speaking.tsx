@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import type { Question, Section, SectionSettings } from '../data/schema'
+import { countAuthoredSpeakingParts } from '../lib/speaking-content'
 import { SectionDurationField } from './section-duration-field'
 import { EmptyState } from './ui/empty-state'
 import { StatusChip } from './ui/status-chip'
@@ -73,8 +74,13 @@ export function StepSpeaking({
   return (
     <StepShell
       title='Speaking'
-      description='IELTS Speaking has 3 parts. Content is managed by the AI Examiner — add prompts as guidance.'
-      counter={<StatusChip current={speakingSections.length} target={3} />}
+      description='IELTS Speaking has 3 parts. Add Part 1 questions, a Part 2 cue card, and Part 3 discussion prompts.'
+      counter={
+        <StatusChip
+          current={countAuthoredSpeakingParts(speakingSections, questionsMap)}
+          target={3}
+        />
+      }
       action={addButton}
     >
       <SectionDurationField
@@ -143,9 +149,9 @@ export function StepSpeaking({
 function getPromptList(questions: Question[]): string[] {
   if (questions.length === 0) return []
   const first = questions[0]
-  const c = first.content
+  const c = first.content ?? {}
   if (Array.isArray(c.questions)) return c.questions as string[]
-  return questions.map((q) => String(q.content.prompt ?? '')).filter(Boolean)
+  return questions.map((q) => String(q.content?.prompt ?? '')).filter(Boolean)
 }
 
 function QuestionListEditor({
@@ -165,8 +171,8 @@ function QuestionListEditor({
   const [newPrompt, setNewPrompt] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const canonicalQuestion = questions.find((q) => Array.isArray(q.content.questions))
-  const legacyQuestions = questions.filter((q) => !Array.isArray(q.content.questions))
+  const canonicalQuestion = questions.find((q) => Array.isArray(q.content?.questions))
+  const legacyQuestions = questions.filter((q) => !Array.isArray(q.content?.questions))
 
   const handleSave = async (updatedPrompts: string[]) => {
     setSaving(true)
@@ -323,7 +329,7 @@ function PromptRow({
 
 function readCueCard(questions: Question[]) {
   if (questions.length === 0) return { topic: '', bullets: '', followUp: '' }
-  const c = questions[0].content
+  const c = questions[0].content ?? {}
   if (c.cue_card && typeof c.cue_card === 'object') {
     const cc = c.cue_card as Record<string, unknown>
     return {
