@@ -1088,37 +1088,65 @@ export function MatchingLetterRenderer({
 
 // ── Map Labeling renderer (group-level: image + dropdown rows) ──────────────
 
+export function ExamMapImage({
+  src,
+  caption,
+  size = 'compact',
+}: {
+  src: string
+  caption?: string
+  size?: 'compact' | 'pane'
+}) {
+  return (
+    <figure className={cn('mx-auto w-full', size === 'pane' ? 'max-w-[380px]' : 'max-w-[340px]')}>
+      {caption && (
+        <figcaption className='mb-1.5 text-center text-[13px] font-semibold text-foreground'>
+          {caption}
+        </figcaption>
+      )}
+      <div className='overflow-hidden rounded-md border border-border bg-white p-1.5'>
+        <img
+          src={mediaUrl(src)}
+          alt={caption || 'Map'}
+          className={cn(
+            'mx-auto block h-auto w-auto max-w-full object-contain',
+            size === 'pane' ? 'max-h-[min(360px,52vh)]' : 'max-h-[min(260px,38vh)]',
+          )}
+          onError={(e) => {
+            ;(e.target as HTMLImageElement).style.display = 'none'
+          }}
+        />
+      </div>
+    </figure>
+  )
+}
+
 export function MapLabelingRenderer({
   questions,
   options,
   imageUrl,
+  imageCaption,
   answers,
   onAnswer,
   previewMode = false,
+  showImage = true,
 }: {
   questions: Question[]
   options: string[]
   imageUrl?: string
+  imageCaption?: string
   answers: Record<string, Record<string, unknown>>
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
   previewMode?: boolean
+  showImage?: boolean
 }) {
   return (
-    <div className='space-y-4'>
-      {imageUrl && (
-        <figure className='w-full overflow-hidden rounded-lg border border-border bg-white p-2 sm:p-3'>
-          <img
-            src={mediaUrl(imageUrl)}
-            alt='Map'
-            className='mx-auto block h-auto w-full max-w-none object-contain'
-            onError={(e) => {
-              ;(e.target as HTMLImageElement).style.display = 'none'
-            }}
-          />
-        </figure>
+    <div className='space-y-3'>
+      {showImage && imageUrl && (
+        <ExamMapImage src={imageUrl} caption={imageCaption} />
       )}
 
-      <div className='space-y-3'>
+      <div className='space-y-1.5'>
         {questions.map((q) => {
           const location =
             (q.content.location as string) ??
@@ -1131,11 +1159,11 @@ export function MapLabelingRenderer({
               <div className='flex flex-wrap items-center gap-x-2 gap-y-1'>
                 <span
                   data-q-chip
-                  className='flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[13px] font-medium text-muted-foreground'
+                  className='flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[12px] font-medium text-muted-foreground'
                 >
                   {displayN}
                 </span>
-                <span className='text-[14px] text-foreground'>
+                <span className='min-w-0 text-[13px] text-foreground'>
                   {location}
                 </span>
                 <Select
@@ -1155,7 +1183,7 @@ export function MapLabelingRenderer({
                 </Select>
               </div>
               {previewMode && (
-                <div className='ml-9 rounded border border-border bg-muted px-2 py-1 text-xs text-muted-foreground'>
+                <div className='ml-8 rounded border border-border bg-muted px-2 py-1 text-xs text-muted-foreground'>
                   Answer: {formatAnswerKey(q.answer_key)}
                 </div>
               )}

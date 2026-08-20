@@ -14,7 +14,7 @@ function makeQuestion(): Question {
     question_group_id: 'g1',
     order: 15,
     question_type: 'map_labeling',
-    content: { location: 'statue of Diana Gosforth' },
+    content: { location: 'statue of Diane Gosforth' },
     answer_key: null,
     task_number: null,
     min_words: null,
@@ -26,7 +26,7 @@ function makeQuestion(): Question {
 }
 
 describe('MapLabelingRenderer', () => {
-  it('shows the map at full pane width so labels stay readable', async () => {
+  it('keeps the map compact so question rows stay on screen', async () => {
     const screen = await render(
       <MapLabelingRenderer
         questions={[makeQuestion()]}
@@ -37,10 +37,27 @@ describe('MapLabelingRenderer', () => {
       />,
     )
 
-    const img = screen.getByAltText('Map')
-    await expect.element(img).toBeVisible()
-    const el = img.element() as HTMLImageElement
-    expect(el.className).toContain('w-full')
-    expect(el.className).not.toContain('max-w-lg')
+    const el = screen.container.querySelector('img') as HTMLImageElement
+    expect(el).toBeTruthy()
+    expect(el.className).toContain('max-h-[min(260px,38vh)]')
+    expect(el.className).not.toContain('max-w-none')
+    expect(el.className.split(/\s+/)).not.toContain('w-full')
+    await expect.element(screen.getByText('statue of Diane Gosforth')).toBeVisible()
+  })
+
+  it('can hide the inline map when it is shown beside the audio', async () => {
+    const screen = await render(
+      <MapLabelingRenderer
+        questions={[makeQuestion()]}
+        options={['A', 'B', 'C']}
+        imageUrl='/media/images/minster-park.png'
+        answers={{}}
+        onAnswer={() => {}}
+        showImage={false}
+      />,
+    )
+
+    await expect.element(screen.getByText('statue of Diane Gosforth')).toBeVisible()
+    expect(screen.container.querySelector('img')).toBeNull()
   })
 })

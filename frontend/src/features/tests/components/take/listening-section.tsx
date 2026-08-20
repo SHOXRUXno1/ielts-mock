@@ -28,6 +28,7 @@ import {
   CompoundMatchingDropdown,
   CompoundMultiSelectPair,
   CompoundTableCompletion,
+  ExamMapImage,
   MapLabelingRenderer,
   MatchingLetterRenderer,
   NoteCompletionCard,
@@ -406,6 +407,7 @@ export function ListeningSection({
   }))
 
   const renderGroups = buildRenderGroups(visibleApiGroups, visibleQuestions)
+  const mapGroup = renderGroups.find((g) => g.type === 'map_labeling' && g.imageUrl)
 
   const [mobileTab, setMobileTab] = useState<'audio' | 'questions'>('audio')
   const isDesktop = useIsDesktop()
@@ -422,6 +424,16 @@ export function ListeningSection({
         <div className='flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600'>
           <AlertCircle className='size-4 shrink-0' />
           No audio file has been uploaded for this section.
+        </div>
+      )}
+
+      {mapGroup?.imageUrl && (
+        <div className='mt-8'>
+          <ExamMapImage
+            src={mapGroup.imageUrl}
+            caption={mapGroup.subtitle?.trim() || undefined}
+            size='pane'
+          />
         </div>
       )}
 
@@ -547,9 +559,11 @@ export function ListeningSection({
                   questions={group.questions}
                   options={group.options ?? []}
                   imageUrl={group.imageUrl}
+                  imageCaption={group.subtitle?.trim() || undefined}
                   answers={answers}
                   onAnswer={onAnswer}
                   previewMode={previewMode}
+                  showImage={!isDesktop}
                 />
               )}
 
