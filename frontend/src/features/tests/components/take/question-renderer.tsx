@@ -1098,7 +1098,7 @@ export function ExamMapImage({
   size?: 'compact' | 'pane'
 }) {
   return (
-    <figure className={cn('mx-auto w-full', size === 'pane' ? 'max-w-[460px]' : 'max-w-[440px]')}>
+    <figure className={cn('mx-auto w-full', size === 'pane' ? 'max-w-[540px]' : 'max-w-[520px]')}>
       {caption && (
         <figcaption className='mb-1.5 text-center text-[13px] font-semibold text-foreground'>
           {caption}
@@ -1110,7 +1110,7 @@ export function ExamMapImage({
           alt={caption || 'Map'}
           className={cn(
             'mx-auto block h-auto w-auto max-w-full object-contain',
-            size === 'pane' ? 'max-h-[min(400px,54vh)]' : 'max-h-[min(340px,46vh)]',
+            size === 'pane' ? 'max-h-[min(460px,58vh)]' : 'max-h-[min(400px,52vh)]',
           )}
           onError={(e) => {
             ;(e.target as HTMLImageElement).style.display = 'none'

@@ -39,7 +39,7 @@ describe('MapLabelingRenderer', () => {
 
     const el = screen.container.querySelector('img') as HTMLImageElement
     expect(el).toBeTruthy()
-    expect(el.className).toContain('max-h-[min(340px,46vh)]')
+    expect(el.className).toContain('max-h-[min(400px,52vh)]')
     expect(el.className).not.toContain('max-w-none')
     expect(el.className.split(/\s+/)).not.toContain('w-full')
     await expect.element(screen.getByText('statue of Diane Gosforth')).toBeVisible()
