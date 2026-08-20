@@ -18,6 +18,7 @@ import {
   SKILL_ORDER,
 } from '@/features/student/practice/skill-icons'
 import { getTestCatalog, type CatalogTest } from '@/lib/api/student'
+import { useAuthStore } from '@/stores/auth-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -223,9 +224,11 @@ function TestCardSkeleton() {
 type SortKey = 'latest' | 'alphabetical' | 'score'
 
 export function StudentTests() {
+  const signedIn = useAuthStore((s) => Boolean(s.auth.accessToken))
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['student-test-catalog'],
     queryFn: getTestCatalog,
+    enabled: signedIn,
   })
 
   const [search, setSearch] = useState('')

@@ -1,7 +1,8 @@
-import { useNavigate, useLocation } from '@tanstack/react-router'
-import { useAuthStore } from '@/stores/auth-store'
+import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { logout } from '@/lib/api/auth'
+import { clearLocalSession, loginReplaceOptions } from '@/lib/sign-out'
 
 interface SignOutDialogProps {
   open: boolean
@@ -10,8 +11,7 @@ interface SignOutDialogProps {
 
 export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
   const navigate = useNavigate()
-  const location = useLocation()
-  const { auth } = useAuthStore()
+  const queryClient = useQueryClient()
 
   const handleSignOut = () => {
     void (async () => {
@@ -20,13 +20,8 @@ export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
       } catch {
         // Network failure must not block local sign-out
       }
-      auth.reset()
-      const currentPath = location.href
-      navigate({
-        to: '/login',
-        search: { redirect: currentPath },
-        replace: true,
-      })
+      clearLocalSession(queryClient)
+      void navigate(loginReplaceOptions)
     })()
   }
 

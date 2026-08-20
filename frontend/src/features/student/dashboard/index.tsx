@@ -59,13 +59,16 @@ function practiceRows(rows: PracticeResultRow[]): AttemptRowItem[] {
 export function StudentDashboard() {
   const firstName =
     useAuthStore((s) => s.auth.user?.full_name ?? s.auth.user?.name) ?? 'Student'
+  const signedIn = useAuthStore((s) => Boolean(s.auth.accessToken))
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['student-dashboard'],
     queryFn: getDashboard,
+    enabled: signedIn,
   })
   const practiceQuery = useQuery({
     queryKey: ['student-practice-results'],
     queryFn: fetchPracticeResults,
+    enabled: signedIn,
   })
 
   if (isLoading) return <DashboardSkeleton />

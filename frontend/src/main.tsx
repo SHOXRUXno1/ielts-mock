@@ -8,8 +8,8 @@ import {
 } from '@tanstack/react-query'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { useAuthStore } from '@/stores/auth-store'
 import { handleServerError } from '@/lib/handle-server-error'
+import { handleUnauthorizedQueryError, hasAccessToken } from '@/lib/sign-out'
 import { isBenignSectionConflict } from '@/features/tests/take/section-conflict'
 import { DirectionProvider } from './context/direction-provider'
 import { FontProvider } from './context/font-provider'
@@ -54,20 +54,26 @@ const queryClient = new QueryClient({
   },
   queryCache: new QueryCache({
     onError: (error) => {
-      if (error instanceof AxiosError) {
-        if (error.response?.status === 401) {
-          toast.error('Session expired!')
-          useAuthStore.getState().auth.reset()
-          const redirect = `${router.history.location.href}`
-          router.navigate({ to: '/login', search: { redirect } })
-        }
-        if (error.response?.status === 500) {
-          toast.error('Internal Server Error!')
-        }
-        if (error.response?.status === 403) {
-          toast.error('Access denied!')
-          router.navigate({ to: '/403', replace: true })
-        }
+      if (!(error instanceof AxiosError)) return
+      const status = error.response?.status
+      if (status === 401) {
+        const handled = handleUnauthorizedQueryError(
+          queryClient,
+          router.state.location.href,
+          (opts) => {
+            void router.navigate(opts)
+          },
+        )
+        if (handled) toast.error('Session expired!')
+        return
+      }
+      if (!hasAccessToken()) return
+      if (status === 500) {
+        toast.error('Internal Server Error!')
+      }
+      if (status === 403) {
+        toast.error('Access denied!')
+        void router.navigate({ to: '/403', replace: true })
       }
     },
   }),

@@ -17,6 +17,7 @@ import {
   SkillBandRow,
 } from '@/components/report'
 import { getMyResults } from '@/lib/api/student'
+import { useAuthStore } from '@/stores/auth-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -134,9 +135,11 @@ type SortKey = 'latest' | 'oldest' | 'band_high' | 'band_low'
 type StatusFilter = 'all' | 'scored' | 'in_progress' | 'abandoned'
 
 export function StudentResults() {
+  const signedIn = useAuthStore((s) => Boolean(s.auth.accessToken))
   const { data: results = [], isLoading } = useQuery({
     queryKey: ['student-results'],
     queryFn: () => getMyResults(),
+    enabled: signedIn,
   })
 
   const [search, setSearch] = useState('')

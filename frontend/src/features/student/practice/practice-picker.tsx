@@ -11,6 +11,7 @@ import {
   type PracticeUnit,
 } from '@/lib/api/practice'
 import { fetchSlugRedirect } from '@/lib/api/tests'
+import { useAuthStore } from '@/stores/auth-store'
 import type { SectionType } from '@/features/tests/data/schema'
 import {
   Dialog,
@@ -124,17 +125,18 @@ type StartTarget =
 export function PracticePicker({ testId, open, onOpenChange }: Props) {
   const navigate = useNavigate()
   const [pending, setPending] = useState<string | null>(null)
+  const signedIn = useAuthStore((s) => Boolean(s.auth.accessToken))
 
   const unitsQuery = useQuery({
     queryKey: ['practice-units', testId],
     queryFn: () => fetchPracticeUnits(testId),
-    enabled: open,
+    enabled: open && signedIn,
   })
 
   const slugsQuery = useQuery({
     queryKey: ['slug-redirect', testId],
     queryFn: () => fetchSlugRedirect(testId),
-    enabled: open,
+    enabled: open && signedIn,
     staleTime: Infinity,
   })
 

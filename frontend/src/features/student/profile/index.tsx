@@ -1,9 +1,10 @@
 import { useNavigate } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { EmptyState } from '@/components/report'
 import { Button } from '@/components/ui/button'
 import { fetchPracticeResults } from '@/lib/api/practice'
 import { getDashboard, getMyResults } from '@/lib/api/student'
+import { clearLocalSession, loginReplaceOptions } from '@/lib/sign-out'
 import { getDisplayNameInitials } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import { LifetimePanel } from './components/lifetime-panel'
@@ -22,25 +23,30 @@ const EMPTY_BANDS = {
 
 export function StudentProfile() {
   const { auth } = useAuthStore()
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const user = auth.user
+  const signedIn = Boolean(auth.accessToken)
 
   const dashboardQuery = useQuery({
     queryKey: ['student-dashboard'],
     queryFn: getDashboard,
+    enabled: signedIn,
   })
   const resultsQuery = useQuery({
     queryKey: ['student-results'],
     queryFn: () => getMyResults(),
+    enabled: signedIn,
   })
   const practiceQuery = useQuery({
     queryKey: ['student-practice-results'],
     queryFn: fetchPracticeResults,
+    enabled: signedIn,
   })
 
   const handleLogout = () => {
-    auth.reset()
-    void navigate({ to: '/login' })
+    clearLocalSession(queryClient)
+    void navigate(loginReplaceOptions)
   }
 
   if (

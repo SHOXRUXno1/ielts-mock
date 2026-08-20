@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DirectionProvider } from '@/context/direction-provider'
+import { useAuthStore } from '@/stores/auth-store'
 import { StudentTests } from './index'
 import type { CatalogResponse } from '@/lib/api/student'
 
@@ -73,6 +74,7 @@ vi.mock('@tanstack/react-router', async () => {
 
 describe('StudentTests', () => {
   it('renders published catalog cards without crashing', async () => {
+    useAuthStore.getState().auth.setAccessToken('test-token')
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const screen = await render(
       <DirectionProvider>
@@ -90,5 +92,9 @@ describe('StudentTests', () => {
       .element(screen.getByText('Cambridge IELTS 16 – Test 1'))
       .toBeInTheDocument()
     await expect.element(screen.getByText('Start full mock').first()).toBeInTheDocument()
+  })
+
+  afterEach(() => {
+    useAuthStore.getState().auth.reset()
   })
 })

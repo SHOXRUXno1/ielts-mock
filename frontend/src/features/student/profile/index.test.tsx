@@ -55,6 +55,7 @@ vi.mock('@/stores/auth-store', () => ({
         name: 'Alibek',
         exp: Date.UTC(2026, 11, 31, 12, 0, 0) / 1000,
       },
+      accessToken: 'test-token',
       reset: vi.fn(),
     },
   }),

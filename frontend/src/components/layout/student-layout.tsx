@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { LogOut } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -11,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { isStudentNavActive, STUDENT_NAV } from '@/components/layout/data/student-nav'
+import { clearLocalSession, loginReplaceOptions } from '@/lib/sign-out'
 import { useAuthStore } from '@/stores/auth-store'
 import { cn, getDisplayNameInitials } from '@/lib/utils'
 
@@ -20,6 +22,7 @@ function displayName(fullName?: string, name?: string): string {
 
 export function StudentLayout() {
   const { auth } = useAuthStore()
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const location = useLocation()
   const name = displayName(auth.user?.full_name, auth.user?.name)
@@ -27,8 +30,8 @@ export function StudentLayout() {
   const pathname = location.pathname
 
   const handleLogout = () => {
-    auth.reset()
-    void navigate({ to: '/login' })
+    clearLocalSession(queryClient)
+    void navigate(loginReplaceOptions)
   }
 
   return (

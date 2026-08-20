@@ -43,8 +43,10 @@ vi.mock('@/lib/api/practice', () => ({
 }))
 
 vi.mock('@/stores/auth-store', () => ({
-  useAuthStore: (selector: (s: { auth: { user: { full_name: string } } }) => unknown) =>
-    selector({ auth: { user: { full_name: 'Alibek' } } }),
+  useAuthStore: (selector: (s: {
+    auth: { user: { full_name: string }; accessToken: string }
+  }) => unknown) =>
+    selector({ auth: { user: { full_name: 'Alibek' }, accessToken: 'test-token' } }),
 }))
 
 vi.mock('@tanstack/react-router', async () => {
