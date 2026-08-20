@@ -1091,14 +1091,13 @@ export function MatchingLetterRenderer({
 export function ExamMapImage({
   src,
   caption,
-  size = 'compact',
 }: {
   src: string
   caption?: string
   size?: 'compact' | 'pane'
 }) {
   return (
-    <figure className={cn('mx-auto w-full', size === 'pane' ? 'max-w-[540px]' : 'max-w-[520px]')}>
+    <figure className='mx-auto w-full max-w-[550px]'>
       {caption && (
         <figcaption className='mb-1.5 text-center text-[13px] font-semibold text-foreground'>
           {caption}
@@ -1108,10 +1107,7 @@ export function ExamMapImage({
         <img
           src={mediaUrl(src)}
           alt={caption || 'Map'}
-          className={cn(
-            'mx-auto block h-auto w-auto max-w-full object-contain',
-            size === 'pane' ? 'max-h-[min(460px,58vh)]' : 'max-h-[min(400px,52vh)]',
-          )}
+          className='mx-auto block h-auto max-h-[min(550px,62vh)] w-auto max-w-full object-contain'
           onError={(e) => {
             ;(e.target as HTMLImageElement).style.display = 'none'
           }}
