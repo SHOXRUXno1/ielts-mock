@@ -1106,16 +1106,16 @@ export function MapLabelingRenderer({
   return (
     <div className='space-y-4'>
       {imageUrl && (
-        <div className='flex justify-center'>
+        <figure className='w-full overflow-hidden rounded-lg border border-border bg-white p-2 sm:p-3'>
           <img
             src={mediaUrl(imageUrl)}
             alt='Map'
-            className='max-w-lg rounded-lg border border-border'
+            className='mx-auto block h-auto w-full max-w-none object-contain'
             onError={(e) => {
               ;(e.target as HTMLImageElement).style.display = 'none'
             }}
           />
-        </div>
+        </figure>
       )}
 
       <div className='space-y-3'>
