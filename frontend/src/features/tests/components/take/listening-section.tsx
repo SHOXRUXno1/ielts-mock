@@ -265,7 +265,9 @@ function ListeningGroupHeader({ group }: { group: RenderGroup }) {
 
   return (
     <div className='mb-4'>
-      <QuestionRangeTitle min={minQ} max={maxQ} />
+      <div className='sticky top-0 z-10 bg-white/95 py-1.5 backdrop-blur-sm'>
+        <QuestionRangeTitle min={minQ} max={maxQ} />
+      </div>
       {rawInstruction && (
         <InstructionBlock className='mt-2'>
           {rawInstruction.split('\n').map((line, i) => (

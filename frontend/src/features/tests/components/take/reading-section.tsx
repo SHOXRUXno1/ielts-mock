@@ -240,7 +240,10 @@ function GroupHeader({ group }: { group: RuntimeGroup }) {
 
   return (
     <div className='mb-5'>
-      <QuestionRangeTitle min={minQ} max={maxQ} />
+      {/* Stay visible when jumping to Q40 so "Questions 37–40" does not scroll away. */}
+      <div className='sticky top-0 z-10 bg-white/95 py-1.5 backdrop-blur-sm'>
+        <QuestionRangeTitle min={minQ} max={maxQ} />
+      </div>
       {instruction && (
         <InstructionBlock className='mt-2'>
           {instruction.split('\n').map((line, i) => (

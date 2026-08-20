@@ -42,6 +42,19 @@ function formatAnswerKey(answerKey: Record<string, unknown> | null): string {
 const chip =
   'inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-primary'
 
+function QuestionNum({ question }: { question: Question }) {
+  const n = question.computed_number ?? question.order
+  return (
+    <span
+      data-q-chip
+      data-q-n={n}
+      className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'
+    >
+      {n}
+    </span>
+  )
+}
+
 // ── Compound table / notes-card types ────────────────────────────────────────
 // Used by ListeningSection when multiple Questions share the same table/notes.
 
@@ -649,7 +662,7 @@ export function QuestionRenderer({
         <div className='space-y-3'>
           <div className='space-y-1'>
             <p className='text-[15px] font-[500] text-foreground'>
-              <span data-q-chip className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'>{question.order}</span>
+              <QuestionNum question={question} />
               {questionText}
             </p>
             <p className='text-[13px] text-muted-foreground'>
@@ -699,7 +712,7 @@ export function QuestionRenderer({
     return (
       <div className='space-y-3'>
         <p className='text-[15px] font-[500] leading-6 text-foreground'>
-          <span data-q-chip className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'>{question.order}</span>
+          <QuestionNum question={question} />
           {questionText}
         </p>
         <RadioGroup
@@ -734,7 +747,7 @@ export function QuestionRenderer({
     return (
       <div className='space-y-2'>
         <p className='text-[15px] font-[500] leading-7 text-foreground'>
-          <span data-q-chip className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'>{question.order}</span>
+          <QuestionNum question={question} />
           {content.statement as string}
         </p>
         <RadioGroup
@@ -767,7 +780,7 @@ export function QuestionRenderer({
     return (
       <div className='space-y-2'>
         <p className='text-[15px] font-[500] leading-7 text-foreground'>
-          <span data-q-chip className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'>{question.order}</span>
+          <QuestionNum question={question} />
           {content.statement as string}
         </p>
         <RadioGroup
@@ -873,7 +886,7 @@ export function QuestionRenderer({
     return (
       <div className='space-y-4'>
         <p className='text-[15px] font-[500] text-foreground'>
-          <span data-q-chip className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'>{question.order}</span>
+          <QuestionNum question={question} />
           {questionText}
         </p>
         {!!content.image_url && (
