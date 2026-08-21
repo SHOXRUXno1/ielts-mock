@@ -3,6 +3,13 @@ export { BandValue } from './band-value'
 export { EmptyState } from './empty-state'
 export { Metric } from './metric'
 export { Panel, PanelBody, PanelHeader, PanelTitle, PanelToolbar } from './panel'
+export {
+  ScoreReveal,
+  TIMELINE as SCORE_REVEAL_TIMELINE,
+  type ScoreRevealProps,
+  type ScoreRevealSection,
+  type ScoreRevealSectionStatus,
+} from './score-reveal'
 export { SectionLabel } from './section-label'
 export { SkillBandRow } from './skill-band-row'
 export {

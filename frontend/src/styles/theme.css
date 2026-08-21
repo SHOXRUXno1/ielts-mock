@@ -22,6 +22,9 @@
   --warning-foreground: oklch(0.424 0.111 45.904);
   --success: oklch(0.925 0.114 163.647);
   --success-foreground: oklch(0.393 0.111 162.48);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --skipped: oklch(0.94 0.008 255.508);
+  --skipped-foreground: oklch(0.52 0.04 257.417);
 
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -73,6 +76,9 @@
   --warning-foreground: oklch(0.828 0.189 84.429);
   --success: oklch(0.316 0.076 163.647);
   --success-foreground: oklch(0.696 0.17 162.48);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --skipped: oklch(0.279 0.02 260.031);
+  --skipped-foreground: oklch(0.72 0.03 256.788);
 
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -137,6 +143,9 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-skipped: var(--skipped);
+  --color-skipped-foreground: var(--skipped-foreground);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

@@ -39,7 +39,7 @@ export function OutcomeBar({
         )}
         {skipped > 0 && (
           <div
-            className='bg-warning-foreground'
+            className='bg-skipped-foreground'
             style={{ width: `${(skipped / total) * 100}%` }}
           />
         )}
@@ -48,7 +48,7 @@ export function OutcomeBar({
         <div className='flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground'>
           <LegendSwatch className='bg-success-foreground' label='Correct' count={correct} />
           <LegendSwatch className='bg-destructive' label='Incorrect' count={incorrect} />
-          <LegendSwatch className='bg-warning-foreground' label='Skipped' count={skipped} />
+          <LegendSwatch className='bg-skipped-foreground' label='Skipped' count={skipped} />
         </div>
       )}
     </div>

@@ -292,16 +292,19 @@ export function TakeTestShell({
   )
 
   const goToResult = useCallback(
-    (id: string) => {
+    (id: string, options?: { reveal?: boolean }) => {
+      const search = options?.reveal ? { reveal: true } : undefined
       if (role === 'student') {
         void navigate({
           to: '/student/results/$attemptId',
           params: { attemptId: id },
+          search,
         })
       } else {
         void navigate({
           to: '/results/$attemptId',
           params: { attemptId: id },
+          search,
         })
       }
     },
@@ -745,12 +748,12 @@ export function TakeTestShell({
         /* ignore */
       }
       toast.success('Test submitted!')
-      goToResult(result.id)
+      goToResult(result.id, { reveal: true })
     },
     onError: (err: unknown) => {
       isFinishingRef.current = false
       if (isAttemptDone(err)) {
-        if (attemptId) goToResult(attemptId)
+        if (attemptId) goToResult(attemptId, { reveal: true })
         return
       }
       toast.error('Failed to submit test. Please try again.')
