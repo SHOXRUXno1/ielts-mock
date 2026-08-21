@@ -86,7 +86,7 @@ describe('BandValue', () => {
     for (const v of displayed) {
       expect(v * 2).toBe(Math.round(v * 2))
     }
-    expect(displayed.at(-1)).toBe(7)
+    expect(displayed[displayed.length - 1]).toBe(7)
     restore()
   })
 
