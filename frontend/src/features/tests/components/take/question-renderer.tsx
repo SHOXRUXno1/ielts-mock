@@ -1,6 +1,6 @@
+import type { ReactNode } from 'react'
 import { Flag } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Select,
@@ -52,6 +52,29 @@ function QuestionNum({ question }: { question: Question }) {
     >
       {n}
     </span>
+  )
+}
+
+/** Native label — shadcn Label is flex + leading-none and clips option text. */
+function ChoiceLabel({
+  htmlFor,
+  children,
+  className,
+}: {
+  htmlFor: string
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className={cn(
+        'block min-w-0 cursor-pointer text-[15px] font-normal leading-7 text-foreground',
+        className,
+      )}
+    >
+      {children}
+    </label>
   )
 }
 
@@ -692,13 +715,10 @@ export function QuestionRenderer({
                     checked={checked}
                     onCheckedChange={() => toggle(letter)}
                   />
-                  <Label
-                    htmlFor={id}
-                    className='cursor-pointer font-normal text-foreground'
-                  >
+                  <ChoiceLabel htmlFor={id}>
                     <span className={cn('mr-1 text-[13px] font-medium', checked ? 'text-primary' : 'text-muted-foreground')}>{letter}.</span>{' '}
                     {opt}
-                  </Label>
+                  </ChoiceLabel>
                 </div>
               )
             })}
@@ -726,13 +746,10 @@ export function QuestionRenderer({
             return (
               <div key={i} className='flex cursor-pointer items-center gap-2.5'>
                 <RadioGroupItem value={letter} id={id} />
-                <Label
-                  htmlFor={id}
-                  className='cursor-pointer text-[15px] font-normal leading-7 text-foreground'
-                >
+                <ChoiceLabel htmlFor={id}>
                   <span className='mr-1 font-medium'>{letter}.</span>
                   {opt}
-                </Label>
+                </ChoiceLabel>
               </div>
             )
           })}
@@ -760,12 +777,12 @@ export function QuestionRenderer({
             return (
               <div key={opt} className='flex items-center gap-2.5'>
                 <RadioGroupItem value={opt} id={id} />
-                <Label
+                <ChoiceLabel
                   htmlFor={id}
-                  className='cursor-pointer text-[15px] font-bold uppercase leading-7 text-foreground'
+                  className='font-bold uppercase'
                 >
                   {opt}
-                </Label>
+                </ChoiceLabel>
               </div>
             )
           })}
@@ -793,12 +810,12 @@ export function QuestionRenderer({
             return (
               <div key={opt} className='flex items-center gap-2.5'>
                 <RadioGroupItem value={opt} id={id} />
-                <Label
+                <ChoiceLabel
                   htmlFor={id}
-                  className='cursor-pointer text-[15px] font-bold uppercase leading-7 text-foreground'
+                  className='font-bold uppercase'
                 >
                   {opt}
-                </Label>
+                </ChoiceLabel>
               </div>
             )
           })}
@@ -983,9 +1000,9 @@ export function QuestionRenderer({
                   checked={checked}
                   onCheckedChange={() => toggle(letter)}
                 />
-                <Label htmlFor={id} className='cursor-pointer font-normal text-foreground'>
+                <ChoiceLabel htmlFor={id}>
                   <span className={cn('mr-1 text-[13px] font-medium', checked ? 'text-primary' : 'text-muted-foreground')}>{letter}.</span> {opt}
-                </Label>
+                </ChoiceLabel>
               </div>
             )
           })}

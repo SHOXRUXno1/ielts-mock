@@ -9,6 +9,13 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+export function otherPartPlayingCopy(
+  playingPart: number,
+  viewedPart: number,
+): string {
+  return `Part ${playingPart} is still playing. Part ${viewedPart} starts automatically when the recording reaches it.`
+}
+
 type Props = {
   section: Section
   partNumber: number
@@ -25,7 +32,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
   const displayDuration = isViewedPlaying ? audio.duration : 0
   const progress = isCompleted
     ? 100
-    : displayDuration > 0
+    : isViewedPlaying && displayDuration > 0
       ? (displayTime / displayDuration) * 100
       : 0
 
@@ -48,7 +55,12 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
       className='rounded-lg border-[0.5px] border-slate-200 bg-slate-50 p-4'
       aria-label={`Part ${partNumber} audio`}
     >
-      <div className='flex items-center gap-4'>
+      <div
+        className={cn(
+          'flex items-center gap-4',
+          isOtherPlaying && 'opacity-50',
+        )}
+      >
         <button
           type='button'
           onClick={() => audio.togglePlay(section.id)}
@@ -77,8 +89,12 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
           </div>
 
           <div className='flex justify-between text-[13px] tabular-nums text-slate-500'>
-            <span>{formatTime(displayTime)}</span>
-            <span>{displayDuration > 0 ? formatTime(displayDuration) : '--:--'}</span>
+            <span>{isViewedPlaying ? formatTime(displayTime) : '--:--'}</span>
+            <span>
+              {isViewedPlaying && displayDuration > 0
+                ? formatTime(displayDuration)
+                : '--:--'}
+            </span>
           </div>
         </div>
 
@@ -114,7 +130,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
 
       {!isCompleted && isOtherPlaying && audio.playingPartNumber != null && (
         <p className='mt-3 text-xs text-slate-500'>
-          Now playing: Part {audio.playingPartNumber}
+          {otherPartPlayingCopy(audio.playingPartNumber, partNumber)}
         </p>
       )}
 

@@ -450,9 +450,7 @@ export function ReadingSection({
               data-question-group
               className={gi > 0 ? 'mt-8 border-t border-border pt-6' : ''}
             >
-              <div className='sticky top-0 z-10 -mx-5 bg-white px-5 py-2 xl:-mx-8 xl:px-8'>
-                <GroupHeader group={group} />
-              </div>
+              <GroupHeader group={group} />
 
               {group.type === 'compound' && group.structure && (
                 <CompoundCompletionRenderer
