@@ -228,7 +228,7 @@ async def _seed_p1(db: AsyncSession, section: Section) -> None:
         "headers": ["Part of tree", "Traditional use"],
         "rows": [
             [_plain(_gap("g6")), _plain("fuel")],
-            [_plain(_gap("g7")), _plain("medicine")],
+            [_plain(_gap("g7"), " and ", _gap("g7")), _plain("medicine")],
             [_plain(_gap("g8")), _plain("construction")],
         ],
     }
@@ -239,7 +239,8 @@ async def _seed_p1(db: AsyncSession, section: Section) -> None:
         question_type=QuestionType.TABLE_COMPLETION.value,
         instruction=(
             "Complete the table below.\n"
-            "Choose NO MORE THAN TWO WORDS from the passage for each answer."
+            "Choose NO MORE THAN TWO WORDS from the passage for each answer.\n"
+            "Write your answers in boxes 6-8 on your answer sheet."
         ),
         options_shared=table,
     )

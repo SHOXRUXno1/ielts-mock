@@ -9,6 +9,10 @@ import {
 import { mediaUrl } from '@/lib/api/attempts'
 import { cn } from '@/lib/utils'
 import type { Question } from '../../data/schema'
+import {
+  joinGapAnswerParts,
+  splitJoinedGapAnswer,
+} from '../../take/joined-gap-answer'
 import type {
   CellSegment,
   CompoundStructure,
@@ -25,8 +29,8 @@ type OnAnswer = (questionId: string, response: Record<string, unknown>) => void
 function buildGapMap(questions: Question[]): Map<string, Question> {
   const map = new Map<string, Question>()
   for (const q of questions) {
-    const gapId = q.content.gap_id
-    const gapKey = q.content.gap_key
+    const gapId = q.content?.gap_id
+    const gapKey = q.content?.gap_key
     if (typeof gapId === 'string' && gapId) map.set(gapId, q)
     if (typeof gapKey === 'string' && gapKey) map.set(gapKey, q)
   }
@@ -90,6 +94,7 @@ export function GapInput({
   previewMode = false,
   /** When set (word-bank summary), render a letter dropdown instead of text. */
   choiceOptions,
+  showNumber = true,
 }: {
   question: Question
   value: string
@@ -98,6 +103,8 @@ export function GapInput({
   readOnly?: boolean
   previewMode?: boolean
   choiceOptions?: string[]
+  /** Official "7 ______ and ______" numbers only the first blank. */
+  showNumber?: boolean
 }) {
   const limit = effectiveMaxWords(maxWords, question.answer_key)
   const overLimit = limit != null && countWords(value) > limit
@@ -112,16 +119,18 @@ export function GapInput({
 
   return (
     <span
-      id={`q-${displayN}`}
+      id={showNumber ? `q-${displayN}` : undefined}
       className='mx-0.5 inline-flex scroll-mt-20 items-center gap-1 align-middle'
     >
-      <span
-        data-q-chip
-        data-q-n={displayN}
-        className='inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground'
-      >
-        {displayN}
-      </span>
+      {showNumber && (
+        <span
+          data-q-chip
+          data-q-n={displayN}
+          className='inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground'
+        >
+          {displayN}
+        </span>
+      )}
       <span className='inline-flex flex-col items-center'>
         {letters ? (
           <Select
@@ -181,6 +190,19 @@ export function GapInput({
   )
 }
 
+function blankCountForQuestion(
+  segments: CellSegment[],
+  gapToQ: Map<string, Question>,
+  questionId: string,
+): number {
+  let n = 0
+  for (const seg of segments) {
+    if (seg.type !== 'gap') continue
+    if (gapToQ.get(seg.gap_id)?.id === questionId) n += 1
+  }
+  return n
+}
+
 function renderSegments(
   segments: CellSegment[],
   gapToQ: Map<string, Question>,
@@ -191,6 +213,10 @@ function renderSegments(
   previewMode?: boolean,
   choiceOptions?: string[],
 ) {
+  const seenQuestion = new Set<string>()
+  const seenNumber = new Set<number>()
+  const blankIndex = new Map<string, number>()
+
   return segments.map((seg, i) => {
     if (seg.type === 'text') {
       const lines = seg.value.split('\n')
@@ -207,12 +233,34 @@ function renderSegments(
     }
     const q = gapToQ.get(seg.gap_id)
     if (!q) return null
+
+    const displayN = q.computed_number ?? q.order
+    const showNumber = !seenQuestion.has(q.id) && !seenNumber.has(displayN)
+    seenQuestion.add(q.id)
+    seenNumber.add(displayN)
+
+    const blanks = blankCountForQuestion(segments, gapToQ, q.id)
+    const idx = blankIndex.get(q.id) ?? 0
+    blankIndex.set(q.id, idx + 1)
+    const stored = (answers[q.id]?.answer as string) ?? ''
+    const value =
+      blanks > 1 ? (splitJoinedGapAnswer(stored, blanks)[idx] ?? '') : stored
+
     return (
       <GapInput
         key={i}
         question={q}
-        value={(answers[q.id]?.answer as string) ?? ''}
-        onChange={(id, answer) => onAnswer(id, { answer })}
+        value={value}
+        showNumber={showNumber}
+        onChange={(id, answer) => {
+          if (blanks <= 1) {
+            onAnswer(id, { answer })
+            return
+          }
+          const parts = splitJoinedGapAnswer(stored, blanks)
+          parts[idx] = answer
+          onAnswer(id, { answer: joinGapAnswerParts(parts) })
+        }}
         maxWords={maxWords}
         readOnly={readOnly}
         previewMode={previewMode}

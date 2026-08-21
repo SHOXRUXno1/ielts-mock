@@ -318,7 +318,14 @@ export function extractGapIds(structure: CompoundStructure | null | undefined): 
     }
   }
 
-  return gaps
+  const seen = new Set<string>()
+  const unique: string[] = []
+  for (const id of gaps) {
+    if (seen.has(id)) continue
+    seen.add(id)
+    unique.push(id)
+  }
+  return unique
 }
 
 export function nextGapId(existing: string[]): string {

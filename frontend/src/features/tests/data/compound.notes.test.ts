@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { asCompoundStructure } from './compound'
+import { asCompoundStructure, extractGapIds } from './compound'
 
 describe('asCompoundStructure notes bullets', () => {
   it('preserves bullets: false', () => {
@@ -40,5 +40,31 @@ describe('asCompoundStructure notes bullets', () => {
     if (result?.variant === 'notes') {
       expect(result.bullets).toBe(true)
     }
+  })
+})
+
+describe('extractGapIds', () => {
+  it('counts a repeated gap_id once (7 ______ and ______)', () => {
+    expect(
+      extractGapIds({
+        variant: 'table',
+        instruction_words: 'NO MORE THAN TWO WORDS',
+        max_words_per_gap: 2,
+        headers: ['Part of tree', 'Traditional use'],
+        rows: [
+          [
+            {
+              variant: 'plain',
+              segments: [
+                { type: 'gap', gap_id: 'g7' },
+                { type: 'text', value: ' and ' },
+                { type: 'gap', gap_id: 'g7' },
+              ],
+            },
+            { variant: 'plain', segments: [{ type: 'text', value: 'medicine' }] },
+          ],
+        ],
+      }),
+    ).toEqual(['g7'])
   })
 })

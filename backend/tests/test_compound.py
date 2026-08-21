@@ -357,23 +357,27 @@ class TestValidateStructure:
         with pytest.raises(ValueError, match="at least one gap"):
             validate_compound_structure("table_completion", bad)
 
-    def test_duplicate_gap_ids(self):
-        bad = _table_structure(
+    def test_repeated_gap_id_is_one_question(self):
+        paired = _table_structure(
             rows=[
                 [
                     {
                         "variant": "plain",
-                        "segments": [{"type": "gap", "gap_id": "g1"}],
+                        "segments": [
+                            {"type": "gap", "gap_id": "g1"},
+                            {"type": "text", "value": " and "},
+                            {"type": "gap", "gap_id": "g1"},
+                        ],
                     },
                     {
                         "variant": "plain",
-                        "segments": [{"type": "gap", "gap_id": "g1"}],
+                        "segments": [{"type": "text", "value": "medicine"}],
                     },
                 ],
             ]
         )
-        with pytest.raises(ValueError, match="duplicate"):
-            validate_compound_structure("table_completion", bad)
+        validate_compound_structure("table_completion", paired)
+        assert extract_gap_ids(paired) == ["g1"]
 
 
 class TestGapContentValidation:

@@ -137,7 +137,15 @@ def extract_gap_ids(structure: dict[str, Any] | None) -> list[str]:
                 continue
             gaps.extend(_gaps_from_segments(step.get("segments")))
 
-    return gaps
+    # Same gap_id may appear twice ("7 ______ and ______") — one question.
+    seen: set[str] = set()
+    unique: list[str] = []
+    for gap_id in gaps:
+        if gap_id in seen:
+            continue
+        seen.add(gap_id)
+        unique.append(gap_id)
+    return unique
 
 
 def validate_compound_structure(
@@ -283,8 +291,8 @@ def validate_compound_structure(
     gap_ids = extract_gap_ids(options_shared)
     if not gap_ids:
         raise ValueError(f"{qtype} structure must contain at least one gap")
-    if len(gap_ids) != len(set(gap_ids)):
-        raise ValueError(f"{qtype} structure has duplicate gap_id values")
+    # The same gap_id may appear twice (official "7 ______ and ______").
+    # extract_gap_ids already returns unique ids — one question, two blanks.
 
 
 def validate_compound_gap_content(
