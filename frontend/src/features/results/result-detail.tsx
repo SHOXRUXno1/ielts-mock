@@ -32,6 +32,10 @@ import { ScoreSummary } from './components/score-summary'
 import { SpeakingReportPanel } from './components/speaking-report-panel'
 import { WritingReportPanel } from './components/writing-report-panel'
 import { bandTone } from './lib/band'
+import {
+  clearScoreReveal,
+  hasScoreReveal,
+} from './lib/score-reveal-flag'
 import { SKILL_BAND_FIELD, SKILL_KEYS, type SkillKey } from './lib/skill'
 import { RESULT_TABS, type ResultTab } from './lib/tabs'
 
@@ -195,7 +199,7 @@ export function ResultDetail() {
     </Button>
   ) : null
 
-  const showReveal = revealRequested
+  const showReveal = revealRequested || hasScoreReveal(attemptId)
   const revealSections: ScoreRevealSection[] = SKILL_KEYS.map((skill) => {
     const band = report[SKILL_BAND_FIELD[skill]]
     if (band != null) return { skill, band, status: 'scored' as const }
@@ -208,6 +212,7 @@ export function ResultDetail() {
   })
 
   const dropReveal = () => {
+    clearScoreReveal(attemptId)
     void navigate({
       to: '.',
       search: (prev) => {
@@ -220,6 +225,7 @@ export function ResultDetail() {
   }
 
   const handleRevealView = () => {
+    clearScoreReveal(attemptId)
     const overall = report.overall_band
     if (overall != null && bandTone(overall) === 'weak') {
       const firstScored = SKILL_KEYS.find(

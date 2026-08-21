@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import * as DialogPrimitive from '@radix-ui/react-dialog'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Download } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -130,15 +129,46 @@ export function ScoreReveal({
   const effectiveCefr = cefr ?? cefrLevel(overallBand)
   const confetti = useMemo(() => confettiPieces(CONFETTI_COUNT), [])
   const countUpDuration = Math.max(TIMELINE.stepMs, climbMs)
+  const canClose = phase === 'done' && !waiting
 
-  // Capture and restore focus.
+  // Capture and restore focus. Plain overlay — no Radix Dialog — so the
+  // submit AlertDialog closing cannot auto-dismiss this screen.
   useEffect(() => {
     previouslyFocused.current =
       (document.activeElement as HTMLElement | null) ?? null
+    contentRef.current?.focus()
     return () => {
       previouslyFocused.current?.focus?.()
     }
   }, [])
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && canClose) {
+        event.preventDefault()
+        onClose()
+      }
+      if (event.key !== 'Tab' || !contentRef.current) return
+      const nodes = contentRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+      )
+      if (nodes.length === 0) {
+        event.preventDefault()
+        return
+      }
+      const first = nodes[0]
+      const last = nodes[nodes.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [canClose, onClose])
 
   // Phase machine — starts only once the overall band is known so the
   // count-up (1 → band, 200ms per half-step) can finish before the CTAs.
@@ -158,8 +188,6 @@ export function ScoreReveal({
       for (const id of timers) window.clearTimeout(id)
     }
   }, [overallBand, climbMs])
-
-  const canClose = phase === 'done' && !waiting
 
   const handleAnnounce = () => {
     if (overallBand == null) return
@@ -182,54 +210,34 @@ export function ScoreReveal({
   const primaryCtaLabel = tone === 'weak' ? 'Review mistakes' : 'View results'
 
   return (
-    <DialogPrimitive.Root
-      open
-      onOpenChange={(open) => {
-        if (!open && canClose) onClose()
-      }}
+    <div
+      role='dialog'
+      aria-modal='true'
+      aria-labelledby='score-reveal-title'
+      aria-describedby='score-reveal-desc'
+      className={cn(
+        'fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden bg-surface-sunken/90 px-6 py-10 backdrop-blur-md',
+        'motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300',
+      )}
     >
-      <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay
-          className={cn(
-            'fixed inset-0 z-50 bg-surface-sunken/80 backdrop-blur-md',
-            'motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300',
-          )}
+      <h2 id='score-reveal-title' className='sr-only'>
+        {testTitle ? `${testTitle} — Score reveal` : 'Score reveal'}
+      </h2>
+      <p id='score-reveal-desc' className='sr-only'>
+        Your band results for this mock test.
+      </p>
+
+      {glow && (
+        <div
+          aria-hidden
+          className='pointer-events-none absolute inset-0 opacity-25'
+          style={{
+            background: `radial-gradient(closest-side, ${glow}, transparent 70%)`,
+          }}
         />
-        <DialogPrimitive.Content
-          ref={contentRef}
-          tabIndex={-1}
-          onEscapeKeyDown={(event) => {
-            if (!canClose) event.preventDefault()
-          }}
-          onPointerDownOutside={(event) => {
-            if (!canClose) event.preventDefault()
-          }}
-          onInteractOutside={(event) => {
-            if (!canClose) event.preventDefault()
-          }}
-          className={cn(
-            'fixed inset-0 z-50 flex flex-col items-center justify-center px-6 py-10 outline-none',
-            'motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300',
-          )}
-        >
-          <DialogPrimitive.Title className='sr-only'>
-            {testTitle ? `${testTitle} — Score reveal` : 'Score reveal'}
-          </DialogPrimitive.Title>
-          <DialogPrimitive.Description className='sr-only'>
-            Your band results for this mock test.
-          </DialogPrimitive.Description>
+      )}
 
-          {glow && (
-            <div
-              aria-hidden
-              className='pointer-events-none absolute inset-0 opacity-25'
-              style={{
-                background: `radial-gradient(closest-side, ${glow}, transparent 70%)`,
-              }}
-            />
-          )}
-
-          {showConfetti && (
+      {showConfetti && (
             <div
               aria-hidden
               className='pointer-events-none absolute inset-0 overflow-hidden'
@@ -249,18 +257,18 @@ export function ScoreReveal({
                       // Custom properties for animation timing.
                       ['--conf-dur' as string]: `${p.durationMs}ms`,
                       ['--conf-delay' as string]: `${p.delayMs}ms`,
-                    } as React.CSSProperties
+                    } as CSSProperties
                   }
                 />
               ))}
-            </div>
-          )}
+        </div>
+      )}
 
-          <div
-            className={cn(
-              'relative z-10 flex w-full max-w-xl flex-col items-center gap-6 text-center',
-            )}
-          >
+      <div
+        ref={contentRef}
+        tabIndex={-1}
+        className='relative z-10 flex w-full max-w-xl flex-col items-center gap-6 text-center outline-none'
+      >
             {testTitle && (
               <p className='text-xs font-medium uppercase tracking-wider text-muted-foreground'>
                 {testTitle}
@@ -402,17 +410,11 @@ export function ScoreReveal({
                 Download PDF
               </Button>
             </div>
-          </div>
 
-          <div
-            aria-live='polite'
-            aria-atomic='true'
-            className='sr-only'
-          >
-            {announcement}
-          </div>
-        </DialogPrimitive.Content>
-      </DialogPrimitive.Portal>
-    </DialogPrimitive.Root>
+        <div aria-live='polite' aria-atomic='true' className='sr-only'>
+          {announcement}
+        </div>
+      </div>
+    </div>
   )
 }

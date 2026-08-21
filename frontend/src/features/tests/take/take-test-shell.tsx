@@ -24,6 +24,7 @@ import {
   type AttemptDetailRead,
   type AttemptRead,
 } from '@/lib/api/attempts'
+import { markScoreReveal } from '@/features/results/lib/score-reveal-flag'
 import { fetchQuestions } from '@/lib/api/questions'
 import { fetchTest, fetchTestBySlug } from '@/lib/api/tests'
 import {
@@ -293,6 +294,7 @@ export function TakeTestShell({
 
   const goToResult = useCallback(
     (id: string, options?: { reveal?: boolean }) => {
+      if (options?.reveal) markScoreReveal(id)
       const search = options?.reveal ? { reveal: true } : undefined
       if (role === 'student') {
         void navigate({
