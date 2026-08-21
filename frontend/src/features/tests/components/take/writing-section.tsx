@@ -88,7 +88,12 @@ function TaskEditor({
     (question.content.task_instruction as string) ??
     (question.content.instruction as string) ??
     getDefaultInstruction(taskNumber, question.essay_type)
-  const displayStatement = !isTask1 && taskStatement ? taskStatement : taskDescription
+  const promptBody =
+    taskDescription.trim() ||
+    [taskStatement, taskQuestion]
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join('\n\n')
   // image_url from DB column takes priority; fallback to content JSON
   const imageUrl =
     question.image_url ??
@@ -226,31 +231,14 @@ function TaskEditor({
         You should spend about {isTask1 ? '20' : '40'} minutes on this task.
       </p>
 
-      {!isTask1 && (
-        <p className='mt-6 text-[13px] text-slate-500'>
-          Write about the following topic:
-        </p>
-      )}
-
-      <div
-        className={cn(
-          'rounded-lg border-l-[3px] border-blue-500 bg-slate-50 p-6',
-          isTask1 ? 'mt-6' : 'mt-2',
-        )}
-      >
-        <div
-          className='text-[15px] leading-[1.9] text-slate-800'
-          style={!isTask1 ? { fontFamily: 'Georgia, serif' } : undefined}
-        >
-          {displayStatement.split('\n').map((line, i) =>
+      <div className='mt-6 rounded-lg border-l-[3px] border-blue-500 bg-slate-50 p-6'>
+        <div className='text-[15px] leading-[1.9] text-slate-800'>
+          {promptBody.split('\n').map((line, i) =>
             line.trim() ? (
               <p key={i} className={i > 0 ? 'mt-3' : undefined}>
                 {line}
               </p>
             ) : null,
-          )}
-          {!isTask1 && taskQuestion && (
-            <p className='mt-4 font-medium'>{taskQuestion}</p>
           )}
         </div>
       </div>

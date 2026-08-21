@@ -124,6 +124,20 @@ describe('WritingSection — prompt area', () => {
       .element(screen.getByText('Write at least 250 words'))
       .toBeInTheDocument()
   })
+
+  it('Task 2 prompt uses the same block as Task 1, without the extra topic line', async () => {
+    const { screen } = await renderSection({ activeTaskIdx: 1 })
+    await expect
+      .element(
+        screen.getByText(
+          'Some people believe that university education should be free.',
+        ),
+      )
+      .toBeInTheDocument()
+    expect(
+      screen.getByText('Write about the following topic:').elements().length,
+    ).toBe(0)
+  })
 })
 
 describe('WritingSection — editor area', () => {
