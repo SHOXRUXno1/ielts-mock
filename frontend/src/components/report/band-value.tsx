@@ -17,6 +17,7 @@ type BandValueProps = {
   animateDelay?: number
   animateDuration?: number
   onAnimateComplete?: () => void
+  onDisplayChange?: (band: number) => void
 }
 
 const SIZE_CLASS: Record<BandValueSize, string> = {
@@ -30,6 +31,11 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
+// Snap to IELTS half-bands so the ticker reads as real scores (1.0, 1.5 …).
+function snapHalfBand(value: number): number {
+  return Math.round(value * 2) / 2
+}
+
 // Initial value chosen once — animation/reset happens inside the effect
 // through rAF/timeout callbacks so we never call setState synchronously
 // in the effect body.
@@ -39,7 +45,10 @@ function initialDisplay(
 ): number | null | undefined {
   if (target == null) return target
   if (from == null) return target
-  return prefersReducedMotion() ? target : from
+  if (prefersReducedMotion()) return target
+  // Nothing to climb toward — the animation would flash the same digit.
+  if (target <= from) return target
+  return snapHalfBand(from)
 }
 
 function useCountUp(
@@ -48,22 +57,33 @@ function useCountUp(
   delay: number,
   duration: number,
   onComplete?: () => void,
+  onDisplayChange?: (band: number) => void,
 ): number | null | undefined {
   const [display, setDisplay] = useState<number | null | undefined>(() =>
     initialDisplay(target, from),
   )
   const completeRef = useRef(onComplete)
+  const displayChangeRef = useRef(onDisplayChange)
   useEffect(() => {
     completeRef.current = onComplete
   }, [onComplete])
+  useEffect(() => {
+    displayChangeRef.current = onDisplayChange
+  }, [onDisplayChange])
 
   useEffect(() => {
     let raf = 0
     let cancelled = false
 
+    const commit = (value: number) => {
+      setDisplay(value)
+      displayChangeRef.current?.(value)
+    }
+
     const finish = (value: number | null | undefined) => {
       if (cancelled) return
       setDisplay(value)
+      if (typeof value === 'number') displayChangeRef.current?.(value)
       completeRef.current?.()
     }
 
@@ -76,7 +96,7 @@ function useCountUp(
         window.clearTimeout(t)
       }
     }
-    if (from == null || prefersReducedMotion()) {
+    if (from == null || prefersReducedMotion() || target <= from) {
       const t = window.setTimeout(() => finish(target), 0)
       return () => {
         cancelled = true
@@ -85,24 +105,32 @@ function useCountUp(
     }
 
     let start = 0
+    let lastSnapped = snapHalfBand(from)
     const tick = (now: number) => {
       if (cancelled) return
       if (start === 0) start = now
       const t = Math.max(0, Math.min(1, (now - start) / duration))
-      // easeOutExpo
-      const eased = t >= 1 ? 1 : 1 - Math.pow(2, -10 * t)
-      const value = from + (target - from) * eased
-      setDisplay(value)
+      // easeOutCubic — visible middle values, gentle finish.
+      const eased = t >= 1 ? 1 : 1 - Math.pow(1 - t, 3)
+      const raw = from + (target - from) * eased
+      // Land exactly on target at t === 1 so a 7.0 doesn't overshoot to 7.5.
+      const next = t >= 1 ? target : snapHalfBand(raw)
+      if (next !== lastSnapped) {
+        lastSnapped = next
+        commit(next)
+      }
       if (t < 1) {
         raf = window.requestAnimationFrame(tick)
       } else {
+        if (next !== target) commit(target)
         completeRef.current?.()
       }
     }
 
     const resetTimer = window.setTimeout(() => {
       if (cancelled) return
-      setDisplay(from)
+      const startValue = snapHalfBand(from)
+      commit(startValue)
       raf = window.requestAnimationFrame(tick)
     }, delay)
 
@@ -127,6 +155,7 @@ export function BandValue({
   animateDelay = 0,
   animateDuration = 900,
   onAnimateComplete,
+  onDisplayChange,
 }: BandValueProps) {
   const cefr = cefrLevel(band)
   const descriptor = bandDescriptor(band)
@@ -136,6 +165,7 @@ export function BandValue({
     animateDelay,
     animateDuration,
     onAnimateComplete,
+    onDisplayChange,
   )
   const aria =
     band == null

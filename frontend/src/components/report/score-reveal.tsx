@@ -111,6 +111,9 @@ export function ScoreReveal({
   const reduced = usePrefersReducedMotion()
   const [phase, setPhase] = useState<Phase>(() => (reduced ? 'done' : 'fade'))
   const [announcement, setAnnouncement] = useState('')
+  const [liveBand, setLiveBand] = useState<number>(() =>
+    reduced ? overallBand : Math.min(1, overallBand),
+  )
   const contentRef = useRef<HTMLDivElement>(null)
   const previouslyFocused = useRef<HTMLElement | null>(null)
 
@@ -256,14 +259,15 @@ export function ScoreReveal({
                 size='display'
                 showCefr={false}
                 showDescriptor={false}
-                animateFrom={reduced ? undefined : 0}
+                animateFrom={reduced ? undefined : 1}
                 animateDelay={reduced ? 0 : TIMELINE.countUpStart}
                 animateDuration={TIMELINE.countUpDuration}
                 onAnimateComplete={handleAnnounce}
+                onDisplayChange={setLiveBand}
                 className='text-center'
               />
               <BandScale
-                band={overallBand}
+                band={liveBand}
                 label='Overall'
                 barClass={
                   tone === 'strong'
