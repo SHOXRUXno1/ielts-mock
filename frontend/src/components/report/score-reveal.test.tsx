@@ -49,8 +49,8 @@ describe('ScoreReveal', () => {
     const overall = screen.getByLabelText(/Overall band 7\.0/)
     await expect.element(overall.getByText('1.0')).toBeInTheDocument()
     await expect.element(overall.getByText('7.0'), { timeout: 8000 }).toBeInTheDocument()
-    const dashes = screen.getByText('—').all()
-    expect(dashes.length).toBeGreaterThanOrEqual(2)
+    const pendingMarks = screen.getByText('…').all()
+    expect(pendingMarks.length).toBeGreaterThanOrEqual(2)
     const view = screen.getByRole('button', { name: 'View results' })
     await expect.element(view, { timeout: 8000 }).toBeEnabled()
     const live = document.querySelector('[aria-live="polite"]')
@@ -74,7 +74,37 @@ describe('ScoreReveal', () => {
     )
     await expect.element(screen.getByText('Scoring')).toBeInTheDocument()
     const dashes = screen.getByText('—').all()
-    expect(dashes.length).toBeGreaterThanOrEqual(3)
+    expect(dashes.length).toBeGreaterThanOrEqual(1)
+    await expect
+      .element(screen.getByRole('button', { name: 'View answers' }))
+      .toBeEnabled()
+    restore()
+  })
+
+  it('lets the student leave when scoring never produces an overall', async () => {
+    const restore = stubMatchMedia(false)
+    const onView = vi.fn()
+    const emptySections: ScoreRevealSection[] = [
+      { skill: 'listening', band: null, status: 'not_attempted' },
+      { skill: 'reading', band: null, status: 'not_attempted' },
+      { skill: 'writing', band: null, status: 'not_attempted' },
+      { skill: 'speaking', band: null, status: 'not_attempted' },
+    ]
+    const screen = await render(
+      <ScoreReveal
+        overallBand={null}
+        sections={emptySections}
+        testTitle='Test'
+        onViewResults={onView}
+        onDownloadPdf={() => {}}
+        onClose={() => {}}
+      />,
+    )
+    await expect.element(screen.getByText('Overall')).toBeInTheDocument()
+    const view = screen.getByRole('button', { name: 'View answers' })
+    await expect.element(view).toBeEnabled()
+    await userEvent.click(view)
+    expect(onView).toHaveBeenCalledTimes(1)
     restore()
   })
 
@@ -118,7 +148,7 @@ describe('ScoreReveal', () => {
     restore()
   })
 
-  it('keeps the CTAs disabled during the sequence and enables them once done', async () => {
+  it('keeps View answers enabled during the sequence and reveals Download once done', async () => {
     const restore = stubMatchMedia(false)
     const screen = await render(
       <ScoreReveal
@@ -131,8 +161,12 @@ describe('ScoreReveal', () => {
       />,
     )
     const view = screen.getByRole('button', { name: 'View results' })
-    await expect.element(view).toBeDisabled()
-    await expect.element(view, { timeout: 8000 }).toBeEnabled()
+    await expect.element(view).toBeEnabled()
+    await expect
+      .element(screen.getByRole('button', { name: /download pdf/i }), {
+        timeout: 8000,
+      })
+      .toBeEnabled()
     restore()
   })
 })

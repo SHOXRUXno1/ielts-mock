@@ -31,7 +31,6 @@ import { ResultNav } from './components/result-nav'
 import { ScoreSummary } from './components/score-summary'
 import { SpeakingReportPanel } from './components/speaking-report-panel'
 import { WritingReportPanel } from './components/writing-report-panel'
-import { bandTone } from './lib/band'
 import {
   clearScoreReveal,
   hasScoreReveal,
@@ -226,24 +225,19 @@ export function ResultDetail() {
 
   const handleRevealView = () => {
     clearScoreReveal(attemptId)
-    const overall = report.overall_band
-    if (overall != null && bandTone(overall) === 'weak') {
-      const firstScored = SKILL_KEYS.find(
-        (skill) => report[SKILL_BAND_FIELD[skill]] != null,
-      )
-      void navigate({
-        to: '.',
-        search: (prev) => {
-          const next = { ...(prev as Record<string, unknown>) }
-          delete next.reveal
-          if (firstScored) next.tab = firstScored
-          return next
-        },
-        replace: true,
-      })
-      return
-    }
-    dropReveal()
+    const firstScored = SKILL_KEYS.find(
+      (skill) => report[SKILL_BAND_FIELD[skill]] != null,
+    )
+    void navigate({
+      to: '.',
+      search: (prev) => {
+        const next = { ...(prev as Record<string, unknown>) }
+        delete next.reveal
+        next.tab = firstScored ?? 'listening'
+        return next
+      },
+      replace: true,
+    })
   }
 
   const handleRevealDownload = () => {

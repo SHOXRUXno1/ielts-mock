@@ -111,8 +111,11 @@ export function ScoreReveal({
   onClose,
 }: ScoreRevealProps) {
   const reduced = usePrefersReducedMotion()
-  const waiting = overallBand == null
-  const [phase, setPhase] = useState<Phase>('fade')
+  const pendingSections = sections.some((section) => section.status === 'pending')
+  const waiting = overallBand == null && pendingSections
+  const [phase, setPhase] = useState<Phase>(() =>
+    overallBand == null && !pendingSections ? 'done' : 'fade',
+  )
   const [announcement, setAnnouncement] = useState('')
   const [liveBand, setLiveBand] = useState<number | null>(() =>
     overallBand == null ? null : 1,
@@ -129,7 +132,12 @@ export function ScoreReveal({
   const effectiveCefr = cefr ?? cefrLevel(overallBand)
   const confetti = useMemo(() => confettiPieces(CONFETTI_COUNT), [])
   const countUpDuration = Math.max(TIMELINE.stepMs, climbMs)
-  const canClose = phase === 'done' && !waiting
+  const skipLabel =
+    !waiting && overallBand != null && tone === 'weak'
+      ? 'Review mistakes'
+      : waiting || overallBand == null
+        ? 'View answers'
+        : 'View results'
 
   // Capture and restore focus. Plain overlay — no Radix Dialog — so the
   // submit AlertDialog closing cannot auto-dismiss this screen.
@@ -144,7 +152,7 @@ export function ScoreReveal({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && canClose) {
+      if (event.key === 'Escape') {
         event.preventDefault()
         onClose()
       }
@@ -168,7 +176,7 @@ export function ScoreReveal({
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [canClose, onClose])
+  }, [onClose])
 
   // Phase machine — starts only once the overall band is known so the
   // count-up (1 → band, 200ms per half-step) can finish before the CTAs.
@@ -205,9 +213,7 @@ export function ScoreReveal({
   const showToneBadge =
     !waiting && (phase === 'tone' || phase === 'chips' || phase === 'done')
   const showChips = waiting || phase === 'chips' || phase === 'done'
-  const showCtas = !waiting && phase === 'done'
-
-  const primaryCtaLabel = tone === 'weak' ? 'Review mistakes' : 'View results'
+  const showDownload = !waiting && overallBand != null && phase === 'done'
 
   return (
     <div
@@ -367,7 +373,7 @@ export function ScoreReveal({
                     </span>
                     {empty ? (
                       <span className='font-manrope text-xl font-semibold tabular-nums text-muted-foreground'>
-                        —
+                        {section.status === 'pending' ? '…' : '—'}
                       </span>
                     ) : (
                       <span
@@ -384,31 +390,26 @@ export function ScoreReveal({
               })}
             </ul>
 
-            <div
-              className={cn(
-                'flex flex-wrap items-center justify-center gap-2 transition-opacity duration-300',
-                showCtas ? 'opacity-100' : 'pointer-events-none opacity-0',
-              )}
-            >
+            <div className='flex flex-wrap items-center justify-center gap-2'>
               <Button
                 size='sm'
                 className='gap-1.5 rounded-lg'
                 onClick={onViewResults}
-                disabled={!showCtas}
-                autoFocus={showCtas}
+                autoFocus
               >
-                {primaryCtaLabel}
+                {skipLabel}
               </Button>
-              <Button
-                size='sm'
-                variant='outline'
-                className='gap-1.5 rounded-lg'
-                onClick={onDownloadPdf}
-                disabled={!showCtas}
-              >
-                <Download className='size-3.5' />
-                Download PDF
-              </Button>
+              {showDownload && (
+                <Button
+                  size='sm'
+                  variant='outline'
+                  className='gap-1.5 rounded-lg'
+                  onClick={onDownloadPdf}
+                >
+                  <Download className='size-3.5' />
+                  Download PDF
+                </Button>
+              )}
             </div>
 
         <div aria-live='polite' aria-atomic='true' className='sr-only'>
