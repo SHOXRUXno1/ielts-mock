@@ -26,27 +26,27 @@ const SIZE_CLASS: Record<BandValueSize, string> = {
   sm: 'text-xl',
 }
 
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
-// Snap to IELTS half-bands so the ticker reads as real scores (1.0, 1.5 …).
 function snapHalfBand(value: number): number {
   return Math.round(value * 2) / 2
 }
 
-// Initial value chosen once — animation/reset happens inside the effect
-// through rAF/timeout callbacks so we never call setState synchronously
-// in the effect body.
+function halfBandSteps(from: number, to: number): number[] {
+  const start = snapHalfBand(from)
+  const end = to
+  const steps: number[] = []
+  for (let v = start; v < end - 0.01; v += 0.5) {
+    steps.push(snapHalfBand(v))
+  }
+  steps.push(end)
+  return steps
+}
+
 function initialDisplay(
   target: number | null | undefined,
   from: number | undefined,
 ): number | null | undefined {
   if (target == null) return target
   if (from == null) return target
-  if (prefersReducedMotion()) return target
-  // Nothing to climb toward — the animation would flash the same digit.
   if (target <= from) return target
   return snapHalfBand(from)
 }
@@ -72,8 +72,9 @@ function useCountUp(
   }, [onDisplayChange])
 
   useEffect(() => {
-    let raf = 0
     let cancelled = false
+    let delayTimer = 0
+    let stepTimer = 0
 
     const commit = (value: number) => {
       setDisplay(value)
@@ -88,56 +89,55 @@ function useCountUp(
     }
 
     if (target == null) {
-      const t = window.setTimeout(() => {
+      delayTimer = window.setTimeout(() => {
         if (!cancelled) setDisplay(target)
       }, 0)
       return () => {
         cancelled = true
-        window.clearTimeout(t)
+        window.clearTimeout(delayTimer)
       }
     }
-    if (from == null || prefersReducedMotion() || target <= from) {
-      const t = window.setTimeout(() => finish(target), 0)
+    if (from == null || target <= from) {
+      delayTimer = window.setTimeout(() => finish(target), 0)
       return () => {
         cancelled = true
-        window.clearTimeout(t)
+        window.clearTimeout(delayTimer)
       }
     }
 
-    let start = 0
-    let lastSnapped = snapHalfBand(from)
-    const tick = (now: number) => {
+    const steps = halfBandSteps(from, target)
+    const gaps = Math.max(1, steps.length - 1)
+    const stepMs = Math.max(80, Math.round(duration / gaps))
+
+    delayTimer = window.setTimeout(() => {
       if (cancelled) return
-      if (start === 0) start = now
-      const t = Math.max(0, Math.min(1, (now - start) / duration))
-      // easeOutCubic — visible middle values, gentle finish.
-      const eased = t >= 1 ? 1 : 1 - Math.pow(1 - t, 3)
-      const raw = from + (target - from) * eased
-      // Land exactly on target at t === 1 so a 7.0 doesn't overshoot to 7.5.
-      const next = t >= 1 ? target : snapHalfBand(raw)
-      if (next !== lastSnapped) {
-        lastSnapped = next
-        commit(next)
-      }
-      if (t < 1) {
-        raf = window.requestAnimationFrame(tick)
-      } else {
-        if (next !== target) commit(target)
+      let i = 0
+      commit(steps[0]!)
+      if (steps.length === 1) {
         completeRef.current?.()
+        return
       }
-    }
-
-    const resetTimer = window.setTimeout(() => {
-      if (cancelled) return
-      const startValue = snapHalfBand(from)
-      commit(startValue)
-      raf = window.requestAnimationFrame(tick)
+      stepTimer = window.setInterval(() => {
+        if (cancelled) return
+        i += 1
+        const value = steps[i]
+        if (value == null) {
+          window.clearInterval(stepTimer)
+          completeRef.current?.()
+          return
+        }
+        commit(value)
+        if (i >= steps.length - 1) {
+          window.clearInterval(stepTimer)
+          completeRef.current?.()
+        }
+      }, stepMs)
     }, delay)
 
     return () => {
       cancelled = true
-      window.clearTimeout(resetTimer)
-      if (raf) window.cancelAnimationFrame(raf)
+      window.clearTimeout(delayTimer)
+      window.clearInterval(stepTimer)
     }
   }, [target, from, delay, duration])
 

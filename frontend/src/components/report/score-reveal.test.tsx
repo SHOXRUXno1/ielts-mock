@@ -33,40 +33,53 @@ describe('ScoreReveal', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders the final state and announces once when reduced motion is on', async () => {
-    const restore = stubMatchMedia(true)
+  it('starts the overall at 1.0 then lands on the final band', async () => {
+    const restore = stubMatchMedia(false)
     const onView = vi.fn()
-    const onDownload = vi.fn()
-    const onClose = vi.fn()
     const screen = await render(
       <ScoreReveal
         overallBand={7}
         sections={scoredSections}
         testTitle='Cambridge IELTS 15 – Test 1'
         onViewResults={onView}
-        onDownloadPdf={onDownload}
-        onClose={onClose}
+        onDownloadPdf={() => {}}
+        onClose={() => {}}
       />,
     )
-    await expect
-      .element(screen.getByLabelText(/Overall band 7\.0/))
-      .toBeInTheDocument()
-    // Pending chips render an em dash.
+    const overall = screen.getByLabelText(/Overall band 7\.0/)
+    await expect.element(overall.getByText('1.0')).toBeInTheDocument()
+    await expect.element(overall.getByText('7.0'), { timeout: 8000 }).toBeInTheDocument()
     const dashes = screen.getByText('—').all()
     expect(dashes.length).toBeGreaterThanOrEqual(2)
-    // Single aria-live announcement mentions the final band.
+    const view = screen.getByRole('button', { name: 'View results' })
+    await expect.element(view, { timeout: 8000 }).toBeEnabled()
     const live = document.querySelector('[aria-live="polite"]')
     expect(live?.textContent).toContain('Overall band 7.0')
-    // Primary CTA is "View results" (band 7 → strong).
-    const view = screen.getByRole('button', { name: 'View results' })
-    await expect.element(view).toBeInTheDocument()
     await userEvent.click(view)
     expect(onView).toHaveBeenCalledTimes(1)
     restore()
   })
 
+  it('shows a pending overall as an em dash until the band arrives', async () => {
+    const restore = stubMatchMedia(false)
+    const screen = await render(
+      <ScoreReveal
+        overallBand={null}
+        sections={scoredSections}
+        testTitle='Test'
+        onViewResults={() => {}}
+        onDownloadPdf={() => {}}
+        onClose={() => {}}
+      />,
+    )
+    await expect.element(screen.getByText('Scoring')).toBeInTheDocument()
+    const dashes = screen.getByText('—').all()
+    expect(dashes.length).toBeGreaterThanOrEqual(3)
+    restore()
+  })
+
   it('uses "Review mistakes" as the primary CTA when band is weak', async () => {
-    const restore = stubMatchMedia(true)
+    const restore = stubMatchMedia(false)
     const screen = await render(
       <ScoreReveal
         overallBand={4.5}
@@ -78,13 +91,15 @@ describe('ScoreReveal', () => {
       />,
     )
     await expect
-      .element(screen.getByRole('button', { name: 'Review mistakes' }))
-      .toBeInTheDocument()
+      .element(screen.getByRole('button', { name: 'Review mistakes' }), {
+        timeout: 8000,
+      })
+      .toBeEnabled()
     restore()
   })
 
   it('exposes the Download PDF button and invokes the handler', async () => {
-    const restore = stubMatchMedia(true)
+    const restore = stubMatchMedia(false)
     const onDownload = vi.fn()
     const screen = await render(
       <ScoreReveal
@@ -97,6 +112,7 @@ describe('ScoreReveal', () => {
       />,
     )
     const btn = screen.getByRole('button', { name: /download pdf/i })
+    await expect.element(btn, { timeout: 8000 }).toBeEnabled()
     await userEvent.click(btn)
     expect(onDownload).toHaveBeenCalledTimes(1)
     restore()
@@ -114,15 +130,9 @@ describe('ScoreReveal', () => {
         onClose={() => {}}
       />,
     )
-    // During the sequence, both CTAs must be disabled.
     const view = screen.getByRole('button', { name: 'View results' })
     await expect.element(view).toBeDisabled()
-    // After the full 2.4s timeline the primary CTA is enabled.
-    await expect
-      .element(screen.getByRole('button', { name: 'View results' }), {
-        timeout: 4000,
-      })
-      .toBeEnabled()
+    await expect.element(view, { timeout: 8000 }).toBeEnabled()
     restore()
   })
 })

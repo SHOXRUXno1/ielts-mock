@@ -18,13 +18,16 @@ import { BandValue } from './band-value'
 export const TIMELINE = {
   fadeIn: 300,
   countUpStart: 300,
-  countUpDuration: 900,
-  toneAt: 1300,
-  chipsStart: 1400,
+  stepMs: 200,
   chipStagger: 60,
-  ctaAt: 2100,
-  total: 2400,
+  afterTone: 200,
+  afterChips: 400,
 } as const
+
+export function climbDurationMs(from: number, to: number): number {
+  const steps = Math.max(0, Math.round((to - from) * 2))
+  return steps * TIMELINE.stepMs
+}
 
 export type ScoreRevealSectionStatus = 'scored' | 'pending' | 'not_attempted'
 
@@ -35,7 +38,7 @@ export type ScoreRevealSection = {
 }
 
 export type ScoreRevealProps = {
-  overallBand: number
+  overallBand: number | null
   cefr?: CefrLevel | null
   sections: ScoreRevealSection[]
   testTitle: string | null | undefined
@@ -109,11 +112,14 @@ export function ScoreReveal({
   onClose,
 }: ScoreRevealProps) {
   const reduced = usePrefersReducedMotion()
-  const [phase, setPhase] = useState<Phase>(() => (reduced ? 'done' : 'fade'))
+  const waiting = overallBand == null
+  const [phase, setPhase] = useState<Phase>('fade')
   const [announcement, setAnnouncement] = useState('')
-  const [liveBand, setLiveBand] = useState<number>(() =>
-    reduced ? overallBand : Math.min(1, overallBand),
+  const [liveBand, setLiveBand] = useState<number | null>(() =>
+    overallBand == null ? null : 1,
   )
+  const climbMs =
+    overallBand == null ? 0 : climbDurationMs(1, overallBand)
   const contentRef = useRef<HTMLDivElement>(null)
   const previouslyFocused = useRef<HTMLElement | null>(null)
 
@@ -123,6 +129,7 @@ export function ScoreReveal({
   const descriptor = bandDescriptor(overallBand)
   const effectiveCefr = cefr ?? cefrLevel(overallBand)
   const confetti = useMemo(() => confettiPieces(CONFETTI_COUNT), [])
+  const countUpDuration = Math.max(TIMELINE.stepMs, climbMs)
 
   // Capture and restore focus.
   useEffect(() => {
@@ -133,36 +140,44 @@ export function ScoreReveal({
     }
   }, [])
 
-  // Phase machine — reduced motion starts already at 'done' via the state
-  // initializer, so this effect is a no-op in that case.
+  // Phase machine — starts only once the overall band is known so the
+  // count-up (1 → band, 200ms per half-step) can finish before the CTAs.
+  // Reduced motion still runs the number ticks; it only skips confetti.
   useEffect(() => {
-    if (reduced) return
-    const timers: number[] = []
-    timers.push(
+    if (overallBand == null) return
+    const toneAt = TIMELINE.countUpStart + climbMs
+    const chipsAt = toneAt + TIMELINE.afterTone
+    const ctaAt = chipsAt + TIMELINE.afterChips
+    const timers = [
       window.setTimeout(() => setPhase('counting'), TIMELINE.fadeIn),
-      window.setTimeout(() => setPhase('tone'), TIMELINE.toneAt),
-      window.setTimeout(() => setPhase('chips'), TIMELINE.chipsStart),
-      window.setTimeout(() => setPhase('done'), TIMELINE.ctaAt),
-    )
+      window.setTimeout(() => setPhase('tone'), toneAt),
+      window.setTimeout(() => setPhase('chips'), chipsAt),
+      window.setTimeout(() => setPhase('done'), ctaAt),
+    ]
     return () => {
       for (const id of timers) window.clearTimeout(id)
     }
-  }, [reduced])
+  }, [overallBand, climbMs])
 
-  const canClose = phase === 'done'
+  const canClose = phase === 'done' && !waiting
 
   const handleAnnounce = () => {
+    if (overallBand == null) return
     const cefrPart = effectiveCefr ? `, CEFR ${effectiveCefr}` : ''
     setAnnouncement(
       `Overall band ${formatBand(overallBand)} out of 9${cefrPart}. ${descriptor ?? ''}`.trim(),
     )
   }
 
-  const showConfetti = !reduced && tone === 'strong' && phase !== 'fade' && phase !== 'counting'
+  const showConfetti =
+    !reduced &&
+    !waiting &&
+    tone === 'strong' &&
+    (phase === 'tone' || phase === 'chips' || phase === 'done')
   const showToneBadge =
-    reduced || phase === 'tone' || phase === 'chips' || phase === 'done'
-  const showChips = reduced || phase === 'chips' || phase === 'done'
-  const showCtas = reduced || phase === 'done'
+    !waiting && (phase === 'tone' || phase === 'chips' || phase === 'done')
+  const showChips = waiting || phase === 'chips' || phase === 'done'
+  const showCtas = !waiting && phase === 'done'
 
   const primaryCtaLabel = tone === 'weak' ? 'Review mistakes' : 'View results'
 
@@ -255,19 +270,19 @@ export function ScoreReveal({
             <div className='flex flex-col items-center gap-4'>
               <BandValue
                 band={overallBand}
-                label='Overall'
+                label={waiting ? 'Scoring' : 'Overall'}
                 size='display'
                 showCefr={false}
                 showDescriptor={false}
-                animateFrom={reduced ? undefined : 1}
-                animateDelay={reduced ? 0 : TIMELINE.countUpStart}
-                animateDuration={TIMELINE.countUpDuration}
+                animateFrom={waiting ? undefined : 1}
+                animateDelay={waiting ? 0 : TIMELINE.countUpStart}
+                animateDuration={countUpDuration}
                 onAnimateComplete={handleAnnounce}
                 onDisplayChange={setLiveBand}
                 className='text-center'
               />
               <BandScale
-                band={liveBand}
+                band={waiting ? null : liveBand}
                 label='Overall'
                 barClass={
                   tone === 'strong'

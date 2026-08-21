@@ -34,21 +34,18 @@ describe('BandValue', () => {
     expect(onComplete).toHaveBeenCalledTimes(1)
   })
 
-  it('jumps straight to the final value when reduced motion is on', async () => {
+  it('still starts at 1.0 under reduced motion so the climb stays visible', async () => {
     const restore = stubMatchMedia(true)
-    const onComplete = vi.fn()
     const screen = await render(
       <BandValue
-        band={7}
+        band={9}
         size='display'
         animateFrom={1}
-        animateDelay={300}
-        animateDuration={900}
-        onAnimateComplete={onComplete}
+        animateDelay={1000}
+        animateDuration={2400}
       />,
     )
-    await expect.element(screen.getByText('7.0')).toBeInTheDocument()
-    expect(onComplete).toHaveBeenCalledTimes(1)
+    await expect.element(screen.getByText('1.0')).toBeInTheDocument()
     restore()
   })
 

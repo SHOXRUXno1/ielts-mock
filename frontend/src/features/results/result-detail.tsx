@@ -195,7 +195,7 @@ export function ResultDetail() {
     </Button>
   ) : null
 
-  const showReveal = revealRequested && report.overall_band != null
+  const showReveal = revealRequested
   const revealSections: ScoreRevealSection[] = SKILL_KEYS.map((skill) => {
     const band = report[SKILL_BAND_FIELD[skill]]
     if (band != null) return { skill, band, status: 'scored' as const }
@@ -333,7 +333,7 @@ export function ResultDetail() {
           </Tabs>
         </Main>
       </PageShell>
-      {showReveal && report.overall_band != null && (
+      {showReveal && (
         <ScoreReveal
           overallBand={report.overall_band}
           sections={revealSections}
