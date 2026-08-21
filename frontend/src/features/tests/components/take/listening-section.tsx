@@ -265,9 +265,7 @@ function ListeningGroupHeader({ group }: { group: RenderGroup }) {
 
   return (
     <div className='mb-4'>
-      <div className='sticky top-0 z-10 bg-white/95 py-1.5 backdrop-blur-sm'>
-        <QuestionRangeTitle min={minQ} max={maxQ} />
-      </div>
+      <QuestionRangeTitle min={minQ} max={maxQ} />
       {rawInstruction && (
         <InstructionBlock className='mt-2'>
           {rawInstruction.split('\n').map((line, i) => (
@@ -454,9 +452,12 @@ export function ListeningSection({
           {renderGroups.map((group, gi) => (
             <div
               key={gi}
+              data-question-group
               className={gi > 0 ? 'mt-8 border-t border-border pt-6' : ''}
             >
-              <ListeningGroupHeader group={group} />
+              <div className='sticky top-0 z-10 -mx-5 bg-white px-5 py-2 xl:-mx-8 xl:px-8'>
+                <ListeningGroupHeader group={group} />
+              </div>
 
               {group.type === 'compound' && group.structure && (
                 <CompoundCompletionRenderer
@@ -626,7 +627,10 @@ export function ListeningSection({
           </div>
         )}
         {mobileTab === 'questions' && (
-          <div className='min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6 pb-24'>
+          <div
+            data-exam-scroll-pane
+            className='min-h-0 flex-1 overflow-y-auto overflow-x-clip bg-white px-5 py-6 pb-24'
+          >
             {section?.id ? (
               <PassageHighlighter
                 attemptId={attemptId}
@@ -653,7 +657,10 @@ export function ListeningSection({
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize='50%' minSize='25%'>
-        <div className='h-full overflow-y-auto overflow-x-hidden bg-white px-5 py-6 pb-24 xl:px-8 xl:py-8'>
+        <div
+          data-exam-scroll-pane
+          className='h-full overflow-y-auto overflow-x-clip bg-white px-5 py-6 pb-24 xl:px-8 xl:py-8'
+        >
           {section?.id ? (
             <PassageHighlighter
               attemptId={attemptId}

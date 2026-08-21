@@ -240,10 +240,7 @@ function GroupHeader({ group }: { group: RuntimeGroup }) {
 
   return (
     <div className='mb-5'>
-      {/* Stay visible when jumping to Q40 so "Questions 37–40" does not scroll away. */}
-      <div className='sticky top-0 z-10 bg-white/95 py-1.5 backdrop-blur-sm'>
-        <QuestionRangeTitle min={minQ} max={maxQ} />
-      </div>
+      <QuestionRangeTitle min={minQ} max={maxQ} />
       {instruction && (
         <InstructionBlock className='mt-2'>
           {instruction.split('\n').map((line, i) => (
@@ -450,9 +447,12 @@ export function ReadingSection({
           {groups.map((group, gi) => (
             <div
               key={gi}
+              data-question-group
               className={gi > 0 ? 'mt-8 border-t border-border pt-6' : ''}
             >
-              <GroupHeader group={group} />
+              <div className='sticky top-0 z-10 -mx-5 bg-white px-5 py-2 xl:-mx-8 xl:px-8'>
+                <GroupHeader group={group} />
+              </div>
 
               {group.type === 'compound' && group.structure && (
                 <CompoundCompletionRenderer
@@ -607,7 +607,10 @@ export function ReadingSection({
           </div>
         )}
         {mobileTab === 'questions' && (
-          <div className='min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6 pb-24'>
+          <div
+            data-exam-scroll-pane
+            className='min-h-0 flex-1 overflow-y-auto overflow-x-clip bg-white px-5 py-6 pb-24'
+          >
             {section?.id ? (
               <PassageHighlighter
                 attemptId={attemptId}
@@ -640,7 +643,10 @@ export function ReadingSection({
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize='50%' minSize='25%'>
-        <div className='h-full overflow-y-auto overflow-x-hidden bg-white px-5 py-6 pb-24 xl:px-8 xl:py-8'>
+        <div
+          data-exam-scroll-pane
+          className='h-full overflow-y-auto overflow-x-clip bg-white px-5 py-6 pb-24 xl:px-8 xl:py-8'
+        >
           {section?.id ? (
             <PassageHighlighter
               attemptId={attemptId}
