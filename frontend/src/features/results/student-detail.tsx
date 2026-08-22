@@ -535,6 +535,7 @@ export function StudentResultDetail({
                         <td className='px-4 py-3 text-right'>
                           <AttemptRowActions
                             attemptId={a.id}
+                            status={a.status}
                             invalidateKeys={[
                               ['results'],
                               ['student-results', studentId],

@@ -10,6 +10,7 @@ import {
   ChevronUp,
   Clock,
   Download,
+  FileDown,
   Percent,
   Search,
   Trophy,
@@ -18,6 +19,7 @@ import {
 import { toast } from 'sonner'
 import { fetchResults, type AttemptListItem } from '@/lib/api/attempts'
 import { AttemptRowActions } from '@/features/results/components/attempt-row-actions'
+import { ExportPdfDialog } from '@/features/results/components/export-pdf-dialog'
 import { bandTone, bandToneClasses, formatBand } from '@/features/results/lib/band'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -362,6 +364,7 @@ export function Results() {
   const [customTo, setCustomTo] = useState('')
   const [bandMin, setBandMin] = useState('')
   const [bandMax, setBandMax] = useState('')
+  const [exportPdfOpen, setExportPdfOpen] = useState(false)
 
   const { data: results = [], isLoading } = useQuery({
     queryKey: ['results'],
@@ -700,6 +703,15 @@ export function Results() {
                 <Download className='size-3.5' />
                 Export CSV
               </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className='h-8 gap-1 text-xs'
+                onClick={() => setExportPdfOpen(true)}
+              >
+                <FileDown className='size-3.5' />
+                Export PDF
+              </Button>
             </div>
 
             {/* Applied chips */}
@@ -929,7 +941,7 @@ export function Results() {
                         <BandPill band={r.speaking_band} />
                       </td>
                       <td className='py-3 pl-3 pr-4 text-right'>
-                        <AttemptRowActions attemptId={r.id} />
+                        <AttemptRowActions attemptId={r.id} status={r.status} />
                       </td>
                     </tr>
                   ))}
@@ -970,6 +982,12 @@ export function Results() {
           </div>
         )}
       </Main>
+
+      <ExportPdfDialog
+        open={exportPdfOpen}
+        onOpenChange={setExportPdfOpen}
+        attempts={results}
+      />
     </>
   )
 }

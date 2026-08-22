@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Eye, Loader2, MoreHorizontal, Trash2 } from 'lucide-react'
+import { Download, Eye, Loader2, MoreHorizontal, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { deleteAttempt } from '@/lib/api/attempts'
+import { deleteAttempt, downloadResultPdf } from '@/lib/api/attempts'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,11 +25,13 @@ import {
 
 type Props = {
   attemptId: string
+  /** Attempt status — used to disable PDF for attempts with no scores yet. */
+  status?: string
   /** Extra query keys to invalidate after mutations */
   invalidateKeys?: unknown[][]
 }
 
-export function AttemptRowActions({ attemptId, invalidateKeys = [['results']] }: Props) {
+export function AttemptRowActions({ attemptId, status, invalidateKeys = [['results']] }: Props) {
   const queryClient = useQueryClient()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
@@ -49,7 +51,13 @@ export function AttemptRowActions({ attemptId, invalidateKeys = [['results']] }:
     onError: () => toast.error('Failed to delete attempt'),
   })
 
-  const busy = deleteMutation.isPending
+  const pdfMutation = useMutation({
+    mutationFn: () => downloadResultPdf(attemptId),
+    onError: () => toast.error('Could not generate the PDF'),
+  })
+
+  const pdfDisabled = status === 'in_progress'
+  const busy = deleteMutation.isPending || pdfMutation.isPending
 
   return (
     <>
@@ -75,6 +83,21 @@ export function AttemptRowActions({ attemptId, invalidateKeys = [['results']] }:
               <Eye className='mr-2 size-4' />
               View details
             </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={pdfDisabled || pdfMutation.isPending}
+            onSelect={(e) => {
+              e.preventDefault()
+              if (pdfDisabled || pdfMutation.isPending) return
+              pdfMutation.mutate()
+            }}
+          >
+            {pdfMutation.isPending ? (
+              <Loader2 className='mr-2 size-4 animate-spin' />
+            ) : (
+              <Download className='mr-2 size-4' />
+            )}
+            Download PDF
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
