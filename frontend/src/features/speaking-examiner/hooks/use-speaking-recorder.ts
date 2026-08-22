@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-
-export const MAX_RECORDING_SECONDS: Record<number, number> = {
-  1: 30,
-  2: 120,
-  3: 45,
-}
-
+import {
+  limitForTurn,
+  type RecordingLimit,
+  type SpeakingTurnKind,
+} from '../constants/recording-limits'
 import type { Phase } from '../types/phase'
 
 type UseSpeakingRecorderOptions = {
-  currentPart: number
+  turnKind: SpeakingTurnKind
   onRecordingComplete: (blob: Blob) => void
   setPhase: (phase: Phase) => void
   onRecordStart?: () => void
@@ -18,7 +16,7 @@ type UseSpeakingRecorderOptions = {
 }
 
 export function useSpeakingRecorder({
-  currentPart,
+  turnKind,
   onRecordingComplete,
   setPhase,
   onRecordStart,
@@ -33,28 +31,30 @@ export function useSpeakingRecorder({
   const chunksRef = useRef<Blob[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
-  const currentPartRef = useRef(currentPart)
+  const turnKindRef = useRef(turnKind)
   const stopRecordingRef = useRef<() => void>(() => {})
   const onRecordEndRef = useRef(onRecordEnd)
   const startingRef = useRef(false)
 
   useEffect(() => {
-    currentPartRef.current = currentPart
-  }, [currentPart])
+    turnKindRef.current = turnKind
+  }, [turnKind])
 
   useEffect(() => {
     onRecordEndRef.current = onRecordEnd
   }, [onRecordEnd])
 
-  const maxRecordingSeconds =
-    MAX_RECORDING_SECONDS[currentPart] ?? MAX_RECORDING_SECONDS[1]
+  const recordingLimit: RecordingLimit = useMemo(
+    () => limitForTurn(turnKind),
+    [turnKind],
+  )
 
   const recordingProgress = useMemo(
     () =>
-      maxRecordingSeconds > 0
-        ? Math.min(100, (recordingTime / maxRecordingSeconds) * 100)
+      recordingLimit.hardSeconds > 0
+        ? Math.min(100, (recordingTime / recordingLimit.hardSeconds) * 100)
         : 0,
-    [recordingTime, maxRecordingSeconds],
+    [recordingTime, recordingLimit.hardSeconds],
   )
 
   const cleanupStream = useCallback(() => {
@@ -126,16 +126,16 @@ export function useSpeakingRecorder({
       setRecordingTime(0)
       onRecordStart?.()
 
-      const maxSec =
-        MAX_RECORDING_SECONDS[currentPartRef.current] ?? MAX_RECORDING_SECONDS[1]
+      // Read the limit once at start: the turn cannot change mid-recording,
+      // and the interval closure must not capture a stale render's value.
+      const { hardSeconds } = limitForTurn(turnKindRef.current)
 
       timerRef.current = setInterval(() => {
         setRecordingTime((t) => {
           const next = t + 1
-          if (next >= maxSec) {
-            toast.info(`Maximum recording time (${maxSec}s) reached`)
-            stopRecordingRef.current()
-          }
+          // The wrap-up cue has already been on screen for a while by now, so
+          // the stop is expected — no toast on top of it.
+          if (next >= hardSeconds) stopRecordingRef.current()
           return next
         })
       }, 1000)
@@ -179,7 +179,7 @@ export function useSpeakingRecorder({
 
   return {
     recordingTime,
-    maxRecordingSeconds,
+    recordingLimit,
     recordingProgress,
     recordingStream,
     startRecording,

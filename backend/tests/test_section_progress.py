@@ -114,7 +114,9 @@ def test_apply_enter_speaking_hard_cap():
     rows = [_row("speaking")]
     entered, _ = sp.apply_enter(rows, settings, "speaking", now)
     assert entered.started_at == now
-    assert entered.ends_at == now + timedelta(minutes=20)
+    assert entered.ends_at == now + timedelta(
+        minutes=sp.SPEAKING_HARD_CAP_MINUTES
+    )
 
 
 def test_apply_enter_seals_previous_with_advance():
@@ -509,7 +511,7 @@ class TestSectionProgressIntegration:
         body = resp.json()
         started = datetime.fromisoformat(body["started_at"].replace("Z", "+00:00"))
         ends = datetime.fromisoformat(body["ends_at"].replace("Z", "+00:00"))
-        assert ends - started == timedelta(minutes=20)
+        assert ends - started == timedelta(minutes=sp.SPEAKING_HARD_CAP_MINUTES)
 
     def test_concurrent_enter_second_is_idempotent(self, attempt_ctx):
         """Two sequential ENTER calls (simulating a race after lock) stay idempotent."""

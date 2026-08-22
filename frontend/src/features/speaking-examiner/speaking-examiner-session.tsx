@@ -51,6 +51,7 @@ import { ScoreCard } from './components/score-card'
 import { SpeakingSessionShell } from './components/speaking-session-shell'
 import { VideoStage } from './components/video-stage'
 import { PART2_BEGIN_SPEAKING } from './constants/part2'
+import { resolveTurnKind } from './constants/recording-limits'
 import { useExaminerAudio } from './hooks/use-examiner-audio'
 import { useMicCheck } from './hooks/use-mic-check'
 import { useSpeakingAutostart } from './hooks/use-speaking-autostart'
@@ -106,6 +107,9 @@ export function SpeakingExaminerSession({
   const [currentPart, setCurrentPart] = useState(1)
   const [questionNumber, setQuestionNumber] = useState(1)
   const [cueCard, setCueCard] = useState<string | null>(null)
+  // The cue-card answer and the rounding-off question that follows it both
+  // report part 2; only the former earns the two-minute long turn.
+  const [isPart2LongTurn, setIsPart2LongTurn] = useState(false)
   const [simliMountKey, setSimliMountKey] = useState(0)
   const [liveSessionId, setLiveSessionId] = useState<string | null>(null)
   const [endTestOpen, setEndTestOpen] = useState(false)
@@ -300,6 +304,10 @@ export function SpeakingExaminerSession({
       const sessionId = sessionIdRef.current
       const signal = abortControllerRef.current?.signal
 
+      // The long turn is submitted; anything still tagged part 2 after this is
+      // the short rounding-off follow-up.
+      setIsPart2LongTurn(false)
+
       onRecordingStopped()
       try {
         if (blob.size < 1024) {
@@ -392,9 +400,11 @@ export function SpeakingExaminerSession({
     ],
   )
 
+  const turnKind = resolveTurnKind(currentPart, isPart2LongTurn)
+
   const {
     recordingTime,
-    maxRecordingSeconds,
+    recordingLimit,
     recordingProgress,
     recordingStream,
     startRecording,
@@ -402,7 +412,7 @@ export function SpeakingExaminerSession({
     abortRecording,
     cleanupStream,
   } = useSpeakingRecorder({
-    currentPart,
+    turnKind,
     onRecordingComplete: processRecording,
     setPhase,
     onRecordStart: handleRecordStart,
@@ -420,6 +430,10 @@ export function SpeakingExaminerSession({
 
     onPrepTimerDone()
     setHistory((h) => [...h, { role: 'examiner', text: PART2_BEGIN_SPEAKING }])
+
+    // Recording starts once the begin-speaking phrase finishes playing, which
+    // gives this state change several seconds to reach the recorder.
+    setIsPart2LongTurn(true)
 
     audioContextRef.current = {
       isPart2CueCard: false,
@@ -489,6 +503,7 @@ export function SpeakingExaminerSession({
     setCurrentPart(1)
     setQuestionNumber(1)
     setCueCard(null)
+    setIsPart2LongTurn(false)
 
     try {
       const resp = await startExaminerWithRetry(resolvedAttemptId, signal)
@@ -563,6 +578,7 @@ export function SpeakingExaminerSession({
       setCurrentPart(1)
       setQuestionNumber(1)
       setCueCard(null)
+      setIsPart2LongTurn(false)
       setLiveSessionId(null)
       prepCompleteRef.current = false
       prevPartRef.current = 1
@@ -727,7 +743,7 @@ export function SpeakingExaminerSession({
       phase={phase}
       recordingStream={recordingStream}
       recordingTime={recordingTime}
-      maxRecordingSeconds={maxRecordingSeconds}
+      recordingLimit={recordingLimit}
       recordingProgress={recordingProgress}
       onStartRecording={() => {
         if (phase === 'ready') {

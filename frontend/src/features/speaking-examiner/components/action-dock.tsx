@@ -2,13 +2,14 @@ import { Loader2, Mic, Volume2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import type { RecordingLimit } from '../constants/recording-limits'
 import type { Phase } from '../types/phase'
 import { RecordingControls } from './recording-controls'
 
 type ActionDockProps = {
   phase: Phase
   recordingTime: number
-  maxRecordingSeconds: number
+  recordingLimit: RecordingLimit
   recordingProgress: number
   micLevels: number[]
   onStartRecording: () => void
@@ -20,7 +21,7 @@ type ActionDockProps = {
 export function ActionDock({
   phase,
   recordingTime,
-  maxRecordingSeconds,
+  recordingLimit,
   recordingProgress,
   micLevels,
   onStartRecording,
@@ -76,7 +77,7 @@ export function ActionDock({
       {phase === 'recording' && (
         <RecordingControls
           recordingTime={recordingTime}
-          maxSeconds={maxRecordingSeconds}
+          limit={recordingLimit}
           progress={recordingProgress}
           levels={micLevels}
           onStop={onStopRecording}
