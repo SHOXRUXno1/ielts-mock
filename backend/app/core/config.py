@@ -74,6 +74,11 @@ class Settings(BaseSettings):
     worker_job_max_retries: int = 3
     worker_stuck_processing_minutes: int = 15
 
+    # ── DigitalOcean (billing readout for the admin usage page) ─
+    # Read-only personal access token. Optional: without it the usage page
+    # simply reports DigitalOcean as unconfigured instead of failing.
+    digitalocean_api_token: str = ""
+
     # ── S3 (Timeweb) ────────────────────────────────────
     s3_endpoint_url: str = ""
     s3_access_key: str = ""

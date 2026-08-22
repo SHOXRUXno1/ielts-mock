@@ -16,6 +16,7 @@ from app.models.section import Section
 from app.models.section_progress import SectionProgress, SectionState
 from app.models.test import Test
 from app.models.user import User
+from app.services.usage_quota import collect_usage
 from app.utils.labels import format_test_label
 
 router = APIRouter(
@@ -914,3 +915,14 @@ async def admin_analytics(
         group_comparison=group_comparison,
         completion=completion,
     )
+
+
+@router.get("/usage")
+async def get_usage():
+    """Remaining quota and spend per external provider.
+
+    Shapes vary per provider because each exposes a different amount, so the
+    tiles are returned as loose dicts rather than one rigid schema.
+    """
+    return await collect_usage()
+

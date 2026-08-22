@@ -16,6 +16,7 @@ from app.core.rate_limiter import (
     get_groq_stt_bucket,
     get_whisper_pool,
 )
+from app.services import usage_meter
 from app.services.scoring import compute_writing_band
 from app.services.shared_http import get_http_client
 from app.services.storage import resolve_local_path
@@ -140,12 +141,16 @@ async def _gemini_request_with_rotation(
         try:
             resp = await call_fn(api_key)
             resp.raise_for_status()
+            usage_meter.record_gemini_call()
             return resp
         except httpx.HTTPStatusError as e:
             last_exc = e
             status = e.response.status_code
             has_more_attempts = attempt < max_retries - 1
             keys_left_in_cycle = len(keys) - ((attempt % len(keys)) + 1)
+
+            if status == 429:
+                usage_meter.record_gemini_rate_limited()
 
             if status == 429 and has_more_attempts:
                 if keys_left_in_cycle > 0:
@@ -1010,6 +1015,7 @@ async def _transcribe_with_groq(
                 },
                 timeout=120.0,
             )
+            usage_meter.record_groq_headers(resp.headers, "stt")
             if resp.status_code >= 400:
                 logger.error(
                     "Groq transcription failed (%s): %s",
@@ -1139,6 +1145,7 @@ async def _call_groq_examiner_turn(contents: list[dict]) -> str:
         },
         timeout=60.0,
     )
+    usage_meter.record_groq_headers(resp.headers, "chat")
     resp.raise_for_status()
     data = resp.json()
     choices = data.get("choices") or []

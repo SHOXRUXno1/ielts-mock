@@ -21,6 +21,7 @@ import { Route as errors403RouteImport } from './routes/(errors)/403'
 import { Route as errors401RouteImport } from './routes/(errors)/401'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as AuthenticatedSettingsRouteRouteImport } from './routes/_authenticated/settings/route'
+import { Route as AuthenticatedUsageIndexRouteImport } from './routes/_authenticated/usage/index'
 import { Route as AuthenticatedTestsIndexRouteImport } from './routes/_authenticated/tests/index'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
@@ -119,6 +120,11 @@ const AuthenticatedSettingsRouteRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedUsageIndexRoute = AuthenticatedUsageIndexRouteImport.update({
+  id: '/usage/',
+  path: '/usage/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTestsIndexRoute = AuthenticatedTestsIndexRouteImport.update({
   id: '/tests/',
   path: '/tests/',
@@ -372,6 +378,7 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
   '/tests/': typeof AuthenticatedTestsIndexRoute
+  '/usage/': typeof AuthenticatedUsageIndexRoute
   '/practice/$bookSlug/$testSlug': typeof TestPracticeBookSlugTestSlugRouteRouteWithChildren
   '/take-test/$bookSlug/$testSlug': typeof TestTakeTestBookSlugTestSlugRouteRouteWithChildren
   '/tests/$testId/preview': typeof TestTestsTestIdPreviewRouteRouteWithChildren
@@ -419,6 +426,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
   '/tests': typeof AuthenticatedTestsIndexRoute
+  '/usage': typeof AuthenticatedUsageIndexRoute
   '/practice/$bookSlug/$testSlug': typeof TestPracticeBookSlugTestSlugRouteRouteWithChildren
   '/results/students/$studentId': typeof AuthenticatedResultsStudentsStudentIdRoute
   '/tests/$testId/edit': typeof AuthenticatedTestsTestIdEditRoute
@@ -468,6 +476,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
   '/_authenticated/tests/': typeof AuthenticatedTestsIndexRoute
+  '/_authenticated/usage/': typeof AuthenticatedUsageIndexRoute
   '/_test/practice/$bookSlug/$testSlug': typeof TestPracticeBookSlugTestSlugRouteRouteWithChildren
   '/_test/take-test/$bookSlug/$testSlug': typeof TestTakeTestBookSlugTestSlugRouteRouteWithChildren
   '/_test/tests/$testId/preview': typeof TestTestsTestIdPreviewRouteRouteWithChildren
@@ -519,6 +528,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/students/'
     | '/tests/'
+    | '/usage/'
     | '/practice/$bookSlug/$testSlug'
     | '/take-test/$bookSlug/$testSlug'
     | '/tests/$testId/preview'
@@ -566,6 +576,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/students'
     | '/tests'
+    | '/usage'
     | '/practice/$bookSlug/$testSlug'
     | '/results/students/$studentId'
     | '/tests/$testId/edit'
@@ -614,6 +625,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/'
     | '/_authenticated/students/'
     | '/_authenticated/tests/'
+    | '/_authenticated/usage/'
     | '/_test/practice/$bookSlug/$testSlug'
     | '/_test/take-test/$bookSlug/$testSlug'
     | '/_test/tests/$testId/preview'
@@ -731,6 +743,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/usage/': {
+      id: '/_authenticated/usage/'
+      path: '/usage'
+      fullPath: '/usage/'
+      preLoaderRoute: typeof AuthenticatedUsageIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tests/': {
@@ -1052,6 +1071,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedResultsIndexRoute: typeof AuthenticatedResultsIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
   AuthenticatedTestsIndexRoute: typeof AuthenticatedTestsIndexRoute
+  AuthenticatedUsageIndexRoute: typeof AuthenticatedUsageIndexRoute
   AuthenticatedResultsStudentsStudentIdRoute: typeof AuthenticatedResultsStudentsStudentIdRoute
 }
 
@@ -1071,6 +1091,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedResultsIndexRoute: AuthenticatedResultsIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedTestsIndexRoute: AuthenticatedTestsIndexRoute,
+  AuthenticatedUsageIndexRoute: AuthenticatedUsageIndexRoute,
   AuthenticatedResultsStudentsStudentIdRoute:
     AuthenticatedResultsStudentsStudentIdRoute,
 }
