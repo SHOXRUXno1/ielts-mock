@@ -16,7 +16,7 @@ export const Route = createFileRoute('/_test/take-test/$testId')({
 
 /**
  * Backward-compat redirect:
- * /take-test/:uuid → /take-test/:bookSlug/:testSlug/listening/1
+ * /take-test/:uuid → intro, or /listening/1 when ?resume= is present.
  */
 function UuidRedirect() {
   const { testId } = Route.useParams()
@@ -31,15 +31,26 @@ function UuidRedirect() {
 
   useEffect(() => {
     if (!data) return
+    if (resume) {
+      void navigate({
+        to: '/take-test/$bookSlug/$testSlug/$section/$part',
+        params: {
+          bookSlug: data.book_slug,
+          testSlug: `test-${data.test_number}`,
+          section: 'listening',
+          part: '1',
+        },
+        search: { resume },
+        replace: true,
+      })
+      return
+    }
     void navigate({
-      to: '/take-test/$bookSlug/$testSlug/$section/$part',
+      to: '/take-test/$bookSlug/$testSlug',
       params: {
         bookSlug: data.book_slug,
         testSlug: `test-${data.test_number}`,
-        section: 'listening',
-        part: '1',
       },
-      search: resume ? { resume } : {},
       replace: true,
     })
   }, [data, navigate, resume])
