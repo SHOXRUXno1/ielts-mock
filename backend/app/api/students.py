@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_admin
 from app.core.database import get_db
-from app.core.security import hash_password
+from app.core.security import hash_password_async
 from app.models.user import User
 from app.schemas.student import (
     ResetPasswordResponse,
@@ -74,7 +74,7 @@ async def create_student(
 
     user = User(
         login=login,
-        hashed_password=hash_password(plain_password),
+        hashed_password=await hash_password_async(plain_password),
         full_name=body.full_name.strip(),
         phone=body.phone,
         group_name=body.group_name,
@@ -155,7 +155,7 @@ async def reset_student_password(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
 
     plain_password = _generate_password()
-    user.hashed_password = hash_password(plain_password)
+    user.hashed_password = await hash_password_async(plain_password)
     await db.commit()
     return ResetPasswordResponse(password=plain_password)
 

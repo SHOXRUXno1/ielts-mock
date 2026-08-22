@@ -231,6 +231,12 @@ Evaluate the following IELTS Writing **{task_label}** response.
 
 ### Off-topic penalty
 If the response is largely irrelevant to the prompt, cap {task_criterion_name} at 4.
+Coherence and Cohesion, Lexical Resource and Grammatical Range are assessed ONLY
+on the quality of the language itself. Never reduce, zero out or "nullify" them
+because the content is off-topic, irrelevant or describes the wrong data — a
+well-written off-topic response still scores highly on those three criteria.
+Band 0 is reserved for a blank response; any response containing writing scores
+at least Band 1 on every criterion.
 
 ### Key points extraction (Task 1 with chart/visual)
 {key_points_instruction}
@@ -652,6 +658,51 @@ def _coerce_writing_criteria_to_int(result: dict) -> dict:
     return result
 
 
+_LANGUAGE_CRITERION_KEYS = (
+    "coherence_cohesion",
+    "lexical_resource",
+    "grammatical_range",
+)
+
+# Below this a near-zero score can be genuine, so don't force a retry.
+_COLLAPSE_MIN_WORDS = 50
+
+
+class WritingEvaluationError(RuntimeError):
+    """Gemini returned a structurally invalid evaluation — safe to retry."""
+
+
+def _validate_writing_criteria(result: dict, *, word_count: int) -> None:
+    """Guard against the model nullifying language criteria for off-topic text.
+
+    Coherence, Lexical Resource and Grammatical Range are scored on the language
+    alone. When Gemini zeroes all three it has collapsed the whole evaluation
+    onto task relevance, which silently costs the student over a band. Raising
+    lets the worker retry instead of recording the bad score.
+    """
+    bands: list[int] = []
+    for key in _LANGUAGE_CRITERION_KEYS:
+        val = result.get(key)
+        if isinstance(val, dict) and val.get("band") is not None:
+            bands.append(int(val["band"]))
+    if (
+        word_count >= _COLLAPSE_MIN_WORDS
+        and len(bands) == len(_LANGUAGE_CRITERION_KEYS)
+        and all(b == 0 for b in bands)
+    ):
+        raise WritingEvaluationError(
+            "Gemini zeroed every language criterion on a "
+            f"{word_count}-word response; retrying evaluation"
+        )
+
+    # IELTS reserves band 0 for a blank script; anything written scores >= 1.
+    for key in _WRITING_CRITERION_KEYS:
+        val = result.get(key)
+        if isinstance(val, dict) and val.get("band") == 0:
+            logger.warning("Raising Writing criterion %s from 0 to 1", key)
+            val["band"] = 1
+
+
 def _enrich_writing_result(result: dict, *, is_task1: bool) -> dict:
     """Sanitize Jumpinto-level fields; omit empty optional sections."""
     key_points = _normalize_key_points(result.get("key_points"))
@@ -794,6 +845,7 @@ async def evaluate_writing(
             result["task_response"] = result.pop("task_achievement")
         result = _enrich_writing_result(result, is_task1=is_task1)
         result = _coerce_writing_criteria_to_int(result)
+        _validate_writing_criteria(result, word_count=_count_words(text))
 
         # Task Band is always recomputed from the (now integer) criteria —
         # do not trust Gemini's own overall_band.

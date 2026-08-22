@@ -19,7 +19,13 @@ from app.core.database import async_session
 from app.models.attempt import Attempt, AttemptMode, AttemptStatus, PRACTICE_MODES
 from app.models.evaluation_job import EvaluationJob, JobStatus
 from app.services.band_calc import compute_overall_band, derive_scored_status
-from app.services.llm import NonEnglishError, evaluate_speaking, evaluate_writing, transcribe_audio
+from app.services.llm import (
+    NonEnglishError,
+    WritingEvaluationError,
+    evaluate_speaking,
+    evaluate_writing,
+    transcribe_audio,
+)
 from app.services.scoring import compute_writing_band
 
 logger = logging.getLogger(__name__)
@@ -86,7 +92,12 @@ async def _process_job(job_id: uuid.UUID) -> uuid.UUID | None:
             job.processed_at = datetime.now(timezone.utc)
 
         except Exception as e:
-            logger.exception("Evaluation job %s failed", job.id)
+            # A rejected evaluation is an expected, retryable outcome — keep the
+            # log readable and reserve tracebacks for genuine faults.
+            if isinstance(e, WritingEvaluationError):
+                logger.warning("Evaluation job %s rejected: %s", job.id, e)
+            else:
+                logger.exception("Evaluation job %s failed", job.id)
             retries = int(job.retry_count or 0) + 1
             job.retry_count = retries
             job.error_message = str(e)
