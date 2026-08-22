@@ -57,6 +57,36 @@ const PAYLOAD: UsageResponse = {
   ],
 }
 
+/** A configured provider that cannot report numbers must explain itself. */
+const NO_NUMBERS: UsageResponse = {
+  generated_at: '2026-08-23T00:00:00Z',
+  providers: [
+    {
+      name: 'ElevenLabs',
+      configured: true,
+      status: 'unknown',
+      detail:
+        "The API key cannot read the subscription (needs the 'user_read' permission). Speech synthesis is unaffected.",
+    },
+    {
+      name: 'Gemini',
+      configured: true,
+      status: 'ok',
+      model: 'gemini-3.1-flash-lite',
+      key_count: 1,
+      rpm_per_key: 300,
+      used: 42,
+      limit: null,
+      remaining: null,
+      percent_left: null,
+      rate_limited_today: 0,
+      estimated: true,
+      detail:
+        'Google publishes no quota endpoint. Set GEMINI_DAILY_QUOTA_PER_KEY to see a remaining figure; the free tier allows 1500/day per key.',
+    },
+  ],
+}
+
 async function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return await render(
@@ -99,6 +129,27 @@ describe('Usage page', () => {
     await expect
       .element(screen.getByText('No API key configured'))
       .toBeInTheDocument()
+  })
+
+  it('explains why ElevenLabs has no numbers instead of showing blank rows', async () => {
+    vi.mocked(fetchUsage).mockResolvedValue(NO_NUMBERS)
+    const screen = await renderPage()
+
+    await expect
+      .element(screen.getByText(/needs the 'user_read' permission/))
+      .toBeInTheDocument()
+    // The blank-row version of this card rendered these labels with dashes.
+    expect(screen.getByText('Plan limit').elements().length).toBe(0)
+  })
+
+  it('shows calls made when Gemini has no stated daily quota', async () => {
+    vi.mocked(fetchUsage).mockResolvedValue(NO_NUMBERS)
+    const screen = await renderPage()
+
+    await expect.element(screen.getByText('Calls today')).toBeInTheDocument()
+    await expect.element(screen.getByText('42')).toBeInTheDocument()
+    // No invented percentage, because no allowance was stated.
+    expect(screen.getByText('100%').elements().length).toBe(0)
   })
 
   it('reports a failure instead of rendering empty cards', async () => {

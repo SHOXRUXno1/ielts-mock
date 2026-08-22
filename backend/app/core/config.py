@@ -79,6 +79,13 @@ class Settings(BaseSettings):
     # simply reports DigitalOcean as unconfigured instead of failing.
     digitalocean_api_token: str = ""
 
+    # Daily request allowance per Gemini key, for the usage page only. Google
+    # exposes no quota endpoint, so a "remaining" figure can only be computed
+    # against a number stated here. Leave at 0 when the tier has no documented
+    # daily cap: the page then reports calls made instead of inventing a
+    # percentage. Free tier is 1500/day per key.
+    gemini_daily_quota_per_key: int = 0
+
     # ── S3 (Timeweb) ────────────────────────────────────
     s3_endpoint_url: str = ""
     s3_access_key: str = ""

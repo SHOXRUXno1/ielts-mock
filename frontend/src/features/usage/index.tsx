@@ -120,14 +120,30 @@ function ProviderDetails({ p }: { p: ProviderUsage }) {
 
     case 'Gemini':
       return (
-        <div className='space-y-2'>
-          <Row label='Model' value={p.model ?? '—'} />
-          <Row
-            label='API keys'
-            value={`${p.key_count ?? 0} × ${p.rpm_per_key ?? 0} req/min`}
-          />
-          <Row label='Throttled today' value={formatNumber(p.rate_limited_today)} />
-          <Row label='Counting since' value={formatWhen(p.counting_since)} />
+        <div className='space-y-3'>
+          {p.percent_left == null && (
+            <div>
+              <p className='text-xs text-muted-foreground'>Calls today</p>
+              <p className='text-2xl font-bold tabular-nums'>
+                {formatNumber(p.used)}
+              </p>
+            </div>
+          )}
+          <div className='space-y-2'>
+            <Row label='Model' value={p.model ?? '—'} />
+            <Row
+              label='API keys'
+              value={`${p.key_count ?? 0} × ${p.rpm_per_key ?? 0} req/min`}
+            />
+            <Row
+              label='Throttled today'
+              value={formatNumber(p.rate_limited_today)}
+            />
+            <Row label='Counting since' value={formatWhen(p.counting_since)} />
+          </div>
+          {p.detail && (
+            <p className='text-xs text-muted-foreground'>{p.detail}</p>
+          )}
         </div>
       )
 
@@ -160,6 +176,15 @@ function ProviderDetails({ p }: { p: ProviderUsage }) {
       )
 
     case 'ElevenLabs':
+      // Without a readable subscription there are no numbers to show, so the
+      // reason has to take their place rather than a column of dashes.
+      if (p.limit == null) {
+        return (
+          <p className='text-sm text-muted-foreground'>
+            {p.detail ?? 'No quota data available'}
+          </p>
+        )
+      }
       return (
         <div className='space-y-2'>
           <Row label='Plan' value={p.tier ?? '—'} />
@@ -312,10 +337,9 @@ export function Usage() {
 
         <p className='text-xs text-muted-foreground'>
           Gemini has no quota API, so its figure is our own tally of calls since
-          the last redeploy compared against the free-tier daily allowance. Groq
-          reports its ceiling only on a real request, so the numbers here are from
-          the most recent one. Simli exposes no quota at all — an exhausted plan
-          shows up as a failed Speaking session.
+          the last redeploy. Groq reports its ceiling only on a real request, so
+          the numbers here are from the most recent one. Simli exposes no quota at
+          all — an exhausted plan shows up as a failed Speaking session.
         </p>
       </Main>
     </>

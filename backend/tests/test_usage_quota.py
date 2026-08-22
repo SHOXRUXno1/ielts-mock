@@ -19,19 +19,37 @@ def _reset_meter():
     usage_meter._groq_limits.clear()
 
 
-def test_gemini_card_scales_budget_with_key_count(monkeypatch):
+def test_gemini_card_scales_stated_budget_with_key_count(monkeypatch):
     monkeypatch.setattr(usage_quota.settings, "gemini_api_keys", "a,b,c")
+    monkeypatch.setattr(usage_quota.settings, "gemini_daily_quota_per_key", 1500)
 
     card = usage_quota._gemini()
 
     assert card["configured"] is True
     assert card["key_count"] == 3
-    assert card["limit"] == 3 * usage_meter.GEMINI_FREE_TIER_DAILY_PER_KEY
+    assert card["limit"] == 4500
     assert card["estimated"] is True
+
+
+def test_gemini_card_claims_no_remaining_without_a_stated_quota(monkeypatch):
+    """A guessed allowance would show a reassuring percentage that means
+    nothing, so an unset quota must leave the figure absent."""
+    monkeypatch.setattr(usage_quota.settings, "gemini_api_keys", "a")
+    monkeypatch.setattr(usage_quota.settings, "gemini_daily_quota_per_key", 0)
+
+    usage_meter.record_gemini_call()
+    card = usage_quota._gemini()
+
+    assert card["used"] == 1
+    assert card["limit"] is None
+    assert card["remaining"] is None
+    assert card["percent_left"] is None
+    assert "GEMINI_DAILY_QUOTA_PER_KEY" in card["detail"]
 
 
 def test_gemini_card_counts_calls_and_throttles(monkeypatch):
     monkeypatch.setattr(usage_quota.settings, "gemini_api_keys", "a")
+    monkeypatch.setattr(usage_quota.settings, "gemini_daily_quota_per_key", 1500)
 
     usage_meter.record_gemini_call()
     usage_meter.record_gemini_call()
@@ -40,7 +58,7 @@ def test_gemini_card_counts_calls_and_throttles(monkeypatch):
     card = usage_quota._gemini()
 
     assert card["used"] == 2
-    assert card["remaining"] == usage_meter.GEMINI_FREE_TIER_DAILY_PER_KEY - 2
+    assert card["remaining"] == 1498
     # A throttle today is worth surfacing even while plenty of budget is left.
     assert card["rate_limited_today"] == 1
     assert card["status"] == "warning"
@@ -99,6 +117,32 @@ async def test_elevenlabs_low_balance_is_flagged(monkeypatch):
     assert card["remaining"] == 1_000
     assert card["percent_left"] == 1
     assert card["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_elevenlabs_key_without_read_scope_is_not_alarming(monkeypatch):
+    """A key may synthesise speech yet lack `user_read`. Speaking is fine, so
+    that must not be reported as an exhausted plan."""
+    monkeypatch.setattr(usage_quota.settings, "elevenlabs_api_key", "xi_test")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            401,
+            json={
+                "detail": {
+                    "status": "missing_permissions",
+                    "message": "The API key you used is missing the permission "
+                    "user_read to execute this operation.",
+                }
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        card = await usage_quota._elevenlabs(client)
+
+    assert card["configured"] is True
+    assert card["status"] == "unknown"
+    assert "user_read" in card["detail"]
 
 
 @pytest.mark.asyncio

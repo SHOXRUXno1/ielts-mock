@@ -18,10 +18,6 @@ from collections import defaultdict
 from datetime import date, datetime, timezone
 from typing import Any, Mapping
 
-# Free-tier allowance per key per day, used to turn a raw count into "left".
-# Google publishes this per model rather than per account.
-GEMINI_FREE_TIER_DAILY_PER_KEY = 1500
-
 _lock = threading.Lock()
 
 _process_started_at = datetime.now(timezone.utc)
@@ -89,7 +85,6 @@ def snapshot() -> dict[str, Any]:
         "gemini": {
             "calls_today": calls,
             "rate_limited_today": throttled,
-            "free_tier_daily_per_key": GEMINI_FREE_TIER_DAILY_PER_KEY,
         },
         "groq": groq,
     }

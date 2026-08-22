@@ -45,12 +45,26 @@ async def _elevenlabs(client: httpx.AsyncClient) -> dict[str, Any]:
         logger.warning("ElevenLabs quota lookup failed: %s", exc)
         return _card("ElevenLabs", True, "error", detail=f"Unreachable: {type(exc).__name__}")
 
+    if resp.status_code in (401, 403):
+        # A key can be allowed to synthesise speech while still lacking the
+        # `user_read` scope this endpoint needs. Speaking works fine in that
+        # case, so it must not be reported as an exhausted plan.
+        return _card(
+            "ElevenLabs",
+            True,
+            "unknown",
+            detail=(
+                "The API key cannot read the subscription (needs the "
+                "'user_read' permission). Speech synthesis is unaffected."
+            ),
+        )
+
     if resp.status_code != 200:
         return _card(
             "ElevenLabs",
             True,
             "error",
-            detail=f"HTTP {resp.status_code}",
+            detail=f"ElevenLabs returned HTTP {resp.status_code}",
         )
 
     body = resp.json()
@@ -147,16 +161,31 @@ def _gemini() -> dict[str, Any]:
 
     meter = usage_meter.snapshot()
     g = meter["gemini"]
-    daily_budget = g["free_tier_daily_per_key"] * len(keys)
     used = g["calls_today"]
-    remaining = max(0, daily_budget - used)
-    percent_left = round(remaining / daily_budget * 100) if daily_budget else None
+
+    # Only claim a remaining figure when a daily cap has actually been stated.
+    # Guessing one would show a reassuring percentage that means nothing.
+    per_key = settings.gemini_daily_quota_per_key
+    daily_budget = per_key * len(keys) if per_key > 0 else None
+    remaining = max(0, daily_budget - used) if daily_budget else None
+    percent_left = (
+        round(remaining / daily_budget * 100)
+        if remaining is not None and daily_budget
+        else None
+    )
 
     status = "ok"
     if g["rate_limited_today"] > 0:
         status = "warning"
     if percent_left is not None and percent_left <= 5:
         status = "error"
+
+    detail = None
+    if daily_budget is None:
+        detail = (
+            "Google publishes no quota endpoint. Set GEMINI_DAILY_QUOTA_PER_KEY "
+            "to see a remaining figure; the free tier allows 1500/day per key."
+        )
 
     return _card(
         "Gemini",
@@ -173,6 +202,7 @@ def _gemini() -> dict[str, Any]:
         unit="requests/day",
         counting_since=meter["counting_since"],
         estimated=True,
+        detail=detail,
     )
 
 
