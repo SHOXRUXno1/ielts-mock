@@ -142,7 +142,7 @@ export function GapInput({
             disabled={readOnly}
           >
             <SelectTrigger
-              aria-label={`Question ${question.order}`}
+              aria-label={`Question ${displayN}`}
               className={cn(
                 'h-7 min-w-14 justify-center gap-1 border bg-card px-1.5 text-center text-[13px] font-medium shadow-sm [&>svg]:size-3',
                 readOnly && 'cursor-default bg-muted',
@@ -170,7 +170,7 @@ export function GapInput({
               if (readOnly) return
               onChange(question.id, e.target.value)
             }}
-            aria-label={`Question ${question.order}`}
+            aria-label={`Question ${displayN}`}
             className={cn(
               'inline-block h-7 min-w-32 max-w-[18rem] rounded-md border bg-card px-2 text-center text-[13px] shadow-sm transition-colors focus:outline-none focus:ring-1',
               readOnly && 'cursor-default bg-muted',
