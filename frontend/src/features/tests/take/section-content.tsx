@@ -4,6 +4,7 @@ import { ListeningSection } from '../components/take/listening-section'
 import { ReadingSection } from '../components/take/reading-section'
 import { WritingSection } from '../components/take/writing-section'
 import { SpeakingSection } from '../components/take/speaking-section'
+import { SpeakingReadyGate } from '../components/take/speaking-ready-gate'
 import { scrollAndFlashQuestion } from './flash-question'
 import { useTakeTest } from './take-test-context'
 import { useTestNavigation } from './use-test-navigation'
@@ -125,7 +126,15 @@ export function SectionContent() {
         />
       )
       break
-    case 'speaking':
+    case 'speaking': {
+      // Live-exam gate: hold on a readiness screen until the student clicks
+      // Start. Only then does enterSection() kick off the 20-min safety cap.
+      // Preview and practice paths keep their existing behaviour.
+      const isLiveExam = !ctx.isPreview && !ctx.isPractice && !!ctx.attemptId
+      if (isLiveExam && ctx.stateOf('speaking') === 'not_started') {
+        body = <SpeakingReadyGate />
+        break
+      }
       body = (
         <SpeakingSection
           attemptId={ctx.isPreview ? null : ctx.attemptId}
@@ -136,6 +145,7 @@ export function SectionContent() {
         />
       )
       break
+    }
     default:
       return null
   }

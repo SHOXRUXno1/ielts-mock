@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { markSpeakingAutostartGesture } from '@/features/speaking-examiner/lib/user-activation'
 import type { SectionType } from '../data/schema'
 import { collectAnswersForTypes } from './collect-answers'
 import { SECTION_LABELS } from './constants'
@@ -148,6 +147,9 @@ export function useSectionGuard() {
         void nav.goToSection(first)
         return
       }
+      // Speaking has a readiness gate; leave state as not_started and let the
+      // gate call enterSection when the student clicks Start.
+      if (first === 'speaking') return
       void enterSection(first).catch(() => {
         toast.error(`Failed to start ${SECTION_LABELS[first]}`)
       })
@@ -225,8 +227,11 @@ export function useSectionGuard() {
       } catch (err) {
         if (!isBenignSectionConflict(err)) throw err
       }
-      if (to === 'speaking') markSpeakingAutostartGesture()
-      await enterSection(to)
+      // Speaking has its own readiness gate — hold on the URL without
+      // entering so the 20-min cap starts on the Start click there.
+      if (to !== 'speaking') {
+        await enterSection(to)
+      }
       handledKeyRef.current = null
       await nav.goToSection(to)
     } catch {

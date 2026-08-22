@@ -117,6 +117,17 @@ export async function getPart2BeginPhrase(): Promise<PhraseResponse> {
   return data
 }
 
+/** Warm the examiner intro-greeting TTS from the readiness gate. */
+export async function getIntroGreetingPhrase(
+  signal?: AbortSignal,
+): Promise<PhraseResponse> {
+  const { data } = await api.get<PhraseResponse>(
+    '/admin/speaking-examiner/intro-greeting-phrase',
+    speakingRequestConfig(signal),
+  )
+  return data
+}
+
 export async function startExaminer(
   attemptId?: string | null,
   signal?: AbortSignal,

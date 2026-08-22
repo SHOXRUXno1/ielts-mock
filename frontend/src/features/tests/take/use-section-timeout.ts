@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { markSpeakingAutostartGesture } from '@/features/speaking-examiner/lib/user-activation'
 import type { SealReason, SealSectionResponse } from '@/lib/api/section-progress'
 import type { Section, SectionType } from '../data/schema'
 import { collectAnswersForTypes } from './collect-answers'
@@ -132,11 +131,14 @@ export function useSectionTimeout({
     const next = peekNext() ?? timeoutDialog.next
     sealingRef.current = false
     if (next) {
-      if (next === 'speaking') markSpeakingAutostartGesture()
-      try {
-        await enterSection(next)
-      } catch {
-        /* may already be entered */
+      // Speaking has its own readiness gate; the 20-min safety cap must only
+      // start on the student's Start click there. Navigate without entering.
+      if (next !== 'speaking') {
+        try {
+          await enterSection(next)
+        } catch {
+          /* may already be entered */
+        }
       }
       clearTimeoutDialog()
       await goToSection(next)

@@ -729,6 +729,22 @@ async def part2_begin_phrase(_actor: Actor = Depends(get_current_actor)):
     )
 
 
+@router.get("/intro-greeting-phrase", response_model=PhraseResponse)
+async def intro_greeting_phrase(_actor: Actor = Depends(get_current_actor)):
+    """Cached TTS for the examiner intro greeting.
+
+    Called from the pre-Speaking readiness gate to warm the TTS cache so the
+    first turn of /start hits a cache entry and plays without a synth delay.
+    Never creates or advances any session; safe to call any number of times.
+    """
+    audio_b64, tts_error, _cache_hit = await _tts_base64(INTRO_GREETING)
+    return PhraseResponse(
+        text=INTRO_GREETING,
+        audio_base64=audio_b64,
+        tts_error=tts_error,
+    )
+
+
 async def _create_start_session(
     admin_email: str,
     *,

@@ -39,7 +39,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuthStore } from '@/stores/auth-store'
-import { markSpeakingAutostartGesture } from '@/features/speaking-examiner/lib/user-activation'
 import type { SpeakingSessionControls } from '@/features/speaking-examiner/speaking-examiner-session'
 import { ExamHeader } from '../components/take/exam-header'
 import { QuestionNavBar } from '../components/take/question-nav-bar'
@@ -1107,11 +1106,15 @@ function ActiveChrome({
       }
       setFinishSectionOpen(false)
       if (next) {
-        if (next === 'speaking') markSpeakingAutostartGesture()
-        try {
-          await enterSection(next)
-        } catch {
-          /* may already be active */
+        // Speaking is gated by an interstitial readiness screen — the 20-min
+        // safety cap must only start on the student's explicit click there.
+        // Navigate to the section URL without calling enterSection.
+        if (next !== 'speaking') {
+          try {
+            await enterSection(next)
+          } catch {
+            /* may already be active */
+          }
         }
         await nav.goToSection(next)
       } else {
@@ -1198,11 +1201,14 @@ function ActiveChrome({
   const speakingActiveChrome = currentType === 'speaking' && !isPreview
   // Speaking is AI-paced; only surface the safety-cap countdown when <5 min left.
   const showAiPaced = speakingActiveChrome && remainingSec > 300
+  // Bind the countdown to an actual server deadline (`remainingMs != null`)
+  // instead of `remainingSec >= 0` — the readiness gate before Speaking has
+  // no active section, so remainingSec is a placeholder 0 there.
   const showCountdown =
     !isPreview &&
     !!attemptId &&
     !!progress &&
-    remainingSec >= 0 &&
+    remainingMs != null &&
     (!speakingActiveChrome || remainingSec <= 300)
 
   const switchToDuration = guard.pendingSwitch
