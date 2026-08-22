@@ -97,6 +97,9 @@ export async function getDashboard(): Promise<DashboardResponse> {
 
 export async function getTestCatalog(): Promise<CatalogResponse> {
   const { data } = await api.get<CatalogResponse>('/student/tests')
+  if (!data || !Array.isArray(data.groups)) {
+    throw new Error('Invalid catalog response')
+  }
   return data
 }
 
