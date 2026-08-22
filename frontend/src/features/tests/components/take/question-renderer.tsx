@@ -582,13 +582,14 @@ function GapFillInline({
 }) {
   const text = (question.content.text as string) ?? ''
   const hasBlank = /___|\{blank\}/.test(text)
+  const displayN = question.computed_number ?? question.order
 
   if (!hasBlank) {
     // Legacy fallback: chip + text + input below
     return (
       <div className='space-y-2'>
         <p className='text-[15px] font-[500] leading-7 text-foreground'>
-          <span className={cn(chip, 'mr-1.5')}>{question.order}</span>
+          <span className={cn(chip, 'mr-1.5')}>{displayN}</span>
           {text}
         </p>
         <input
@@ -607,7 +608,7 @@ function GapFillInline({
   return (
     <p className='text-[15px] font-[500] leading-8 text-foreground'>
       {parts[0]}
-      <span className={cn(chip, 'mx-1')}>{question.order}</span>
+      <span className={cn(chip, 'mx-1')}>{displayN}</span>
       <input
         type='text'
         value={(answer.answer as string) ?? ''}
@@ -826,8 +827,12 @@ export function QuestionRenderer({
 
   // ── Sentence Completion / Short Answer ───────────────────────────────────
   if (qType === 'sentence_completion' || qType === 'short_answer') {
-    const prompt = (content.prompt as string) ?? ''
+    // Accept "question" as well, as mcq and multi_select already do: a short
+    // answer authored under that key would otherwise render as a blank line.
+    const prompt =
+      ((content.prompt ?? content.question) as string | undefined) ?? ''
     const maxWords = (content.max_words as number) ?? 3
+    const displayN = question.computed_number ?? question.order
     const studentAnswer = (answer.answer as string) ?? ''
     const wordCount = studentAnswer.trim() === '' ? 0 : studentAnswer.trim().split(/\s+/).length
     const overLimit = wordCount > maxWords
@@ -838,7 +843,7 @@ export function QuestionRenderer({
         <div className='space-y-2'>
           <p className='text-[15px] font-[500] leading-8 text-foreground'>
             <span className='mr-1.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground align-middle'>
-              {question.order}
+              {displayN}
             </span>
             {parts[0]}
             <input
@@ -862,7 +867,7 @@ export function QuestionRenderer({
       <div className='space-y-2'>
         <p className='text-[15px] font-[500] leading-7 text-foreground'>
           <span className='mr-1.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground align-middle'>
-            {question.order}
+            {displayN}
           </span>
           {prompt}
         </p>

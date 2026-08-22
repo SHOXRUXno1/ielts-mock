@@ -1,0 +1,15 @@
+{
+  "description": "Academic practice test: Listening, Reading, Writing and Speaking.",
+  "titles": {
+    "listening:1": "Part 1 — Registering with a new surgery",
+    "listening:2": "Part 2 — Guided tour of the university library",
+    "listening:3": "Part 3 — Tutorial on essay progress",
+    "listening:4": "Part 4 — Earth sciences lecture on tsunami",
+    "reading:10": "Passage 1 — Cod in trouble",
+    "reading:11": "Passage 2 — The rise of antibiotic-resistant infections",
+    "reading:12": "Passage 3 — Hydroelectric power",
+    "speaking:30": "Part 1 — Where you live, parks, free time",
+    "speaking:31": "Part 2 — One of your good friends",
+    "speaking:32": "Part 3 — Family and friends, living with friends"
+  }
+}
