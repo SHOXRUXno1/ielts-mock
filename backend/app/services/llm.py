@@ -10,7 +10,11 @@ from collections.abc import Awaitable, Callable
 import httpx
 
 from app.core.config import settings
-from app.core.rate_limiter import KeyRotator, get_whisper_pool
+from app.core.rate_limiter import (
+    KeyRotator,
+    get_groq_stt_bucket,
+    get_whisper_pool,
+)
 from app.services.scoring import compute_writing_band
 from app.services.shared_http import get_http_client
 from app.services.storage import resolve_local_path
@@ -917,7 +921,9 @@ async def transcribe_audio_bytes(
     *,
     content_type: str | None = None,
 ) -> str:
-    """Transcribe raw audio. Groq Whisper first; Gemini fallback on 401/403.
+    """Transcribe raw audio. Groq Whisper is the fast path within its minute
+    budget; everything else spills over to Gemini STT, which has far more
+    headroom. A candidate's turn must never fail just because Groq is busy.
 
     Lenient: never raises NonEnglishError.
     """
@@ -926,19 +932,30 @@ async def transcribe_audio_bytes(
             "Recording too short or empty — please speak for at least a few seconds"
         )
 
+    can_use_gemini = bool(settings.gemini_key_list)
     groq_error: Exception | None = None
-    if settings.groq_api_key and not _groq_stt_blocked:
-        try:
-            return await _transcribe_with_groq(audio_bytes, content_type)
-        except httpx.HTTPStatusError as exc:
-            groq_error = exc
-            if exc.response.status_code in (401, 403):
-                _block_groq_stt(f"HTTP {exc.response.status_code}")
-            else:
-                raise
 
-    if settings.gemini_key_list:
-        logger.warning("Transcribing via Gemini STT fallback")
+    if settings.groq_api_key and not _groq_stt_blocked:
+        # Skip Groq outright when its budget is spent, so we neither queue
+        # behind the window nor spend a request we know will be refused.
+        if can_use_gemini and not get_groq_stt_bucket().try_acquire():
+            logger.info("Groq STT budget spent — routing this turn to Gemini")
+        else:
+            try:
+                return await _transcribe_with_groq(audio_bytes, content_type)
+            except httpx.HTTPStatusError as exc:
+                groq_error = exc
+                status = exc.response.status_code
+                if status in (401, 403):
+                    _block_groq_stt(f"HTTP {status}")
+                elif not can_use_gemini:
+                    raise
+                else:
+                    logger.warning("Groq STT returned %s — falling back", status)
+
+    if can_use_gemini:
+        if groq_error is not None:
+            logger.warning("Transcribing via Gemini STT fallback")
         return await _transcribe_with_gemini(audio_bytes, content_type)
 
     if groq_error is not None:
@@ -974,7 +991,10 @@ async def _transcribe_with_groq(
                     resp.status_code,
                     resp.text[:500],
                 )
-            if resp.status_code in (429, 500, 502, 503, 504) and attempt < max_attempts - 1:
+            # 429 is deliberately absent: Groq's window is a whole minute, so
+            # a few seconds of backoff cannot clear it. The caller spills that
+            # case over to Gemini instead of stalling the candidate.
+            if resp.status_code in (500, 502, 503, 504) and attempt < max_attempts - 1:
                 wait = min(2 ** attempt, 8)
                 logger.warning(
                     "Groq transcription %s — retry in %ds (attempt %d/%d)",

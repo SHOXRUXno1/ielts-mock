@@ -30,6 +30,15 @@ class TokenBucket:
             wait = (1.0 - self.tokens) / self.rate
             await asyncio.sleep(wait)
 
+    def try_acquire(self) -> bool:
+        """Take a token only if one is ready, for callers that would rather
+        route elsewhere than wait out the window."""
+        self._refill()
+        if self.tokens >= 1.0:
+            self.tokens -= 1.0
+            return True
+        return False
+
 
 class KeyRotator:
     """Round-robin API key rotation with per-key rate limiting."""
@@ -106,6 +115,19 @@ class AsyncSemaphorePool:
 
 _whisper_pool: AsyncSemaphorePool | None = None
 _elevenlabs_pool: AsyncSemaphorePool | None = None
+_groq_stt_bucket: TokenBucket | None = None
+
+
+def get_groq_stt_bucket() -> TokenBucket:
+    """Rate budget for Groq Whisper. The concurrency pool alone cannot honour
+    it, because Groq's ceiling is requests per minute, not requests in flight."""
+    global _groq_stt_bucket
+    if _groq_stt_bucket is None:
+        from app.core.config import settings
+
+        rpm = max(1, settings.groq_stt_rpm_limit)
+        _groq_stt_bucket = TokenBucket(rate=rpm / 60.0, capacity=rpm)
+    return _groq_stt_bucket
 
 
 def get_whisper_pool() -> AsyncSemaphorePool:

@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     groq_examiner_model: str = "llama-3.3-70b-versatile"
     whisper_max_concurrent: int = 8
+    # Groq's on-demand tier allows only 20 Whisper requests per minute for the
+    # whole account, which 20+ live Speaking sessions blow through instantly.
+    # Transcriptions that find no token left spill over to Gemini STT rather
+    # than waiting for the window or failing the candidate's turn. This budget
+    # is per process, so divide the account limit by the number of app workers.
+    groq_stt_rpm_limit: int = 5
 
     # ── ElevenLabs (Text-to-Speech) ─────────────────────
     elevenlabs_api_key: str = ""
@@ -50,6 +56,11 @@ class Settings(BaseSettings):
     simli_face_id: str = ""
     # Soft cap under Simli Pro (10 concurrent). Extra students fall back to audio-only.
     simli_max_concurrent: int = 8
+    # A live candidate answers every minute or so, so a session untouched for
+    # longer has lost its browser and is no longer holding a WebRTC stream.
+    # Without this, sessions that died mid-exam kept reserving a video slot
+    # until the abandon sweep caught them, and everyone else got audio-only.
+    simli_slot_idle_minutes: int = 5
 
     # ── Evaluation worker ───────────────────────────────
     worker_max_concurrent_jobs: int = 4

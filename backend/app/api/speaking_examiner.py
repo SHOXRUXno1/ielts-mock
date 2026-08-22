@@ -6,7 +6,7 @@ import logging
 import re
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
@@ -42,6 +42,7 @@ from app.schemas.speaking_examiner import (
 )
 from app.services.edge_tts_service import text_to_speech_edge
 from app.services.elevenlabs_service import text_to_speech
+from app.services.speaking_cleanup import idle_since
 from app.services.speaking_plan import (
     DEFAULT_PART1,
     SpeakingPlan,
@@ -1681,7 +1682,9 @@ async def get_simli_token(
         return {"enabled": False, "reason": "not_configured"}
 
     # Soft capacity gate — Simli Pro allows 10 concurrent WebRTC sessions.
-    # Count live speaking sessions still mid-exam; extras get audio-only.
+    # Count only candidates still taking turns: a session whose browser died
+    # mid-exam holds no stream, and counting it would hand audio-only to
+    # everyone else until the abandon sweep eventually caught up.
     terminal = (
         SpeakingState.ENDED.value,
         SpeakingState.SCORING.value,
@@ -1694,6 +1697,8 @@ async def get_simli_token(
             .where(
                 SpeakingSession.status == "in_progress",
                 SpeakingSession.current_state.notin_(terminal),
+                SpeakingSession.updated_at
+                >= idle_since(timedelta(minutes=settings.simli_slot_idle_minutes)),
             )
         )
     ).scalar_one()

@@ -9,6 +9,7 @@ import pytest
 from app.services.llm import (
     _groq_upload_file,
     _normalize_stt_text,
+    _transcribe_with_groq,
     generate_examiner_turn,
     reset_groq_stt_circuit,
     transcribe_audio_bytes,
@@ -81,31 +82,55 @@ class TestGroqUploadFile:
         assert mime == "audio/wav"
 
 
+GROQ_STT_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
+
+
+def _groq_response(status: int, **kwargs) -> httpx.Response:
+    return httpx.Response(
+        status, request=httpx.Request("POST", GROQ_STT_URL), **kwargs
+    )
+
+
 class TestGroqTranscribeRetry:
     @pytest.mark.asyncio
     @patch("app.services.llm.settings")
     @patch("app.services.llm.get_http_client")
-    async def test_retries_on_429(self, mock_get_client, mock_settings):
+    async def test_retries_on_transient_server_error(
+        self, mock_get_client, mock_settings
+    ):
         mock_settings.groq_api_key = "gsk_test"
 
-        ok_resp = MagicMock()
-        ok_resp.status_code = 200
-        ok_resp.json = MagicMock(return_value={"text": "hello there"})
-        ok_resp.raise_for_status = MagicMock()
-
-        fail_resp = MagicMock()
-        fail_resp.status_code = 429
-        fail_resp.text = "rate limit"
-
         mock_client = AsyncMock()
-        mock_client.post = AsyncMock(side_effect=[fail_resp, ok_resp])
+        mock_client.post = AsyncMock(
+            side_effect=[
+                _groq_response(503, text="unavailable"),
+                _groq_response(200, json={"text": "hello there"}),
+            ]
+        )
         mock_get_client.return_value = mock_client
 
         with patch("app.services.llm.asyncio.sleep", new=AsyncMock()):
-            text = await transcribe_audio_bytes(b"x" * 1024)
+            text = await _transcribe_with_groq(b"x" * 1024, None)
 
         assert text == "hello there"
         assert mock_client.post.await_count == 2
+
+    @pytest.mark.asyncio
+    @patch("app.services.llm.settings")
+    @patch("app.services.llm.get_http_client")
+    async def test_does_not_retry_a_rate_limit(self, mock_get_client, mock_settings):
+        """Groq's budget resets on a minute boundary, so retrying inside a few
+        seconds only delays the candidate. The caller spills over to Gemini."""
+        mock_settings.groq_api_key = "gsk_test"
+
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=_groq_response(429, text="rate limit"))
+        mock_get_client.return_value = mock_client
+
+        with pytest.raises(httpx.HTTPStatusError):
+            await _transcribe_with_groq(b"x" * 1024, None)
+
+        assert mock_client.post.await_count == 1
 
     @pytest.mark.asyncio
     @patch("app.services.llm.settings")
