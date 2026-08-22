@@ -4,6 +4,11 @@ Cropping by eye drifts between tests, so the bounds come from the page itself:
 the union of the vector rectangles that make up the map, and the union of the
 embedded images that make up the chart. Text is excluded so the instruction
 lines above the figure do not end up baked into it.
+
+Some figures cannot be found that way. A labelled diagram carries its question
+numbers as ordinary page text beside the artwork, and a data table drawn in text
+has no artwork at all; in both cases the crop has to include the surrounding
+text, so `--top`/`--bottom` take an explicit vertical band instead.
 """
 
 from __future__ import annotations
@@ -35,12 +40,22 @@ def union(boxes: list[tuple[float, float, float, float]]) -> tuple[float, float,
     )
 
 
-def figure_bbox(page, source: str, min_side: float) -> tuple[float, float, float, float]:
+def figure_bbox(
+    page,
+    source: str,
+    min_side: float,
+    top: float | None = None,
+    bottom: float | None = None,
+) -> tuple[float, float, float, float]:
     """Bounds of the drawing on the page.
 
     `min_side` drops the hairlines and specks that vector art leaves behind,
     which would otherwise stretch the crop to the whole page.
     """
+    if source == "band":
+        if top is None or bottom is None:
+            raise SystemExit("band mode needs --top and --bottom")
+        return (0.0, top, page.width, bottom)
     if source == "images":
         shapes = [(im["x0"], im["top"], im["x1"], im["bottom"]) for im in page.images]
     else:
@@ -58,8 +73,10 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("test_no", type=int)
     ap.add_argument("--page", type=int, required=True, help="1-based")
-    ap.add_argument("--source", choices=("rects", "images"), required=True)
+    ap.add_argument("--source", choices=("rects", "images", "band"), required=True)
     ap.add_argument("--min-side", type=float, default=12.0)
+    ap.add_argument("--top", type=float, help="band mode: top edge in points")
+    ap.add_argument("--bottom", type=float, help="band mode: bottom edge in points")
     # The page footer sits just under the artwork and would otherwise be baked
     # into the figure, naming the book to whoever sits the exam.
     ap.add_argument("--cut-bottom", type=float, default=0.0, help="points to drop")
@@ -69,7 +86,9 @@ def main() -> None:
 
     with pdfplumber.open(paper(args.test_no)) as pdf:
         page = pdf.pages[args.page - 1]
-        x0, top, x1, bottom = figure_bbox(page, args.source, args.min_side)
+        x0, top, x1, bottom = figure_bbox(
+            page, args.source, args.min_side, args.top, args.bottom
+        )
         box = (
             max(0, x0 - PAD),
             max(0, top - PAD),

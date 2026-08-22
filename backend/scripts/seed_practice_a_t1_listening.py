@@ -536,7 +536,9 @@ class SectionWriter:
             self._add(
                 group,
                 QuestionType.SHORT_ANSWER,
-                {"question": item["question"]},
+                # The take screen reads a short answer's wording from
+                # content.prompt; under any other key the line renders blank.
+                {"prompt": item["question"], "max_words": item["max_words"]},
                 {
                     "correct": item["correct"],
                     "max_words": item["max_words"],

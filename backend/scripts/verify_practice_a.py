@@ -1,13 +1,15 @@
-"""Check Practice Set A Test 1 end to end before anyone sits it.
+"""Check a Practice Set A test end to end before anyone sits it.
 
 Runs the same rules the publish endpoint enforces, then prints every question
 with its display number and answer key so the whole test can be read against the
 paper in one pass. Also confirms the audio and image files the test points at
 actually exist on disk, which a database check alone would miss.
 
+Exits non-zero when anything is wrong, so it can gate a deploy.
+
 Usage:
     cd backend
-    .\\venv\\Scripts\\python scripts\\verify_practice_a_t1.py
+    .\\venv\\Scripts\\python scripts\\verify_practice_a.py 2
 """
 
 from __future__ import annotations
@@ -30,8 +32,6 @@ from app.models.test import Test  # noqa: E402
 from app.services.question_numbering import annotate_question_numbers  # noqa: E402
 from app.services.storage import resolve_local_path  # noqa: E402
 from seed_practice_a_common import BOOK_SLUG  # noqa: E402
-
-TEST_NUMBER = 1
 
 
 def answer_summary(question) -> str:
@@ -60,7 +60,7 @@ def display_number(question) -> str:
     return str(start)
 
 
-async def report(db: AsyncSession) -> int:
+async def report(db: AsyncSession, test_number: int) -> int:
     test = (
         await db.execute(
             select(Test)
@@ -71,11 +71,11 @@ async def report(db: AsyncSession) -> int:
                 selectinload(Test.sections).selectinload(Section.questions),
                 selectinload(Test.section_settings),
             )
-            .where(Test.book_slug == BOOK_SLUG, Test.test_number == TEST_NUMBER)
+            .where(Test.book_slug == BOOK_SLUG, Test.test_number == test_number)
         )
     ).scalar_one_or_none()
     if test is None:
-        print("test not found — run the bootstrap script first")
+        print(f"test {test_number} not found — run the bootstrap script first")
         return 1
 
     annotate_question_numbers(test)
@@ -128,9 +128,10 @@ async def report(db: AsyncSession) -> int:
 
 
 async def main() -> int:
+    test_number = int(sys.argv[1]) if len(sys.argv) > 1 else 1
     engine = create_async_engine(settings.database_url)
     async with AsyncSession(engine, expire_on_commit=False) as db:
-        code = await report(db)
+        code = await report(db, test_number)
     await engine.dispose()
     return code
 

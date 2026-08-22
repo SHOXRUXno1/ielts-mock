@@ -25,7 +25,12 @@ from app.models.test import Test
 BOOK_NAME = "IELTS Practice Set A"
 BOOK_SLUG = "practice-set-a"
 
-DATA_DIR = Path(__file__).resolve().parent / "data" / "practice_a_t1"
+DATA_ROOT = Path(__file__).resolve().parent / "data"
+
+
+def data_dir(test_number: int) -> Path:
+    return DATA_ROOT / f"practice_a_t{test_number}"
+
 
 # Media lands under these names rather than the random ones the upload endpoint
 # generates, so re-running a seed points at the same files instead of orphaning
@@ -104,13 +109,13 @@ async def clear_section(db: AsyncSession, section_id: uuid.UUID) -> int:
     return removed
 
 
-def read_passage(name: str) -> tuple[str, str]:
+def read_passage(test_number: int, name: str) -> tuple[str, str]:
     """Return (title, body) for a stored reading passage.
 
     The first line is the title and the rest is the passage, one paragraph per
     line, as written by scripts/_extract_booster_passages.py.
     """
-    path = DATA_DIR / name
+    path = data_dir(test_number) / name
     if not path.exists():
         raise SystemExit(f"passage file missing: {path}")
     lines = path.read_text(encoding="utf-8").splitlines()

@@ -1,4 +1,4 @@
-"""Sit Practice Set A Test 1 three times in memory and check the marking.
+"""Sit a Practice Set A test three times in memory and check the marking.
 
 A seed script can load answer keys that look right and still mark wrongly, so
 this drives the real scoring service over the seeded rows as three candidates:
@@ -14,7 +14,7 @@ Nothing is written to the database: answers are built as detached objects.
 
 Usage:
     cd backend
-    .\\venv\\Scripts\\python scripts\\check_practice_a_t1_scoring.py
+    .\\venv\\Scripts\\python scripts\\check_practice_a_scoring.py 2
 """
 
 from __future__ import annotations
@@ -44,7 +44,6 @@ from app.services.scoring import (  # noqa: E402
 )
 from seed_practice_a_common import BOOK_SLUG  # noqa: E402
 
-TEST_NUMBER = 1
 MULTI = "multi_select"
 
 
@@ -113,7 +112,7 @@ def variant_check(questions: list[Question]) -> list[str]:
     return rejected
 
 
-async def check(db: AsyncSession) -> int:
+async def check(db: AsyncSession, test_number: int) -> int:
     test = (
         await db.execute(
             select(Test)
@@ -123,11 +122,11 @@ async def check(db: AsyncSession) -> int:
                 .selectinload(QuestionGroup.questions),
                 selectinload(Test.sections).selectinload(Section.questions),
             )
-            .where(Test.book_slug == BOOK_SLUG, Test.test_number == TEST_NUMBER)
+            .where(Test.book_slug == BOOK_SLUG, Test.test_number == test_number)
         )
     ).scalar_one_or_none()
     if test is None:
-        print("test not found")
+        print(f"test {test_number} not found")
         return 1
 
     annotate_question_numbers(test)
@@ -203,9 +202,10 @@ async def check(db: AsyncSession) -> int:
 
 
 async def main() -> int:
+    test_number = int(sys.argv[1]) if len(sys.argv) > 1 else 1
     engine = create_async_engine(settings.database_url)
     async with AsyncSession(engine, expire_on_commit=False) as db:
-        code = await check(db)
+        code = await check(db, test_number)
     await engine.dispose()
     return code
 

@@ -26,14 +26,38 @@ def find_paper(test_no: int, kind: str) -> Path:
     return matches[0]
 
 
+def find_answers(test_no: int, skill: str) -> Path:
+    """Answer keys are filed per set of five tests, not per test."""
+    set_no = (test_no - 1) // 5 + 1
+    lo, hi = (set_no - 1) * 5 + 1, set_no * 5
+    folder = ROOT / f"AcademicTestsSet{set_no}" / "ANSWERS"
+    patterns = [
+        f"academic {skill} answers - tests {lo} - {hi}.pdf",
+        f"academic {skill} answers - tests {lo} _ {hi}.pdf",
+        f"academic {skill} answers*{lo}*{hi}*.pdf",
+    ]
+    for pattern in patterns:
+        matches = list(folder.glob(pattern))
+        if matches:
+            return matches[0]
+    raise SystemExit(f"no {skill} answers for test {test_no} under {folder}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("test_no", type=int)
-    ap.add_argument("--kind", choices=("paper", "script"), default="paper")
+    ap.add_argument(
+        "--kind",
+        choices=("paper", "script", "answers-listening", "answers-reading"),
+        default="paper",
+    )
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
 
-    src = find_paper(args.test_no, args.kind)
+    if args.kind.startswith("answers-"):
+        src = find_answers(args.test_no, args.kind.split("-", 1)[1])
+    else:
+        src = find_paper(args.test_no, args.kind)
     chunks: list[str] = []
     with pdfplumber.open(src) as pdf:
         for i, page in enumerate(pdf.pages, 1):

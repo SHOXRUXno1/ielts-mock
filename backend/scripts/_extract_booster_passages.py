@@ -57,8 +57,19 @@ def page_lines(page) -> list[tuple[float, float, str]]:
 
 
 def is_title(text: str) -> bool:
+    """Is this the passage title rather than its first line of prose?
+
+    Titles are set either in full capitals or in ordinary title case, so case
+    alone cannot decide it. What separates a title from body text is length and
+    punctuation: prose wraps near the page width and the first line of a
+    paragraph almost always runs on past a clause.
+    """
     letters = [c for c in text if c.isalpha()]
-    return len(text) > 8 and bool(letters) and all(c.isupper() for c in letters)
+    if not letters:
+        return False
+    if all(c.isupper() for c in letters) and len(text) >= 4:
+        return True
+    return len(text) <= 60 and len(text.split()) <= 8 and not text.endswith(".")
 
 
 def collect(pdf) -> tuple[dict[int, str], dict[int, list[tuple[float, float, str]]]]:
