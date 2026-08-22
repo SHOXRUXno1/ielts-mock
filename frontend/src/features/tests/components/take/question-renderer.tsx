@@ -826,7 +826,10 @@ export function QuestionRenderer({
 
   // ── Sentence Completion / Short Answer ───────────────────────────────────
   if (qType === 'sentence_completion' || qType === 'short_answer') {
-    const prompt = (content.prompt as string) ?? ''
+    // Accept "question" as well, as mcq and multi_select already do: a short
+    // answer authored under that key would otherwise render as a blank line.
+    const prompt =
+      ((content.prompt ?? content.question) as string | undefined) ?? ''
     const maxWords = (content.max_words as number) ?? 3
     const studentAnswer = (answer.answer as string) ?? ''
     const wordCount = studentAnswer.trim() === '' ? 0 : studentAnswer.trim().split(/\s+/).length
