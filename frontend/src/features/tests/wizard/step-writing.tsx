@@ -104,7 +104,7 @@ function loadDraft(q: Question | undefined, taskNum: number): TaskDraft {
     useCustomQuestion: isCustomQuestion,
     imageUrl:
       taskNum === 1
-        ? (q?.image_url ?? (q?.content.image_url as string | undefined) ?? null)
+        ? (q?.image_url ?? (q?.content?.image_url as string | undefined) ?? null)
         : null,
     essayType: q?.essay_type ?? null,
   }

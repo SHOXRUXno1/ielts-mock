@@ -59,7 +59,7 @@ function questionToDraft(q: Question): QuestionDraft {
     answer_key: q.answer_key,
     task_number: taskNumber,
     min_words: inferMinWords(q, taskNumber),
-    image_url: q.image_url ?? (q.content.image_url as string | undefined) ?? null,
+    image_url: q.image_url ?? (q.content?.image_url as string | undefined) ?? null,
     essay_type: q.essay_type ?? null,
   }
 }

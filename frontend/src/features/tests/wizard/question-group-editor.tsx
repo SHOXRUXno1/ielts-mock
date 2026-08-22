@@ -221,7 +221,7 @@ function syncGapDrafts(
   const gapIds = extractGapIds(structure)
   const byGap = new Map(
     existing
-      .map((d) => [String(d.content.gap_id ?? ''), d] as const)
+      .map((d) => [String(d.content?.gap_id ?? ''), d] as const)
       .filter(([id]) => id),
   )
   return gapIds.map((gapId, index) => {
@@ -592,7 +592,7 @@ export function QuestionGroupEditor({
         // Prune orphan gap questions
         const keep = new Set(extractGapIds(synced))
         for (const q of group.questions) {
-          const gapId = String(q.content.gap_id ?? '')
+          const gapId = String(q.content?.gap_id ?? '')
           if (gapId && !keep.has(gapId)) {
             await deleteQuestion(group.section_id, q.id)
           }
@@ -899,7 +899,7 @@ export function QuestionGroupEditor({
       // stale group.questions prop — prevents duplicate creates when onRefresh
       // hasn't propagated yet.
       const existingLocal = localQuestions.find(
-        (d) => String(d.content.gap_id ?? '') === gapId && d.id != null,
+        (d) => String(d.content?.gap_id ?? '') === gapId && d.id != null,
       )
       const effectiveType = isCompoundType(group.question_type)
         ? group.question_type
@@ -926,7 +926,7 @@ export function QuestionGroupEditor({
 
       setLocalQuestions((prev) => {
         const byGap = new Map(
-          prev.map((d) => [String(d.content.gap_id ?? ''), d] as const),
+          prev.map((d) => [String(d.content?.gap_id ?? ''), d] as const),
         )
         byGap.set(gapId, draftFromQuestion(saved))
         return syncGapDrafts(
@@ -973,7 +973,7 @@ export function QuestionGroupEditor({
 
   const getGapDraft = useCallback(
     (gapId: string): QuestionDraft => {
-      const found = gapDrafts.find((d) => String(d.content.gap_id) === gapId)
+      const found = gapDrafts.find((d) => String(d.content?.gap_id) === gapId)
       if (found) return found
       return {
         order: gapDrafts.length + 1,
@@ -999,9 +999,9 @@ export function QuestionGroupEditor({
   const hasLegacyCompound =
     group.questions.some(
       (q) =>
-        q.content.table_id != null ||
-        q.content.notes_id != null ||
-        q.content.gap_key != null,
+        q.content?.table_id != null ||
+        q.content?.notes_id != null ||
+        q.content?.gap_key != null,
     ) && !asCompoundStructure(group.options_shared)
 
   return (
