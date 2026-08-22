@@ -6,7 +6,7 @@ import logging
 import re
 import time
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
@@ -42,7 +42,7 @@ from app.schemas.speaking_examiner import (
 )
 from app.services.edge_tts_service import text_to_speech_edge
 from app.services.elevenlabs_service import text_to_speech
-from app.services.speaking_cleanup import idle_since
+from app.services.simli_slots import claim_slot, release_slot
 from app.services.speaking_plan import (
     DEFAULT_PART1,
     SpeakingPlan,
@@ -1681,38 +1681,20 @@ async def get_simli_token(
     if not settings.simli_api_key or not settings.simli_face_id:
         return {"enabled": False, "reason": "not_configured"}
 
-    # Soft capacity gate — Simli Pro allows 10 concurrent WebRTC sessions.
-    # Count only candidates still taking turns: a session whose browser died
-    # mid-exam holds no stream, and counting it would hand audio-only to
-    # everyone else until the abandon sweep eventually caught up.
-    terminal = (
-        SpeakingState.ENDED.value,
-        SpeakingState.SCORING.value,
-        SpeakingState.ABANDONED.value,
-    )
-    active_count = (
-        await db.execute(
-            select(func.count())
-            .select_from(SpeakingSession)
-            .where(
-                SpeakingSession.status == "in_progress",
-                SpeakingSession.current_state.notin_(terminal),
-                SpeakingSession.updated_at
-                >= idle_since(timedelta(minutes=settings.simli_slot_idle_minutes)),
-            )
-        )
-    ).scalar_one()
-    if active_count >= settings.simli_max_concurrent:
+    # Claim a slot before calling out to Simli, so candidates starting together
+    # are admitted one at a time rather than all seeing an empty house.
+    granted, taken = await claim_slot(db, _actor.sub)
+    if not granted:
         logger.info(
-            "Simli at capacity active=%s max=%s — audio-only fallback",
-            active_count,
+            "Simli at capacity taken=%s max=%s — audio-only fallback",
+            taken,
             settings.simli_max_concurrent,
         )
         return {
             "enabled": False,
             "reason": "capacity",
             "detail": (
-                f"Video avatar slots are full ({active_count}/"
+                f"Video avatar slots are full ({taken}/"
                 f"{settings.simli_max_concurrent}). Audio-only mode is active."
             ),
         }
@@ -1760,8 +1742,11 @@ async def get_simli_token(
         }
     except _SimliCreditsError as e:
         logger.warning("Simli credits exhausted: %s", e.payload.get("detail"))
+        await release_slot(db, _actor.sub)
         return e.payload
     except Exception as e:
+        # No stream was established, so the claim would only deny somebody else.
+        await release_slot(db, _actor.sub)
         return _simli_error_response(e)
 
 

@@ -51,12 +51,18 @@ async def cleanup_abandoned_sessions(db: AsyncSession) -> int:
 
 async def run_session_cleanup() -> None:
     """Forever loop: abandon stale sessions every CLEANUP_INTERVAL seconds."""
+    # Imported here because the slot service depends on this module.
+    from app.services.simli_slots import purge_expired_leases
+
     while True:
         try:
             async with async_session() as db:
                 n = await cleanup_abandoned_sessions(db)
                 if n:
                     logger.info("Abandoned %d stale speaking sessions", n)
+                leases = await purge_expired_leases(db)
+                if leases:
+                    logger.info("Cleared %d expired Simli slot leases", leases)
         except asyncio.CancelledError:
             raise
         except Exception:

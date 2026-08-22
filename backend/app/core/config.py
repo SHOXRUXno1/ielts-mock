@@ -54,13 +54,20 @@ class Settings(BaseSettings):
     # ── Simli (Video Avatar) ─────────────────────────────
     simli_api_key: str = ""
     simli_face_id: str = ""
-    # Soft cap under Simli Pro (10 concurrent). Extra students fall back to audio-only.
-    simli_max_concurrent: int = 8
+    # Simli Pro allows 10 concurrent sessions. Extra students fall back to
+    # audio-only. Admission is claimed up front (see services/simli_slots), so
+    # the plan ceiling can be used in full instead of held back as slack.
+    simli_max_concurrent: int = 10
     # A live candidate answers every minute or so, so a session untouched for
     # longer has lost its browser and is no longer holding a WebRTC stream.
     # Without this, sessions that died mid-exam kept reserving a video slot
     # until the abandon sweep caught them, and everyone else got audio-only.
     simli_slot_idle_minutes: int = 5
+    # How long a granted video token holds its slot before the exam session
+    # takes over the claim. Long enough to cover the loading screen and a
+    # candidate hesitating before they begin, short enough that someone who
+    # closes the tab frees the slot quickly.
+    simli_lease_minutes: int = 3
 
     # ── Evaluation worker ───────────────────────────────
     worker_max_concurrent_jobs: int = 4

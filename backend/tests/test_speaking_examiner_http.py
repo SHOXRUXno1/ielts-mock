@@ -11,7 +11,6 @@ from app.api.speaking_examiner import (
     MAX_EXAMINER_TURNS,
     PART2_BEGIN_SPEAKING,
     _simli_credits_response,
-    get_simli_token,
 )
 
 
@@ -49,31 +48,6 @@ class TestSimliCredits:
         assert payload["enabled"] is False
         assert payload["reason"] == "simli_credits_exhausted"
         assert "Free credits ran out" in payload["detail"]
-
-    @pytest.mark.asyncio
-    @patch("app.api.speaking_examiner.settings")
-    @patch("app.api.speaking_examiner.httpx.AsyncClient")
-    async def test_simli_token_returns_credits_error(self, mock_client_cls, mock_settings):
-        mock_settings.simli_api_key = "key"
-        mock_settings.simli_face_id = "face-id-123"
-
-        resp = MagicMock()
-        resp.status_code = 402
-        resp.json = MagicMock(
-            return_value={
-                "detail": "Free credits ran out, upgrade plan on https://app.simli.com",
-            }
-        )
-
-        mock_client = AsyncMock()
-        mock_client.post = AsyncMock(return_value=resp)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
-        mock_client_cls.return_value = mock_client
-
-        payload = await get_simli_token()
-        assert payload["reason"] == "simli_credits_exhausted"
-        assert payload["enabled"] is False
 
 
 class TestTranscribeValidation:

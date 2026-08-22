@@ -8,6 +8,7 @@ from app.models.question import Question
 from app.models.question_group import QuestionGroup
 from app.models.section import Section
 from app.models.section_progress import SectionProgress, SectionState, SealedReason
+from app.models.simli_lease import SimliSlotLease
 from app.models.speaking_session import SpeakingSession, SpeakingState
 from app.models.test import Test
 from app.models.test_section_settings import TestSectionSettings
@@ -27,6 +28,7 @@ __all__ = [
     "PRACTICE_MODES",
     "Answer",
     "EvaluationJob",
+    "SimliSlotLease",
     "SpeakingSession",
     "SpeakingState",
     "WritingFeedback",
