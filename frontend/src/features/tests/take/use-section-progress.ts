@@ -83,9 +83,23 @@ export function useSectionProgress(opts: {
         reason: args.reason,
       })
     },
-    onSuccess: async () => {
+    onSuccess: (data) => {
       if (!attemptId) return
-      applyProgress(await getAttemptProgress(attemptId))
+      qc.setQueryData(
+        progressKey(attemptId),
+        (old: ProgressWithSkew | undefined) => {
+          if (!old) return old
+          const sealed = data.sealed
+          return {
+            ...old,
+            server_now: data.server_now,
+            skewMs: skewFromServerNow(data.server_now),
+            sections: old.sections.map((s) =>
+              s.section_type === sealed.section_type ? { ...s, ...sealed } : s,
+            ),
+          }
+        },
+      )
     },
   })
 

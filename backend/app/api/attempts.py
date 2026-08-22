@@ -117,21 +117,21 @@ async def _upsert_answers(
     for item in answers:
         by_qid[item.question_id] = item
 
-    for item in by_qid.values():
-        stmt = (
-            pg_insert(Answer)
-            .values(
-                id=uuid.uuid4(),
-                attempt_id=attempt_id,
-                question_id=item.question_id,
-                response=item.response,
-            )
-            .on_conflict_do_update(
-                index_elements=["attempt_id", "question_id"],
-                set_={"response": item.response},
-            )
-        )
-        await db.execute(stmt)
+    rows = [
+        {
+            "id": uuid.uuid4(),
+            "attempt_id": attempt_id,
+            "question_id": item.question_id,
+            "response": item.response,
+        }
+        for item in by_qid.values()
+    ]
+    stmt = pg_insert(Answer).values(rows)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["attempt_id", "question_id"],
+        set_={"response": stmt.excluded.response},
+    )
+    await db.execute(stmt)
     return len(by_qid)
 
 

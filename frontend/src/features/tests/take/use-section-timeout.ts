@@ -37,7 +37,7 @@ type Options = {
 }
 
 /**
- * When the clock hits 00:00: lock + show Time's up immediately, flush/seal
+ * When the clock hits 00:00: lock + show Time's up immediately, seal
  * in the background, then auto-advance when the dialog countdown reaches 0.
  */
 export function useSectionTimeout({
@@ -53,7 +53,7 @@ export function useSectionTimeout({
   peekNext,
   reportSectionExpired,
   clearTimeoutDialog,
-  flushBeforeNavigate,
+  flushBeforeNavigate: _flushBeforeNavigate,
   sealSection,
   enterSection,
   goToSection,
@@ -80,8 +80,6 @@ export function useSectionTimeout({
 
     sealPromiseRef.current = (async () => {
       try {
-        const expiredOnFlush = await flushBeforeNavigate()
-        if (expiredOnFlush) return
         const all = collectAnswersForTypes(answers, sortedSections, [
           expiredType,
         ])
@@ -117,7 +115,6 @@ export function useSectionTimeout({
     answers,
     sortedSections,
     reportSectionExpired,
-    flushBeforeNavigate,
     sealSection,
   ])
 

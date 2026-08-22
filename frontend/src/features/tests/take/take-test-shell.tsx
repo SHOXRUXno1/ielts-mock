@@ -584,6 +584,13 @@ export function TakeTestShell({
     }
   }, [LS_KEY])
 
+  const cancelAutoSave = useCallback(() => {
+    if (autoSaveRef.current) {
+      clearTimeout(autoSaveRef.current)
+      autoSaveRef.current = null
+    }
+  }, [])
+
   useEffect(() => {
     if (!LS_KEY || !attemptId || finished) return
     if (autoSaveRef.current) clearTimeout(autoSaveRef.current)
@@ -953,6 +960,9 @@ export function TakeTestShell({
             timeoutCountdown={timeoutCountdown}
             clearTimeoutDialog={clearTimeoutDialog}
             peekTimeoutNext={peekTimeoutNext}
+            persistLocal={persistLocal}
+            cancelAutoSave={cancelAutoSave}
+            setIsFlushing={setIsFlushing}
           >
             {children ?? <Outlet />}
           </ActiveChrome>
@@ -972,6 +982,9 @@ function ActiveChrome({
   timeoutCountdown,
   clearTimeoutDialog,
   peekTimeoutNext,
+  persistLocal,
+  cancelAutoSave,
+  setIsFlushing,
 }: {
   children: ReactNode
   onConfirmSubmit: () => void
@@ -982,6 +995,9 @@ function ActiveChrome({
   timeoutCountdown: number | null
   clearTimeoutDialog: () => void
   peekTimeoutNext: () => SectionType | null
+  persistLocal: () => void
+  cancelAutoSave: () => void
+  setIsFlushing: (value: boolean) => void
 }) {
   const ctx = useTakeTest()
   const { remainingMs, remainingSec, timerExpired } = useTakeTestTimer()
@@ -1025,6 +1041,7 @@ function ActiveChrome({
     activeSectionType,
   )
   const [finishSectionOpen, setFinishSectionOpen] = useState(false)
+  const [isFinishingSection, setIsFinishingSection] = useState(false)
 
   const onTimeoutExhausted = useCallback(() => {
     if (bookSlug && testSlug && attemptId) guard.triggerSubmit()
@@ -1060,12 +1077,15 @@ function ActiveChrome({
   })
 
   const handleFinishSection = useCallback(async () => {
-    setFinishSectionOpen(false)
-    if (isSealing) return
+    if (isSealing || isFinishingSection) return
     const sealType = activeSectionType ?? currentType
     if (!sealType || sealedTypes.has(sealType)) return
+    cancelAutoSave()
+    persistLocal()
+    setIsFinishingSection(true)
+    setIsFlushing(true)
     try {
-      await flushBeforeNavigate()
+      // Seal persists answers — do not flush first (that was a second 40-row write).
       const all = collectAnswersForTypes(answers, sortedSections, [sealType])
       let next: SectionType | null = null
       try {
@@ -1082,6 +1102,7 @@ function ActiveChrome({
         if (detail !== 'Section not active') throw err
         next = nextTypeAfter(presentTypes, sealType)
       }
+      setFinishSectionOpen(false)
       if (next) {
         if (next === 'speaking') markSpeakingAutostartGesture()
         try {
@@ -1095,10 +1116,15 @@ function ActiveChrome({
       }
     } catch {
       toast.error('Failed to finish section')
+    } finally {
+      setIsFinishingSection(false)
+      setIsFlushing(false)
     }
   }, [
-    flushBeforeNavigate,
     answers,
+    persistLocal,
+    cancelAutoSave,
+    setIsFlushing,
     sealSection,
     activeSectionType,
     currentType,
@@ -1108,6 +1134,7 @@ function ActiveChrome({
     presentTypes,
     sortedSections,
     isSealing,
+    isFinishingSection,
     sealedTypes,
   ])
 
@@ -1221,6 +1248,7 @@ function ActiveChrome({
           onFinishSection={() => setFinishSectionOpen(true)}
           finishDisabled={
             isSealing ||
+            isFinishingSection ||
             !activeSectionType ||
             sealedTypes.has(activeSectionType)
           }
@@ -1240,7 +1268,9 @@ function ActiveChrome({
           <div className='flex items-center gap-3 rounded-xl bg-white px-8 py-5 shadow-lg'>
             <Loader2 className='size-5 animate-spin text-blue-600' />
             <span className='text-sm font-medium text-slate-700'>
-              Saving your answers&hellip;
+              {isFinishingSection
+                ? 'Finishing section…'
+                : 'Saving your answers…'}
             </span>
           </div>
         </div>
@@ -1381,11 +1411,20 @@ function ActiveChrome({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isFinishingSection}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               className='bg-blue-600 hover:bg-blue-700'
-              onClick={() => void handleFinishSection()}
+              disabled={isFinishingSection}
+              onClick={(e) => {
+                e.preventDefault()
+                void handleFinishSection()
+              }}
             >
+              {isFinishingSection && (
+                <Loader2 className='mr-1.5 size-3.5 animate-spin' />
+              )}
               Finish section
             </AlertDialogAction>
           </AlertDialogFooter>
