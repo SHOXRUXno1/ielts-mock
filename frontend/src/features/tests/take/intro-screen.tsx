@@ -8,7 +8,7 @@ import {
 } from '../data/duration-rules'
 import type { Section, SectionType, TestDetail } from '../data/schema'
 import { SECTION_LABELS, TYPE_ORDER } from './constants'
-import { enterExamFullscreen } from './enter-exam-fullscreen'
+import { enterExamFullscreen } from './exam-fullscreen'
 import { cn } from '@/lib/utils'
 import { SKILL_ICONS } from '@/features/student/practice/skill-icons'
 

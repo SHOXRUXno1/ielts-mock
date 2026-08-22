@@ -91,6 +91,7 @@ import {
   useTakeTestTimer,
 } from './take-test-timer-context'
 import { useTestNavigation } from './use-test-navigation'
+import { exitExamFullscreen } from './exam-fullscreen'
 
 function isAttemptDone(err: unknown): boolean {
   const detail = (err as { response?: { data?: { detail?: string } } })
@@ -294,6 +295,8 @@ export function TakeTestShell({
 
   const goToResult = useCallback(
     (id: string, options?: { reveal?: boolean }) => {
+      // Every finished-attempt path leaves through here — drop exam fullscreen.
+      exitExamFullscreen()
       if (options?.reveal) markScoreReveal(id)
       const search = options?.reveal ? { reveal: true } : undefined
       if (role === 'student') {
