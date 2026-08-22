@@ -1,14 +1,19 @@
 import { useMemo, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   Award,
   Calendar,
   ChevronRight,
+  Download,
   FileText,
+  Loader2,
   Search,
   TrendingUp,
 } from 'lucide-react'
+import { toast } from 'sonner'
+import { downloadResultPdf } from '@/lib/api/attempts'
+import { cn } from '@/lib/utils'
 import {
   BandValue,
   EmptyState,
@@ -32,7 +37,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SKILL_KEYS } from '@/features/results/lib/skill'
 import { attemptStatusMeta } from '@/features/results/lib/status'
 import { formatBand } from '@/features/results/lib/band'
-import { cn } from '@/lib/utils'
 
 interface ResultItem {
   id: string
@@ -63,55 +67,83 @@ function ResultCard({ result }: { result: ResultItem }) {
     ? new Date(result.finished_at)
     : new Date(result.created_at)
 
+  const pdfDisabled = result.status === 'in_progress'
+  const download = useMutation({
+    mutationFn: () => downloadResultPdf(result.id),
+    onError: () => toast.error('Could not generate the PDF'),
+  })
+
   return (
-    <Link
-      to='/student/results/$attemptId'
-      params={{ attemptId: result.id }}
-      className='group block rounded-2xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
-    >
-      <Panel className='transition-colors group-hover:bg-muted/30'>
-        <div className='flex flex-col gap-4 sm:flex-row sm:items-start'>
-          <BandValue
-            band={result.overall_band}
-            label='Overall'
-            size='sm'
-            showDescriptor={false}
-          />
-          <div className='min-w-0 flex-1'>
-            <div className='flex items-start justify-between gap-3'>
-              <h3 className='truncate text-sm font-semibold text-foreground'>
-                {result.test_title}
-              </h3>
-              <ChevronRight className='size-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-foreground' />
-            </div>
-            <div className='mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground'>
-              <span className='inline-flex items-center gap-1.5'>
-                <Calendar size={12} />
-                {date.toLocaleDateString(undefined, {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-              </span>
-              <span className='inline-flex items-center gap-1.5'>
-                <span className={cn('size-1.5 rounded-full', statusCfg.dot)} />
-                <span className={statusCfg.text}>{statusCfg.label}</span>
-              </span>
-            </div>
-            <div className='mt-3 space-y-1'>
-              {SKILL_KEYS.map((skill) => (
-                <SkillBandRow
-                  key={skill}
-                  skill={skill}
-                  band={bandFor(result, skill)}
-                  className='px-0 py-2'
-                />
-              ))}
+    <div className='group relative'>
+      <Link
+        to='/student/results/$attemptId'
+        params={{ attemptId: result.id }}
+        className='block rounded-2xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
+      >
+        <Panel className='transition-colors group-hover:bg-muted/30'>
+          <div className='flex flex-col gap-4 sm:flex-row sm:items-start'>
+            <BandValue
+              band={result.overall_band}
+              label='Overall'
+              size='sm'
+              showDescriptor={false}
+            />
+            <div className='min-w-0 flex-1'>
+              <div className='flex items-start justify-between gap-3'>
+                <h3 className='truncate pr-16 text-sm font-semibold text-foreground'>
+                  {result.test_title}
+                </h3>
+              </div>
+              <div className='mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground'>
+                <span className='inline-flex items-center gap-1.5'>
+                  <Calendar size={12} />
+                  {date.toLocaleDateString(undefined, {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </span>
+                <span className='inline-flex items-center gap-1.5'>
+                  <span className={cn('size-1.5 rounded-full', statusCfg.dot)} />
+                  <span className={statusCfg.text}>{statusCfg.label}</span>
+                </span>
+              </div>
+              <div className='mt-3 space-y-1'>
+                {SKILL_KEYS.map((skill) => (
+                  <SkillBandRow
+                    key={skill}
+                    skill={skill}
+                    band={bandFor(result, skill)}
+                    className='px-0 py-2'
+                  />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </Panel>
-    </Link>
+        </Panel>
+      </Link>
+      <div className='pointer-events-none absolute right-5 top-5 flex items-center gap-1'>
+        <button
+          type='button'
+          aria-label='Download PDF'
+          disabled={pdfDisabled || download.isPending}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (pdfDisabled || download.isPending) return
+            download.mutate()
+          }}
+          className='pointer-events-auto inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+        >
+          {download.isPending ? (
+            <Loader2 className='size-4 animate-spin' />
+          ) : (
+            <Download className='size-4' />
+          )}
+        </button>
+        <ChevronRight className='size-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-foreground' />
+      </div>
+    </div>
   )
 }
 

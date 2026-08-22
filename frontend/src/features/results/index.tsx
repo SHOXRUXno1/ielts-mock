@@ -929,7 +929,7 @@ export function Results() {
                         <BandPill band={r.speaking_band} />
                       </td>
                       <td className='py-3 pl-3 pr-4 text-right'>
-                        <AttemptRowActions attemptId={r.id} />
+                        <AttemptRowActions attemptId={r.id} status={r.status} />
                       </td>
                     </tr>
                   ))}
