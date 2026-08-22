@@ -1,4 +1,4 @@
-name: Deploy to Timeweb VPS
+name: Deploy to production
 
 on:
   push:
