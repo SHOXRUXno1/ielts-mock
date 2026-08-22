@@ -5,6 +5,7 @@ import base64
 import json
 import logging
 import mimetypes
+import re
 from collections.abc import Awaitable, Callable
 
 import httpx
@@ -74,6 +75,30 @@ def get_rotator() -> KeyRotator:
 
 def _key_prefix(key: str) -> str:
     return key[:10]
+
+
+_KEY_IN_URL_RE = re.compile(r"([?&]key=)[^&\s'\"]+")
+
+
+def redact_api_keys(text: str) -> str:
+    """Strip API keys out of text bound for a log, the database or the admin UI.
+
+    An httpx error quotes the request URL, and Gemini takes its key as a query
+    parameter, so the raw message carries a live credential.
+    """
+    return _KEY_IN_URL_RE.sub(r"\1REDACTED", text)
+
+
+def _redacted(exc: httpx.HTTPStatusError) -> httpx.HTTPStatusError:
+    """Strip the key from a failure's message, in place.
+
+    Rewriting the original rather than raising a replacement keeps the key out
+    of the chained exception a replacement would carry behind it.
+    """
+    exc.args = tuple(
+        redact_api_keys(arg) if isinstance(arg, str) else arg for arg in exc.args
+    )
+    return exc
 
 
 def _retry_after_seconds(response: httpx.Response) -> float:
@@ -161,7 +186,7 @@ async def _gemini_request_with_rotation(
                 )
                 await asyncio.sleep(wait)
                 continue
-            raise
+            raise _redacted(e)
         except (httpx.TimeoutException, httpx.ConnectError) as e:
             if attempt < max_retries - 1:
                 wait = 2 ** attempt
@@ -176,7 +201,7 @@ async def _gemini_request_with_rotation(
                 continue
             raise
 
-    raise last_exc or RuntimeError("Gemini call failed")
+    raise (_redacted(last_exc) if last_exc else RuntimeError("Gemini call failed"))
 
 
 def _count_words(text: str) -> int:

@@ -24,6 +24,7 @@ from app.services.llm import (
     WritingEvaluationError,
     evaluate_speaking,
     evaluate_writing,
+    redact_api_keys,
     transcribe_audio,
 )
 from app.services.scoring import compute_writing_band
@@ -88,7 +89,7 @@ async def _process_job(job_id: uuid.UUID) -> uuid.UUID | None:
         except NonEnglishError as e:
             logger.warning("Job %s: non-English audio — %s", job.id, e)
             job.status = JobStatus.FAILED
-            job.error_message = str(e)
+            job.error_message = redact_api_keys(str(e))
             job.processed_at = datetime.now(timezone.utc)
 
         except Exception as e:
@@ -100,7 +101,9 @@ async def _process_job(job_id: uuid.UUID) -> uuid.UUID | None:
                 logger.exception("Evaluation job %s failed", job.id)
             retries = int(job.retry_count or 0) + 1
             job.retry_count = retries
-            job.error_message = str(e)
+            # This text is stored and shown in the admin panel, so it must not
+            # carry a provider credential.
+            job.error_message = redact_api_keys(str(e))
             job.processed_at = datetime.now(timezone.utc)
             if retries < settings.worker_job_max_retries:
                 # Re-queue with backoff recorded in error_message for operators.
