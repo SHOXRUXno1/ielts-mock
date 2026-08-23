@@ -228,7 +228,7 @@ export function useSectionGuard() {
         if (!isBenignSectionConflict(err)) throw err
       }
       // Speaking has its own readiness gate — hold on the URL without
-      // entering so the 20-min cap starts on the Start click there.
+      // entering so the safety cap starts on the Start click there.
       if (to !== 'speaking') {
         await enterSection(to)
       }
@@ -315,6 +315,15 @@ export function useSectionGuard() {
       }
 
       if (!activeSectionType) {
+        // Speaking has its own readiness gate — hold on the URL without
+        // entering so the safety cap starts on the Start click there. Without
+        // this, clicking the Speaking tab from the gate would silently start
+        // the cap, and a student whose machine then died would come back to
+        // an expired section.
+        if (to === 'speaking') {
+          void nav.goToSection(to)
+          return
+        }
         void enterSection(to)
           .then(() => nav.goToSection(to))
           .catch(() => {
