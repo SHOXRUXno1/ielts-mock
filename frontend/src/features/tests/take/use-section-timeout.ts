@@ -131,7 +131,7 @@ export function useSectionTimeout({
     const next = peekNext() ?? timeoutDialog.next
     sealingRef.current = false
     if (next) {
-      // Speaking has its own readiness gate; the 20-min safety cap must only
+      // Speaking has its own readiness gate; the safety cap must only
       // start on the student's Start click there. Navigate without entering.
       if (next !== 'speaking') {
         try {

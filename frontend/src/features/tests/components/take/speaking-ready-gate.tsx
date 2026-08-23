@@ -23,7 +23,7 @@ type PrewarmStatus = 'pending' | 'ok' | 'failed'
  * Interstitial screen shown after Writing is sealed and before Speaking starts.
  *
  * Nothing on the server has moved yet — Speaking is still `not_started`, so no
- * timer is ticking. The 20-minute safety cap only starts on `enterSection`,
+ * timer is ticking. The safety cap only starts on `enterSection`,
  * which happens on the button click. That means the student may spend as long
  * as they like on this screen without losing time.
  *

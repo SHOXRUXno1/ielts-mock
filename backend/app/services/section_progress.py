@@ -12,10 +12,13 @@ from app.models.test_section_settings import TestSectionSettings
 GRACE_SECONDS = 30
 
 # Speaking is AI-paced; this hard cap only guards against runaway sessions.
-# Budget for a candidate who uses every per-answer limit in full (roughly
-# 19 min of speech, prep, examiner audio and turn latency combined) plus
-# slack, so a talkative student never gets cut off by the safety net.
-SPEAKING_HARD_CAP_MINUTES = 28
+# A candidate who uses every per-answer limit in full needs roughly 19 min
+# (speech, prep, examiner audio and turn latency combined), so a real sitting
+# never approaches this number. The rest is deliberate headroom: the deadline
+# keeps running while the tab is gone, so a student whose machine dies
+# mid-Speaking has time to reboot and resume instead of coming back to a
+# section that expired without them.
+SPEAKING_HARD_CAP_MINUTES = 60
 
 SEAL_REASON_MANUAL = SealedReason.MANUAL.value
 SEAL_REASON_TIMEOUT = SealedReason.TIMEOUT.value

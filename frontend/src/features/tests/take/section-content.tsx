@@ -128,7 +128,7 @@ export function SectionContent() {
       break
     case 'speaking': {
       // Live-exam gate: hold on a readiness screen until the student clicks
-      // Start. Only then does enterSection() kick off the 20-min safety cap.
+      // Start. Only then does enterSection() kick off the safety cap.
       // Preview and practice paths keep their existing behaviour.
       const isLiveExam = !ctx.isPreview && !ctx.isPractice && !!ctx.attemptId
       if (isLiveExam && ctx.stateOf('speaking') === 'not_started') {

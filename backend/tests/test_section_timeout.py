@@ -252,7 +252,7 @@ class TestSectionDeadlineEnforcement:
 
         enter = client.post(f"/attempts/{attempt_id}/sections/speaking/enter")
         assert enter.status_code == 200, enter.text
-        # Simulate a session that overran the 20-min safety cap (past grace).
+        # Simulate a session that overran the safety cap (past grace).
         _set_ends_at(
             attempt_id,
             "speaking",
