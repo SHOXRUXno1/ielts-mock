@@ -471,11 +471,15 @@ Evaluate the following IELTS Speaking transcript.
    - Band 4: Uses a limited range of pronunciation features. Mispronunciations are frequent and understanding requires some effort.
    - Band 3: Shows some simple features but unintelligible speech is more frequent.
 
-   IMPORTANT for Pronunciation: Since we only have transcript (not audio), assess pronunciation INDIRECTLY through:
-   - Whisper transcription errors suggest pronunciation issues
-   - Natural collocations and phrasing suggest good pronunciation
-   - Unusual word choices or fragments may indicate pronunciation difficulties
-   - State in feedback that this is an approximate assessment from transcript
+   IMPORTANT for Pronunciation: you are reading a transcript, not listening to
+   the candidate, so you hold no evidence about how they actually sound.
+   Speech-to-text errors, odd word choices and broken fragments come from the
+   microphone and the transcription model, not from the speaker's mouth, and a
+   non-native accent that the model handles poorly is not a pronunciation fault.
+   Never lower this criterion for any of them. With no audio to judge, award the
+   band supported by the candidate's demonstrated command of spoken English,
+   in line with the other three criteria, and say in the feedback that
+   pronunciation could not be assessed directly from a recording.
 
 ### Relevance check
 If the student's response does not address the given questions/cue card, cap Fluency and Coherence at 4.
@@ -505,7 +509,11 @@ Half bands like 4.5, 5.5, 6.5 are NOT allowed at the individual criterion level.
 Only the final Speaking Band (overall_band, average of 4 criteria) may contain .5 values.
 Return integer values for individual criteria in the JSON output.
 overall_band = average of 4 criteria rounded to nearest 0.5.
-Be strict but fair.
+Mark with the official best-fit approach a certified examiner uses: award the band
+whose descriptors the performance actually meets, without inflating or deflating it.
+Where a performance genuinely sits between two bands, award the higher one, as a
+live examiner does. Judge what the candidate demonstrated, not what is missing from
+a short exam answer.
 
 IMPORTANT SCORING RULES:
 - Band 0: No speech produced at all. Candidate did not attempt to speak.
