@@ -57,68 +57,28 @@ export function useSpeakingRecorder({
     [recordingTime, recordingLimit.hardSeconds],
   )
 
-  const clearTimer = useCallback(() => {
+  const cleanupStream = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
     }
-  }, [])
-
-  /** Hand the microphone back to the browser. Only at the end of the session. */
-  const releaseMic = useCallback(() => {
-    clearTimer()
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop())
       streamRef.current = null
     }
     setRecordingStream(null)
-  }, [clearTimer])
+  }, [])
 
-  useEffect(() => releaseMic, [releaseMic])
-
-  /**
-   * Open the microphone, or reuse the one already open.
-   *
-   * The device is deliberately held for the whole session. A freshly opened
-   * capture device does not deliver usable audio immediately — echo
-   * cancellation and automatic gain control need a moment to settle — so
-   * reopening it per turn swallowed the first words of every answer. Short
-   * replies suffered worst: candidates tapped, said their name, and Whisper,
-   * handed near-silence, invented "Thank you." in its place.
-   */
-  const acquireStream = useCallback(async (): Promise<MediaStream> => {
-    const open = streamRef.current
-    if (open?.getAudioTracks().some((t) => t.readyState === 'live')) return open
-
-    // A stream whose tracks ended (device unplugged, OS took it away) is of no
-    // use to MediaRecorder; drop it and ask for the device again.
-    releaseMic()
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true },
-    })
-    streamRef.current = stream
-    setRecordingStream(stream)
-    return stream
-  }, [releaseMic])
-
-  /**
-   * Start the device early, while the candidate is still reading or listening,
-   * so it is settled by the time they speak. Failure is not reported: this is
-   * speculative, and startRecording raises the real error if it matters.
-   */
-  const warmUpMic = useCallback(async () => {
-    try {
-      await acquireStream()
-    } catch {
-      // Left for startRecording to surface.
-    }
-  }, [acquireStream])
+  useEffect(() => cleanupStream, [cleanupStream])
 
   const stopRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current
     if (!recorder || recorder.state !== 'recording') return
 
-    clearTimer()
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
 
     onRecordEndRef.current?.()
 
@@ -131,12 +91,11 @@ export function useSpeakingRecorder({
     recorder.onstop = () => {
       const mimeType = recorder.mimeType || 'audio/webm'
       const blob = new Blob(chunksRef.current, { type: mimeType })
-      // The microphone stays open for the next answer; see acquireStream.
-      setRecordingTime(0)
+      cleanupStream()
       onRecordingComplete(blob)
     }
     recorder.stop()
-  }, [clearTimer, onRecordingComplete])
+  }, [cleanupStream, onRecordingComplete])
 
   useEffect(() => {
     stopRecordingRef.current = stopRecording
@@ -148,7 +107,11 @@ export function useSpeakingRecorder({
 
     startingRef.current = true
     try {
-      const stream = await acquireStream()
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      })
+      streamRef.current = stream
+      setRecordingStream(stream)
       const recorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
           ? 'audio/webm;codecs=opus'
@@ -188,10 +151,13 @@ export function useSpeakingRecorder({
     } finally {
       startingRef.current = false
     }
-  }, [setPhase, onRecordStart, acquireStream])
+  }, [setPhase, onRecordStart])
 
   const abortRecording = useCallback(() => {
-    clearTimer()
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
 
     const recorder = mediaRecorderRef.current
     if (recorder) {
@@ -207,9 +173,9 @@ export function useSpeakingRecorder({
     }
 
     chunksRef.current = []
-    releaseMic()
+    cleanupStream()
     setRecordingTime(0)
-  }, [releaseMic, clearTimer])
+  }, [cleanupStream])
 
   return {
     recordingTime,
@@ -219,7 +185,6 @@ export function useSpeakingRecorder({
     startRecording,
     stopRecording,
     abortRecording,
-    warmUpMic,
-    releaseMic,
+    cleanupStream,
   }
 }
