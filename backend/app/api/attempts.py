@@ -967,6 +967,18 @@ async def finish_attempt(
     if (attempt.mode or AttemptMode.FULL_MOCK.value) in PRACTICE_MODES:
         return await _finish_practice_attempt(db, attempt)
 
+    return await _finish_full_mock_attempt(db, attempt)
+
+
+async def _finish_full_mock_attempt(
+    db: AsyncSession, attempt: Attempt
+) -> Attempt:
+    """Score and close a full-mock attempt.
+
+    Shared by /finish (student pressed Submit) and /integrity-event (a rule
+    violation forced termination) so the seal/score path stays single-sourced.
+    """
+    attempt_id = attempt.id
     now = datetime.now(timezone.utc)
     attempt.status = AttemptStatus.COMPLETED
     attempt.finished_at = now
@@ -1136,6 +1148,92 @@ async def finish_attempt(
     )
     result = await db.execute(stmt)
     return result.scalar_one()
+
+
+# Event names accepted by /integrity-event. Kept as a whitelist so an unknown
+# `type` on the wire cannot poison the log with attacker-controlled strings.
+_INTEGRITY_EVENT_TYPES = frozenset({"fullscreen_exit"})
+
+
+class IntegrityEventIn(BaseModel):
+    type: str = Field(..., max_length=64)
+    # When True, the client believes the violation is unrecoverable (the grace
+    # window expired). The server still guards against replay.
+    terminal: bool = False
+
+
+class IntegrityEventOut(BaseModel):
+    recorded: bool
+    terminated: bool
+    events_count: int
+
+
+@router.post(
+    "/attempts/{attempt_id}/integrity-event",
+    response_model=IntegrityEventOut,
+)
+async def report_integrity_event(
+    attempt_id: uuid.UUID,
+    payload: IntegrityEventIn,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+):
+    """Log a proctoring event and optionally close the attempt.
+
+    Recording and termination live in one endpoint so the client cannot lose
+    the "close the exam" call between two round-trips. If the network drops
+    after `recorded` but before `terminated`, the attempt is still open, and
+    the client's retry with `terminal: true` is idempotent (already-finished
+    attempts return 400 rather than double-scoring).
+    """
+    if payload.type not in _INTEGRITY_EVENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unknown integrity event type",
+        )
+
+    attempt = await db.get(Attempt, attempt_id)
+    if attempt is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found"
+        )
+    _assert_attempt_access(attempt, actor)
+    if attempt.status != AttemptStatus.IN_PROGRESS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Attempt already finished",
+        )
+
+    # JSONB in Postgres is opaque to SQLAlchemy's change tracking when mutated
+    # in place, so a fresh list must be assigned for the update to be flushed.
+    events = list(attempt.integrity_events or [])
+    events.append(
+        {
+            "type": payload.type,
+            "at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+    attempt.integrity_events = events
+
+    terminated = False
+    if payload.terminal:
+        # A practice attempt has no bands to compute; just close it.
+        mode = attempt.mode or AttemptMode.FULL_MOCK.value
+        if mode in PRACTICE_MODES:
+            attempt.status = AttemptStatus.ABANDONED
+            attempt.finished_at = datetime.now(timezone.utc)
+            await db.commit()
+        else:
+            await _finish_full_mock_attempt(db, attempt)
+        terminated = True
+    else:
+        await db.commit()
+
+    return IntegrityEventOut(
+        recorded=True,
+        terminated=terminated,
+        events_count=len(events),
+    )
 
 
 @router.get("/attempts/{attempt_id}", response_model=AttemptDetailRead)

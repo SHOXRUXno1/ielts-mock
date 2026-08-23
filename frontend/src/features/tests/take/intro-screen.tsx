@@ -205,6 +205,11 @@ export function IntroScreen({
             Timers start when you enter a section. Leaving a section seals it —
             you cannot return.
           </p>
+          <p className='rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-center text-[13px] leading-relaxed text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200'>
+            The test runs in fullscreen. If you leave fullscreen during the
+            exam, you have 10 seconds to return. If you do not, the attempt is
+            closed and submitted for scoring.
+          </p>
           <div className='flex flex-col-reverse items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-center'>
             <Button
               size='lg'

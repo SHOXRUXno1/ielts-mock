@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
-import { Clock, Download, Ellipsis, Flag, Loader2, Play, RotateCcw, Timer } from 'lucide-react'
+import { Clock, Download, Ellipsis, Flag, Loader2, Play, RotateCcw, ShieldAlert, Timer } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -47,6 +47,10 @@ export function ScoreSummary({
     onError: () => toast.error('Could not generate the PDF'),
   })
 
+  const fullscreenExits =
+    attempt.integrity_events?.filter((e) => e.type === 'fullscreen_exit')
+      .length ?? 0
+
   return (
     <Panel className={ENTER}>
       <div className='grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-center'>
@@ -64,6 +68,16 @@ export function ScoreSummary({
               <span className={status.dot + ' size-1.5 rounded-full'} />
               {status.label}
             </Badge>
+            {fullscreenExits > 0 && (
+              <Badge
+                variant='destructive'
+                className='gap-1.5 rounded-lg'
+                title='This attempt left fullscreen during the exam.'
+              >
+                <ShieldAlert className='size-3' />
+                Integrity flag
+              </Badge>
+            )}
           </div>
 
           <div className='grid gap-3 sm:grid-cols-3 lg:grid-cols-4'>
@@ -80,6 +94,13 @@ export function ScoreSummary({
             <Metric icon={Clock} label='Duration' value={duration ?? '—'} />
             {attempt.flagged_overtime && (
               <Metric icon={Timer} label='Timing' value='Overtime' />
+            )}
+            {fullscreenExits > 0 && (
+              <Metric
+                icon={ShieldAlert}
+                label='Fullscreen exits'
+                value={String(fullscreenExits)}
+              />
             )}
           </div>
 

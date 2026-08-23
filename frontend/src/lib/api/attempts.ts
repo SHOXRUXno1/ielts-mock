@@ -23,8 +23,15 @@ export type AttemptRead = {
   reading_raw: number | null
   /** @deprecated Legacy cumulative-deadline flag; no longer set on finish. */
   flagged_overtime: boolean
+  /** Append-only proctoring log. Null until the first violation. */
+  integrity_events: IntegrityEvent[] | null
   created_at: string
   updated_at: string
+}
+
+export type IntegrityEvent = {
+  type: 'fullscreen_exit' | string
+  at: string
 }
 
 export type SectionSnapshot = {
@@ -162,6 +169,26 @@ export async function finalizeAttempt(attemptId: string): Promise<AttemptRead> {
 
 export async function getAttempt(attemptId: string): Promise<AttemptDetailRead> {
   const { data } = await api.get<AttemptDetailRead>(`/attempts/${attemptId}`)
+  return data
+}
+
+export type IntegrityEventType = 'fullscreen_exit'
+
+export type IntegrityEventResponse = {
+  recorded: boolean
+  terminated: boolean
+  events_count: number
+}
+
+export async function reportIntegrityEvent(
+  attemptId: string,
+  type: IntegrityEventType,
+  terminal: boolean,
+): Promise<IntegrityEventResponse> {
+  const { data } = await api.post<IntegrityEventResponse>(
+    `/attempts/${attemptId}/integrity-event`,
+    { type, terminal },
+  )
   return data
 }
 

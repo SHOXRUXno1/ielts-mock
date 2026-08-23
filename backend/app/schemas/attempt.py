@@ -90,6 +90,8 @@ class AttemptRead(BaseModel):
     reading_raw: int | None
     # TODO: remove after all clients updated — legacy cumulative-deadline flag.
     flagged_overtime: bool
+    # Append-only log of proctoring events. None until the first violation.
+    integrity_events: list[dict[str, Any]] | None = None
     created_at: datetime
     updated_at: datetime
 

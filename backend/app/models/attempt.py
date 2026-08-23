@@ -2,8 +2,10 @@ import enum
 import uuid
 from datetime import datetime
 
+from typing import Any
+
 from sqlalchemy import DateTime, Float, ForeignKey, SmallInteger, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKey
@@ -75,6 +77,13 @@ class Attempt(UUIDPrimaryKey, TimestampMixin, Base):
     # TODO: remove after all clients updated — legacy cumulative-deadline flag.
     # No longer written on finish; timing is enforced via SectionProgress.
     flagged_overtime: Mapped[bool] = mapped_column(default=False)
+
+    # Append-only log of exam-integrity events (e.g. leaving fullscreen mid-exam).
+    # JSONB, not a pair of counters, so future event kinds cost no migration.
+    # Shape: [{"type": str, "at": ISO8601 str, ...}]
+    integrity_events: Mapped[list[dict[str, Any]] | None] = mapped_column(
+        JSONB, nullable=True
+    )
 
     user: Mapped["User | None"] = relationship(back_populates="attempts")
     test: Mapped["Test"] = relationship(back_populates="attempts")

@@ -91,6 +91,8 @@ import {
 } from './take-test-timer-context'
 import { useTestNavigation } from './use-test-navigation'
 import { exitExamFullscreen } from './exam-fullscreen'
+import { FullscreenGuardOverlay } from './fullscreen-guard-overlay'
+import { useFullscreenGuard } from './use-fullscreen-guard'
 
 function isAttemptDone(err: unknown): boolean {
   const detail = (err as { response?: { data?: { detail?: string } } })
@@ -965,6 +967,11 @@ export function TakeTestShell({
             persistLocal={persistLocal}
             cancelAutoSave={cancelAutoSave}
             setIsFlushing={setIsFlushing}
+            onIntegrityTerminated={() => {
+              if (attemptId && attemptId !== PREVIEW_ATTEMPT_ID) {
+                goToResult(attemptId)
+              }
+            }}
           >
             {children ?? <Outlet />}
           </ActiveChrome>
@@ -987,6 +994,7 @@ function ActiveChrome({
   persistLocal,
   cancelAutoSave,
   setIsFlushing,
+  onIntegrityTerminated,
 }: {
   children: ReactNode
   onConfirmSubmit: () => void
@@ -1000,6 +1008,7 @@ function ActiveChrome({
   persistLocal: () => void
   cancelAutoSave: () => void
   setIsFlushing: (value: boolean) => void
+  onIntegrityTerminated: () => void
 }) {
   const ctx = useTakeTest()
   const { remainingMs, remainingSec, timerExpired } = useTakeTestTimer()
@@ -1044,6 +1053,18 @@ function ActiveChrome({
   )
   const [finishSectionOpen, setFinishSectionOpen] = useState(false)
   const [isFinishingSection, setIsFinishingSection] = useState(false)
+
+  // Fullscreen proctoring — blocks the exam when the student leaves fullscreen
+  // and closes the attempt if they do not come back inside the grace window.
+  const {
+    violated: fullscreenViolated,
+    secondsLeft: fullscreenSecondsLeft,
+    returnToFullscreen,
+  } = useFullscreenGuard({
+    attemptId: attemptId && attemptId !== PREVIEW_ATTEMPT_ID ? attemptId : null,
+    isPreview,
+    onTerminated: onIntegrityTerminated,
+  })
 
   const onTimeoutExhausted = useCallback(() => {
     if (bookSlug && testSlug && attemptId) guard.triggerSubmit()
@@ -1271,6 +1292,13 @@ function ActiveChrome({
 
         <QuestionNavBar />
       </div>
+
+      {fullscreenViolated && (
+        <FullscreenGuardOverlay
+          secondsLeft={fullscreenSecondsLeft}
+          onReturn={returnToFullscreen}
+        />
+      )}
 
       {isFlushing && (
         <div className='fixed inset-0 z-[100] flex items-center justify-center bg-black/40'>

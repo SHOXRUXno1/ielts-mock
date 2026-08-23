@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  consumeIntentionalExit,
   enterExamFullscreen,
   exitExamFullscreen,
   isExamFullscreen,
+  markIntentionalExamFullscreenExit,
 } from './exam-fullscreen'
 
 function stubFullscreen(opts: {
@@ -37,6 +39,8 @@ afterEach(() => {
   delete el.requestFullscreen
   delete doc.exitFullscreen
   delete doc.fullscreenElement
+  // Do not leak the intentional-exit flag between tests.
+  consumeIntentionalExit()
   vi.restoreAllMocks()
 })
 
@@ -80,5 +84,18 @@ describe('exam fullscreen', () => {
       exit: vi.fn().mockRejectedValue(new Error('blocked')),
     })
     expect(() => exitExamFullscreen()).not.toThrow()
+  })
+
+  it('exit marks the fullscreen change as intentional', () => {
+    stubFullscreen({ element: document.documentElement })
+    exitExamFullscreen()
+    expect(consumeIntentionalExit()).toBe(true)
+    // The flag is consumed on first read so the next real violation is caught.
+    expect(consumeIntentionalExit()).toBe(false)
+  })
+
+  it('markIntentionalExamFullscreenExit lets callers opt in without exiting', () => {
+    markIntentionalExamFullscreenExit()
+    expect(consumeIntentionalExit()).toBe(true)
   })
 })
