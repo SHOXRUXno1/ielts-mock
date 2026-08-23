@@ -1057,7 +1057,7 @@ function ActiveChrome({
   // Fullscreen proctoring — blocks the exam when the student leaves fullscreen
   // and closes the attempt if they do not come back inside the grace window.
   const {
-    violated: fullscreenViolated,
+    violation: fullscreenViolation,
     secondsLeft: fullscreenSecondsLeft,
     returnToFullscreen,
   } = useFullscreenGuard({
@@ -1127,8 +1127,8 @@ function ActiveChrome({
       }
       setFinishSectionOpen(false)
       if (next) {
-        // Speaking is gated by an interstitial readiness screen — the 20-min
-        // safety cap must only start on the student's explicit click there.
+        // Speaking is gated by an interstitial readiness screen — the safety
+        // cap must only start on the student's explicit click there.
         // Navigate to the section URL without calling enterSection.
         if (next !== 'speaking') {
           try {
@@ -1293,8 +1293,9 @@ function ActiveChrome({
         <QuestionNavBar />
       </div>
 
-      {fullscreenViolated && (
+      {fullscreenViolation && (
         <FullscreenGuardOverlay
+          kind={fullscreenViolation}
           secondsLeft={fullscreenSecondsLeft}
           onReturn={returnToFullscreen}
         />

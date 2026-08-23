@@ -39,6 +39,16 @@ function removeFullscreenSupport() {
   }
 }
 
+function mount(overrides: { isPreview?: boolean; onTerminated?: () => void } = {}) {
+  return renderHook(() =>
+    useFullscreenGuard({
+      attemptId: 'attempt-1',
+      isPreview: overrides.isPreview ?? false,
+      onTerminated: overrides.onTerminated ?? (() => {}),
+    }),
+  )
+}
+
 beforeEach(() => {
   reportIntegrityEventMock.mockClear()
 })
@@ -52,23 +62,19 @@ afterEach(() => {
   delete el.webkitRequestFullscreen
 })
 
-describe('useFullscreenGuard', () => {
-  it('opens after the debounce when the student really left fullscreen', async () => {
+describe('useFullscreenGuard — leaving fullscreen mid-exam', () => {
+  it('opens after the debounce and reports a deliberate exit', async () => {
     setFullscreenElement(document.documentElement)
-    const { result } = await renderHook(() =>
-      useFullscreenGuard({
-        attemptId: 'attempt-1',
-        isPreview: false,
-        onTerminated: () => {},
-      }),
-    )
+    const { result } = await mount()
 
-    expect(result.current.violated).toBe(false)
+    expect(result.current.violation).toBe(null)
 
     setFullscreenElement(null)
     fireFullscreenChange()
+    // Nothing during the debounce — a transient state must not count.
+    expect(result.current.violation).toBe(null)
 
-    await vi.waitFor(() => expect(result.current.violated).toBe(true), {
+    await vi.waitFor(() => expect(result.current.violation).toBe('exit'), {
       timeout: 1500,
     })
     expect(result.current.secondsLeft).toBe(FULLSCREEN_GRACE_SECONDS)
@@ -79,15 +85,29 @@ describe('useFullscreenGuard', () => {
     )
   })
 
+  it('closes the attempt when the countdown runs out', async () => {
+    const onTerminated = vi.fn()
+    setFullscreenElement(document.documentElement)
+    await mount({ onTerminated })
+
+    setFullscreenElement(null)
+    fireFullscreenChange()
+
+    await vi.waitFor(
+      () =>
+        expect(reportIntegrityEventMock).toHaveBeenCalledWith(
+          'attempt-1',
+          'fullscreen_exit',
+          true,
+        ),
+      { timeout: (FULLSCREEN_GRACE_SECONDS + 4) * 1000 },
+    )
+    await vi.waitFor(() => expect(onTerminated).toHaveBeenCalledTimes(1))
+  })
+
   it('ignores a change that was flagged as intentional', async () => {
     setFullscreenElement(document.documentElement)
-    const { result } = await renderHook(() =>
-      useFullscreenGuard({
-        attemptId: 'attempt-1',
-        isPreview: false,
-        onTerminated: () => {},
-      }),
-    )
+    const { result } = await mount()
 
     markIntentionalExamFullscreenExit()
     setFullscreenElement(null)
@@ -95,19 +115,13 @@ describe('useFullscreenGuard', () => {
 
     await new Promise((r) => setTimeout(r, 800))
 
-    expect(result.current.violated).toBe(false)
+    expect(result.current.violation).toBe(null)
     expect(reportIntegrityEventMock).not.toHaveBeenCalled()
   })
 
   it('does not fire when the page still owns fullscreen on another element', async () => {
     setFullscreenElement(document.documentElement)
-    const { result } = await renderHook(() =>
-      useFullscreenGuard({
-        attemptId: 'attempt-1',
-        isPreview: false,
-        onTerminated: () => {},
-      }),
-    )
+    const { result } = await mount()
 
     const video = document.createElement('video')
     setFullscreenElement(video)
@@ -115,105 +129,128 @@ describe('useFullscreenGuard', () => {
 
     await new Promise((r) => setTimeout(r, 800))
 
-    expect(result.current.violated).toBe(false)
+    expect(result.current.violation).toBe(null)
     expect(reportIntegrityEventMock).not.toHaveBeenCalled()
   })
 
-  it('clears the violation when fullscreen comes back before the countdown ends', async () => {
+  it('clears the violation when fullscreen comes back in time', async () => {
     setFullscreenElement(document.documentElement)
-    const { result } = await renderHook(() =>
-      useFullscreenGuard({
-        attemptId: 'attempt-1',
-        isPreview: false,
-        onTerminated: () => {},
-      }),
-    )
+    const { result } = await mount()
 
     setFullscreenElement(null)
     fireFullscreenChange()
-    await vi.waitFor(() => expect(result.current.violated).toBe(true), {
+    await vi.waitFor(() => expect(result.current.violation).toBe('exit'), {
       timeout: 1500,
     })
 
     setFullscreenElement(document.documentElement)
     fireFullscreenChange()
-    await vi.waitFor(() => expect(result.current.violated).toBe(false), {
+    await vi.waitFor(() => expect(result.current.violation).toBe(null), {
       timeout: 1500,
     })
     expect(result.current.secondsLeft).toBe(FULLSCREEN_GRACE_SECONDS)
   })
+})
 
-  it('flags an exam that mounts outside fullscreen (the F5 bypass)', async () => {
+describe('useFullscreenGuard — page loaded outside fullscreen', () => {
+  it('blocks and logs a reload, closing the F5 bypass', async () => {
     // A reload resumes the exam without any fullscreenchange to react to.
     setFullscreenElement(null)
-    const { result } = await renderHook(() =>
-      useFullscreenGuard({
-        attemptId: 'attempt-1',
-        isPreview: false,
-        onTerminated: () => {},
-      }),
-    )
+    const { result } = await mount()
 
-    await vi.waitFor(() => expect(result.current.violated).toBe(true), {
+    await vi.waitFor(() => expect(result.current.violation).toBe('reload'), {
       timeout: 3000,
     })
     expect(reportIntegrityEventMock).toHaveBeenCalledWith(
       'attempt-1',
-      'fullscreen_exit',
+      'fullscreen_reload',
       false,
     )
   })
 
+  it('never terminates the attempt, so a crashed machine costs nothing', async () => {
+    const onTerminated = vi.fn()
+    setFullscreenElement(null)
+    const { result } = await mount({ onTerminated })
+
+    await vi.waitFor(() => expect(result.current.violation).toBe('reload'), {
+      timeout: 3000,
+    })
+    // Sit well past the grace window a deliberate exit would have.
+    await new Promise((r) => setTimeout(r, (FULLSCREEN_GRACE_SECONDS + 2) * 1000))
+
+    expect(result.current.violation).toBe('reload')
+    expect(onTerminated).not.toHaveBeenCalled()
+    expect(reportIntegrityEventMock).not.toHaveBeenCalledWith(
+      'attempt-1',
+      expect.anything(),
+      true,
+    )
+  })
+
+  it('is not upgraded to a terminating exit by a later event', async () => {
+    const onTerminated = vi.fn()
+    setFullscreenElement(null)
+    const { result } = await mount({ onTerminated })
+
+    await vi.waitFor(() => expect(result.current.violation).toBe('reload'), {
+      timeout: 3000,
+    })
+
+    // Something fires a change while still outside fullscreen (a failed
+    // request, say). The block must stay a block.
+    fireFullscreenChange()
+    await new Promise((r) => setTimeout(r, (FULLSCREEN_GRACE_SECONDS + 2) * 1000))
+
+    expect(result.current.violation).toBe('reload')
+    expect(onTerminated).not.toHaveBeenCalled()
+  })
+
+  it('clears once the student returns to fullscreen', async () => {
+    setFullscreenElement(null)
+    const { result } = await mount()
+
+    await vi.waitFor(() => expect(result.current.violation).toBe('reload'), {
+      timeout: 3000,
+    })
+
+    setFullscreenElement(document.documentElement)
+    fireFullscreenChange()
+
+    await vi.waitFor(() => expect(result.current.violation).toBe(null), {
+      timeout: 1500,
+    })
+  })
+
   it('does not flag a legitimate start that reaches fullscreen', async () => {
     setFullscreenElement(document.documentElement)
-    const { result } = await renderHook(() =>
-      useFullscreenGuard({
-        attemptId: 'attempt-1',
-        isPreview: false,
-        onTerminated: () => {},
-      }),
-    )
+    const { result } = await mount()
 
     // Sit through the initial check window with no events at all.
     await new Promise((r) => setTimeout(r, 2000))
 
-    expect(result.current.violated).toBe(false)
+    expect(result.current.violation).toBe(null)
     expect(reportIntegrityEventMock).not.toHaveBeenCalled()
   })
 
   it('stays out of the way where the page cannot go fullscreen (iOS Safari)', async () => {
     removeFullscreenSupport()
     setFullscreenElement(null)
-    const { result } = await renderHook(() =>
-      useFullscreenGuard({
-        attemptId: 'attempt-1',
-        isPreview: false,
-        onTerminated: () => {},
-      }),
-    )
+    const { result } = await mount()
 
     await new Promise((r) => setTimeout(r, 2000))
 
-    expect(result.current.violated).toBe(false)
+    expect(result.current.violation).toBe(null)
     expect(reportIntegrityEventMock).not.toHaveBeenCalled()
   })
 
   it('is a no-op in preview mode', async () => {
-    setFullscreenElement(document.documentElement)
-    const { result } = await renderHook(() =>
-      useFullscreenGuard({
-        attemptId: 'attempt-1',
-        isPreview: true,
-        onTerminated: () => {},
-      }),
-    )
-
     setFullscreenElement(null)
-    fireFullscreenChange()
+    const { result } = await mount({ isPreview: true })
 
-    await new Promise((r) => setTimeout(r, 800))
+    await new Promise((r) => setTimeout(r, 2000))
 
-    expect(result.current.violated).toBe(false)
+    expect(result.current.violation).toBe(null)
     expect(reportIntegrityEventMock).not.toHaveBeenCalled()
   })
 })

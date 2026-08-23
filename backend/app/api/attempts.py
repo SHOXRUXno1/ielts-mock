@@ -1152,7 +1152,17 @@ async def _finish_full_mock_attempt(
 
 # Event names accepted by /integrity-event. Kept as a whitelist so an unknown
 # `type` on the wire cannot poison the log with attacker-controlled strings.
-_INTEGRITY_EVENT_TYPES = frozenset({"fullscreen_exit"})
+#
+# The two fullscreen events mean different things and carry different weight:
+#   fullscreen_exit   — left fullscreen while the page was live; deliberate,
+#                       and the client terminates the attempt if the student
+#                       does not come back within the grace window.
+#   fullscreen_reload — the exam page loaded outside fullscreen (reload, tab
+#                       restore, recovery after a crash). A browser cannot
+#                       restore fullscreen without a user gesture, so this is
+#                       expected rather than damning: the client blocks the
+#                       exam until the student re-enters, but never ends it.
+_INTEGRITY_EVENT_TYPES = frozenset({"fullscreen_exit", "fullscreen_reload"})
 
 
 class IntegrityEventIn(BaseModel):

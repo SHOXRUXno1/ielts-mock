@@ -1,6 +1,16 @@
 import { Link } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
-import { Clock, Download, Ellipsis, Flag, Loader2, Play, RotateCcw, ShieldAlert, Timer } from 'lucide-react'
+import {
+  Clock,
+  Download,
+  Ellipsis,
+  Flag,
+  Loader2,
+  Play,
+  RotateCcw,
+  ShieldAlert,
+  Timer,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -47,9 +57,15 @@ export function ScoreSummary({
     onError: () => toast.error('Could not generate the PDF'),
   })
 
-  const fullscreenExits =
-    attempt.integrity_events?.filter((e) => e.type === 'fullscreen_exit')
-      .length ?? 0
+  // Exits are deliberate; reloads usually are not. Counting them together
+  // would let a power cut look like cheating, so they stay separate.
+  const events = attempt.integrity_events ?? []
+  const fullscreenExits = events.filter(
+    (e) => e.type === 'fullscreen_exit',
+  ).length
+  const fullscreenReloads = events.filter(
+    (e) => e.type === 'fullscreen_reload',
+  ).length
 
   return (
     <Panel className={ENTER}>
@@ -100,6 +116,13 @@ export function ScoreSummary({
                 icon={ShieldAlert}
                 label='Fullscreen exits'
                 value={String(fullscreenExits)}
+              />
+            )}
+            {fullscreenReloads > 0 && (
+              <Metric
+                icon={RotateCcw}
+                label='Reloads'
+                value={String(fullscreenReloads)}
               />
             )}
           </div>

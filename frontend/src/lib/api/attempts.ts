@@ -30,7 +30,7 @@ export type AttemptRead = {
 }
 
 export type IntegrityEvent = {
-  type: 'fullscreen_exit' | string
+  type: IntegrityEventType | string
   at: string
 }
 
@@ -172,7 +172,13 @@ export async function getAttempt(attemptId: string): Promise<AttemptDetailRead> 
   return data
 }
 
-export type IntegrityEventType = 'fullscreen_exit'
+/**
+ * `fullscreen_exit` — left fullscreen while the page was live; terminates the
+ * attempt if the student does not come back within the grace window.
+ * `fullscreen_reload` — the page loaded outside fullscreen (reload, restored
+ * tab, recovery after a crash). Blocking only; never terminal.
+ */
+export type IntegrityEventType = 'fullscreen_exit' | 'fullscreen_reload'
 
 export type IntegrityEventResponse = {
   recorded: boolean

@@ -152,6 +152,33 @@ def test_terminal_call_delegates_to_finish_helper(monkeypatch):
     assert a.integrity_events[0]["type"] == "fullscreen_exit"
 
 
+def test_reload_event_is_accepted_and_never_terminal():
+    """A page that loads outside fullscreen is logged but must not end the
+    attempt — a browser cannot restore fullscreen without a user gesture, so
+    this also covers an honest student returning after a crash."""
+    a = _attempt()
+    session = MagicMock()
+    session.get = AsyncMock(return_value=a)
+    session.commit = AsyncMock()
+    _install(
+        session,
+        Actor(role="student", sub=str(a.user_id), login="s", user_id=a.user_id),
+    )
+    try:
+        with TestClient(app) as client:
+            resp = client.post(
+                f"/attempts/{a.id}/integrity-event",
+                json={"type": "fullscreen_reload", "terminal": False},
+            )
+    finally:
+        _teardown()
+
+    assert resp.status_code == 200
+    assert resp.json()["terminated"] is False
+    assert a.integrity_events[0]["type"] == "fullscreen_reload"
+    assert a.status == AttemptStatus.IN_PROGRESS
+
+
 def test_other_students_attempt_forbidden():
     a = _attempt()
     session = MagicMock()
