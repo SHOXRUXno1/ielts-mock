@@ -28,6 +28,17 @@ function fireFullscreenChange() {
   document.dispatchEvent(new Event('fullscreenchange'))
 }
 
+/** Hide the Fullscreen API to emulate a browser that cannot go fullscreen. */
+function removeFullscreenSupport() {
+  for (const name of ['requestFullscreen', 'webkitRequestFullscreen']) {
+    Object.defineProperty(document.documentElement, name, {
+      configurable: true,
+      writable: true,
+      value: undefined,
+    })
+  }
+}
+
 beforeEach(() => {
   reportIntegrityEventMock.mockClear()
 })
@@ -35,7 +46,10 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks()
   const doc = document as unknown as Record<string, unknown>
+  const el = document.documentElement as unknown as Record<string, unknown>
   delete doc.fullscreenElement
+  delete el.requestFullscreen
+  delete el.webkitRequestFullscreen
 })
 
 describe('useFullscreenGuard', () => {
@@ -127,6 +141,61 @@ describe('useFullscreenGuard', () => {
       timeout: 1500,
     })
     expect(result.current.secondsLeft).toBe(FULLSCREEN_GRACE_SECONDS)
+  })
+
+  it('flags an exam that mounts outside fullscreen (the F5 bypass)', async () => {
+    // A reload resumes the exam without any fullscreenchange to react to.
+    setFullscreenElement(null)
+    const { result } = await renderHook(() =>
+      useFullscreenGuard({
+        attemptId: 'attempt-1',
+        isPreview: false,
+        onTerminated: () => {},
+      }),
+    )
+
+    await vi.waitFor(() => expect(result.current.violated).toBe(true), {
+      timeout: 3000,
+    })
+    expect(reportIntegrityEventMock).toHaveBeenCalledWith(
+      'attempt-1',
+      'fullscreen_exit',
+      false,
+    )
+  })
+
+  it('does not flag a legitimate start that reaches fullscreen', async () => {
+    setFullscreenElement(document.documentElement)
+    const { result } = await renderHook(() =>
+      useFullscreenGuard({
+        attemptId: 'attempt-1',
+        isPreview: false,
+        onTerminated: () => {},
+      }),
+    )
+
+    // Sit through the initial check window with no events at all.
+    await new Promise((r) => setTimeout(r, 2000))
+
+    expect(result.current.violated).toBe(false)
+    expect(reportIntegrityEventMock).not.toHaveBeenCalled()
+  })
+
+  it('stays out of the way where the page cannot go fullscreen (iOS Safari)', async () => {
+    removeFullscreenSupport()
+    setFullscreenElement(null)
+    const { result } = await renderHook(() =>
+      useFullscreenGuard({
+        attemptId: 'attempt-1',
+        isPreview: false,
+        onTerminated: () => {},
+      }),
+    )
+
+    await new Promise((r) => setTimeout(r, 2000))
+
+    expect(result.current.violated).toBe(false)
+    expect(reportIntegrityEventMock).not.toHaveBeenCalled()
   })
 
   it('is a no-op in preview mode', async () => {

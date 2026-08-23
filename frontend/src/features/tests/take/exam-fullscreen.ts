@@ -65,6 +65,17 @@ export function isExamFullscreen(): boolean {
 }
 
 /**
+ * Whether this browser can put the page itself into fullscreen.
+ *
+ * False on iOS Safari, where only <video> can go fullscreen. The guard has to
+ * know: without this check it would read "exam is not fullscreen" as cheating
+ * and fail every attempt on those devices.
+ */
+export function isExamFullscreenSupported(): boolean {
+  return requestFn(document.documentElement as FullscreenElement) != null
+}
+
+/**
  * Best-effort keyboard lock, hidden behind a helper so callers do not have to
  * feature-detect. Silently no-ops in Firefox and Safari (no support), on
  * insecure origins, and inside iframes.
