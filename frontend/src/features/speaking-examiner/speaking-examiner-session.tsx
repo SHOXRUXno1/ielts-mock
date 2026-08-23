@@ -410,7 +410,8 @@ export function SpeakingExaminerSession({
     startRecording,
     stopRecording,
     abortRecording,
-    cleanupStream,
+    warmUpMic,
+    releaseMic,
   } = useSpeakingRecorder({
     turnKind,
     onRecordingComplete: processRecording,
@@ -422,6 +423,16 @@ export function SpeakingExaminerSession({
   useEffect(() => {
     startRecordingRef.current = startRecording
   }, [startRecording])
+
+  // Open the microphone while the examiner is still speaking, or while the
+  // candidate reads the cue card, so the device has settled before the answer
+  // begins. Without this the first word of every turn was lost to the device
+  // warming up, which hit short answers hardest.
+  useEffect(() => {
+    if (phase === 'playing' || phase === 'ready' || phase === 'prep') {
+      void warmUpMic()
+    }
+  }, [phase, warmUpMic])
 
   const handlePrepComplete = useCallback(async () => {
     if (prepCompleteRef.current) return
@@ -569,7 +580,7 @@ export function SpeakingExaminerSession({
       if (phaseRef.current === 'recording') {
         abortRecording()
       } else {
-        cleanupStream()
+        releaseMic()
       }
 
       resetAudioState()
@@ -598,7 +609,7 @@ export function SpeakingExaminerSession({
     [
       phaseRef,
       abortRecording,
-      cleanupStream,
+      releaseMic,
       resetAudioState,
       resetFlow,
       resetMicCheck,
