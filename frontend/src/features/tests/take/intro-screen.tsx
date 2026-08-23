@@ -8,7 +8,10 @@ import {
 } from '../data/duration-rules'
 import type { Section, SectionType, TestDetail } from '../data/schema'
 import { SECTION_LABELS, TYPE_ORDER } from './constants'
-import { enterExamFullscreen } from './exam-fullscreen'
+import {
+  enterExamFullscreen,
+  EXAM_FULLSCREEN_ENFORCED,
+} from './exam-fullscreen'
 import { cn } from '@/lib/utils'
 import { SKILL_ICONS } from '@/features/student/practice/skill-icons'
 
@@ -205,11 +208,6 @@ export function IntroScreen({
             Timers start when you enter a section. Leaving a section seals it —
             you cannot return.
           </p>
-          <p className='rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-center text-[13px] leading-relaxed text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200'>
-            The test runs in fullscreen. If you leave fullscreen during the
-            exam, you have 3 seconds to return. If you do not, the attempt is
-            closed and submitted for scoring.
-          </p>
           <div className='flex flex-col-reverse items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-center'>
             <Button
               size='lg'
@@ -225,7 +223,7 @@ export function IntroScreen({
               size='lg'
               className='h-12 rounded-xl bg-sky-600 px-10 text-[15px] font-semibold text-white shadow-md shadow-sky-500/25 hover:bg-sky-700'
               onClick={() => {
-                enterExamFullscreen()
+                if (EXAM_FULLSCREEN_ENFORCED) enterExamFullscreen()
                 onStart()
               }}
               disabled={isStarting}

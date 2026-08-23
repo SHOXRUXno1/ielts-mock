@@ -1153,22 +1153,34 @@ async def _finish_full_mock_attempt(
 # Event names accepted by /integrity-event. Kept as a whitelist so an unknown
 # `type` on the wire cannot poison the log with attacker-controlled strings.
 #
-# The two fullscreen events mean different things and carry different weight:
-#   fullscreen_exit   — left fullscreen while the page was live; deliberate,
-#                       and the client terminates the attempt if the student
-#                       does not come back within the grace window.
+# Both names stay accepted even though the client no longer sends them: tabs
+# opened before fullscreen proctoring was switched off still report, and a 400
+# there would only produce noise in their console.
+#   fullscreen_exit   — left fullscreen while the page was live.
 #   fullscreen_reload — the exam page loaded outside fullscreen (reload, tab
-#                       restore, recovery after a crash). A browser cannot
-#                       restore fullscreen without a user gesture, so this is
-#                       expected rather than damning: the client blocks the
-#                       exam until the student re-enters, but never ends it.
+#                       restore, recovery after a crash).
 _INTEGRITY_EVENT_TYPES = frozenset({"fullscreen_exit", "fullscreen_reload"})
+
+
+# Proctoring events are recorded, never enforced.
+#
+# Ending an attempt over one of these proved indefensible. A browser drops out
+# of fullscreen for reasons the candidate does not control — a permission
+# prompt, the window closing, the machine shutting down — and a three-second
+# countdown cannot tell any of those from someone walking away. In a single
+# morning it closed four live attempts, two belonging to candidates who had
+# done nothing wrong.
+#
+# The events still land in the log for a human to weigh. Ignoring `terminal`
+# here rather than only in the client is deliberate: tabs opened before this
+# change keep sending it, and they must not be able to close an attempt.
+_INTEGRITY_ENFORCED = False
 
 
 class IntegrityEventIn(BaseModel):
     type: str = Field(..., max_length=64)
-    # When True, the client believes the violation is unrecoverable (the grace
-    # window expired). The server still guards against replay.
+    # Sent by clients that still expect the grace window to close the attempt.
+    # Accepted for compatibility and ignored; see _INTEGRITY_ENFORCED.
     terminal: bool = False
 
 
@@ -1188,13 +1200,9 @@ async def report_integrity_event(
     db: AsyncSession = Depends(get_db),
     actor: Actor = Depends(get_current_actor),
 ):
-    """Log a proctoring event and optionally close the attempt.
+    """Append a proctoring event to the attempt's log.
 
-    Recording and termination live in one endpoint so the client cannot lose
-    the "close the exam" call between two round-trips. If the network drops
-    after `recorded` but before `terminated`, the attempt is still open, and
-    the client's retry with `terminal: true` is idempotent (already-finished
-    attempts return 400 rather than double-scoring).
+    Never closes the attempt: see _INTEGRITY_ENFORCED for why.
     """
     if payload.type not in _INTEGRITY_EVENT_TYPES:
         raise HTTPException(
@@ -1225,23 +1233,12 @@ async def report_integrity_event(
     )
     attempt.integrity_events = events
 
-    terminated = False
-    if payload.terminal:
-        # A practice attempt has no bands to compute; just close it.
-        mode = attempt.mode or AttemptMode.FULL_MOCK.value
-        if mode in PRACTICE_MODES:
-            attempt.status = AttemptStatus.ABANDONED
-            attempt.finished_at = datetime.now(timezone.utc)
-            await db.commit()
-        else:
-            await _finish_full_mock_attempt(db, attempt)
-        terminated = True
-    else:
-        await db.commit()
+    await db.commit()
 
+    # `terminal` is accepted and ignored — see _INTEGRITY_ENFORCED.
     return IntegrityEventOut(
         recorded=True,
-        terminated=terminated,
+        terminated=False,
         events_count=len(events),
     )
 

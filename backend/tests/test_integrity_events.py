@@ -1,11 +1,10 @@
 """Unit tests for /attempts/{id}/integrity-event.
 
-The full-mock scoring path is exercised by other tests; here the focus is on
-the four behaviours the endpoint uniquely owns:
+The endpoint records proctoring events and nothing else. What it uniquely owns:
     * unknown event types are rejected,
     * a foreign attempt cannot be touched,
-    * a non-terminal call records without closing the attempt,
-    * a terminal call closes the attempt exactly once.
+    * an event is appended without closing the attempt,
+    * `terminal: true` from an older client is ignored rather than obeyed.
 """
 
 from __future__ import annotations
@@ -115,9 +114,10 @@ def test_non_terminal_appends_event_without_scoring():
     session.commit.assert_awaited_once()
 
 
-def test_terminal_call_delegates_to_finish_helper(monkeypatch):
-    """The terminal branch must go through _finish_full_mock_attempt so the
-    seal/score path stays single-sourced."""
+def test_terminal_flag_from_an_old_client_cannot_close_the_attempt(monkeypatch):
+    """Tabs opened before proctoring was switched off still send
+    `terminal: true`. Honouring it is what cost live candidates their exams, so
+    the flag must die at the door: log the event, leave the attempt open."""
     a = _attempt()
     calls: list[Attempt] = []
 
@@ -147,8 +147,9 @@ def test_terminal_call_delegates_to_finish_helper(monkeypatch):
     assert resp.status_code == 200
     body = resp.json()
     assert body["recorded"] is True
-    assert body["terminated"] is True
-    assert calls == [a], "must call the shared finish helper once"
+    assert body["terminated"] is False
+    assert calls == [], "scoring must not be triggered by a proctoring event"
+    assert a.status == AttemptStatus.IN_PROGRESS
     assert a.integrity_events[0]["type"] == "fullscreen_exit"
 
 

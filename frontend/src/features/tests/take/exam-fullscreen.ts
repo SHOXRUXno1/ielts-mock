@@ -1,3 +1,20 @@
+/**
+ * Master switch for fullscreen proctoring. Currently off.
+ *
+ * Forcing the exam into fullscreen and policing it did more harm than good.
+ * A browser leaves fullscreen for reasons the candidate never chose — a
+ * permission prompt, the window closing, the machine shutting down — and the
+ * grace countdown could not tell those from someone walking away, so it closed
+ * live attempts belonging to people who had done nothing wrong.
+ *
+ * Flipping this back to `true` restores the whole feature: the intro screen
+ * enters fullscreen again and the guard resumes watching. Do not do that until
+ * leaving fullscreen is merely recorded for the admin rather than punished.
+ */
+// Typed as boolean rather than the literal `false` so neither the compiler nor
+// the linter treats the guarded branches as dead code.
+export const EXAM_FULLSCREEN_ENFORCED: boolean = false
+
 type FullscreenElement = HTMLElement & {
   webkitRequestFullscreen?: () => Promise<void>
 }

@@ -3,6 +3,7 @@ import { reportIntegrityEvent } from '@/lib/api/attempts'
 import {
   consumeIntentionalExit,
   enterExamFullscreen,
+  EXAM_FULLSCREEN_ENFORCED,
   isExamFullscreen,
   isExamFullscreenSupported,
 } from './exam-fullscreen'
@@ -59,6 +60,10 @@ type Options = {
 /**
  * Keeps the student inside fullscreen for the duration of the exam.
  *
+ * Inert while EXAM_FULLSCREEN_ENFORCED is false — the hook still mounts and
+ * returns a null violation, so callers need no branch of their own. The rest
+ * of this description applies once the switch is back on.
+ *
  * Whenever the exam is found running outside fullscreen an opaque overlay
  * takes over the screen, so leaving fullscreen never becomes a way to read
  * the questions in a windowed tab. What differs is the consequence: a
@@ -110,6 +115,9 @@ export function useFullscreenGuard({
   }, [])
 
   useEffect(() => {
+    // Switched off: never subscribe, so no violation can ever open and the
+    // overlay stays unmounted. See EXAM_FULLSCREEN_ENFORCED.
+    if (!EXAM_FULLSCREEN_ENFORCED) return
     if (isPreview) return
     if (!attemptId) return
     // Where the page cannot go fullscreen at all, there is no rule to break.

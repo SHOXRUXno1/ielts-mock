@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderHook } from 'vitest-browser-react'
-import { markIntentionalExamFullscreenExit } from './exam-fullscreen'
+import {
+  EXAM_FULLSCREEN_ENFORCED,
+  markIntentionalExamFullscreenExit,
+} from './exam-fullscreen'
 import {
   FULLSCREEN_GRACE_SECONDS,
   useFullscreenGuard,
@@ -62,7 +65,24 @@ afterEach(() => {
   delete el.webkitRequestFullscreen
 })
 
-describe('useFullscreenGuard — leaving fullscreen mid-exam', () => {
+describe('useFullscreenGuard — while proctoring is switched off', () => {
+  it('never opens a violation, whatever the page does', async () => {
+    const onTerminated = vi.fn()
+    setFullscreenElement(null)
+    const { result } = await mount({ onTerminated })
+
+    fireFullscreenChange()
+    await new Promise((r) => setTimeout(r, (FULLSCREEN_GRACE_SECONDS + 2) * 1000))
+
+    expect(result.current.violation).toBe(null)
+    expect(onTerminated).not.toHaveBeenCalled()
+    expect(reportIntegrityEventMock).not.toHaveBeenCalled()
+  })
+})
+
+// The suites below describe the feature as it behaves when enforced. They run
+// again by themselves the moment EXAM_FULLSCREEN_ENFORCED goes back to true.
+describe.skipIf(!EXAM_FULLSCREEN_ENFORCED)('useFullscreenGuard — leaving fullscreen mid-exam', () => {
   it('opens after the debounce and reports a deliberate exit', async () => {
     setFullscreenElement(document.documentElement)
     const { result } = await mount()
@@ -152,7 +172,7 @@ describe('useFullscreenGuard — leaving fullscreen mid-exam', () => {
   })
 })
 
-describe('useFullscreenGuard — page loaded outside fullscreen', () => {
+describe.skipIf(!EXAM_FULLSCREEN_ENFORCED)('useFullscreenGuard — page loaded outside fullscreen', () => {
   it('blocks and logs a reload, closing the F5 bypass', async () => {
     // A reload resumes the exam without any fullscreenchange to react to.
     setFullscreenElement(null)
