@@ -7,7 +7,7 @@ import {
 } from './exam-fullscreen'
 
 /** Seconds a student has to re-enter fullscreen before the attempt is closed. */
-export const FULLSCREEN_GRACE_SECONDS = 10
+export const FULLSCREEN_GRACE_SECONDS = 3
 
 /**
  * Change events fire during transitions between elements (documentElement →
