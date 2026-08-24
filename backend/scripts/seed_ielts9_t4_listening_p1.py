@@ -168,7 +168,9 @@ QUESTIONS = [
     # Q7-10: Table completion (gap_id references)
     {"order": 7, "type": "table_completion", "group": "talks", "gap_id": "7", "answer": ["heart", "heart disease"]},
     {"order": 8, "type": "table_completion", "group": "talks", "gap_id": "8", "answer": "primary school"},
-    {"order": 9, "type": "table_completion", "group": "talks", "gap_id": "9", "answer": ["$n/a", "unavailable"]},
+    # "it's a late afternoon talk, at four thirty" — the gap wants the time.
+    {"order": 9, "type": "table_completion", "group": "talks", "gap_id": "9",
+     "answer": ["4.30", "4:30", "4.30pm", "4.30 pm", "4:30pm", "4:30 pm", "16.30", "16:30", "four thirty"]},
     {"order": 10, "type": "table_completion", "group": "talks", "gap_id": "10", "answer": ["ages", "age groups"]},
 ]
 
