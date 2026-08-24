@@ -358,6 +358,20 @@ def score_answer(question: Question, answer: Answer) -> tuple[int, int]:
 
     if qtype == "matching":
         correct_pairs = _matching_pairs(question)
+
+        # One item per row — "Gen" against a key of "A" — which is how the
+        # editor writes matching now, and how every sibling matching type is
+        # already scored. There are no pairs to walk here, and the pair branch
+        # below reads the absence of them as nothing correct, so the question
+        # could not be answered at all: nine of them across Cambridge IELTS 9
+        # Test 4 had never once been marked right.
+        if not correct_pairs:
+            correct = _get_correct_scalar(question.answer_key)
+            is_correct = bool(correct) and _normalize(str(student_value)) == _normalize(correct)
+            answer.is_correct = is_correct
+            answer.score = 1.0 if is_correct else 0.0
+            return (1, 1) if is_correct else (0, 1)
+
         total_pairs = max(len(correct_pairs), 1)
 
         if isinstance(student_value, dict) and correct_pairs:

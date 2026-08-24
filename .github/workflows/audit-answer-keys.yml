@@ -1,0 +1,32 @@
+name: Audit answer keys
+
+# Reports questions that no candidate could answer correctly — a placeholder
+# left in a key, or a key written in a shape the scorer does not read. Both have
+# reached candidates before, and neither shows up as an error anywhere: the mark
+# is simply never awarded.
+#
+# Read-only. Fails the run when it finds something, so the red tick is the alarm.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: audit-answer-keys
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check every answer key on the server
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/ielts-mock
+            docker compose -f docker-compose.prod.yml exec -T backend \
+              python scripts/audit_answer_keys.py

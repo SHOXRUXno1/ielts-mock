@@ -183,6 +183,59 @@ class TestMatching:
         assert c == 0
 
 
+class TestMatchingOneItemPerRow:
+    """The shape the editor actually writes: a row per item, keyed by a letter.
+
+    "What reason prevented each member from joining?" becomes one question per
+    member — content {"stem": "Gen"} against a key of "A" — rather than one
+    question holding every pair. Every question in the bank is written this way,
+    and none of them had ever been marked correct: the pair branch found no
+    pairs to walk and scored zero, so a candidate who picked A for a question
+    whose answer was A was still told she was wrong.
+    """
+
+    def test_the_right_letter_earns_the_mark(self):
+        q = make_q(QuestionType.MATCHING, {"correct": "A"}, {"stem": "Gen"})
+        a = make_a(q, {"answer": "A"})
+        assert score_answer(q, a) == (1, 1)
+        assert a.is_correct is True
+        assert a.score == 1.0
+
+    def test_the_wrong_letter_earns_nothing(self):
+        q = make_q(QuestionType.MATCHING, {"correct": "A"}, {"stem": "Gen"})
+        a = make_a(q, {"answer": "C"})
+        assert score_answer(q, a) == (0, 1)
+        assert a.is_correct is False
+
+    def test_case_and_padding_do_not_decide_it(self):
+        q = make_q(QuestionType.MATCHING, {"correct": "A"}, {"stem": "Gen"})
+        a = make_a(q, {"answer": " a "})
+        assert score_answer(q, a) == (1, 1)
+
+    def test_silence_is_not_an_answer(self):
+        q = make_q(QuestionType.MATCHING, {"correct": "A"}, {"stem": "Gen"})
+        a = make_a(q, {"answer": ""})
+        assert score_answer(q, a) == (0, 1)
+        assert a.is_correct is False
+
+    def test_a_missing_key_never_reads_as_correct(self):
+        """An empty key and an empty answer are both "", which must not match."""
+        q = make_q(QuestionType.MATCHING, {}, {"stem": "Gen"})
+        a = make_a(q, {"answer": ""})
+        assert score_answer(q, a) == (0, 1)
+        assert a.is_correct is False
+
+    def test_it_is_worth_one_mark_when_unanswered(self):
+        """Four such rows are four marks, not four questions worth one between them."""
+        questions = [
+            make_q(QuestionType.MATCHING, {"correct": letter}, {"stem": stem})
+            for stem, letter in [("Gen", "A"), ("James", "C"), ("Leo", "B"), ("Mark", "C")]
+        ]
+        answers = [make_a(questions[0], {"answer": "A"})]
+        c, t = score_section(questions, answers)
+        assert (c, t) == (1, 4)
+
+
 # ── MultiSelect ────────────────────────────────────────────────────────────────
 
 class TestMultiSelect:
