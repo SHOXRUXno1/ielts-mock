@@ -101,6 +101,13 @@
 
     .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
     .center { text-align: center; }
+    .marks {
+      display: block;
+      margin-top: 2px;
+      font-size: 7.5pt;
+      font-weight: 400;
+      color: #71717a;
+    }
 
     .section { page-break-before: always; }
     .card { page-break-inside: avoid; margin-bottom: 14px; }
@@ -111,11 +118,18 @@
       border-radius: 999px;
       font-size: 8pt;
       font-weight: 600;
-      text-transform: capitalize;
+      white-space: nowrap;
     }
     .pill-correct { background: #dcfce7; color: #15803d; }
+    .pill-partial { background: #ffedd5; color: #c2410c; }
     .pill-incorrect { background: #fee2e2; color: #b91c1c; }
     .pill-skipped { background: #fef9c3; color: #a16207; }
+
+    .key-note {
+      margin: -6px 0 14px;
+      font-size: 8.5pt;
+      color: #71717a;
+    }
 
     .empty {
       padding: 14px 12px;
@@ -210,6 +224,10 @@
   <section class="section">
     <h2>Listening</h2>
     {% if listening %}
+      <p class="key-note">
+        Answers joined by “,” must all be given. Answers joined by “|” are
+        alternatives — any one of them is accepted.
+      </p>
       {% for group in listening %}
       <div class="card">
         <h3>{{ group.label }}</h3>
@@ -228,10 +246,13 @@
           <tbody>
             {% for row in group.rows %}
             <tr>
-              <td class="num">{{ row.number }}</td>
+              <td class="num">
+                {{ row.number }}
+                {% if row.marks_label %}<span class="marks">{{ row.marks_label }}</span>{% endif %}
+              </td>
               <td>{{ row.student }}</td>
               <td>{{ row.correct }}</td>
-              <td><span class="pill pill-{{ row.outcome }}">{{ row.outcome }}</span></td>
+              <td><span class="pill pill-{{ row.outcome }}">{{ row.result_label }}</span></td>
             </tr>
             {% endfor %}
           </tbody>
@@ -246,6 +267,10 @@
   <section class="section">
     <h2>Reading</h2>
     {% if reading %}
+      <p class="key-note">
+        Answers joined by “,” must all be given. Answers joined by “|” are
+        alternatives — any one of them is accepted.
+      </p>
       {% for group in reading %}
       <div class="card">
         <h3>{{ group.label }}</h3>
@@ -264,10 +289,13 @@
           <tbody>
             {% for row in group.rows %}
             <tr>
-              <td class="num">{{ row.number }}</td>
+              <td class="num">
+                {{ row.number }}
+                {% if row.marks_label %}<span class="marks">{{ row.marks_label }}</span>{% endif %}
+              </td>
               <td>{{ row.student }}</td>
               <td>{{ row.correct }}</td>
-              <td><span class="pill pill-{{ row.outcome }}">{{ row.outcome }}</span></td>
+              <td><span class="pill pill-{{ row.outcome }}">{{ row.result_label }}</span></td>
             </tr>
             {% endfor %}
           </tbody>

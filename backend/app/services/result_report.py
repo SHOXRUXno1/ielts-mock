@@ -4,14 +4,24 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from urllib.parse import quote
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from app.services.scoring import scoring_slots_for_question
+
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 
 NO_ANSWER = "(no answer)"
+
+OUTCOME_LABELS: dict[str, str] = {
+    "correct": "Correct",
+    "partial": "Partly correct",
+    "incorrect": "Incorrect",
+    "skipped": "Skipped",
+}
 
 STATUS_LABELS: dict[str, str] = {
     "fully_scored": "Fully scored",
@@ -138,13 +148,59 @@ def format_correct_answer(answer_key: dict[str, Any] | None) -> str:
     return str(correct)
 
 
+def format_answer_set(items: Any) -> str:
+    """Join options that must *all* be given, sorted, e.g. ``B, D``.
+
+    Deliberately a comma, to keep it apart from the ``|`` used for alternatives
+    where any one is accepted. Both columns are sorted the same way so the
+    candidate's answer and the key can be compared letter for letter.
+    """
+    if not isinstance(items, list):
+        return ""
+    return ", ".join(sorted(str(item) for item in items if str(item)))
+
+
+def answer_marks(answer: Any) -> tuple[int, int]:
+    """Marks earned and marks available for one answer row.
+
+    "Choose TWO letters" occupies two question numbers and is worth two marks,
+    so one right letter earns one of them — which is what the band already
+    reflects. ``is_correct`` is all-or-nothing and cannot show that, so the
+    earned share is read from ``score``.
+    """
+    question = _get(answer, "question")
+    total = 1
+    if question is not None:
+        total = scoring_slots_for_question(
+            SimpleNamespace(
+                question_type=_get(question, "question_type"),
+                content=_get(question, "content"),
+                answer_key=_get(question, "answer_key"),
+            )
+        )
+
+    fully_correct = _get(answer, "is_correct") is True
+    if total <= 1:
+        return (1, 1) if fully_correct else (0, 1)
+    if fully_correct:
+        return total, total
+
+    try:
+        fraction = float(_get(answer, "score") or 0.0)
+    except (TypeError, ValueError):
+        fraction = 0.0
+    earned = round(fraction * total)
+    return max(0, min(total - 1, earned)), total
+
+
 def answer_outcome(answer: Any) -> str:
     student = format_student_answer(_get(answer, "response") or {})
     if student == NO_ANSWER:
         return "skipped"
     if _get(answer, "is_correct") is True:
         return "correct"
-    return "incorrect"
+    earned, _total = answer_marks(answer)
+    return "partial" if earned > 0 else "incorrect"
 
 
 def display_number(question: Any) -> str:
@@ -251,12 +307,31 @@ def _objective_groups(answers: list[Any], skill: str) -> list[dict[str, Any]]:
         rows = []
         for answer in bucket["answers"]:
             question = _get(answer, "question")
+            answer_key = _get(question, "answer_key") if question is not None else None
+            response = _get(answer, "response") or {}
+            earned, total = answer_marks(answer)
+            outcome = answer_outcome(answer)
+
+            student = format_student_answer(response)
+            correct = format_correct_answer(answer_key)
+            if total > 1:
+                # A set of options, not a list of alternatives — show both
+                # columns the same way so "Correct" is self-evident.
+                picked = format_answer_set(response.get("answer") if isinstance(response, dict) else None)
+                student = picked or student
+                expected = answer_key.get("correct", answer_key.get("answer")) if isinstance(answer_key, dict) else None
+                correct = format_answer_set(expected) or correct
+
             rows.append(
                 {
                     "number": display_number(question),
-                    "student": format_student_answer(_get(answer, "response") or {}),
-                    "correct": format_correct_answer(_get(question, "answer_key") if question else None),
-                    "outcome": answer_outcome(answer),
+                    "student": student,
+                    "correct": correct,
+                    "outcome": outcome,
+                    "result_label": OUTCOME_LABELS.get(outcome, outcome),
+                    "earned": earned,
+                    "total": total,
+                    "marks_label": f"{earned}/{total} marks" if total > 1 else "",
                 }
             )
         rows.sort(key=lambda row: _sort_key(row["number"]))
@@ -264,9 +339,19 @@ def _objective_groups(answers: list[Any], skill: str) -> list[dict[str, Any]]:
             {
                 "label": f"{prefix} {bucket['order']}",
                 "rows": rows,
-                "correct": sum(1 for row in rows if row["outcome"] == "correct"),
-                "incorrect": sum(1 for row in rows if row["outcome"] == "incorrect"),
-                "skipped": sum(1 for row in rows if row["outcome"] == "skipped"),
+                # Counted in marks, not rows, so the totals match the raw score:
+                # a half-right pair adds one mark to each side.
+                "correct": sum(row["earned"] for row in rows),
+                "incorrect": sum(
+                    row["total"] - row["earned"]
+                    for row in rows
+                    if row["outcome"] != "skipped"
+                ),
+                "skipped": sum(
+                    row["total"] - row["earned"]
+                    for row in rows
+                    if row["outcome"] == "skipped"
+                ),
             }
         )
     return groups

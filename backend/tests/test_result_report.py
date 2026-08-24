@@ -5,6 +5,7 @@ import pytest
 
 from app.services.result_report import (
     NO_ANSWER,
+    answer_marks,
     answer_outcome,
     band_descriptor,
     build_report_context,
@@ -63,11 +64,49 @@ class TestFormatCorrectAnswer:
         assert format_correct_answer({}) == ""
 
 
+def _choose_two(picked: list[str], key: list[str], score: float, is_correct: bool = False):
+    """A "Choose TWO letters" row: one question, two numbers, two marks."""
+    return {
+        "response": {"answer": picked},
+        "is_correct": is_correct,
+        "score": score,
+        "question": {
+            "question_type": "multi_select",
+            "content": {"choose_n": 2},
+            "answer_key": {"correct": key},
+        },
+    }
+
+
 class TestAnswerOutcome:
     def test_skipped_vs_incorrect(self):
         assert answer_outcome({"response": {}, "is_correct": False}) == "skipped"
         assert answer_outcome({"response": {"answer": "x"}, "is_correct": False}) == "incorrect"
         assert answer_outcome({"response": {"answer": "x"}, "is_correct": True}) == "correct"
+
+    def test_one_of_two_letters_is_partial(self):
+        row = _choose_two(["D", "C"], ["B", "C"], score=0.5)
+        assert answer_outcome(row) == "partial"
+
+    def test_no_letter_matching_is_still_incorrect(self):
+        row = _choose_two(["A", "E"], ["B", "C"], score=0.0)
+        assert answer_outcome(row) == "incorrect"
+
+
+class TestAnswerMarks:
+    def test_half_right_pair_earns_one_mark(self):
+        assert answer_marks(_choose_two(["D", "C"], ["B", "C"], score=0.5)) == (1, 2)
+
+    def test_full_pair_earns_both(self):
+        row = _choose_two(["B", "D"], ["B", "D"], score=1.0, is_correct=True)
+        assert answer_marks(row) == (2, 2)
+
+    def test_wrong_pair_earns_neither(self):
+        assert answer_marks(_choose_two(["A", "E"], ["B", "C"], score=0.0)) == (0, 2)
+
+    def test_single_mark_questions_stay_whole(self):
+        assert answer_marks({"response": {"answer": "x"}, "is_correct": True}) == (1, 1)
+        assert answer_marks({"response": {"answer": "x"}, "is_correct": False}) == (0, 1)
 
 
 def _answer(
@@ -174,6 +213,61 @@ class TestBuildReportContext:
         assert context["listening"][0]["skipped"] == 1
         assert context["writing"]["state"] == "scoring"
 
+    def test_choose_two_shows_the_mark_it_earned(self):
+        """A pair worth two marks must not read as a flat "Incorrect"."""
+        row = SimpleNamespace(
+            response={"answer": ["D", "C"]},
+            is_correct=False,
+            score=0.5,
+            question=SimpleNamespace(
+                computed_number=23,
+                computed_number_end=24,
+                order=23,
+                question_type="multi_select",
+                content={"choose_n": 2},
+                answer_key={"correct": ["B", "C"]},
+            ),
+            section=SimpleNamespace(id="l3", type="listening", order=3),
+        )
+        context = build_report_context(_minimal_detail(answers=[row]), "Alibek")
+
+        group = context["listening"][0]
+        assert group["correct"] == 1
+        assert group["incorrect"] == 1
+
+        cell = group["rows"][0]
+        assert cell["number"] == "23–24"
+        assert cell["outcome"] == "partial"
+        assert cell["result_label"] == "Partly correct"
+        assert cell["marks_label"] == "1/2 marks"
+        # Both columns use the same separator and order, so a matching pair
+        # cannot look like a mismatch.
+        assert cell["student"] == "C, D"
+        assert cell["correct"] == "B, C"
+
+    def test_full_pair_columns_match_exactly(self):
+        row = SimpleNamespace(
+            response={"answer": ["B", "D"]},
+            is_correct=True,
+            score=1.0,
+            question=SimpleNamespace(
+                computed_number=21,
+                computed_number_end=22,
+                order=21,
+                question_type="multi_select",
+                content={"choose_n": 2},
+                answer_key={"correct": ["B", "D"]},
+            ),
+            section=SimpleNamespace(id="l3", type="listening", order=3),
+        )
+        context = build_report_context(_minimal_detail(answers=[row]), "Alibek")
+
+        cell = context["listening"][0]["rows"][0]
+        assert cell["student"] == cell["correct"] == "B, D"
+        assert cell["result_label"] == "Correct"
+        assert cell["marks_label"] == "2/2 marks"
+        assert context["listening"][0]["correct"] == 2
+
     def test_writing_and_speaking_feedback(self):
         context = build_report_context(
             _minimal_detail(
@@ -239,6 +333,30 @@ class TestRender:
         assert "Cambridge IELTS 15" in html
         assert "Alibek" in html
         assert "Not attempted" in html
+
+    def test_html_renders_a_partly_correct_pair(self):
+        row = SimpleNamespace(
+            response={"answer": ["D", "C"]},
+            is_correct=False,
+            score=0.5,
+            question=SimpleNamespace(
+                computed_number=23,
+                computed_number_end=24,
+                order=23,
+                question_type="multi_select",
+                content={"choose_n": 2},
+                answer_key={"correct": ["B", "C"]},
+            ),
+            section=SimpleNamespace(id="l3", type="listening", order=3),
+        )
+        html = render_report_html(
+            build_report_context(_minimal_detail(answers=[row]), "Alibek")
+        )
+        assert "pill-partial" in html
+        assert "Partly correct" in html
+        assert "1/2 marks" in html
+        # The note that tells apart "all of these" from "any of these".
+        assert "alternatives" in html
 
     def test_pdf_bytes_start_with_header(self):
         context = build_report_context(_minimal_detail(), "Alibek")
