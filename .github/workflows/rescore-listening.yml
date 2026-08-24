@@ -1,0 +1,45 @@
+name: Re-mark Listening
+
+# Correcting an answer key leaves marks already awarded untouched, so a
+# candidate keeps whatever the old key gave her until the paper is re-marked.
+# This reaches the server the same way the deploy does, so nobody needs a copy
+# of the production credentials to put that right.
+
+on:
+  workflow_dispatch:
+    inputs:
+      test:
+        description: Test title, or enough of it to match
+        required: true
+        default: Cambridge IELTS 9
+      apply:
+        description: Write the new marks. Leave off to see what would change.
+        type: boolean
+        default: false
+
+concurrency:
+  group: rescore-production
+  cancel-in-progress: false
+
+jobs:
+  rescore:
+    name: Re-mark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-mark Listening on the server
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          TEST_TITLE: ${{ inputs.test }}
+          APPLY_FLAG: ${{ inputs.apply && '--apply' || '' }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          # Carried as variables rather than pasted into the command, so a
+          # title cannot smuggle a second command in behind it.
+          envs: TEST_TITLE,APPLY_FLAG
+          script: |
+            set -e
+            cd /opt/ielts-mock
+            docker compose -f docker-compose.prod.yml exec -T backend \
+              python scripts/rescore_listening.py $APPLY_FLAG "$TEST_TITLE"
