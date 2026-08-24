@@ -617,7 +617,7 @@ async def download_result_pdf(
     student_name = await _attempt_student_name(db, attempt_id, actor)
     context = build_report_context(detail, student_name)
     pdf = await asyncio.to_thread(render_report_pdf, context)
-    ascii_name, utf8_name = report_filenames(detail)
+    ascii_name, utf8_name = report_filenames(detail, student_name)
     return StreamingResponse(
         io.BytesIO(pdf),
         media_type="application/pdf",

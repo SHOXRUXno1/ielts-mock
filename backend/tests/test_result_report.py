@@ -318,13 +318,35 @@ class TestBuildReportContext:
 
 
 class TestFilenames:
-    def test_ascii_and_utf8_names(self):
-        ascii_name, utf8_name = report_filenames(_minimal_detail())
-        assert ascii_name == "ielts-result-2026-01-15.pdf"
-        assert utf8_name.endswith("2026-01-15.pdf")
+    def test_names_the_file_after_the_student(self):
+        ascii_name, utf8_name = report_filenames(_minimal_detail(), "Alibek Karimov")
+        assert utf8_name == "Alibek Karimov - Cambridge IELTS 15 Test 1.pdf"
+        assert ascii_name == "alibek-karimov-cambridge-ielts-15-test-1.pdf"
         header = content_disposition(ascii_name, utf8_name)
-        assert 'filename="ielts-result-2026-01-15.pdf"' in header
+        assert 'filename="alibek-karimov-cambridge-ielts-15-test-1.pdf"' in header
         assert "filename*=UTF-8''" in header
+
+    def test_no_date_in_the_name(self):
+        _ascii, utf8_name = report_filenames(_minimal_detail(), "Alibek Karimov")
+        assert "2026" not in utf8_name
+
+    def test_keeps_non_latin_names_and_still_offers_ascii(self):
+        ascii_name, utf8_name = report_filenames(_minimal_detail(), "Шохрух Ниёзов")
+        assert utf8_name.startswith("Шохрух Ниёзов - ")
+        # Cyrillic cannot survive the ASCII fallback; the test title carries it.
+        assert ascii_name == "cambridge-ielts-15-test-1.pdf"
+
+    def test_falls_back_when_the_student_is_unknown(self):
+        _ascii, utf8_name = report_filenames(_minimal_detail(), None)
+        assert utf8_name.startswith("Student - ")
+
+    def test_strips_characters_a_filesystem_would_reject(self):
+        ascii_name, utf8_name = report_filenames(
+            _minimal_detail(), 'Ali/Bek: "Karimov"'
+        )
+        assert "/" not in utf8_name and ":" not in utf8_name and '"' not in utf8_name
+        assert utf8_name.startswith("Ali Bek Karimov - ")
+        assert ascii_name.startswith("ali-bek-karimov-")
 
 
 class TestRender:

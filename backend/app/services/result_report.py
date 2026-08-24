@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -501,17 +502,40 @@ def build_report_context(detail: Any, student_name: str) -> dict[str, Any]:
     }
 
 
-def report_filenames(detail: Any) -> tuple[str, str]:
-    finished = _as_datetime(_get(detail, "finished_at")) or _as_datetime(
-        _get(detail, "created_at")
+def _clean_for_filename(value: Any) -> str:
+    """Strip anything a filesystem would object to, keeping letters of any script."""
+    text = str(value or "")
+    kept = "".join(char if char.isalnum() or char in " -_" else " " for char in text)
+    return " ".join(kept.split())[:60]
+
+
+def _ascii_slug(value: str) -> str:
+    """Latin-only fallback for clients that ignore the UTF-8 filename.
+
+    Accents are folded (Gulnora → Gulnora), and anything left outside ASCII —
+    Cyrillic, for instance — simply drops out. The caller supplies a default
+    for names that vanish entirely.
+    """
+    decomposed = unicodedata.normalize("NFKD", value)
+    kept = "".join(
+        char if char.isascii() and char.isalnum() else " " for char in decomposed
     )
-    date = finished.strftime("%Y-%m-%d") if finished else "result"
-    ascii_name = f"ielts-result-{date}.pdf"
-    title = str(_get(detail, "test_title") or "IELTS Mock")
-    cleaned = "".join(char if char.isalnum() or char in " -_" else " " for char in title)
-    cleaned = " ".join(cleaned.split())[:80] or "IELTS Mock"
-    utf8_name = f"IELTS Result - {cleaned} - {date}.pdf"
-    return ascii_name, utf8_name
+    return "-".join(kept.split()).lower()[:60]
+
+
+def report_filenames(detail: Any, student_name: Any = None) -> tuple[str, str]:
+    """Filenames for the downloaded report: candidate first, then the test.
+
+    Reports are filed and sent on per student, so the name is what anyone
+    scanning a folder looks for. The date is left out — it is printed inside
+    the report, and it pushed the useful part off the end of the name. The
+    test title stays so that one student's several reports stay apart.
+    """
+    student = _clean_for_filename(student_name) or "Student"
+    title = _clean_for_filename(_get(detail, "test_title")) or "IELTS Mock"
+    utf8_name = f"{student} - {title}.pdf"
+    ascii_name = _ascii_slug(f"{student} {title}") or "ielts-result"
+    return f"{ascii_name}.pdf", utf8_name
 
 
 def content_disposition(ascii_name: str, utf8_name: str) -> str:
