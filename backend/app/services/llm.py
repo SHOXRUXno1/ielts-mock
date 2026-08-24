@@ -40,6 +40,43 @@ _EMPTY_STT_MARKERS = frozenset(
     }
 )
 
+# Whisper never answers "nothing". Given audio without speech it invents a short
+# stock phrase, and that invention was being stored as the candidate's answer:
+# in one live sitting five of six Part 1 turns came back "Thank you.", and the
+# intro reply became the student's name, so the examiner addressed her as
+# "Thank" for the rest of the exam.
+#
+# Probed against the live Groq API (scripts/_probe_stt_silence.py): digital
+# silence transcribes as "you", while microphone room tone and mains hum both
+# transcribe as ".".
+#
+# The model's own confidence cannot catch this. For room tone Groq reports
+# no_speech_prob 0.089 and avg_logprob -0.19 — figures that describe clean,
+# confident speech. Only the text gives the game away, so the text is what we
+# read. Every phrase here is a stock filler no candidate would offer as their
+# whole answer; a genuinely brief reply such as "Call me Sasha" is untouched.
+_SILENCE_HALLUCINATIONS = frozenset(
+    {
+        "you",
+        "thank you",
+        "thank you very much",
+        "thanks",
+        "thanks a lot",
+        "thank you for watching",
+        "thanks for watching",
+        "thank you for listening",
+        "please subscribe",
+        "subscribe",
+        "bye",
+        "goodbye",
+        "bye bye",
+        "the end",
+        "you you",
+    }
+)
+
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+
 
 def reset_groq_stt_circuit() -> None:
     global _groq_stt_blocked
@@ -53,9 +90,42 @@ def _block_groq_stt(reason: str) -> None:
     _groq_stt_blocked = True
 
 
+def _strip_for_match(text: str) -> str:
+    """Reduce a phrase to bare words for comparison against the stock list."""
+    return re.sub(r"[^a-z0-9\s]", "", text.lower()).strip()
+
+
+def _is_silence_hallucination(text: str) -> bool:
+    """True when the transcript is Whisper talking to itself over silence.
+
+    Sentences are de-duplicated first: fed a quiet microphone the model often
+    repeats one filler, and "Thank you. Thank you." is no more an answer than a
+    single "Thank you." is.
+    """
+    bare = _strip_for_match(text)
+    if not bare:
+        # Punctuation only — "." and "..." are what room tone returns.
+        return True
+    unique = {
+        _strip_for_match(s)
+        for s in _SENTENCE_SPLIT_RE.split(text.strip())
+        if _strip_for_match(s)
+    }
+    return bool(unique) and unique <= _SILENCE_HALLUCINATIONS
+
+
 def _normalize_stt_text(text: str) -> str:
+    """Turn a provider's output into the candidate's words, or "" if there were none.
+
+    Returning "" matters: the caller answers 400 and the candidate is asked to
+    speak again, which is the honest outcome when nothing was recorded. Storing
+    the model's invention instead marks a student on words they never said.
+    """
     cleaned = text.strip().strip('"').strip()
     if cleaned.lower() in _EMPTY_STT_MARKERS:
+        return ""
+    if _is_silence_hallucination(cleaned):
+        logger.info("Discarding silence hallucination from STT: %r", cleaned[:80])
         return ""
     return cleaned
 

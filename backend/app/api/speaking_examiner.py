@@ -311,6 +311,22 @@ def _is_intro_turn(turn: dict) -> bool:
     return turn.get("phase") == "intro"
 
 
+def _is_intro_state(session: "SpeakingSession | None") -> bool:
+    """True during the name exchange, where nothing the candidate says is marked.
+
+    Asking someone to repeat their name is fair; refusing to begin the exam until
+    a microphone yields one is not. Neither intro answer is scored, and the
+    engine already has a frame for an unknown name, so an unrecognised reply here
+    carries the test forward instead of stranding the candidate on question one.
+    """
+    if session is None:
+        return False
+    return session.current_state in (
+        SpeakingState.INTRO_GREETING.value,
+        SpeakingState.INTRO_NICKNAME.value,
+    )
+
+
 def _history_turn(role: str, text: str, phase: str | None = None) -> dict:
     turn: dict = {"role": role, "text": text}
     if phase:
@@ -1362,12 +1378,6 @@ async def transcribe_and_respond(
         )
         whisper_ms = int((time.perf_counter() - t0) * 1000)
 
-        if not transcript.strip():
-            return JSONResponse(
-                status_code=400,
-                content={"detail": "Could not detect speech — try again"},
-            )
-
         live_session: SpeakingSession | None = None
         if session_id:
             live_session = await _get_live_session(
@@ -1379,6 +1389,12 @@ async def transcribe_and_respond(
             history = list(live_session.history_json or [])
         else:
             history = []
+
+        if not transcript.strip() and not _is_intro_state(live_session):
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Could not detect speech — try again"},
+            )
 
         if live_session is not None:
             plan = await load_speaking_plan(live_session.test_id, db)

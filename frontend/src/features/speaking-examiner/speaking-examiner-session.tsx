@@ -410,7 +410,8 @@ export function SpeakingExaminerSession({
     startRecording,
     stopRecording,
     abortRecording,
-    cleanupStream,
+    warmUpMic,
+    releaseMic,
   } = useSpeakingRecorder({
     turnKind,
     onRecordingComplete: processRecording,
@@ -422,6 +423,21 @@ export function SpeakingExaminerSession({
   useEffect(() => {
     startRecordingRef.current = startRecording
   }, [startRecording])
+
+  // Open the microphone once the candidate is the one being waited on, so the
+  // device has settled before they speak: a capture device is deaf for its
+  // first moments while echo cancellation and gain control converge, which cost
+  // short answers most of their words.
+  //
+  // Deliberately not done during 'playing'. Reaching for the device while the
+  // examiner's audio is going gains nothing — the candidate cannot answer yet —
+  // and it puts a getUserMedia call in the middle of playback, which is the one
+  // part of this that cannot be exercised outside a real browser.
+  useEffect(() => {
+    if (phase === 'ready' || phase === 'prep') {
+      void warmUpMic()
+    }
+  }, [phase, warmUpMic])
 
   const handlePrepComplete = useCallback(async () => {
     if (prepCompleteRef.current) return
@@ -569,7 +585,7 @@ export function SpeakingExaminerSession({
       if (phaseRef.current === 'recording') {
         abortRecording()
       } else {
-        cleanupStream()
+        releaseMic()
       }
 
       resetAudioState()
@@ -598,7 +614,7 @@ export function SpeakingExaminerSession({
     [
       phaseRef,
       abortRecording,
-      cleanupStream,
+      releaseMic,
       resetAudioState,
       resetFlow,
       resetMicCheck,
