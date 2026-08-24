@@ -2,12 +2,48 @@ import type { AnswerRead } from '@/lib/api/attempts'
 import {
   assignSlotNumbers,
   countScoringSlots,
+  scoringSlotsForQuestion,
   type Question,
 } from '@/features/tests/data/schema'
 
 export const OBJECTIVE_QUESTION_TOTAL = 40
 
-export type AnswerOutcome = 'correct' | 'incorrect' | 'skipped'
+export type AnswerOutcome = 'correct' | 'partial' | 'incorrect' | 'skipped'
+
+export type AnswerMarks = { earned: number; total: number }
+
+/**
+ * Marks the question is worth, and how many the candidate earned.
+ *
+ * "Choose TWO letters" fills two question numbers and is worth two marks, so
+ * one right letter earns one of them. The server already scores it that way —
+ * `score` is the fraction earned, and the raw total includes it — but the
+ * report used to collapse the pair into a single row and call it wrong, which
+ * read as though the right letter had counted for nothing.
+ *
+ * Only questions that span several numbers are split. Elsewhere `is_correct`
+ * stays the single source of truth, so nothing that scores one mark today can
+ * start reporting a fraction of one.
+ */
+export function answerMarks(answer: AnswerRead): AnswerMarks {
+  const question = answer.question
+  const total = question
+    ? scoringSlotsForQuestion({
+        question_type: question.question_type,
+        content: question.content,
+        answer_key: question.answer_key,
+      })
+    : 1
+
+  if (total <= 1) {
+    return { earned: answer.is_correct === true ? 1 : 0, total: 1 }
+  }
+  if (answer.is_correct === true) return { earned: total, total }
+
+  const fraction = answer.score ?? 0
+  const earned = Math.round(fraction * total)
+  return { earned: Math.max(0, Math.min(total - 1, earned)), total }
+}
 
 export function formatStudentAnswer(response: Record<string, unknown>): string {
   const val = response.answer
@@ -19,6 +55,26 @@ export function formatStudentAnswer(response: Record<string, unknown>): string {
       .join('; ')
   }
   return String(val)
+}
+
+/** A–J option letters, as matching / multiple-choice keys are written. */
+const CHOICE_LETTER = /^[A-Ja-j]$/
+
+/**
+ * Split a formatted answer into option letters, or null if it is ordinary text.
+ *
+ * Single letters must stay readable: a strikethrough through "B" sits on the
+ * middle bar and the glyph reads as "D". Callers render these as marks, not
+ * struck-through text.
+ */
+export function splitChoiceLetters(value: string): string[] | null {
+  const parts = value
+    .trim()
+    .split(/\s*[|,]\s*|\s+/)
+    .filter(Boolean)
+  if (parts.length === 0) return null
+  if (!parts.every((part) => CHOICE_LETTER.test(part))) return null
+  return parts.map((part) => part.toUpperCase())
 }
 
 export function formatCorrectAnswer(
@@ -53,7 +109,40 @@ export function answerOutcome(answer: AnswerRead): AnswerOutcome {
   const student = formatStudentAnswer(answer.response)
   if (student === '(no answer)') return 'skipped'
   if (answer.is_correct === true) return 'correct'
-  return 'incorrect'
+  return answerMarks(answer).earned > 0 ? 'partial' : 'incorrect'
+}
+
+/**
+ * Split a question's marks across the report's three buckets.
+ *
+ * Counted in marks rather than rows so the totals agree with the raw score in
+ * the header: a half-right pair adds one mark to each side instead of one row
+ * to "incorrect".
+ */
+export function tallyMarks(answers: AnswerRead[]): {
+  correct: number
+  incorrect: number
+  skipped: number
+} {
+  let correct = 0
+  let incorrect = 0
+  let skipped = 0
+  for (const answer of answers) {
+    const { earned, total } = answerMarks(answer)
+    correct += earned
+    if (answerOutcome(answer) === 'skipped') skipped += total - earned
+    else incorrect += total - earned
+  }
+  return { correct, incorrect, skipped }
+}
+
+/** Partial answers belong under "incorrect": a mark was lost there. */
+export function matchesOutcomeFilter(
+  outcome: AnswerOutcome,
+  filter: AnswerOutcome,
+): boolean {
+  if (filter === 'incorrect') return outcome === 'incorrect' || outcome === 'partial'
+  return outcome === filter
 }
 
 function snapshotAsQuestion(q: NonNullable<AnswerRead['question']>): Question {

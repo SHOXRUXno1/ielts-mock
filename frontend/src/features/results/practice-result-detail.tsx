@@ -32,7 +32,10 @@ import {
   writingBandFromJobs,
 } from './writing-feedback-panel'
 import { EvaluationProgressCard, isJobActive } from './evaluation-progress'
+import { AnswerMark } from './components/answer-mark'
 import {
+  answerMarks,
+  answerOutcome,
   formatCorrectAnswer,
   formatStudentAnswer,
 } from './lib/answers'
@@ -400,9 +403,9 @@ export function PracticeResultDetail({ attempt }: Props) {
                 </TableHeader>
                 <TableBody>
                   {filteredAnswers.map((a) => {
-                    const isCorrect = a.is_correct === true
+                    const outcome = answerOutcome(a)
+                    const marks = answerMarks(a)
                     const student = formatStudentAnswer(a.response)
-                    const skipped = student === '(no answer)'
                     const correctText = formatCorrectAnswer(
                       a.question?.answer_key ?? null,
                     )
@@ -411,35 +414,44 @@ export function PracticeResultDetail({ attempt }: Props) {
                         key={a.id}
                         className={cn(
                           'border-l-2',
-                          isCorrect
+                          outcome === 'correct'
                             ? 'border-l-transparent'
-                            : skipped
+                            : outcome === 'skipped'
                               ? 'border-l-warning-foreground/60 bg-warning/20'
-                              : 'border-l-destructive bg-destructive/5',
+                              : outcome === 'partial'
+                                ? 'border-l-warning-foreground bg-warning/15'
+                                : 'border-l-destructive bg-destructive/5',
                         )}
                       >
                         <TableCell className='py-2 font-medium tabular-nums text-muted-foreground'>
                           {a.question?.computed_number ??
                             a.question?.order ??
                             '?'}
-                        </TableCell>
-                        <TableCell
-                          className={cn(
-                            'py-2 font-medium',
-                            skipped && 'text-muted-foreground',
+                          {marks.total > 1 && (
+                            <span className='block text-[11px] font-normal opacity-80'>
+                              {marks.earned}/{marks.total} marks
+                            </span>
                           )}
-                        >
-                          {skipped ? '—' : student}
                         </TableCell>
-                        <TableCell
-                          className={cn(
-                            'py-2',
-                            correctText
-                              ? 'font-medium text-success-foreground'
-                              : 'text-muted-foreground',
+                        <TableCell className='py-2'>
+                          {outcome === 'skipped' ? (
+                            <span className='text-muted-foreground'>—</span>
+                          ) : (
+                            <AnswerMark
+                              value={student}
+                              tone={outcome === 'incorrect' ? 'wrong' : 'plain'}
+                              matchAgainst={
+                                outcome === 'partial' ? correctText : undefined
+                              }
+                            />
                           )}
-                        >
-                          {correctText || '—'}
+                        </TableCell>
+                        <TableCell className='py-2'>
+                          {correctText ? (
+                            <AnswerMark value={correctText} tone='right' />
+                          ) : (
+                            <span className='text-muted-foreground'>—</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     )

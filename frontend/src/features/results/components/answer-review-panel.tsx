@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Check, CircleMinus, CircleX } from 'lucide-react'
+import { Check, CircleDashed, CircleMinus, CircleX } from 'lucide-react'
 import type { AnswerRead } from '@/lib/api/attempts'
 import {
   Table,
@@ -12,23 +12,29 @@ import {
 import { cn } from '@/lib/utils'
 import {
   OBJECTIVE_QUESTION_TOTAL,
+  answerMarks,
   answerOutcome,
   buildDisplayNumbers,
   formatCorrectAnswer,
   formatStudentAnswer,
   groupAnswersByPart,
+  matchesOutcomeFilter,
+  tallyMarks,
+  type AnswerMarks,
   type AnswerOutcome,
 } from '../lib/answers'
 import { accuracyByPart } from '../lib/insights'
 import { ENTER } from '../lib/motion'
 import { type SkillKey, skillMeta } from '../lib/skill'
 import { isSectionNotAttempted } from '../lib/status'
+import { AnswerMark } from './answer-mark'
 import { OutcomeBar } from './outcome-bar'
 import { ResultEmptyState } from './result-empty-state'
 import { SkillReportHeader } from './skill-report-header'
 import { Panel, PanelBody, PanelHeader, PanelToolbar } from '@/components/report'
 
-type FilterKey = AnswerOutcome
+/** Partial answers have no bucket of their own; they filter as incorrect. */
+type FilterKey = Exclude<AnswerOutcome, 'partial'>
 
 type AnswerReviewPanelProps = {
   skill: Extract<SkillKey, 'listening' | 'reading'>
@@ -73,28 +79,16 @@ export function AnswerReviewPanel({
     [filtered, displayNumbers],
   )
 
-  const counts = useMemo(() => {
-    let correct = 0
-    let incorrect = 0
-    let skipped = 0
-    for (const row of rows) {
-      const outcome = answerOutcome(row)
-      if (outcome === 'correct') correct += 1
-      else if (outcome === 'skipped') skipped += 1
-      else incorrect += 1
-    }
-    return { correct, incorrect, skipped }
-  }, [rows])
+  const counts = useMemo(() => tallyMarks(rows), [rows])
 
   const partAccuracy = useMemo(
     () => accuracyByPart(answers, skill),
     [answers, skill],
   )
 
-  const visible = rows.filter((row) => {
-    if (filter == null) return true
-    return answerOutcome(row) === filter
-  })
+  const visible = rows.filter(
+    (row) => filter == null || matchesOutcomeFilter(answerOutcome(row), filter),
+  )
   const groups = useMemo(
     () => groupAnswersByPart(visible, skill),
     [visible, skill],
@@ -268,31 +262,32 @@ function AnswerTableRow({
   const outcome = answerOutcome(answer)
   const student = formatStudentAnswer(answer.response)
   const correct = formatCorrectAnswer(answer.question?.answer_key ?? null)
+  const marks = answerMarks(answer)
 
   return (
     <TableRow className={cn('h-11 border-l-[3px]', outcomeRowClass(outcome))}>
       <TableCell className='py-0'>
         <OutcomeIcon outcome={outcome} />
       </TableCell>
-      <TableCell className='py-0 font-medium tabular-nums text-muted-foreground'>
+      <TableCell className='py-1 font-medium tabular-nums text-muted-foreground'>
         {number}
+        <MarksLabel marks={marks} className='block' />
       </TableCell>
-      <TableCell className='py-0 font-mono text-[13px]'>
+      <TableCell className='py-0'>
         {outcome === 'skipped' ? (
           <span className='text-muted-foreground'>—</span>
-        ) : outcome === 'incorrect' ? (
-          <span className='text-muted-foreground line-through'>{student}</span>
         ) : (
-          <span className='font-medium'>{student}</span>
+          <AnswerMark
+            value={student}
+            tone={outcome === 'incorrect' ? 'wrong' : 'plain'}
+            matchAgainst={outcome === 'partial' ? correct : undefined}
+          />
         )}
       </TableCell>
-      <TableCell
-        className={cn(
-          'py-0 font-mono text-[13px]',
-          correct ? 'font-medium text-success-foreground' : 'text-muted-foreground',
+      <TableCell className='py-0'>
+        {correct ? <AnswerMark value={correct} tone='right' /> : (
+          <span className='text-muted-foreground'>—</span>
         )}
-      >
-        {correct || '—'}
       </TableCell>
     </TableRow>
   )
@@ -308,28 +303,52 @@ function AnswerCard({
   const outcome = answerOutcome(answer)
   const student = formatStudentAnswer(answer.response)
   const correct = formatCorrectAnswer(answer.question?.answer_key ?? null)
+  const marks = answerMarks(answer)
 
   return (
     <div className={cn('rounded-xl border border-l-[3px] p-3', outcomeRowClass(outcome))}>
       <div className='mb-2 flex items-center justify-between gap-2'>
         <span className='text-xs font-medium tabular-nums text-muted-foreground'>
           Question {number}
+          <MarksLabel marks={marks} className='ms-2' />
         </span>
         <OutcomeIcon outcome={outcome} />
       </div>
-      <p className='font-mono text-[13px] font-medium text-foreground'>
+      <p className='font-medium text-foreground'>
         {outcome === 'skipped' ? (
           '—'
-        ) : outcome === 'incorrect' ? (
-          <span className='text-muted-foreground line-through'>{student}</span>
         ) : (
-          student
+          <AnswerMark
+            value={student}
+            tone={outcome === 'incorrect' ? 'wrong' : 'plain'}
+            matchAgainst={outcome === 'partial' ? correct : undefined}
+          />
         )}
       </p>
-      <p className='mt-1 font-mono text-xs text-muted-foreground'>
-        Correct: {correct || '—'}
+      <p className='mt-1.5 flex items-center gap-2 text-xs text-muted-foreground'>
+        <span>Correct:</span>
+        {correct ? <AnswerMark value={correct} tone='right' /> : '—'}
       </p>
     </div>
+  )
+}
+
+/**
+ * "1/2 marks" on questions that fill more than one question number, so a
+ * half-right "Choose TWO letters" pair does not read as a plain zero.
+ */
+function MarksLabel({
+  marks,
+  className,
+}: {
+  marks: AnswerMarks
+  className?: string
+}) {
+  if (marks.total <= 1) return null
+  return (
+    <span className={cn('text-[11px] font-normal tabular-nums opacity-80', className)}>
+      {marks.earned}/{marks.total} marks
+    </span>
   )
 }
 
@@ -339,6 +358,14 @@ function OutcomeIcon({ outcome }: { outcome: AnswerOutcome }) {
       <span className='inline-flex items-center'>
         <Check className='size-4 text-success-foreground' />
         <span className='sr-only'>Correct</span>
+      </span>
+    )
+  }
+  if (outcome === 'partial') {
+    return (
+      <span className='inline-flex items-center'>
+        <CircleDashed className='size-4 text-warning-foreground' />
+        <span className='sr-only'>Partly correct</span>
       </span>
     )
   }
@@ -360,6 +387,7 @@ function OutcomeIcon({ outcome }: { outcome: AnswerOutcome }) {
 
 function outcomeRowClass(outcome: AnswerOutcome): string {
   if (outcome === 'incorrect') return 'border-l-destructive bg-destructive/5'
+  if (outcome === 'partial') return 'border-l-warning-foreground bg-warning/15'
   if (outcome === 'skipped') return 'border-l-warning-foreground/60 bg-warning/20'
   return 'border-l-transparent'
 }

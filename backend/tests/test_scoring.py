@@ -236,6 +236,9 @@ class TestMultiSelect:
         c, t = score_answer(q, a)
         assert (c, t) == (1, 2)
         assert a.score == 0.5
+        # is_correct is all-or-nothing, so the earned mark only shows in score.
+        # Reports must read score, not is_correct, or the mark disappears.
+        assert a.is_correct is False
 
     def test_list_none_correct(self):
         q = make_q(QuestionType.MULTI_SELECT, {"correct": ["A", "C"]})

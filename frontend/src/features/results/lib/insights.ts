@@ -1,5 +1,5 @@
 import type { AnswerRead, AttemptDetailRead } from '@/lib/api/attempts'
-import { answerOutcome, groupAnswersByPart } from './answers'
+import { groupAnswersByPart, tallyMarks } from './answers'
 import { formatBand } from './band'
 import { SKILL_BAND_FIELD, SKILL_KEYS, type SkillKey } from './skill'
 
@@ -84,22 +84,14 @@ export function accuracyByPart(
     (answer) => answer.is_correct !== null && answer.section?.type === skill,
   )
   return groupAnswersByPart(scored, skill).map((group) => {
-    let correct = 0
-    let incorrect = 0
-    let skipped = 0
-    for (const answer of group.answers) {
-      const outcome = answerOutcome(answer)
-      if (outcome === 'correct') correct += 1
-      else if (outcome === 'skipped') skipped += 1
-      else incorrect += 1
-    }
+    const { correct, incorrect, skipped } = tallyMarks(group.answers)
     return {
       key: group.key,
       label: group.label,
       correct,
       incorrect,
       skipped,
-      total: group.answers.length,
+      total: correct + incorrect + skipped,
     }
   })
 }
