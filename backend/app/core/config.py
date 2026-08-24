@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     gemini_api_keys: str = ""  # comma-separated list of API keys for rotation
     gemini_model: str = "gemini-3.1-flash-lite"
     gemini_rpm_limit: int = 15  # requests per minute per key
+    # Hearing a candidate and marking an essay are different jobs, and they were
+    # sharing one setting: changing the model to suit written work silently
+    # changed how the exam hears speech. Measured on deliberately ungrammatical
+    # speech (scripts/_probe_stt_grammar_fidelity.py), flash-lite was the weakest
+    # of the Gemini models that accept audio at all, and the only one to misread
+    # accented English that its siblings got right.
+    gemini_stt_model: str = "gemini-3.5-flash"
 
     @property
     def gemini_key_list(self) -> list[str]:

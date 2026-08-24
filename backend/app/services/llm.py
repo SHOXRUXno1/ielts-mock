@@ -132,10 +132,10 @@ def _normalize_stt_text(text: str) -> str:
     return cleaned
 
 
-def _gemini_url() -> str:
+def _gemini_url(model: str | None = None) -> str:
     return (
         "https://generativelanguage.googleapis.com/v1beta/models"
-        f"/{settings.gemini_model}:generateContent"
+        f"/{model or settings.gemini_model}:generateContent"
     )
 
 
@@ -1223,7 +1223,7 @@ async def _transcribe_with_gemini(
     async def _post(api_key: str) -> httpx.Response:
         client = get_http_client()
         return await client.post(
-            _gemini_url(),
+            _gemini_url(settings.gemini_stt_model),
             json=payload,
             params={"key": api_key},
             timeout=60.0,
@@ -1240,7 +1240,11 @@ async def _transcribe_with_gemini(
         if isinstance(part, dict) and isinstance(part.get("text"), str):
             text += part["text"]
     transcript = _normalize_stt_text(text)
-    logger.info("Gemini STT transcript length: %d chars", len(transcript))
+    logger.info(
+        "Gemini STT (%s) transcript length: %d chars",
+        settings.gemini_stt_model,
+        len(transcript),
+    )
     return transcript
 
 

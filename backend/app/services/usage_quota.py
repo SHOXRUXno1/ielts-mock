@@ -192,6 +192,7 @@ def _gemini() -> dict[str, Any]:
         True,
         status,
         model=settings.gemini_model,
+        stt_model=settings.gemini_stt_model,
         key_count=len(keys),
         rpm_per_key=settings.gemini_rpm_limit,
         used=used,
