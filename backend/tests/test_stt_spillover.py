@@ -112,3 +112,77 @@ class TestSpillover:
 
         with pytest.raises(httpx.HTTPStatusError):
             await llm.transcribe_audio_bytes(AUDIO)
+
+
+class TestTheEngineIsOnTheRecord:
+    """Spilling over is correct, but it must also be visible afterwards.
+
+    The spillover above is silent by design, which left "recognition is
+    sometimes wrong" with no denominator: a sitting's turns can be split between
+    two models with different failure habits, and nobody could tell which one
+    had heard a given answer. Naming the engine, and why it ran, is what makes
+    the complaint countable.
+    """
+
+    @pytest.mark.asyncio
+    async def test_a_groq_turn_names_groq_and_needs_no_excuse(self, monkeypatch):
+        monkeypatch.setattr(llm.settings, "groq_stt_rpm_limit", 5)
+        _record_calls(monkeypatch, groq_result="from groq")
+
+        result = await llm.transcribe_audio_bytes_detailed(AUDIO)
+
+        assert result.text == "from groq"
+        assert result.provider == "groq"
+        assert result.reason is None
+        assert result.audio_bytes == len(AUDIO)
+
+    @pytest.mark.asyncio
+    async def test_a_busy_minute_is_named_as_the_reason(self, monkeypatch):
+        monkeypatch.setattr(llm.settings, "groq_stt_rpm_limit", 1)
+        _record_calls(monkeypatch, groq_result="from groq")
+
+        first = await llm.transcribe_audio_bytes_detailed(AUDIO)
+        second = await llm.transcribe_audio_bytes_detailed(AUDIO)
+
+        assert (first.provider, first.reason) == ("groq", None)
+        assert (second.provider, second.reason) == ("gemini", "groq_budget_spent")
+
+    @pytest.mark.asyncio
+    async def test_an_http_failure_carries_its_status(self, monkeypatch):
+        monkeypatch.setattr(llm.settings, "groq_stt_rpm_limit", 5)
+        _record_calls(monkeypatch, groq_result=_http_error(429))
+
+        result = await llm.transcribe_audio_bytes_detailed(AUDIO)
+
+        assert (result.provider, result.reason) == ("gemini", "groq_http_429")
+
+    @pytest.mark.asyncio
+    async def test_a_dead_provider_reads_differently_from_a_busy_one(
+        self, monkeypatch
+    ):
+        """Both route to Gemini; only one of them means Groq needs attention."""
+        monkeypatch.setattr(llm, "_groq_stt_blocked", True)
+        calls = _record_calls(monkeypatch, groq_result="from groq")
+
+        result = await llm.transcribe_audio_bytes_detailed(AUDIO)
+
+        assert (result.provider, result.reason) == ("gemini", "groq_blocked")
+        assert calls["groq"] == 0
+
+    @pytest.mark.asyncio
+    async def test_a_missing_key_reads_differently_again(self, monkeypatch):
+        monkeypatch.setattr(llm.settings, "groq_api_key", "")
+        _record_calls(monkeypatch, groq_result="from groq")
+
+        result = await llm.transcribe_audio_bytes_detailed(AUDIO)
+
+        assert (result.provider, result.reason) == ("gemini", "groq_not_configured")
+
+    @pytest.mark.asyncio
+    async def test_callers_that_only_want_the_words_still_get_a_string(
+        self, monkeypatch
+    ):
+        monkeypatch.setattr(llm.settings, "groq_stt_rpm_limit", 5)
+        _record_calls(monkeypatch, groq_result="from groq")
+
+        assert await llm.transcribe_audio_bytes(AUDIO) == "from groq"

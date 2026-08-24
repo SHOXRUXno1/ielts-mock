@@ -6,7 +6,9 @@ import json
 import logging
 import mimetypes
 import re
+import time
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 
 import httpx
 
@@ -1024,11 +1026,42 @@ async def transcribe_audio(audio_url: str) -> str:
     return await transcribe_audio_bytes(audio_bytes, content_type=content_type)
 
 
+@dataclass(frozen=True)
+class Transcription:
+    """A transcript together with the engine that produced it.
+
+    Which engine ran stops being an implementation detail once two of them serve
+    the same exam. Groq's minute budget sends the overflow to Gemini, so one
+    candidate's turns can be split between two models with different failure
+    habits — and a transcript can only be judged next to its source. Keeping
+    that on the record is what turns "recognition is sometimes wrong" from an
+    impression into something countable.
+    """
+
+    text: str
+    provider: str
+    reason: str | None = None
+    latency_ms: int = 0
+    audio_bytes: int = 0
+
+
 async def transcribe_audio_bytes(
     audio_bytes: bytes,
     *,
     content_type: str | None = None,
 ) -> str:
+    """Transcribe raw audio, for callers that only need the words."""
+    result = await transcribe_audio_bytes_detailed(
+        audio_bytes, content_type=content_type
+    )
+    return result.text
+
+
+async def transcribe_audio_bytes_detailed(
+    audio_bytes: bytes,
+    *,
+    content_type: str | None = None,
+) -> Transcription:
     """Transcribe raw audio. Groq Whisper is the fast path within its minute
     budget; everything else spills over to Gemini STT, which has far more
     headroom. A candidate's turn must never fail just because Groq is busy.
@@ -1042,29 +1075,58 @@ async def transcribe_audio_bytes(
 
     can_use_gemini = bool(settings.gemini_key_list)
     groq_error: Exception | None = None
+    reason: str | None = None
+    started = time.perf_counter()
+
+    def done(text: str, provider: str) -> Transcription:
+        record = Transcription(
+            text=text,
+            provider=provider,
+            reason=reason,
+            latency_ms=int((time.perf_counter() - started) * 1000),
+            audio_bytes=len(audio_bytes),
+        )
+        logger.info(
+            "STT provider=%s reason=%s latency_ms=%d audio_bytes=%d chars=%d empty=%s",
+            record.provider,
+            record.reason or "-",
+            record.latency_ms,
+            record.audio_bytes,
+            len(record.text),
+            not record.text.strip(),
+        )
+        return record
 
     if settings.groq_api_key and not _groq_stt_blocked:
         # Skip Groq outright when its budget is spent, so we neither queue
         # behind the window nor spend a request we know will be refused.
         if can_use_gemini and not get_groq_stt_bucket().try_acquire():
+            reason = "groq_budget_spent"
             logger.info("Groq STT budget spent — routing this turn to Gemini")
         else:
             try:
-                return await _transcribe_with_groq(audio_bytes, content_type)
+                return done(
+                    await _transcribe_with_groq(audio_bytes, content_type), "groq"
+                )
             except httpx.HTTPStatusError as exc:
                 groq_error = exc
                 status = exc.response.status_code
+                reason = f"groq_http_{status}"
                 if status in (401, 403):
                     _block_groq_stt(f"HTTP {status}")
                 elif not can_use_gemini:
                     raise
                 else:
                     logger.warning("Groq STT returned %s — falling back", status)
+    elif can_use_gemini:
+        reason = "groq_blocked" if _groq_stt_blocked else "groq_not_configured"
 
     if can_use_gemini:
         if groq_error is not None:
             logger.warning("Transcribing via Gemini STT fallback")
-        return await _transcribe_with_gemini(audio_bytes, content_type)
+        return done(
+            await _transcribe_with_gemini(audio_bytes, content_type), "gemini"
+        )
 
     if groq_error is not None:
         raise groq_error

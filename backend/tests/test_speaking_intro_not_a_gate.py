@@ -18,8 +18,13 @@ import pytest
 
 from app.api.speaking_examiner import _is_intro_state
 from app.models.speaking_session import SpeakingState
+from app.services.llm import Transcription
 
 AUDIO = ("recording.webm", b"x" * 2048, "audio/webm")
+
+HEARD_NOTHING = Transcription(
+    text="", provider="groq", latency_ms=610, audio_bytes=2048
+)
 
 # What the engine hands back once the intro has been carried forward without a
 # name: the Part 1 frame that INTRO_FRAME_NO_NAME already exists to produce.
@@ -69,8 +74,8 @@ class TestSilenceAtTheIntro:
     def _post(self, client, session):
         with (
             patch(
-                "app.api.speaking_examiner.transcribe_audio_bytes",
-                new=AsyncMock(return_value=""),
+                "app.api.speaking_examiner.transcribe_audio_bytes_detailed",
+                new=AsyncMock(return_value=HEARD_NOTHING),
             ),
             patch(
                 "app.api.speaking_examiner._get_live_session",

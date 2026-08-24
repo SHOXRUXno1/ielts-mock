@@ -60,11 +60,13 @@ from app.services.speaking_state import (
 )
 from pydantic import BaseModel
 from app.services.llm import (
+    Transcription,
     evaluate_speaking_dialog,
     generate_cue_card,
     generate_examiner_turn,
     generate_part3_question,
     transcribe_audio_bytes,
+    transcribe_audio_bytes_detailed,
 )
 from app.services.tts_cache import get_cached_tts, set_cached_tts
 
@@ -327,10 +329,24 @@ def _is_intro_state(session: "SpeakingSession | None") -> bool:
     )
 
 
-def _history_turn(role: str, text: str, phase: str | None = None) -> dict:
+def _history_turn(
+    role: str,
+    text: str,
+    phase: str | None = None,
+    stt: "Transcription | None" = None,
+) -> dict:
     turn: dict = {"role": role, "text": text}
     if phase:
         turn["phase"] = phase
+    if stt is not None:
+        # Stored per turn rather than per session because the split happens
+        # mid-exam: the budget can run out between one answer and the next.
+        turn["stt"] = {
+            "provider": stt.provider,
+            "reason": stt.reason,
+            "latency_ms": stt.latency_ms,
+            "audio_bytes": stt.audio_bytes,
+        }
     return turn
 
 
@@ -833,6 +849,7 @@ async def _advance_turn(
     db: AsyncSession,
     *,
     include_tts: bool,
+    stt: "Transcription | None" = None,
 ) -> dict:
     """Server-driven next examiner turn using current_state + question index."""
     history = list(session.history_json or [])
@@ -947,7 +964,7 @@ async def _advance_turn(
         assert_can_advance(session)
         raise InvalidStateTransition(f"Cannot advance from {state}")
 
-    history.append(_history_turn("candidate", candidate_text, cand_phase))
+    history.append(_history_turn("candidate", candidate_text, cand_phase, stt))
     history.append(_history_turn("examiner", text, exam_phase))
     session.history_json = history
     if is_end:
@@ -1372,10 +1389,11 @@ async def transcribe_and_respond(
         assert contents is not None
 
         t0 = time.perf_counter()
-        transcript = await transcribe_audio_bytes(
+        stt = await transcribe_audio_bytes_detailed(
             contents,
             content_type=file.content_type,
         )
+        transcript = stt.text
         whisper_ms = int((time.perf_counter() - t0) * 1000)
 
         live_session: SpeakingSession | None = None
@@ -1405,6 +1423,7 @@ async def transcribe_and_respond(
                     plan,
                     db,
                     include_tts=False,
+                    stt=stt,
                 )
             except InvalidStateTransition as e:
                 status, detail = http_detail_for_blocked_state(
@@ -1419,7 +1438,8 @@ async def transcribe_and_respond(
             else:
                 payload["timings"] = {"whisper_ms": whisper_ms}
             logger.info(
-                "Examiner /transcribe-and-respond whisper_ms=%d state=%s part=%s",
+                "Examiner /transcribe-and-respond stt=%s whisper_ms=%d state=%s part=%s",
+                stt.provider,
                 whisper_ms,
                 live_session.current_state,
                 payload.get("part"),

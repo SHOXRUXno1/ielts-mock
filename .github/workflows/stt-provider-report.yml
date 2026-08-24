@@ -1,0 +1,48 @@
+name: Speaking STT engine report
+
+# Two engines transcribe the same exam — Groq Whisper while its minute budget
+# lasts, Gemini for the overflow — and until now nobody could tell which one had
+# heard a given answer. This counts the split so that "recognition is sometimes
+# wrong" can be answered with a number instead of an impression.
+#
+# Read-only. Never fails the run: an empty report is a finding, not an error.
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: How many days back to look
+        required: false
+        default: "30"
+      show_turns:
+        description: List every turn where little or nothing was heard
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: stt-provider-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    name: Report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Count Speaking turns by engine
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          DAYS: ${{ inputs.days }}
+          TURNS_FLAG: ${{ inputs.show_turns && '--show-turns' || '' }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          # Carried as variables rather than pasted into the command, so an
+          # input cannot smuggle a second command in behind it.
+          envs: DAYS,TURNS_FLAG
+          script: |
+            set -e
+            cd /opt/ielts-mock
+            docker compose -f docker-compose.prod.yml exec -T backend \
+              python scripts/stt_provider_report.py --days "$DAYS" $TURNS_FLAG
