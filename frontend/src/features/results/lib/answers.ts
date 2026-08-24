@@ -61,6 +61,29 @@ export function formatStudentAnswer(response: Record<string, unknown>): string {
 const CHOICE_LETTER = /^[A-Ja-j]$/
 
 /**
+ * Question types whose options are labelled with letters A, B, C…
+ *
+ * Matching Headings is deliberately missing: it labels its headings with
+ * lower-case Roman numerals, where "i" is a one and not the letter I. Deciding
+ * from the character alone turned that one into an option letter and printed
+ * it as "I", which is not what the answer key says.
+ */
+const LETTER_OPTION_TYPES = new Set<string>([
+  'mcq',
+  'multi_select',
+  'matching',
+  'matching_information',
+  'matching_features',
+  'map_labeling',
+])
+
+export function usesOptionLetters(
+  question: { question_type: string } | null | undefined,
+): boolean {
+  return question != null && LETTER_OPTION_TYPES.has(question.question_type)
+}
+
+/**
  * Split a formatted answer into option letters, or null if it is ordinary text.
  *
  * Single letters must stay readable: a strikethrough through "B" sits on the

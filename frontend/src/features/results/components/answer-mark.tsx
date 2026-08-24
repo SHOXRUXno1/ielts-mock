@@ -7,6 +7,12 @@ type Props = {
   value: string
   tone: Tone
   /**
+   * Whether this question labels its options with letters. Off by default, so
+   * a value is only ever shown as an option letter when the question actually
+   * has them — Roman numerals and ordinary words stay as written.
+   */
+  optionLetters?: boolean
+  /**
    * The answer key, when the value being shown is the candidate's own. Each
    * option letter is then coloured on its own, so a half-right "Choose TWO"
    * pair shows which of the two letters earned its mark.
@@ -20,9 +26,15 @@ type Props = {
  * Option letters sit in a mark, never under a strikethrough: a line through
  * "B" lands on the middle bar and the letter reads as "D".
  */
-export function AnswerMark({ value, tone, matchAgainst }: Props) {
-  const letters = splitChoiceLetters(value)
-  const keyLetters = matchAgainst ? splitChoiceLetters(matchAgainst) : null
+export function AnswerMark({
+  value,
+  tone,
+  optionLetters = false,
+  matchAgainst,
+}: Props) {
+  const letters = optionLetters ? splitChoiceLetters(value) : null
+  const keyLetters =
+    optionLetters && matchAgainst ? splitChoiceLetters(matchAgainst) : null
   if (!letters) {
     if (tone === 'wrong') {
       return <span className='text-muted-foreground line-through'>{value}</span>

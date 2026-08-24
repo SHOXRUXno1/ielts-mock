@@ -8,6 +8,7 @@ import {
   groupAnswersByPart,
   splitChoiceLetters,
   tallyMarks,
+  usesOptionLetters,
 } from './answers'
 
 function answer(partial: Partial<AnswerRead> & { response: Record<string, unknown> }): AnswerRead {
@@ -62,6 +63,25 @@ describe('splitChoiceLetters', () => {
     expect(splitChoiceLetters('river')).toBeNull()
     expect(splitChoiceLetters('NOT GIVEN')).toBeNull()
     expect(splitChoiceLetters('TRUE')).toBeNull()
+  })
+})
+
+describe('usesOptionLetters', () => {
+  it('is true for the types labelled A, B, C', () => {
+    expect(usesOptionLetters({ question_type: 'mcq' })).toBe(true)
+    expect(usesOptionLetters({ question_type: 'multi_select' })).toBe(true)
+    expect(usesOptionLetters({ question_type: 'matching_features' })).toBe(true)
+    expect(usesOptionLetters({ question_type: 'map_labeling' })).toBe(true)
+  })
+
+  it('is false for Matching Headings, which numbers its options i, ii, iii', () => {
+    expect(usesOptionLetters({ question_type: 'matching_headings' })).toBe(false)
+  })
+
+  it('is false for written answers and for a missing question', () => {
+    expect(usesOptionLetters({ question_type: 'gap_fill' })).toBe(false)
+    expect(usesOptionLetters({ question_type: 'true_false_ng' })).toBe(false)
+    expect(usesOptionLetters(null)).toBe(false)
   })
 })
 

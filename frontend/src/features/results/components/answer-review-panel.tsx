@@ -20,6 +20,7 @@ import {
   groupAnswersByPart,
   matchesOutcomeFilter,
   tallyMarks,
+  usesOptionLetters,
   type AnswerMarks,
   type AnswerOutcome,
 } from '../lib/answers'
@@ -263,6 +264,7 @@ function AnswerTableRow({
   const student = formatStudentAnswer(answer.response)
   const correct = formatCorrectAnswer(answer.question?.answer_key ?? null)
   const marks = answerMarks(answer)
+  const optionLetters = usesOptionLetters(answer.question)
 
   return (
     <TableRow className={cn('h-11 border-l-[3px]', outcomeRowClass(outcome))}>
@@ -280,12 +282,15 @@ function AnswerTableRow({
           <AnswerMark
             value={student}
             tone={outcome === 'incorrect' ? 'wrong' : 'plain'}
+            optionLetters={optionLetters}
             matchAgainst={outcome === 'partial' ? correct : undefined}
           />
         )}
       </TableCell>
       <TableCell className='py-0'>
-        {correct ? <AnswerMark value={correct} tone='right' /> : (
+        {correct ? (
+          <AnswerMark value={correct} tone='right' optionLetters={optionLetters} />
+        ) : (
           <span className='text-muted-foreground'>—</span>
         )}
       </TableCell>
@@ -304,6 +309,7 @@ function AnswerCard({
   const student = formatStudentAnswer(answer.response)
   const correct = formatCorrectAnswer(answer.question?.answer_key ?? null)
   const marks = answerMarks(answer)
+  const optionLetters = usesOptionLetters(answer.question)
 
   return (
     <div className={cn('rounded-xl border border-l-[3px] p-3', outcomeRowClass(outcome))}>
@@ -321,13 +327,18 @@ function AnswerCard({
           <AnswerMark
             value={student}
             tone={outcome === 'incorrect' ? 'wrong' : 'plain'}
+            optionLetters={optionLetters}
             matchAgainst={outcome === 'partial' ? correct : undefined}
           />
         )}
       </p>
       <p className='mt-1.5 flex items-center gap-2 text-xs text-muted-foreground'>
         <span>Correct:</span>
-        {correct ? <AnswerMark value={correct} tone='right' /> : '—'}
+        {correct ? (
+          <AnswerMark value={correct} tone='right' optionLetters={optionLetters} />
+        ) : (
+          '—'
+        )}
       </p>
     </div>
   )

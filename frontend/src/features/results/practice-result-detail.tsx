@@ -38,6 +38,7 @@ import {
   answerOutcome,
   formatCorrectAnswer,
   formatStudentAnswer,
+  usesOptionLetters,
 } from './lib/answers'
 import { formatBand } from './lib/band'
 import { SKILL_META, type SkillMeta } from './lib/skill'
@@ -405,6 +406,7 @@ export function PracticeResultDetail({ attempt }: Props) {
                   {filteredAnswers.map((a) => {
                     const outcome = answerOutcome(a)
                     const marks = answerMarks(a)
+                    const optionLetters = usesOptionLetters(a.question)
                     const student = formatStudentAnswer(a.response)
                     const correctText = formatCorrectAnswer(
                       a.question?.answer_key ?? null,
@@ -440,6 +442,7 @@ export function PracticeResultDetail({ attempt }: Props) {
                             <AnswerMark
                               value={student}
                               tone={outcome === 'incorrect' ? 'wrong' : 'plain'}
+                              optionLetters={optionLetters}
                               matchAgainst={
                                 outcome === 'partial' ? correctText : undefined
                               }
@@ -448,7 +451,11 @@ export function PracticeResultDetail({ attempt }: Props) {
                         </TableCell>
                         <TableCell className='py-2'>
                           {correctText ? (
-                            <AnswerMark value={correctText} tone='right' />
+                            <AnswerMark
+                              value={correctText}
+                              tone='right'
+                              optionLetters={optionLetters}
+                            />
                           ) : (
                             <span className='text-muted-foreground'>—</span>
                           )}
