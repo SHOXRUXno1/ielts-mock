@@ -147,7 +147,6 @@ export function useExaminerAudio({
   const playBase64Audio = useCallback(
     (base64: string): Promise<void> =>
       new Promise((resolve) => {
-        cancelBrowserSpeech()
         announceAudioStart()
         try {
           const raw = atob(base64)
@@ -175,7 +174,7 @@ export function useExaminerAudio({
           resolve()
         }
       }),
-    [announceAudioStart, cancelBrowserSpeech],
+    [announceAudioStart],
   )
 
   const speakWithWebSpeech = useCallback(

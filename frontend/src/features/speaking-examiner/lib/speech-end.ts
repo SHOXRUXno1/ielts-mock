@@ -12,13 +12,6 @@
 export const END_MARGIN_AFTER_SPEECH_MS = 1500
 
 /**
- * Earliest fraction of the utterance at which a report of silence may mean
- * the examiner has finished. Before that it is a pause between words — and
- * ending there leaves the rest of the sentence playing over the candidate.
- */
-export const SILENCE_EARLIEST_FRACTION = 0.75
-
-/**
  * Grace when the avatar never reported starting, leaving the moment we finished
  * handing over the bytes as the only reference. WebRTC can hold those in a
  * jitter buffer for some time before a word is heard, hence the wider
@@ -62,11 +55,6 @@ type SilenceArgs = {
   audioSent: boolean
   /** Every chunk of it, not just the first. */
   sendComplete: boolean
-  /** When the avatar reported starting, or null if it never did. */
-  speakingStartedAt?: number | null
-  /** Length of the audio handed to the avatar. */
-  durationMs?: number
-  now?: number
 }
 
 /**
@@ -76,43 +64,7 @@ type SilenceArgs = {
  * turn out of it is itself reported as silence. Taken at face value that ends
  * the new turn before its first word, so silence only counts once every chunk
  * has been handed over.
- *
- * After that, a pause between words is still reported as silence. Ending there
- * is what leaves a leftover voice and a leftover mouth: the session moves on,
- * the microphone opens, and the rest of the sentence keeps playing. Silence
- * may close the turn only once most of the utterance should already have been
- * heard; the duration timer is the authority until then.
  */
-export function silenceEndsTurn({
-  audioSent,
-  sendComplete,
-  speakingStartedAt = null,
-  durationMs = 0,
-  now = 0,
-}: SilenceArgs): boolean {
-  if (!audioSent || !sendComplete) return false
-  if (speakingStartedAt === null || durationMs <= 0) return false
-  return now - speakingStartedAt >= durationMs * SILENCE_EARLIEST_FRACTION
-}
-
-type MuteableAudio = {
-  pause: () => void
-  volume: number
-  currentTime: number
-}
-
-/**
- * Stop a leftover utterance from being heard. The avatar's WebRTC element and
- * the browser-voice fallback both keep playing after we decide the turn is
- * over unless they are muted and rewound here.
- */
-export function silenceAudioElement(el: MuteableAudio | null | undefined): void {
-  if (!el) return
-  el.volume = 0
-  el.pause()
-  try {
-    el.currentTime = 0
-  } catch {
-    // Some remote streams throw on seek; muting is enough for those.
-  }
+export function silenceEndsTurn({ audioSent, sendComplete }: SilenceArgs): boolean {
+  return audioSent && sendComplete
 }

@@ -1,10 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   END_BACKSTOP_MARGIN_MS,
   END_MARGIN_AFTER_SPEECH_MS,
-  SILENCE_EARLIEST_FRACTION,
   endTimerDelayMs,
-  silenceAudioElement,
   silenceEndsTurn,
 } from './speech-end'
 
@@ -103,56 +101,15 @@ describe('waiting for the examiner to stop talking', () => {
 })
 
 describe('reading a report of silence', () => {
-  const farEnough = {
-    audioSent: true,
-    sendComplete: true,
-    speakingStartedAt: NOW,
-    durationMs: FOUR_SECOND_ANSWER,
-    now: NOW + FOUR_SECOND_ANSWER * SILENCE_EARLIEST_FRACTION,
-  }
-
   it('ignores the silence left by clearing the previous turn', () => {
-    expect(silenceEndsTurn({ ...farEnough, sendComplete: false })).toBe(false)
+    expect(silenceEndsTurn({ audioSent: true, sendComplete: false })).toBe(false)
   })
 
-  it('accepts silence only once most of the utterance should have been heard', () => {
-    expect(silenceEndsTurn(farEnough)).toBe(true)
-  })
-
-  it('ignores a pause between words', () => {
-    // Ending here is what leaves a leftover voice: the session moves on and
-    // the rest of the sentence keeps playing over the candidate.
-    expect(
-      silenceEndsTurn({
-        ...farEnough,
-        now: NOW + FOUR_SECOND_ANSWER * 0.3,
-      }),
-    ).toBe(false)
-  })
-
-  it('does not trust silence when the avatar never reported starting', () => {
-    expect(silenceEndsTurn({ ...farEnough, speakingStartedAt: null })).toBe(
-      false,
-    )
+  it('accepts silence once the whole answer has been handed over', () => {
+    expect(silenceEndsTurn({ audioSent: true, sendComplete: true })).toBe(true)
   })
 
   it('ignores silence when there is no turn in flight at all', () => {
-    expect(silenceEndsTurn({ ...farEnough, audioSent: false })).toBe(false)
-  })
-})
-
-describe('silencing leftover playback', () => {
-  it('mutes, pauses and rewinds the element', () => {
-    const el = { pause: vi.fn(), volume: 1, currentTime: 3.2 }
-
-    silenceAudioElement(el)
-
-    expect(el.volume).toBe(0)
-    expect(el.pause).toHaveBeenCalledOnce()
-    expect(el.currentTime).toBe(0)
-  })
-
-  it('does nothing when there is no element', () => {
-    expect(() => silenceAudioElement(null)).not.toThrow()
+    expect(silenceEndsTurn({ audioSent: false, sendComplete: true })).toBe(false)
   })
 })
