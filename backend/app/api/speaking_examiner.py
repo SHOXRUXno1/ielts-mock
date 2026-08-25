@@ -641,14 +641,30 @@ async def _tts_base64_inner(text: str) -> tuple[str, str | None, bool]:
     return "", result.error, False
 
 
+def _tts_text_for_turn(clean_text: str, part: int, cue_card: str | None) -> str:
+    if part == 2 and cue_card:
+        return PART2_CUE_INTRO
+    return clean_text
+
+
 async def _tts_for_turn(
     clean_text: str,
     part: int,
     cue_card: str | None,
 ) -> tuple[str, str | None, bool]:
-    if part == 2 and cue_card:
-        return await _tts_base64(PART2_CUE_INTRO)
-    return await _tts_base64(clean_text)
+    return await _tts_base64(_tts_text_for_turn(clean_text, part, cue_card))
+
+
+async def _warm_tts_for_turn(
+    clean_text: str,
+    part: int,
+    cue_card: str | None,
+) -> None:
+    """Synthesize in the background so the client's follow-up often hits cache."""
+    try:
+        await _tts_for_turn(clean_text, part, cue_card)
+    except Exception:
+        logger.exception("Background TTS warm failed")
 
 
 def _parse_dt(value: str | None) -> datetime | None:
@@ -983,6 +999,16 @@ async def _advance_turn(
         t1 = time.perf_counter()
         audio_b64, tts_error, cache_hit = await _tts_for_turn(text, part, cue_card)
         tts_ms = int((time.perf_counter() - t1) * 1000)
+    else:
+        # Do not make the candidate wait for synthesis before the next
+        # question even exists on screen. A cache hit rides along; a miss
+        # is warmed in this worker so /synthesize-turn is often instant.
+        cached = get_cached_tts(_tts_text_for_turn(text, part, cue_card))
+        if cached:
+            audio_b64 = cached
+            cache_hit = True
+        else:
+            asyncio.create_task(_warm_tts_for_turn(text, part, cue_card))
 
     logger.info(
         "Examiner turn state=%s -> %s part=%s q=%s/%s end=%s tts_ms=%s",
@@ -1280,6 +1306,13 @@ async def _generate_examiner_response(
         t1 = time.perf_counter()
         audio_b64, tts_error, cache_hit = await _tts_for_turn(clean_text, part, cue_card)
         tts_ms = int((time.perf_counter() - t1) * 1000)
+    else:
+        cached = get_cached_tts(_tts_text_for_turn(clean_text, part, cue_card))
+        if cached:
+            audio_b64 = cached
+            cache_hit = True
+        else:
+            asyncio.create_task(_warm_tts_for_turn(clean_text, part, cue_card))
 
     candidate_turn = {"role": "candidate", "text": candidate_text}
     examiner_turn = {"role": "examiner", "text": clean_text}
@@ -1381,17 +1414,13 @@ async def transcribe_and_respond(
     _actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ):
-    """Transcribe the candidate and answer them: transcript, text and voice together.
+    """Transcribe the candidate and return the next examiner turn.
 
-    The voice used to be left to a second request so the text could reach the
-    screen sooner. It arrived a round trip and a synthesis later, and in between
-    the candidate read the next question off a still, silent examiner — the one
-    part of the exam where the avatar visibly lagged its own words. Sending both
-    at once costs the wait before anything appears and saves the round trip.
-
-    A failed synthesis still answers 200 with empty audio and ``tts_error`` set,
-    which the client retries through /synthesize-turn before falling back to the
-    browser's own voice.
+    Synthesis is not awaited here. Waiting for ElevenLabs on this request is
+    what made every answer feel frozen: the candidate stared at "thinking"
+    until speech-to-text, the next question, and the voice were all done.
+    The caption still waits for sound via onAudioStart; the voice comes from
+    a cache hit on this payload or a follow-up /synthesize-turn.
     """
     try:
         contents, error_resp = await _read_transcribe_blob(file)
@@ -1433,7 +1462,7 @@ async def transcribe_and_respond(
                     transcript,
                     plan,
                     db,
-                    include_tts=True,
+                    include_tts=False,
                     stt=stt,
                 )
             except InvalidStateTransition as e:
@@ -1464,7 +1493,7 @@ async def transcribe_and_respond(
         payload, timings, _updated_history = await _generate_examiner_response(
             transcript,
             history,
-            include_tts=True,
+            include_tts=False,
             test_context=None,
         )
         timings.whisper_ms = whisper_ms

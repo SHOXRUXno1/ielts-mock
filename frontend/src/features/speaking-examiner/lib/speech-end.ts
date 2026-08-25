@@ -13,12 +13,11 @@ export const END_MARGIN_AFTER_SPEECH_MS = 1500
 
 /**
  * Grace when the avatar never reported starting, leaving the moment we finished
- * handing over the bytes as the only reference. WebRTC can hold those in a
- * jitter buffer for some time before a word is heard, hence the wider
- * allowance — the previous half-second expired mid-sentence often enough that
- * candidates were cut off by their own microphone.
+ * handing over the bytes as the only reference. Wider than the half-second
+ * that used to cut people off, but not so wide that the microphone sits
+ * closed for seconds after the examiner has already gone quiet.
  */
-export const END_BACKSTOP_MARGIN_MS = 5000
+export const END_BACKSTOP_MARGIN_MS = 2000
 
 type EndTimerArgs = {
   /** Length of the audio handed to the avatar. */
