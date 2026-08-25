@@ -9,6 +9,7 @@ import {
 } from '../lib/simli-pcm'
 import {
   endTimerDelayMs,
+  muteLiveAudioElement,
   silenceAudioElement,
   silenceEndsTurn,
 } from '../lib/speech-end'
@@ -135,7 +136,7 @@ function SimliAvatarInner({
     } catch {
       /* already gone */
     }
-    silenceAudioElement(audioRef.current)
+    muteLiveAudioElement(audioRef.current)
     const leftover = fallbackAudioRef.current
     fallbackAudioRef.current = null
     if (leftover) {
@@ -263,6 +264,9 @@ function SimliAvatarInner({
         client.ClearBuffer()
         if (audioRef.current) {
           audioRef.current.volume = 1
+          void audioRef.current.play().catch(() => {
+            /* already playing, or the stream is not attached yet */
+          })
         }
 
         speakingDoneRef.current = false

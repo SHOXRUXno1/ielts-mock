@@ -102,9 +102,11 @@ type MuteableAudio = {
 }
 
 /**
- * Stop a leftover utterance from being heard. The avatar's WebRTC element and
- * the browser-voice fallback both keep playing after we decide the turn is
- * over unless they are muted and rewound here.
+ * Stop a leftover utterance we ourselves created (`new Audio(...)`).
+ *
+ * Do not use this on Simli's WebRTC element: `pause()` there is permanent —
+ * the next turn turns the volume back up and nobody ever calls `play()`, so
+ * the examiner appears to speak and no sound comes out.
  */
 export function silenceAudioElement(el: MuteableAudio | null | undefined): void {
   if (!el) return
@@ -115,4 +117,12 @@ export function silenceAudioElement(el: MuteableAudio | null | undefined): void 
   } catch {
     // Some remote streams throw on seek; muting is enough for those.
   }
+}
+
+/** Duck a live stream without pausing it, so the next `play()` is not required. */
+export function muteLiveAudioElement(
+  el: { volume: number } | null | undefined,
+): void {
+  if (!el) return
+  el.volume = 0
 }
