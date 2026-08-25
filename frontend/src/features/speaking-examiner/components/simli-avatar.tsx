@@ -7,7 +7,11 @@ import {
   mp3Base64ToPcm16,
   PCM_CHUNK_BYTES,
 } from '../lib/simli-pcm'
-import { endTimerDelayMs, silenceEndsTurn } from '../lib/speech-end'
+import {
+  endTimerDelayMs,
+  silenceAudioElement,
+  silenceEndsTurn,
+} from '../lib/speech-end'
 import { LottieAvatar } from './lottie-avatar'
 
 const CLOSE_COOLDOWN_MS = 2000
@@ -85,6 +89,8 @@ function SimliAvatarInner({
   const sendCompletedAtRef = useRef(0)
   const speakingStartedAtRef = useRef<number | null>(null)
   const expectedDurationMsRef = useRef(0)
+  const sendGenerationRef = useRef(0)
+  const fallbackAudioRef = useRef<HTMLAudioElement | null>(null)
   const [ready, setReady] = useState(false)
   const [useLottieFallback, setUseLottieFallback] = useState(false)
   const [lottieSpeaking, setLottieSpeaking] = useState(false)
@@ -118,6 +124,27 @@ function SimliAvatarInner({
     readyRef.current = ready
   }, [ready])
 
+  const drainLeftoverPlayback = useCallback(() => {
+    // The turn is over from our point of view. Anything still in Simli's
+    // buffer keeps the mouth moving and the speakers playing — over the
+    // candidate's first words, once the microphone opens.
+    sendGenerationRef.current += 1
+    const client = simliRef.current
+    try {
+      client?.ClearBuffer()
+    } catch {
+      /* already gone */
+    }
+    silenceAudioElement(audioRef.current)
+    const leftover = fallbackAudioRef.current
+    fallbackAudioRef.current = null
+    if (leftover) {
+      leftover.onended = null
+      leftover.onerror = null
+      silenceAudioElement(leftover)
+    }
+  }, [])
+
   const requestReconnect = useCallback(
     (failedAudio?: string | null) => {
       if (reconnectPendingRef.current) return
@@ -129,21 +156,23 @@ function SimliAvatarInner({
       audioSentRef.current = false
       sendCompleteRef.current = false
       speakingStartedAtRef.current = null
+      drainLeftoverPlayback()
       clearEndTimer()
       onConnectionLostRef.current?.()
     },
-    [clearEndTimer],
+    [clearEndTimer, drainLeftoverPlayback],
   )
 
   const notifySpeakingDone = useCallback(() => {
     if (speakingDoneRef.current) return
     speakingDoneRef.current = true
     clearEndTimer()
+    drainLeftoverPlayback()
     audioSentRef.current = false
     sendCompleteRef.current = false
     speakingStartedAtRef.current = null
     onSpeakingDoneRef.current()
-  }, [clearEndTimer])
+  }, [clearEndTimer, drainLeftoverPlayback])
 
   /** Start the safety net that ends the turn if the avatar never reports silence. */
   const armEndTimer = useCallback(() => {
@@ -183,20 +212,31 @@ function SimliAvatarInner({
 
   const playFallbackAudio = useCallback(
     async (b64: string) => {
+      const previous = fallbackAudioRef.current
+      fallbackAudioRef.current = null
+      if (previous) {
+        previous.onended = null
+        previous.onerror = null
+        silenceAudioElement(previous)
+      }
+
       const binary = atob(b64)
       const bytes = new Uint8Array(binary.length)
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
       const blob = new Blob([bytes], { type: 'audio/mpeg' })
       const url = URL.createObjectURL(blob)
       const audio = new Audio(url)
+      fallbackAudioRef.current = audio
       setLottieSpeaking(true)
       audio.onended = () => {
         URL.revokeObjectURL(url)
+        if (fallbackAudioRef.current === audio) fallbackAudioRef.current = null
         setLottieSpeaking(false)
         onSpeakingDoneRef.current()
       }
       audio.onerror = () => {
         URL.revokeObjectURL(url)
+        if (fallbackAudioRef.current === audio) fallbackAudioRef.current = null
         setLottieSpeaking(false)
         onSpeakingDoneRef.current()
       }
@@ -217,6 +257,8 @@ function SimliAvatarInner({
         simliLog('[Simli] Audio duration:', duration, 'seconds')
         simliLog('[Simli] Sending audio data, chunks:', numChunks)
 
+        const generation = ++sendGenerationRef.current
+
         clearEndTimer()
         client.ClearBuffer()
         if (audioRef.current) {
@@ -231,12 +273,18 @@ function SimliAvatarInner({
 
         await forEachPcmChunk(pcm, PCM_CHUNK_BYTES, (chunk, index) => {
           if (simliRef.current !== client) return
+          // A newer send, or a drain at the end of the previous turn, owns
+          // the socket now. Feeding this one further would leave two voices
+          // and a mouth that never stops.
+          if (sendGenerationRef.current !== generation) return
           if (index === 0) {
             client.sendAudioDataImmediate(chunk)
           } else {
             client.sendAudioData(chunk)
           }
         })
+
+        if (sendGenerationRef.current !== generation) return
 
         // `speaking` may already have fired part-way through the send, in which
         // case the timer anchors to it. This is also the moment a report of
@@ -346,6 +394,9 @@ function SimliAvatarInner({
               !silenceEndsTurn({
                 audioSent: audioSentRef.current,
                 sendComplete: sendCompleteRef.current,
+                speakingStartedAt: speakingStartedAtRef.current,
+                durationMs: expectedDurationMsRef.current,
+                now: Date.now(),
               })
             ) {
               return
@@ -432,6 +483,16 @@ function SimliAvatarInner({
       onReadyRef.current?.(false)
     }
   }, [sessionToken, faceId, iceKey, clearEndTimer, activateLottieFallback])
+
+  useEffect(() => {
+    if (audioBase64) return
+    // Parent cleared the turn. Drain even if we already reported done — a
+    // reconnect can leave a half-played buffer that would otherwise keep
+    // talking into the next question.
+    lastAudioRef.current = null
+    queuedAudioRef.current = null
+    drainLeftoverPlayback()
+  }, [audioBase64, drainLeftoverPlayback])
 
   useEffect(() => {
     if (!audioBase64 || audioBase64 === lastAudioRef.current) return
