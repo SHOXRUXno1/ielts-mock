@@ -4,7 +4,6 @@ import {
   END_MARGIN_AFTER_SPEECH_MS,
   SILENCE_EARLIEST_FRACTION,
   endTimerDelayMs,
-  muteLiveAudioElement,
   silenceAudioElement,
   silenceEndsTurn,
 } from './speech-end'
@@ -155,15 +154,5 @@ describe('silencing leftover playback', () => {
 
   it('does nothing when there is no element', () => {
     expect(() => silenceAudioElement(null)).not.toThrow()
-  })
-
-  it('ducks a live stream without pausing it', () => {
-    const el = { pause: vi.fn(), volume: 1, currentTime: 1.4 }
-
-    muteLiveAudioElement(el)
-
-    expect(el.volume).toBe(0)
-    expect(el.pause).not.toHaveBeenCalled()
-    expect(el.currentTime).toBe(1.4)
   })
 })
