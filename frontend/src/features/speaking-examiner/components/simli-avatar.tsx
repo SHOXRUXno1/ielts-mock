@@ -7,6 +7,7 @@ import {
   mp3Base64ToPcm16,
   PCM_CHUNK_BYTES,
 } from '../lib/simli-pcm'
+import { endTimerDelayMs, silenceEndsTurn } from '../lib/speech-end'
 import { LottieAvatar } from './lottie-avatar'
 
 const CLOSE_COOLDOWN_MS = 2000
@@ -77,6 +78,13 @@ function SimliAvatarInner({
   const speakingDoneRef = useRef(false)
   const reconnectPendingRef = useRef(false)
   const endTimerRef = useRef<number | null>(null)
+  // Every chunk of this utterance has been handed over. Until then a `silent`
+  // event is about the previous one — ClearBuffer drains it, and that drain is
+  // reported as silence — so honouring it would end a turn before it began.
+  const sendCompleteRef = useRef(false)
+  const sendCompletedAtRef = useRef(0)
+  const speakingStartedAtRef = useRef<number | null>(null)
+  const expectedDurationMsRef = useRef(0)
   const [ready, setReady] = useState(false)
   const [useLottieFallback, setUseLottieFallback] = useState(false)
   const [lottieSpeaking, setLottieSpeaking] = useState(false)
@@ -119,6 +127,8 @@ function SimliAvatarInner({
         lastAudioRef.current = null
       }
       audioSentRef.current = false
+      sendCompleteRef.current = false
+      speakingStartedAtRef.current = null
       clearEndTimer()
       onConnectionLostRef.current?.()
     },
@@ -130,8 +140,40 @@ function SimliAvatarInner({
     speakingDoneRef.current = true
     clearEndTimer()
     audioSentRef.current = false
+    sendCompleteRef.current = false
+    speakingStartedAtRef.current = null
     onSpeakingDoneRef.current()
   }, [clearEndTimer])
+
+  /** Start the safety net that ends the turn if the avatar never reports silence. */
+  const armEndTimer = useCallback(() => {
+    const remaining = () =>
+      endTimerDelayMs({
+        durationMs: expectedDurationMsRef.current,
+        speakingStartedAt: speakingStartedAtRef.current,
+        sendCompletedAt: sendCompletedAtRef.current,
+        now: Date.now(),
+      })
+
+    const arm = () => {
+      if (!audioSentRef.current || speakingDoneRef.current) return
+      clearEndTimer()
+      endTimerRef.current = window.setTimeout(() => {
+        if (!audioSentRef.current) return
+        // The avatar may have reported starting after this was scheduled, which
+        // pushes the real end back. Wait out the difference rather than cutting
+        // the examiner off mid-sentence.
+        if (remaining() > 0) {
+          arm()
+          return
+        }
+        simliLog('[Simli] Speaking end (timeout, no silent event)')
+        notifySpeakingDone()
+      }, remaining())
+    }
+
+    arm()
+  }, [clearEndTimer, notifySpeakingDone])
 
   const activateLottieFallback = useCallback(() => {
     setUseLottieFallback(true)
@@ -175,6 +217,7 @@ function SimliAvatarInner({
         simliLog('[Simli] Audio duration:', duration, 'seconds')
         simliLog('[Simli] Sending audio data, chunks:', numChunks)
 
+        clearEndTimer()
         client.ClearBuffer()
         if (audioRef.current) {
           audioRef.current.volume = 1
@@ -182,6 +225,9 @@ function SimliAvatarInner({
 
         speakingDoneRef.current = false
         audioSentRef.current = true
+        sendCompleteRef.current = false
+        speakingStartedAtRef.current = null
+        expectedDurationMsRef.current = duration * 1000
 
         await forEachPcmChunk(pcm, PCM_CHUNK_BYTES, (chunk, index) => {
           if (simliRef.current !== client) return
@@ -192,19 +238,18 @@ function SimliAvatarInner({
           }
         })
 
-        clearEndTimer()
-        endTimerRef.current = window.setTimeout(() => {
-          if (audioSentRef.current) {
-            simliLog('[Simli] Speaking end (duration timeout)')
-            notifySpeakingDone()
-          }
-        }, (duration + 0.5) * 1000)
+        // `speaking` may already have fired part-way through the send, in which
+        // case the timer anchors to it. This is also the moment a report of
+        // silence starts describing this turn rather than the one before it.
+        sendCompleteRef.current = true
+        sendCompletedAtRef.current = Date.now()
+        armEndTimer()
       } catch (err) {
         simliError('[Simli] Failed to send audio:', err)
         requestReconnect(b64)
       }
     },
-    [clearEndTimer, notifySpeakingDone, requestReconnect]
+    [clearEndTimer, armEndTimer, requestReconnect]
   )
 
   const flushQueuedAudio = useCallback(async () => {
@@ -287,11 +332,24 @@ function SimliAvatarInner({
           simliRef.current = client
 
           client.on('speaking', () => {
+            if (!audioSentRef.current || speakingStartedAtRef.current !== null) {
+              return
+            }
+            // The only observable moment the avatar's mouth actually starts.
+            // The running safety net re-reads this when it expires.
             simliLog('[Simli] Avatar speaking')
+            speakingStartedAtRef.current = Date.now()
           })
 
           client.on('silent', () => {
-            if (!audioSentRef.current) return
+            if (
+              !silenceEndsTurn({
+                audioSent: audioSentRef.current,
+                sendComplete: sendCompleteRef.current,
+              })
+            ) {
+              return
+            }
             simliLog('[Simli] Speaking end (silent event)')
             notifySpeakingDoneRef.current()
           })

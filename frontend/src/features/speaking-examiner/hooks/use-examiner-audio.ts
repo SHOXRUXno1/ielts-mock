@@ -12,11 +12,22 @@ const SIMLI_LOAD_TIMEOUT_MS = 10_000
 type UseExaminerAudioOptions = {
   phaseRef: MutableRefObject<Phase>
   onAudioComplete: () => void
+  /**
+   * Called at the last moment before sound is produced, on every path.
+   *
+   * A live turn arrives as text with no audio attached; the voice takes a second
+   * round trip to synthesise. The caption used to say the examiner was speaking
+   * from the moment the text arrived, so the candidate watched a still avatar
+   * under the word "Speaking" for a second or two of every question. Announcing
+   * the start here instead ties the caption to the sound.
+   */
+  onAudioStart?: () => void
 }
 
 export function useExaminerAudio({
   phaseRef,
   onAudioComplete,
+  onAudioStart,
 }: UseExaminerAudioOptions) {
   const [simliToken, setSimliToken] = useState<string | null>(null)
   const [simliFaceId, setSimliFaceId] = useState<string | null>(null)
@@ -35,10 +46,19 @@ export function useExaminerAudio({
   const simliFallbackRef = useRef(false)
   const simliReadyWaitersRef = useRef<Array<(ok: boolean) => void>>([])
   const onAudioCompleteRef = useRef(onAudioComplete)
+  const onAudioStartRef = useRef(onAudioStart)
 
   useEffect(() => {
     onAudioCompleteRef.current = onAudioComplete
   }, [onAudioComplete])
+
+  useEffect(() => {
+    onAudioStartRef.current = onAudioStart
+  }, [onAudioStart])
+
+  const announceAudioStart = useCallback(() => {
+    onAudioStartRef.current?.()
+  }, [])
 
   useEffect(() => {
     simliEnabledRef.current = simliEnabled
@@ -127,6 +147,7 @@ export function useExaminerAudio({
   const playBase64Audio = useCallback(
     (base64: string): Promise<void> =>
       new Promise((resolve) => {
+        announceAudioStart()
         try {
           const raw = atob(base64)
           const bytes = new Uint8Array(raw.length)
@@ -153,12 +174,16 @@ export function useExaminerAudio({
           resolve()
         }
       }),
-    [],
+    [announceAudioStart],
   )
 
   const speakWithWebSpeech = useCallback(
     (text: string): Promise<void> =>
       new Promise((resolve) => {
+        // Announced before the capability check on purpose: a browser without
+        // speech synthesis still has to move the turn along, and the caller
+        // only completes a turn it was told had started.
+        announceAudioStart()
         if (!window.speechSynthesis) {
           resolve()
           return
@@ -182,7 +207,7 @@ export function useExaminerAudio({
         activeUtteranceRef.current = utterance
         window.speechSynthesis.speak(utterance)
       }),
-    [cancelBrowserSpeech],
+    [cancelBrowserSpeech, announceAudioStart],
   )
 
   const handleSimliDone = useCallback(() => {
@@ -242,6 +267,7 @@ export function useExaminerAudio({
               synthesize.signal,
             )
             if (synth.audio_base64?.trim()) {
+              announceAudioStart()
               setPendingAudioB64(synth.audio_base64)
               if (synth.tts_error) {
                 toast.warning(`Examiner voice fallback — ${synth.tts_error}`)
@@ -261,6 +287,7 @@ export function useExaminerAudio({
         }
 
         if (hasAudio) {
+          announceAudioStart()
           setPendingAudioB64(audioBase64)
         } else {
           const detail =
@@ -313,6 +340,7 @@ export function useExaminerAudio({
       playBase64Audio,
       speakWithWebSpeech,
       handleSimliDone,
+      announceAudioStart,
     ],
   )
 

@@ -146,7 +146,6 @@ export function SpeakingExaminerSession({
     onRecordingStopped,
     onTranscriptReady,
     onTranscriptFailed,
-    onExaminerResponse,
     onExaminerAudioDone,
     onPrepTimerDone,
     scheduleScoringAfterSpeech,
@@ -221,6 +220,7 @@ export function SpeakingExaminerSession({
   } = useExaminerAudio({
     phaseRef,
     onAudioComplete: handleAudioComplete,
+    onAudioStart: onExaminerTurnReady,
   })
 
   const { simliBanner, isTokenPending, restartInit, applySimliTokenFromResponse } =
@@ -254,7 +254,9 @@ export function SpeakingExaminerSession({
       signal?: AbortSignal,
     ) => {
       audioContextRef.current = ctx
-      onExaminerTurnReady()
+      // The move to 'playing' now comes from useExaminerAudio, at the moment
+      // sound actually starts. Announcing it here instead put the caption a
+      // whole synthesis round trip ahead of the examiner's voice.
       const needsSynthesis = !resp.audio_base64?.trim()
       await playExaminerAudio(
         resp.text,
@@ -271,7 +273,7 @@ export function SpeakingExaminerSession({
       )
       if (!isSessionActive(sessionId)) return
     },
-    [onExaminerTurnReady, playExaminerAudio, isSessionActive],
+    [playExaminerAudio, isSessionActive],
   )
 
   const reconnectSimli = useCallback(
@@ -351,8 +353,9 @@ export function SpeakingExaminerSession({
         const updatedHistory = [...history, candidateTurn, examinerTurn]
         setHistory(updatedHistory)
 
-        onExaminerResponse()
-
+        // Stay on 'thinking' until the voice is ready. The turn arrives as text
+        // alone and the audio needs a second round trip, so calling it 'playing'
+        // here left the avatar standing still under a "Speaking" caption.
         if (import.meta.env.DEV && resp.timings) {
           // eslint-disable-next-line no-console -- perf diagnostics
           console.debug('[Examiner] turn timings', resp.timings)
@@ -392,7 +395,6 @@ export function SpeakingExaminerSession({
       onRecordingStopped,
       onTranscriptReady,
       onTranscriptFailed,
-      onExaminerResponse,
       scheduleScoringAfterSpeech,
       playExaminerTurn,
       isSessionActive,
@@ -535,7 +537,9 @@ export function SpeakingExaminerSession({
         setLiveSessionId(resp.session_id)
       }
       setHistory([{ role: 'examiner', text: resp.text }])
-      // Force playing even if onExaminerResponse no-ops due to phase flap.
+      // The greeting carries its audio inline, so there is no synthesis gap to
+      // wait out here. Forced rather than left to the audio callback because
+      // Simli init can flap the phase back to idle mid-request.
       setPhase('playing')
       void playExaminerTurn(
         resp,

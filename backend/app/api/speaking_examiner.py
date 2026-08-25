@@ -1381,7 +1381,18 @@ async def transcribe_and_respond(
     _actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ):
-    """Transcribe audio and generate examiner turn in one request (TTS deferred)."""
+    """Transcribe the candidate and answer them: transcript, text and voice together.
+
+    The voice used to be left to a second request so the text could reach the
+    screen sooner. It arrived a round trip and a synthesis later, and in between
+    the candidate read the next question off a still, silent examiner — the one
+    part of the exam where the avatar visibly lagged its own words. Sending both
+    at once costs the wait before anything appears and saves the round trip.
+
+    A failed synthesis still answers 200 with empty audio and ``tts_error`` set,
+    which the client retries through /synthesize-turn before falling back to the
+    browser's own voice.
+    """
     try:
         contents, error_resp = await _read_transcribe_blob(file)
         if error_resp is not None:
@@ -1422,7 +1433,7 @@ async def transcribe_and_respond(
                     transcript,
                     plan,
                     db,
-                    include_tts=False,
+                    include_tts=True,
                     stt=stt,
                 )
             except InvalidStateTransition as e:
@@ -1438,9 +1449,12 @@ async def transcribe_and_respond(
             else:
                 payload["timings"] = {"whisper_ms": whisper_ms}
             logger.info(
-                "Examiner /transcribe-and-respond stt=%s whisper_ms=%d state=%s part=%s",
+                "Examiner /transcribe-and-respond stt=%s whisper_ms=%d tts_ms=%s "
+                "tts_cache_hit=%s state=%s part=%s",
                 stt.provider,
                 whisper_ms,
+                payload["timings"].get("tts_ms"),
+                payload["timings"].get("tts_cache_hit"),
                 live_session.current_state,
                 payload.get("part"),
             )
@@ -1450,7 +1464,7 @@ async def transcribe_and_respond(
         payload, timings, _updated_history = await _generate_examiner_response(
             transcript,
             history,
-            include_tts=False,
+            include_tts=True,
             test_context=None,
         )
         timings.whisper_ms = whisper_ms

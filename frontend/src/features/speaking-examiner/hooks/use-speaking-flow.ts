@@ -133,10 +133,6 @@ export function useSpeakingFlow({
     if (phaseRef.current === 'transcribing') setPhase('ready')
   }, [setPhase])
 
-  const onExaminerResponse = useCallback(() => {
-    if (phaseRef.current === 'thinking') setPhase('playing')
-  }, [setPhase])
-
   const scheduleScoringAfterSpeech = useCallback(
     (history: ConversationTurn[]) => {
       pendingScoreHistoryRef.current = history
@@ -202,7 +198,6 @@ export function useSpeakingFlow({
     onRecordingStopped,
     onTranscriptReady,
     onTranscriptFailed,
-    onExaminerResponse,
     onExaminerAudioDone,
     onPrepTimerDone,
     scheduleScoringAfterSpeech,
