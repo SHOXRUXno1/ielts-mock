@@ -1160,7 +1160,6 @@ function ActiveChrome({
     enterSection,
     isSealing,
     bookSlug,
-    testSlug,
     reportSectionExpired,
     activeSectionType,
     stateOf,

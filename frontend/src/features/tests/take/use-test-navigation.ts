@@ -177,7 +177,7 @@ export function useTestNavigation() {
           to: '/take-test/$testId',
           params: { testId: liveTestId },
           search: {
-            resume: ctx.attemptId,
+            resume: ctx.attemptId ?? undefined,
             section,
             part: section === 'speaking' ? undefined : String(safePart),
           },
