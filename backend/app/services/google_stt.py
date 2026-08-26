@@ -9,9 +9,12 @@ httpx instead of pulling in the full Google client libraries.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import logging
+import shutil
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -36,6 +39,11 @@ _credentials: dict[str, Any] | None | object = _UNSET
 _access_token: str | None = None
 _access_token_expires_at = 0.0
 _blocked = False
+
+# Sync Recognize rejects anything over 60s. Chunks stay under that with
+# room for ffmpeg seek slop so a 120s Part 2 still fits on Chirp.
+_SYNC_LIMIT_S = 55.0
+_EMPTY_WAV_BYTES = 16_000  # ~0.5s of 16 kHz 16-bit mono; shorter is noise
 
 
 def reset() -> None:
@@ -183,8 +191,61 @@ async def _access_token_value() -> str:
     return token
 
 
+def ffmpeg_available() -> bool:
+    return shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
+
+
+def is_duration_limit_error(exc: BaseException) -> bool:
+    """Google's wording for 'this clip is longer than sync Recognize allows'."""
+    if not isinstance(exc, httpx.HTTPStatusError):
+        return False
+    body = (exc.response.text or "").lower()
+    return (
+        "60 seconds" in body
+        or "1 minute" in body
+        or "1 min" in body
+        or "sync input too long" in body
+        or "exceeds duration limit" in body
+    )
+
+
+def _join_chunk_transcripts(parts: list[str]) -> str:
+    return " ".join(part.strip() for part in parts if part and part.strip())
+
+
 async def recognize(audio_bytes: bytes) -> str:
-    """Synchronous Chirp Recognize. Audio longer than ~60s is rejected by Google."""
+    """Transcribe with Chirp. Clips over ~60s are split, then recognized in parallel.
+
+    Google will not raise the sync Recognize ceiling — 60 seconds is a hard
+    product limit. Batch needs a GCS bucket; streaming is gRPC and wants
+    near-realtime send. For a 2-minute Part 2 the honest path on this stack
+    is cut-and-stitch.
+    """
+    if ffmpeg_available():
+        chunks = await split_for_sync_recognize(audio_bytes)
+        if len(chunks) > 1:
+            return await _recognize_chunks(chunks)
+
+    try:
+        return await recognize_once(audio_bytes)
+    except httpx.HTTPStatusError as exc:
+        if is_duration_limit_error(exc) and ffmpeg_available():
+            chunks = await split_for_sync_recognize(audio_bytes, force=True)
+            if len(chunks) > 1:
+                return await _recognize_chunks(chunks)
+        raise
+
+
+async def _recognize_chunks(chunks: list[bytes]) -> str:
+    logger.info("Google STT recognizing %d chunks in parallel", len(chunks))
+    parts = await asyncio.gather(*[recognize_once(chunk) for chunk in chunks])
+    text = _join_chunk_transcripts(list(parts))
+    logger.info("Google STT joined %d chunks → %d chars", len(chunks), len(text))
+    return text
+
+
+async def recognize_once(audio_bytes: bytes) -> str:
+    """One synchronous Chirp Recognize. Audio longer than ~60s is rejected."""
     project = project_id()
     if not project:
         raise RuntimeError("Google STT project_id is missing")
@@ -225,3 +286,99 @@ async def recognize(audio_bytes: bytes) -> str:
     transcript = transcript_from_response(resp.json())
     logger.info("Google STT (%s) transcript length: %d chars", model, len(transcript))
     return transcript
+
+
+async def split_for_sync_recognize(
+    audio_bytes: bytes,
+    *,
+    force: bool = False,
+) -> list[bytes]:
+    """Cut a long take into ≤55s WAV pieces Chirp will accept."""
+    with tempfile.TemporaryDirectory(prefix="chirp-") as tmp:
+        src = Path(tmp) / "in.webm"
+        src.write_bytes(audio_bytes)
+        duration = await _probe_duration_s(src)
+        if duration is not None and duration <= _SYNC_LIMIT_S and not force:
+            return [audio_bytes]
+        if duration is None and not force:
+            return [audio_bytes]
+        chunks = await _extract_chunks(src, duration)
+        return chunks or [audio_bytes]
+
+
+async def _probe_duration_s(path: Path) -> float | None:
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            str(path),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+    except FileNotFoundError:
+        return None
+    out, _err = await proc.communicate()
+    if proc.returncode != 0:
+        return None
+    raw = out.decode("utf-8", errors="replace").strip()
+    try:
+        value = float(raw)
+    except ValueError:
+        return None
+    if value <= 0:
+        return None
+    return value
+
+
+async def _extract_chunks(src: Path, duration: float | None) -> list[bytes]:
+    chunks: list[bytes] = []
+    start = 0.0
+    limit = duration if duration is not None else 180.0
+    idx = 0
+    while start < limit - 0.05:
+        dest = src.with_name(f"chunk-{idx}.wav")
+        ok = await _cut_wav(src, dest, start, _SYNC_LIMIT_S)
+        if not ok or dest.stat().st_size < _EMPTY_WAV_BYTES:
+            break
+        chunks.append(dest.read_bytes())
+        start += _SYNC_LIMIT_S
+        idx += 1
+        if duration is None and idx >= 4:
+            break
+    return chunks
+
+
+async def _cut_wav(src: Path, dest: Path, start: float, length: float) -> bool:
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-y",
+            "-i",
+            str(src),
+            "-ss",
+            f"{start:.2f}",
+            "-t",
+            f"{length:.2f}",
+            "-ac",
+            "1",
+            "-ar",
+            "16000",
+            str(dest),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+    except FileNotFoundError:
+        return False
+    _out, err = await proc.communicate()
+    if proc.returncode != 0:
+        logger.warning("ffmpeg cut failed: %s", err.decode("utf-8", errors="replace")[:300])
+        return False
+    return dest.exists()

@@ -5,7 +5,7 @@ ENV PYTHONPATH=/app
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      gcc libpq-dev curl \
+      gcc libpq-dev curl ffmpeg \
       libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 \
       fonts-dejavu-core fonts-liberation && \
     rm -rf /var/lib/apt/lists/*
