@@ -22,7 +22,6 @@ from app.models.test import Test
 from app.models.user import User
 from app.schemas.test import TestDetailRead
 from app.services import section_progress as sp
-from app.services import section_settings as settings_service
 from app.utils.labels import format_test_label
 
 
@@ -202,7 +201,11 @@ async def start_next_full_mock(
     test = await db.get(Test, test_id)
     if test is None or not test.is_published:
         raise NoUnusedMocks
-    await settings_service.ensure_loaded(db, test)
+    # Do not call section_settings.ensure_loaded here. db.get() leaves
+    # test.section_settings unloaded; touching it in async raises
+    # MissingGreenlet (500). start_attempt never needed settings to
+    # create the sitting, and a commit inside ensure_loaded would also
+    # release this FOR UPDATE lock mid-start.
 
     attempt = Attempt(
         test_id=test_id,

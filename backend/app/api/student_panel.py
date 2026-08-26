@@ -515,6 +515,7 @@ async def start_full_mock(
     if actor.user_id is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     try:
-        return await start_next_full_mock(db, actor.user_id)
+        attempt = await start_next_full_mock(db, actor.user_id)
+        return AttemptRead.model_validate(attempt)
     except NoUnusedMocks:
         raise http_no_mocks() from None

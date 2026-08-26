@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.api.deps import Actor, get_current_actor
@@ -17,6 +18,7 @@ from app.services.student_mock import (
     cloak_test_read,
     pick_unused_id,
     practice_set_label,
+    start_next_full_mock,
     student_mock_label,
 )
 
@@ -132,3 +134,54 @@ def test_student_slug_redirect_is_hidden():
 
     assert resp.status_code == 403
     assert "cambridge" not in resp.text.lower()
+
+
+def test_start_next_does_not_import_settings_service():
+    from app.services import student_mock as module
+
+    assert not hasattr(module, "settings_service")
+
+
+@pytest.mark.asyncio
+async def test_start_next_full_mock_does_not_touch_section_settings():
+    user_id = uuid.uuid4()
+    test_id = uuid.uuid4()
+
+    user = MagicMock()
+    user.id = user_id
+
+    test = MagicMock(spec=TestModel)
+    test.id = test_id
+    test.is_published = True
+
+    def _boom(_self):
+        raise RuntimeError("lazy section_settings must not be loaded")
+
+    type(test).section_settings = property(_boom)
+
+    lock_result = MagicMock()
+    lock_result.scalar_one_or_none.return_value = user
+    live_result = MagicMock()
+    live_result.scalar_one_or_none.return_value = None
+    used_result = MagicMock()
+    used_result.all.return_value = []
+    published_result = MagicMock()
+    published_result.all.return_value = [(test_id,)]
+
+    session = MagicMock()
+    session.execute = AsyncMock(
+        side_effect=[lock_result, live_result, used_result, published_result]
+    )
+    session.get = AsyncMock(return_value=test)
+    session.add = MagicMock()
+    session.flush = AsyncMock()
+    session.commit = AsyncMock()
+    session.refresh = AsyncMock()
+
+    attempt = await start_next_full_mock(session, user_id)
+
+    session.flush.assert_awaited()
+    session.commit.assert_awaited()
+    session.refresh.assert_awaited()
+    assert attempt.test_id == test_id
+    assert attempt.user_id == user_id

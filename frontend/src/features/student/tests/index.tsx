@@ -194,10 +194,23 @@ export function StudentTests() {
       })
     },
     onError: (err: unknown) => {
-      const detail =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail
-      toast.error(detail || 'Could not start a full mock')
+      const detail = (
+        err as { response?: { data?: { detail?: unknown } } }
+      )?.response?.data?.detail
+      const message =
+        typeof detail === 'string'
+          ? detail
+          : Array.isArray(detail)
+            ? detail
+                .map((item) =>
+                  typeof item === 'string'
+                    ? item
+                    : (item as { msg?: string })?.msg,
+                )
+                .filter(Boolean)
+                .join(' ')
+            : ''
+      toast.error(message || 'Could not start a full mock')
     },
   })
 
