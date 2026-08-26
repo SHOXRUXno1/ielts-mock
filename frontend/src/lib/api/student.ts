@@ -110,6 +110,7 @@ export type FullMockStatus = {
   in_progress_attempt_id: string | null
   in_progress_test_id: string | null
   in_progress_title: string | null
+  in_progress_section: string | null
 }
 
 export async function getFullMockStatus(): Promise<FullMockStatus> {

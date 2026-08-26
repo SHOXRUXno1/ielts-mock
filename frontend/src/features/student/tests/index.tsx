@@ -23,6 +23,7 @@ import {
   type CatalogTest,
 } from '@/lib/api/student'
 import { useAuthStore } from '@/stores/auth-store'
+import { continueTakeSearch } from './continue-search'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -252,11 +253,10 @@ export function StudentTests() {
                   void navigate({
                     to: '/take-test/$testId',
                     params: { testId: mock!.in_progress_test_id! },
-                    search: {
-                      resume: mock!.in_progress_attempt_id!,
-                      section: 'listening',
-                      part: '1',
-                    },
+                    search: continueTakeSearch(
+                      mock!.in_progress_attempt_id!,
+                      mock!.in_progress_section,
+                    ),
                   })
                 }
               >

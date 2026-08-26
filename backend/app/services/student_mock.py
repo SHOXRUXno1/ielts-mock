@@ -18,6 +18,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attempt import Attempt, AttemptMode, AttemptStatus
+from app.models.section_progress import SectionProgress
 from app.models.test import Test
 from app.models.user import User
 from app.schemas.test import TestDetailRead
@@ -127,6 +128,18 @@ async def published_test_ids(db: AsyncSession) -> list[uuid.UUID]:
         .order_by(Test.created_at.asc())
     )
     return [row[0] for row in rows.all()]
+
+
+async def resume_section_for_attempt(
+    db: AsyncSession,
+    attempt_id: uuid.UUID,
+) -> str | None:
+    rows = (
+        await db.execute(
+            select(SectionProgress).where(SectionProgress.attempt_id == attempt_id)
+        )
+    ).scalars().all()
+    return sp.resume_section_type(list(rows))
 
 
 async def remaining_count(db: AsyncSession, user_id: uuid.UUID) -> int:

@@ -59,6 +59,7 @@ const mockStatus: FullMockStatus = {
   in_progress_attempt_id: null,
   in_progress_test_id: null,
   in_progress_title: null,
+  in_progress_section: null,
 }
 
 vi.mock('@/lib/api/student', () => ({

@@ -24,6 +24,7 @@ from app.services.student_mock import (
     published_index_map,
     published_test_ids,
     remaining_count,
+    resume_section_for_attempt,
     slot_map_for_user,
     start_next_full_mock,
     student_mock_label,
@@ -137,6 +138,7 @@ class FullMockStatus(BaseModel):
     in_progress_attempt_id: uuid.UUID | None = None
     in_progress_test_id: uuid.UUID | None = None
     in_progress_title: str | None = None
+    in_progress_section: str | None = None
 
 
 @router.get("/dashboard", response_model=DashboardResponse)
@@ -494,9 +496,11 @@ async def full_mock_status(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     live = await in_progress_full_mock(db, actor.user_id)
     title = None
+    section = None
     if live is not None:
         slots = await slot_map_for_user(db, actor.user_id)
         title = student_mock_label(slots.get(live.test_id))
+        section = await resume_section_for_attempt(db, live.id)
     published = await published_test_ids(db)
     return FullMockStatus(
         remaining=await remaining_count(db, actor.user_id),
@@ -504,6 +508,7 @@ async def full_mock_status(
         in_progress_attempt_id=live.id if live is not None else None,
         in_progress_test_id=live.test_id if live is not None else None,
         in_progress_title=title,
+        in_progress_section=section,
     )
 
 

@@ -262,6 +262,22 @@ def all_sealed(
     return True
 
 
+def resume_section_type(rows: Sequence[SectionProgress]) -> str | None:
+    """Section a student should land on when they Continue a live sitting.
+
+    Prefer the active skill. If they never entered (briefing cancel), take the
+    first not-started skill in exam order. All sealed → None (submit owns that).
+    """
+    by_type = {r.section_type: _as_state(r.state) for r in rows}
+    for t in TYPE_ORDER:
+        if by_type.get(t) == SectionState.ACTIVE:
+            return t
+    for t in TYPE_ORDER:
+        if by_type.get(t) == SectionState.NOT_STARTED:
+            return t
+    return None
+
+
 def ensure_progress_rows(
     attempt_id,
     present_types: Iterable[str] | None = None,

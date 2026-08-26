@@ -14,6 +14,8 @@ from app.core.database import get_db
 from app.main import app
 from app.models.test import Test as TestModel
 from app.schemas.test import TestDetailRead
+from app.models.section_progress import SectionProgress, SectionState
+from app.services import section_progress as sp
 from app.services.student_mock import (
     cloak_test_read,
     pick_unused_id,
@@ -40,6 +42,43 @@ def test_labels():
     assert student_mock_label(3) == "Mock #3"
     assert practice_set_label(None) == "Practice set"
     assert practice_set_label(2) == "Practice set #2"
+
+
+def _progress(stype: str, state: SectionState) -> SectionProgress:
+    return SectionProgress(
+        id=uuid.uuid4(),
+        attempt_id=uuid.uuid4(),
+        section_type=stype,
+        state=state.value,
+    )
+
+
+def test_resume_section_prefers_active():
+    rows = [
+        _progress("listening", SectionState.SEALED),
+        _progress("reading", SectionState.ACTIVE),
+        _progress("writing", SectionState.NOT_STARTED),
+        _progress("speaking", SectionState.NOT_STARTED),
+    ]
+    assert sp.resume_section_type(rows) == "reading"
+
+
+def test_resume_section_first_not_started_when_none_active():
+    rows = [
+        _progress("listening", SectionState.NOT_STARTED),
+        _progress("reading", SectionState.NOT_STARTED),
+    ]
+    assert sp.resume_section_type(rows) == "listening"
+
+
+def test_resume_section_all_sealed_is_none():
+    rows = [
+        _progress("listening", SectionState.SEALED),
+        _progress("reading", SectionState.SEALED),
+        _progress("writing", SectionState.SEALED),
+        _progress("speaking", SectionState.SEALED),
+    ]
+    assert sp.resume_section_type(rows) is None
 
 
 def test_cloak_test_read_strips_cambridge():
