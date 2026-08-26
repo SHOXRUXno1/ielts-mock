@@ -377,7 +377,11 @@ export function TakeTestShell({
   // ── Auto-resolve in-progress attempt when URL has no ?resume ─────────────
   // Practice mode always arrives with a fresh attempt id in the URL, so we
   // skip the "resume last mock" resolver here.
-  const shouldResolveCurrent = !isPreview && !isPractice && !attemptId && !!testId
+  // Stay off this query on the briefing screen: attaching the attempt there
+  // replaces IntroScreen with a spinner, and the section redirect is gated
+  // on ?resume or a Start click in this visit.
+  const shouldResolveCurrent =
+    !isPreview && !isPractice && !attemptId && !!testId && !isIntroRoute
   const currentAttemptQuery = useQuery({
     queryKey: ['attempts', 'current', testId],
     queryFn: () => getCurrentAttempt(testId),
@@ -385,9 +389,7 @@ export function TakeTestShell({
     retry: false,
     staleTime: 0,
   })
-  const resolvingAttempt =
-    shouldResolveCurrent &&
-    (currentAttemptQuery.isLoading || currentAttemptQuery.isFetching)
+  const resolvingAttempt = shouldResolveCurrent && currentAttemptQuery.isLoading
 
   useEffect(() => {
     const canSlug = !!bookSlug && !!testSlug
@@ -401,10 +403,6 @@ export function TakeTestShell({
     resumeNavDoneRef.current = navKey
 
     if (current) {
-      if (isIntroRoute && !resume) {
-        setLocalAttemptId(current.id)
-        return
-      }
       if (liveById && testIdProp) {
         const section = routeSearch.section
         void navigate({
