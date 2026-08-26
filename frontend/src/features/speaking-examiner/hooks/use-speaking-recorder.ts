@@ -9,7 +9,7 @@ import type { Phase } from '../types/phase'
 
 type UseSpeakingRecorderOptions = {
   turnKind: SpeakingTurnKind
-  onRecordingComplete: (blob: Blob) => void
+  onRecordingComplete: (blob: Blob, durationSeconds: number) => void
   setPhase: (phase: Phase) => void
   onRecordStart?: () => void
   onRecordEnd?: () => void
@@ -29,6 +29,7 @@ export function useSpeakingRecorder({
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const elapsedSecondsRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const pendingStreamRef = useRef<Promise<MediaStream> | null>(null)
@@ -146,9 +147,11 @@ export function useSpeakingRecorder({
     recorder.onstop = () => {
       const mimeType = recorder.mimeType || 'audio/webm'
       const blob = new Blob(chunksRef.current, { type: mimeType })
+      const durationSeconds = elapsedSecondsRef.current
       // The microphone stays open for the next answer; see acquireStream.
+      elapsedSecondsRef.current = 0
       setRecordingTime(0)
-      onRecordingComplete(blob)
+      onRecordingComplete(blob, durationSeconds)
     }
     recorder.stop()
   }, [clearTimer, onRecordingComplete])
@@ -175,6 +178,7 @@ export function useSpeakingRecorder({
       }
       recorder.start(100)
       mediaRecorderRef.current = recorder
+      elapsedSecondsRef.current = 0
       setRecordingTime(0)
       onRecordStart?.()
 
@@ -185,6 +189,7 @@ export function useSpeakingRecorder({
       timerRef.current = setInterval(() => {
         setRecordingTime((t) => {
           const next = t + 1
+          elapsedSecondsRef.current = next
           // The wrap-up cue has already been on screen for a while by now, so
           // the stop is expected — no toast on top of it.
           if (next >= hardSeconds) stopRecordingRef.current()

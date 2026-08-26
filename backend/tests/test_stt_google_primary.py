@@ -36,7 +36,7 @@ def _http_error(url: str, status: int) -> httpx.HTTPStatusError:
 def _record_calls(monkeypatch, *, google_result, groq_result="from groq"):
     calls = {"google": 0, "groq": 0, "gemini": 0}
 
-    async def fake_google(audio_bytes):
+    async def fake_google(audio_bytes, *, duration_seconds=None):
         calls["google"] += 1
         if isinstance(google_result, Exception):
             raise google_result

@@ -213,16 +213,30 @@ def _join_chunk_transcripts(parts: list[str]) -> str:
     return " ".join(part.strip() for part in parts if part and part.strip())
 
 
-async def recognize(audio_bytes: bytes) -> str:
+async def recognize(
+    audio_bytes: bytes,
+    *,
+    duration_seconds: float | None = None,
+) -> str:
     """Transcribe with Chirp. Clips over ~60s are split, then recognized in parallel.
 
     Google will not raise the sync Recognize ceiling — 60 seconds is a hard
     product limit. Batch needs a GCS bucket; streaming is gRPC and wants
     near-realtime send. For a 2-minute Part 2 the honest path on this stack
     is cut-and-stitch.
+
+    ``duration_seconds`` is the recorder's clock. WebM often has no duration
+    tag, and sending that whole take to Recognize hangs until the client
+    gives up. A known long take is split first; an unknown one is probed
+    and cut, never offered whole.
     """
+    if duration_seconds is not None and duration_seconds <= _SYNC_LIMIT_S:
+        return await recognize_once(audio_bytes)
+
     if ffmpeg_available():
-        chunks = await split_for_sync_recognize(audio_bytes)
+        chunks = await split_for_sync_recognize(
+            audio_bytes, duration_hint=duration_seconds
+        )
         if len(chunks) > 1:
             return await _recognize_chunks(chunks)
 
@@ -230,7 +244,9 @@ async def recognize(audio_bytes: bytes) -> str:
         return await recognize_once(audio_bytes)
     except httpx.HTTPStatusError as exc:
         if is_duration_limit_error(exc) and ffmpeg_available():
-            chunks = await split_for_sync_recognize(audio_bytes, force=True)
+            chunks = await split_for_sync_recognize(
+                audio_bytes, force=True, duration_hint=duration_seconds
+            )
             if len(chunks) > 1:
                 return await _recognize_chunks(chunks)
         raise
@@ -292,15 +308,16 @@ async def split_for_sync_recognize(
     audio_bytes: bytes,
     *,
     force: bool = False,
+    duration_hint: float | None = None,
 ) -> list[bytes]:
     """Cut a long take into ≤55s WAV pieces Chirp will accept."""
     with tempfile.TemporaryDirectory(prefix="chirp-") as tmp:
         src = Path(tmp) / "in.webm"
         src.write_bytes(audio_bytes)
-        duration = await _probe_duration_s(src)
+        duration = duration_hint
+        if duration is None:
+            duration = await _probe_duration_s(src)
         if duration is not None and duration <= _SYNC_LIMIT_S and not force:
-            return [audio_bytes]
-        if duration is None and not force:
             return [audio_bytes]
         chunks = await _extract_chunks(src, duration)
         return chunks or [audio_bytes]

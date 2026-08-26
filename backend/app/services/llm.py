@@ -1050,10 +1050,13 @@ async def transcribe_audio_bytes(
     audio_bytes: bytes,
     *,
     content_type: str | None = None,
+    duration_seconds: float | None = None,
 ) -> str:
     """Transcribe raw audio, for callers that only need the words."""
     result = await transcribe_audio_bytes_detailed(
-        audio_bytes, content_type=content_type
+        audio_bytes,
+        content_type=content_type,
+        duration_seconds=duration_seconds,
     )
     return result.text
 
@@ -1062,6 +1065,7 @@ async def transcribe_audio_bytes_detailed(
     audio_bytes: bytes,
     *,
     content_type: str | None = None,
+    duration_seconds: float | None = None,
 ) -> Transcription:
     """Transcribe raw audio. Chirp is the first ear when a service account
     is configured. Groq Whisper takes the rest of the live traffic within
@@ -1111,7 +1115,12 @@ async def transcribe_audio_bytes_detailed(
 
     if can_use_google:
         try:
-            return done(await _transcribe_with_google(audio_bytes), "google")
+            return done(
+                await _transcribe_with_google(
+                    audio_bytes, duration_seconds=duration_seconds
+                ),
+                "google",
+            )
         except httpx.HTTPStatusError as exc:
             google_error = exc
             status = exc.response.status_code
@@ -1178,8 +1187,14 @@ async def transcribe_audio_bytes_detailed(
     raise RuntimeError("No speech-to-text provider configured")
 
 
-async def _transcribe_with_google(audio_bytes: bytes) -> str:
-    return _normalize_stt_text(await google_stt.recognize(audio_bytes))
+async def _transcribe_with_google(
+    audio_bytes: bytes,
+    *,
+    duration_seconds: float | None = None,
+) -> str:
+    return _normalize_stt_text(
+        await google_stt.recognize(audio_bytes, duration_seconds=duration_seconds)
+    )
 
 
 async def _transcribe_with_groq(

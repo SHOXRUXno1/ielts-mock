@@ -2,6 +2,8 @@ import axios from 'axios'
 import { api } from '@/lib/axios'
 
 export const SPEAKING_REQUEST_TIMEOUT_MS = 90_000
+/** Chirp on a 2-minute Part 2 can chew for longer than one short request. */
+export const SPEAKING_TRANSCRIBE_TIMEOUT_MS = 210_000
 export const NO_SPEECH_TRANSCRIPT = '(no speech detected)'
 
 export type ConversationTurn = {
@@ -145,6 +147,7 @@ export async function transcribeAndRespondExaminer(
   blob: Blob,
   sessionId?: string | null,
   signal?: AbortSignal,
+  durationSeconds?: number | null,
 ): Promise<TranscribeAndRespondResponse> {
   const formData = new FormData()
   const mimeType = blob.type.split(';')[0] || 'audio/webm'
@@ -152,11 +155,19 @@ export async function transcribeAndRespondExaminer(
     'file',
     new File([blob], 'recording.webm', { type: mimeType }),
   )
-  const params = sessionId ? { session_id: sessionId } : undefined
+  const params: Record<string, string> = {}
+  if (sessionId) params.session_id = sessionId
+  if (durationSeconds != null && durationSeconds > 0) {
+    params.duration_seconds = String(durationSeconds)
+  }
   const { data } = await api.post<TranscribeAndRespondResponse>(
     '/admin/speaking-examiner/transcribe-and-respond',
     formData,
-    { ...speakingRequestConfig(signal), params },
+    {
+      timeout: SPEAKING_TRANSCRIBE_TIMEOUT_MS,
+      ...(signal ? { signal } : {}),
+      params: Object.keys(params).length ? params : undefined,
+    },
   )
   return data
 }
@@ -254,9 +265,11 @@ export async function transcribeAndRespondWithRetry(
   blob: Blob,
   sessionId?: string | null,
   signal?: AbortSignal,
+  durationSeconds?: number | null,
 ): Promise<TranscribeAndRespondResponse> {
   return withSpeakingRetry(
-    () => transcribeAndRespondExaminer(blob, sessionId, signal),
+    () =>
+      transcribeAndRespondExaminer(blob, sessionId, signal, durationSeconds),
     signal,
   )
 }

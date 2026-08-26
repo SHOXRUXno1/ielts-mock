@@ -38,7 +38,7 @@ class TestRecognizeSplitsLongAudio:
     async def test_a_long_take_is_recognized_in_parallel_chunks(self, monkeypatch):
         calls: list[int] = []
 
-        async def fake_split(audio_bytes, *, force=False):
+        async def fake_split(audio_bytes, *, force=False, duration_hint=None):
             return [b"a" * 2048, b"b" * 2048]
 
         async def fake_once(audio_bytes):
@@ -56,7 +56,7 @@ class TestRecognizeSplitsLongAudio:
 
     @pytest.mark.asyncio
     async def test_a_short_take_stays_on_one_call(self, monkeypatch):
-        async def fake_split(audio_bytes, *, force=False):
+        async def fake_split(audio_bytes, *, force=False, duration_hint=None):
             return [audio_bytes]
 
         async def fake_once(audio_bytes):
@@ -70,7 +70,7 @@ class TestRecognizeSplitsLongAudio:
 
     @pytest.mark.asyncio
     async def test_a_60s_refusal_retries_as_chunks(self, monkeypatch):
-        async def fake_split(audio_bytes, *, force=False):
+        async def fake_split(audio_bytes, *, force=False, duration_hint=None):
             if not force:
                 return [audio_bytes]
             return [b"a" * 2048, b"b" * 2048]
@@ -97,3 +97,44 @@ class TestRecognizeSplitsLongAudio:
 
         with pytest.raises(httpx.HTTPStatusError):
             await google_stt.recognize(b"x" * 4096)
+
+    @pytest.mark.asyncio
+    async def test_a_known_long_take_is_split_before_the_first_call(
+        self, monkeypatch
+    ):
+        hints: list[float | None] = []
+
+        async def fake_split(audio_bytes, *, force=False, duration_hint=None):
+            hints.append(duration_hint)
+            return [b"a" * 2048, b"b" * 2048]
+
+        async def fake_once(audio_bytes):
+            return "chunk"
+
+        monkeypatch.setattr(google_stt, "ffmpeg_available", lambda: True)
+        monkeypatch.setattr(google_stt, "split_for_sync_recognize", fake_split)
+        monkeypatch.setattr(google_stt, "recognize_once", fake_once)
+
+        text = await google_stt.recognize(b"x" * 4096, duration_seconds=120)
+
+        assert text == "chunk chunk"
+        assert hints == [120]
+
+    @pytest.mark.asyncio
+    async def test_a_known_short_take_skips_the_splitter(self, monkeypatch):
+        split_calls = {"n": 0}
+
+        async def fake_split(*_args, **_kwargs):
+            split_calls["n"] += 1
+            return [b"nope"]
+
+        async def fake_once(audio_bytes):
+            return "short"
+
+        monkeypatch.setattr(google_stt, "split_for_sync_recognize", fake_split)
+        monkeypatch.setattr(google_stt, "recognize_once", fake_once)
+
+        text = await google_stt.recognize(b"x" * 4096, duration_seconds=20)
+
+        assert text == "short"
+        assert split_calls["n"] == 0

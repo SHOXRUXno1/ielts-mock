@@ -1411,6 +1411,7 @@ async def respond_to_candidate(
 async def transcribe_and_respond(
     file: UploadFile,
     session_id: uuid.UUID | None = Query(None),
+    duration_seconds: float | None = Query(None),
     _actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ):
@@ -1432,6 +1433,7 @@ async def transcribe_and_respond(
         stt = await transcribe_audio_bytes_detailed(
             contents,
             content_type=file.content_type,
+            duration_seconds=duration_seconds,
         )
         transcript = stt.text
         whisper_ms = int((time.perf_counter() - t0) * 1000)

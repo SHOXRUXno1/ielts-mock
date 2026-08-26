@@ -302,7 +302,7 @@ export function SpeakingExaminerSession({
   }, [reconnectSimli])
 
   const processRecording = useCallback(
-    async (blob: Blob) => {
+    async (blob: Blob, durationSeconds = 0) => {
       const sessionId = sessionIdRef.current
       const signal = abortControllerRef.current?.signal
 
@@ -318,7 +318,12 @@ export function SpeakingExaminerSession({
           return
         }
 
-        const resp = await transcribeAndRespondWithRetry(blob, liveSessionId, signal)
+        const resp = await transcribeAndRespondWithRetry(
+          blob,
+          liveSessionId,
+          signal,
+          durationSeconds,
+        )
         if (!isSessionActive(sessionId)) return
 
         if (
