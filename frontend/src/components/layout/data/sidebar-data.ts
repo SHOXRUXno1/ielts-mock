@@ -10,7 +10,6 @@ import {
   UserCog,
   Palette,
   Users,
-  Wallet,
 } from 'lucide-react'
 import type { SidebarData } from '../types'
 
@@ -46,7 +45,6 @@ export function sidebarDataFor(
       {
         title: 'Other',
         items: [
-          { title: 'Usage & Billing', url: '/usage', icon: Wallet },
           {
             title: 'Settings',
             icon: Settings,

@@ -9,104 +9,67 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TestRouteRouteImport } from './routes/_test/route'
-import { Route as StudentRouteRouteImport } from './routes/_student/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedSpeakingExaminerRouteImport } from './routes/_authenticated/speaking-examiner'
-import { Route as errors503RouteImport } from './routes/(errors)/503'
-import { Route as errors500RouteImport } from './routes/(errors)/500'
-import { Route as errors404RouteImport } from './routes/(errors)/404'
-import { Route as errors403RouteImport } from './routes/(errors)/403'
-import { Route as errors401RouteImport } from './routes/(errors)/401'
+import { Route as StudentRouteRouteImport } from './routes/_student/route'
+import { Route as TestRouteRouteImport } from './routes/_test/route'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
+import { Route as errors401RouteImport } from './routes/(errors)/401'
+import { Route as errors403RouteImport } from './routes/(errors)/403'
+import { Route as errors404RouteImport } from './routes/(errors)/404'
+import { Route as errors500RouteImport } from './routes/(errors)/500'
+import { Route as errors503RouteImport } from './routes/(errors)/503'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedSettingsRouteRouteImport } from './routes/_authenticated/settings/route'
-import { Route as AuthenticatedUsageIndexRouteImport } from './routes/_authenticated/usage/index'
-import { Route as AuthenticatedTestsIndexRouteImport } from './routes/_authenticated/tests/index'
-import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
-import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
-import { Route as AuthenticatedResultsIndexRouteImport } from './routes/_authenticated/results/index'
-import { Route as AuthenticatedHelpCenterIndexRouteImport } from './routes/_authenticated/help-center/index'
-import { Route as AuthenticatedDevicesIndexRouteImport } from './routes/_authenticated/devices/index'
+import { Route as AuthenticatedSpeakingExaminerRouteImport } from './routes/_authenticated/speaking-examiner'
 import { Route as AuthenticatedAnalyticsIndexRouteImport } from './routes/_authenticated/analytics/index'
-import { Route as TestTakeTestTestIdRouteImport } from './routes/_test/take-test.$testId'
-import { Route as StudentStudentTestsRouteImport } from './routes/_student/student/tests'
-import { Route as StudentStudentProfileRouteImport } from './routes/_student/student/profile'
-import { Route as StudentStudentDashboardRouteImport } from './routes/_student/student/dashboard'
-import { Route as AuthenticatedTestsImportRouteImport } from './routes/_authenticated/tests/import'
-import { Route as AuthenticatedTestsCreateRouteImport } from './routes/_authenticated/tests/create'
-import { Route as AuthenticatedTestsTestIdRouteImport } from './routes/_authenticated/tests/$testId'
-import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students.$studentId'
-import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
-import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
-import { Route as AuthenticatedResultsAttemptIdRouteImport } from './routes/_authenticated/results/$attemptId'
+import { Route as AuthenticatedDevicesIndexRouteImport } from './routes/_authenticated/devices/index'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
-import { Route as StudentStudentResultsIndexRouteImport } from './routes/_student/student/results/index'
-import { Route as AuthenticatedTestsTestIdIndexRouteImport } from './routes/_authenticated/tests/$testId.index'
-import { Route as StudentStudentResultsAttemptIdRouteImport } from './routes/_student/student/results/$attemptId'
-import { Route as AuthenticatedTestsTestIdEditRouteImport } from './routes/_authenticated/tests/$testId.edit'
+import { Route as AuthenticatedHelpCenterIndexRouteImport } from './routes/_authenticated/help-center/index'
+import { Route as AuthenticatedResultsIndexRouteImport } from './routes/_authenticated/results/index'
+import { Route as AuthenticatedResultsAttemptIdRouteImport } from './routes/_authenticated/results/$attemptId'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
+import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
+import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
+import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students.$studentId'
+import { Route as AuthenticatedTestsIndexRouteImport } from './routes/_authenticated/tests/index'
+import { Route as AuthenticatedTestsTestIdRouteImport } from './routes/_authenticated/tests/$testId'
+import { Route as AuthenticatedTestsCreateRouteImport } from './routes/_authenticated/tests/create'
+import { Route as AuthenticatedTestsImportRouteImport } from './routes/_authenticated/tests/import'
+import { Route as StudentStudentDashboardRouteImport } from './routes/_student/student/dashboard'
+import { Route as StudentStudentProfileRouteImport } from './routes/_student/student/profile'
+import { Route as StudentStudentTestsRouteImport } from './routes/_student/student/tests'
+import { Route as TestTakeTestTestIdRouteImport } from './routes/_test/take-test.$testId'
 import { Route as AuthenticatedResultsStudentsStudentIdRouteImport } from './routes/_authenticated/results/students.$studentId'
-import { Route as TestTestsTestIdPreviewRouteRouteImport } from './routes/_test/tests/$testId/preview/route'
-import { Route as TestTakeTestBookSlugTestSlugRouteRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/route'
+import { Route as AuthenticatedTestsTestIdIndexRouteImport } from './routes/_authenticated/tests/$testId.index'
+import { Route as AuthenticatedTestsTestIdEditRouteImport } from './routes/_authenticated/tests/$testId.edit'
+import { Route as StudentStudentResultsIndexRouteImport } from './routes/_student/student/results/index'
+import { Route as StudentStudentResultsAttemptIdRouteImport } from './routes/_student/student/results/$attemptId'
 import { Route as TestPracticeBookSlugTestSlugRouteRouteImport } from './routes/_test/practice/$bookSlug/$testSlug/route'
-import { Route as TestTestsTestIdPreviewIndexRouteImport } from './routes/_test/tests/$testId/preview/index'
-import { Route as TestTakeTestBookSlugTestSlugIndexRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/index'
-import { Route as TestTakeTestBookSlugTestSlugReviewRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/review'
-import { Route as TestTestsTestIdPreviewSectionRouteRouteImport } from './routes/_test/tests/$testId/preview/$section/route'
-import { Route as TestTakeTestBookSlugTestSlugSectionRouteRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/$section/route'
+import { Route as TestTakeTestBookSlugTestSlugRouteRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/route'
+import { Route as TestTestsTestIdPreviewRouteRouteImport } from './routes/_test/tests/$testId/preview/route'
 import { Route as TestPracticeBookSlugTestSlugSectionRouteRouteImport } from './routes/_test/practice/$bookSlug/$testSlug/$section/route'
-import { Route as TestTestsTestIdPreviewSectionIndexRouteImport } from './routes/_test/tests/$testId/preview/$section/index'
-import { Route as TestTakeTestBookSlugTestSlugSectionIndexRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/$section/index'
-import { Route as TestTestsTestIdPreviewSectionPartRouteImport } from './routes/_test/tests/$testId/preview/$section/$part'
-import { Route as TestTakeTestBookSlugTestSlugSectionPartRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/$section/$part'
+import { Route as TestTakeTestBookSlugTestSlugIndexRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/index'
+import { Route as TestTakeTestBookSlugTestSlugSectionRouteRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/$section/route'
+import { Route as TestTakeTestBookSlugTestSlugReviewRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/review'
+import { Route as TestTestsTestIdPreviewIndexRouteImport } from './routes/_test/tests/$testId/preview/index'
+import { Route as TestTestsTestIdPreviewSectionRouteRouteImport } from './routes/_test/tests/$testId/preview/$section/route'
 import { Route as TestPracticeBookSlugTestSlugSectionPartRouteImport } from './routes/_test/practice/$bookSlug/$testSlug/$section/$part'
+import { Route as TestTakeTestBookSlugTestSlugSectionIndexRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/$section/index'
+import { Route as TestTakeTestBookSlugTestSlugSectionPartRouteImport } from './routes/_test/take-test/$bookSlug/$testSlug/$section/$part'
+import { Route as TestTestsTestIdPreviewSectionIndexRouteImport } from './routes/_test/tests/$testId/preview/$section/index'
+import { Route as TestTestsTestIdPreviewSectionPartRouteImport } from './routes/_test/tests/$testId/preview/$section/$part'
 
-const TestRouteRoute = TestRouteRouteImport.update({
-  id: '/_test',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudentRouteRoute = StudentRouteRouteImport.update({
   id: '/_student',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSpeakingExaminerRoute =
-  AuthenticatedSpeakingExaminerRouteImport.update({
-    id: '/speaking-examiner',
-    path: '/speaking-examiner',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const errors503Route = errors503RouteImport.update({
-  id: '/(errors)/503',
-  path: '/503',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const errors500Route = errors500RouteImport.update({
-  id: '/(errors)/500',
-  path: '/500',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const errors404Route = errors404RouteImport.update({
-  id: '/(errors)/404',
-  path: '/404',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const errors403Route = errors403RouteImport.update({
-  id: '/(errors)/403',
-  path: '/403',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const errors401Route = errors401RouteImport.update({
-  id: '/(errors)/401',
-  path: '/401',
+const TestRouteRoute = TestRouteRouteImport.update({
+  id: '/_test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authLoginRoute = authLoginRouteImport.update({
@@ -114,50 +77,46 @@ const authLoginRoute = authLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const errors401Route = errors401RouteImport.update({
+  id: '/(errors)/401',
+  path: '/401',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const errors403Route = errors403RouteImport.update({
+  id: '/(errors)/403',
+  path: '/403',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const errors404Route = errors404RouteImport.update({
+  id: '/(errors)/404',
+  path: '/404',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const errors500Route = errors500RouteImport.update({
+  id: '/(errors)/500',
+  path: '/500',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const errors503Route = errors503RouteImport.update({
+  id: '/(errors)/503',
+  path: '/503',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRouteRoute =
   AuthenticatedSettingsRouteRouteImport.update({
     id: '/settings',
     path: '/settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedUsageIndexRoute = AuthenticatedUsageIndexRouteImport.update({
-  id: '/usage/',
-  path: '/usage/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedTestsIndexRoute = AuthenticatedTestsIndexRouteImport.update({
-  id: '/tests/',
-  path: '/tests/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedStudentsIndexRoute =
-  AuthenticatedStudentsIndexRouteImport.update({
-    id: '/students/',
-    path: '/students/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsIndexRoute =
-  AuthenticatedSettingsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any)
-const AuthenticatedResultsIndexRoute =
-  AuthenticatedResultsIndexRouteImport.update({
-    id: '/results/',
-    path: '/results/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedHelpCenterIndexRoute =
-  AuthenticatedHelpCenterIndexRouteImport.update({
-    id: '/help-center/',
-    path: '/help-center/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDevicesIndexRoute =
-  AuthenticatedDevicesIndexRouteImport.update({
-    id: '/devices/',
-    path: '/devices/',
+const AuthenticatedSpeakingExaminerRoute =
+  AuthenticatedSpeakingExaminerRouteImport.update({
+    id: '/speaking-examiner',
+    path: '/speaking-examiner',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAnalyticsIndexRoute =
@@ -166,66 +125,10 @@ const AuthenticatedAnalyticsIndexRoute =
     path: '/analytics/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const TestTakeTestTestIdRoute = TestTakeTestTestIdRouteImport.update({
-  id: '/take-test/$testId',
-  path: '/take-test/$testId',
-  getParentRoute: () => TestRouteRoute,
-} as any)
-const StudentStudentTestsRoute = StudentStudentTestsRouteImport.update({
-  id: '/student/tests',
-  path: '/student/tests',
-  getParentRoute: () => StudentRouteRoute,
-} as any)
-const StudentStudentProfileRoute = StudentStudentProfileRouteImport.update({
-  id: '/student/profile',
-  path: '/student/profile',
-  getParentRoute: () => StudentRouteRoute,
-} as any)
-const StudentStudentDashboardRoute = StudentStudentDashboardRouteImport.update({
-  id: '/student/dashboard',
-  path: '/student/dashboard',
-  getParentRoute: () => StudentRouteRoute,
-} as any)
-const AuthenticatedTestsImportRoute =
-  AuthenticatedTestsImportRouteImport.update({
-    id: '/tests/import',
-    path: '/tests/import',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedTestsCreateRoute =
-  AuthenticatedTestsCreateRouteImport.update({
-    id: '/tests/create',
-    path: '/tests/create',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedTestsTestIdRoute =
-  AuthenticatedTestsTestIdRouteImport.update({
-    id: '/tests/$testId',
-    path: '/tests/$testId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedStudentsStudentIdRoute =
-  AuthenticatedStudentsStudentIdRouteImport.update({
-    id: '/students/$studentId',
-    path: '/students/$studentId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsAppearanceRoute =
-  AuthenticatedSettingsAppearanceRouteImport.update({
-    id: '/appearance',
-    path: '/appearance',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any)
-const AuthenticatedSettingsAccountRoute =
-  AuthenticatedSettingsAccountRouteImport.update({
-    id: '/account',
-    path: '/account',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any)
-const AuthenticatedResultsAttemptIdRoute =
-  AuthenticatedResultsAttemptIdRouteImport.update({
-    id: '/results/$attemptId',
-    path: '/results/$attemptId',
+const AuthenticatedDevicesIndexRoute =
+  AuthenticatedDevicesIndexRouteImport.update({
+    id: '/devices/',
+    path: '/devices/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedErrorsErrorRoute =
@@ -234,11 +137,102 @@ const AuthenticatedErrorsErrorRoute =
     path: '/errors/$error',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const StudentStudentResultsIndexRoute =
-  StudentStudentResultsIndexRouteImport.update({
-    id: '/student/results/',
-    path: '/student/results/',
-    getParentRoute: () => StudentRouteRoute,
+const AuthenticatedHelpCenterIndexRoute =
+  AuthenticatedHelpCenterIndexRouteImport.update({
+    id: '/help-center/',
+    path: '/help-center/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedResultsIndexRoute =
+  AuthenticatedResultsIndexRouteImport.update({
+    id: '/results/',
+    path: '/results/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedResultsAttemptIdRoute =
+  AuthenticatedResultsAttemptIdRouteImport.update({
+    id: '/results/$attemptId',
+    path: '/results/$attemptId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+const AuthenticatedSettingsAccountRoute =
+  AuthenticatedSettingsAccountRouteImport.update({
+    id: '/account',
+    path: '/account',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+const AuthenticatedSettingsAppearanceRoute =
+  AuthenticatedSettingsAppearanceRouteImport.update({
+    id: '/appearance',
+    path: '/appearance',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+const AuthenticatedStudentsIndexRoute =
+  AuthenticatedStudentsIndexRouteImport.update({
+    id: '/students/',
+    path: '/students/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentsStudentIdRoute =
+  AuthenticatedStudentsStudentIdRouteImport.update({
+    id: '/students/$studentId',
+    path: '/students/$studentId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTestsIndexRoute = AuthenticatedTestsIndexRouteImport.update({
+  id: '/tests/',
+  path: '/tests/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTestsTestIdRoute =
+  AuthenticatedTestsTestIdRouteImport.update({
+    id: '/tests/$testId',
+    path: '/tests/$testId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTestsCreateRoute =
+  AuthenticatedTestsCreateRouteImport.update({
+    id: '/tests/create',
+    path: '/tests/create',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTestsImportRoute =
+  AuthenticatedTestsImportRouteImport.update({
+    id: '/tests/import',
+    path: '/tests/import',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const StudentStudentDashboardRoute = StudentStudentDashboardRouteImport.update({
+  id: '/student/dashboard',
+  path: '/student/dashboard',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentStudentProfileRoute = StudentStudentProfileRouteImport.update({
+  id: '/student/profile',
+  path: '/student/profile',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentStudentTestsRoute = StudentStudentTestsRouteImport.update({
+  id: '/student/tests',
+  path: '/student/tests',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const TestTakeTestTestIdRoute = TestTakeTestTestIdRouteImport.update({
+  id: '/take-test/$testId',
+  path: '/take-test/$testId',
+  getParentRoute: () => TestRouteRoute,
+} as any)
+const AuthenticatedResultsStudentsStudentIdRoute =
+  AuthenticatedResultsStudentsStudentIdRouteImport.update({
+    id: '/results/students/$studentId',
+    path: '/results/students/$studentId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedTestsTestIdIndexRoute =
   AuthenticatedTestsTestIdIndexRouteImport.update({
@@ -246,28 +240,28 @@ const AuthenticatedTestsTestIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedTestsTestIdRoute,
   } as any)
-const StudentStudentResultsAttemptIdRoute =
-  StudentStudentResultsAttemptIdRouteImport.update({
-    id: '/student/results/$attemptId',
-    path: '/student/results/$attemptId',
-    getParentRoute: () => StudentRouteRoute,
-  } as any)
 const AuthenticatedTestsTestIdEditRoute =
   AuthenticatedTestsTestIdEditRouteImport.update({
     id: '/edit',
     path: '/edit',
     getParentRoute: () => AuthenticatedTestsTestIdRoute,
   } as any)
-const AuthenticatedResultsStudentsStudentIdRoute =
-  AuthenticatedResultsStudentsStudentIdRouteImport.update({
-    id: '/results/students/$studentId',
-    path: '/results/students/$studentId',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const StudentStudentResultsIndexRoute =
+  StudentStudentResultsIndexRouteImport.update({
+    id: '/student/results/',
+    path: '/student/results/',
+    getParentRoute: () => StudentRouteRoute,
   } as any)
-const TestTestsTestIdPreviewRouteRoute =
-  TestTestsTestIdPreviewRouteRouteImport.update({
-    id: '/tests/$testId/preview',
-    path: '/tests/$testId/preview',
+const StudentStudentResultsAttemptIdRoute =
+  StudentStudentResultsAttemptIdRouteImport.update({
+    id: '/student/results/$attemptId',
+    path: '/student/results/$attemptId',
+    getParentRoute: () => StudentRouteRoute,
+  } as any)
+const TestPracticeBookSlugTestSlugRouteRoute =
+  TestPracticeBookSlugTestSlugRouteRouteImport.update({
+    id: '/practice/$bookSlug/$testSlug',
+    path: '/practice/$bookSlug/$testSlug',
     getParentRoute: () => TestRouteRoute,
   } as any)
 const TestTakeTestBookSlugTestSlugRouteRoute =
@@ -276,22 +270,28 @@ const TestTakeTestBookSlugTestSlugRouteRoute =
     path: '/take-test/$bookSlug/$testSlug',
     getParentRoute: () => TestRouteRoute,
   } as any)
-const TestPracticeBookSlugTestSlugRouteRoute =
-  TestPracticeBookSlugTestSlugRouteRouteImport.update({
-    id: '/practice/$bookSlug/$testSlug',
-    path: '/practice/$bookSlug/$testSlug',
+const TestTestsTestIdPreviewRouteRoute =
+  TestTestsTestIdPreviewRouteRouteImport.update({
+    id: '/tests/$testId/preview',
+    path: '/tests/$testId/preview',
     getParentRoute: () => TestRouteRoute,
   } as any)
-const TestTestsTestIdPreviewIndexRoute =
-  TestTestsTestIdPreviewIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => TestTestsTestIdPreviewRouteRoute,
+const TestPracticeBookSlugTestSlugSectionRouteRoute =
+  TestPracticeBookSlugTestSlugSectionRouteRouteImport.update({
+    id: '/$section',
+    path: '/$section',
+    getParentRoute: () => TestPracticeBookSlugTestSlugRouteRoute,
   } as any)
 const TestTakeTestBookSlugTestSlugIndexRoute =
   TestTakeTestBookSlugTestSlugIndexRouteImport.update({
     id: '/',
     path: '/',
+    getParentRoute: () => TestTakeTestBookSlugTestSlugRouteRoute,
+  } as any)
+const TestTakeTestBookSlugTestSlugSectionRouteRoute =
+  TestTakeTestBookSlugTestSlugSectionRouteRouteImport.update({
+    id: '/$section',
+    path: '/$section',
     getParentRoute: () => TestTakeTestBookSlugTestSlugRouteRoute,
   } as any)
 const TestTakeTestBookSlugTestSlugReviewRoute =
@@ -300,29 +300,23 @@ const TestTakeTestBookSlugTestSlugReviewRoute =
     path: '/review',
     getParentRoute: () => TestTakeTestBookSlugTestSlugRouteRoute,
   } as any)
+const TestTestsTestIdPreviewIndexRoute =
+  TestTestsTestIdPreviewIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => TestTestsTestIdPreviewRouteRoute,
+  } as any)
 const TestTestsTestIdPreviewSectionRouteRoute =
   TestTestsTestIdPreviewSectionRouteRouteImport.update({
     id: '/$section',
     path: '/$section',
     getParentRoute: () => TestTestsTestIdPreviewRouteRoute,
   } as any)
-const TestTakeTestBookSlugTestSlugSectionRouteRoute =
-  TestTakeTestBookSlugTestSlugSectionRouteRouteImport.update({
-    id: '/$section',
-    path: '/$section',
-    getParentRoute: () => TestTakeTestBookSlugTestSlugRouteRoute,
-  } as any)
-const TestPracticeBookSlugTestSlugSectionRouteRoute =
-  TestPracticeBookSlugTestSlugSectionRouteRouteImport.update({
-    id: '/$section',
-    path: '/$section',
-    getParentRoute: () => TestPracticeBookSlugTestSlugRouteRoute,
-  } as any)
-const TestTestsTestIdPreviewSectionIndexRoute =
-  TestTestsTestIdPreviewSectionIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => TestTestsTestIdPreviewSectionRouteRoute,
+const TestPracticeBookSlugTestSlugSectionPartRoute =
+  TestPracticeBookSlugTestSlugSectionPartRouteImport.update({
+    id: '/$part',
+    path: '/$part',
+    getParentRoute: () => TestPracticeBookSlugTestSlugSectionRouteRoute,
   } as any)
 const TestTakeTestBookSlugTestSlugSectionIndexRoute =
   TestTakeTestBookSlugTestSlugSectionIndexRouteImport.update({
@@ -330,23 +324,23 @@ const TestTakeTestBookSlugTestSlugSectionIndexRoute =
     path: '/',
     getParentRoute: () => TestTakeTestBookSlugTestSlugSectionRouteRoute,
   } as any)
-const TestTestsTestIdPreviewSectionPartRoute =
-  TestTestsTestIdPreviewSectionPartRouteImport.update({
-    id: '/$part',
-    path: '/$part',
-    getParentRoute: () => TestTestsTestIdPreviewSectionRouteRoute,
-  } as any)
 const TestTakeTestBookSlugTestSlugSectionPartRoute =
   TestTakeTestBookSlugTestSlugSectionPartRouteImport.update({
     id: '/$part',
     path: '/$part',
     getParentRoute: () => TestTakeTestBookSlugTestSlugSectionRouteRoute,
   } as any)
-const TestPracticeBookSlugTestSlugSectionPartRoute =
-  TestPracticeBookSlugTestSlugSectionPartRouteImport.update({
+const TestTestsTestIdPreviewSectionIndexRoute =
+  TestTestsTestIdPreviewSectionIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => TestTestsTestIdPreviewSectionRouteRoute,
+  } as any)
+const TestTestsTestIdPreviewSectionPartRoute =
+  TestTestsTestIdPreviewSectionPartRouteImport.update({
     id: '/$part',
     path: '/$part',
-    getParentRoute: () => TestPracticeBookSlugTestSlugSectionRouteRoute,
+    getParentRoute: () => TestTestsTestIdPreviewSectionRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -378,7 +372,6 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
   '/tests/': typeof AuthenticatedTestsIndexRoute
-  '/usage/': typeof AuthenticatedUsageIndexRoute
   '/practice/$bookSlug/$testSlug': typeof TestPracticeBookSlugTestSlugRouteRouteWithChildren
   '/take-test/$bookSlug/$testSlug': typeof TestTakeTestBookSlugTestSlugRouteRouteWithChildren
   '/tests/$testId/preview': typeof TestTestsTestIdPreviewRouteRouteWithChildren
@@ -426,7 +419,6 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
   '/tests': typeof AuthenticatedTestsIndexRoute
-  '/usage': typeof AuthenticatedUsageIndexRoute
   '/practice/$bookSlug/$testSlug': typeof TestPracticeBookSlugTestSlugRouteRouteWithChildren
   '/results/students/$studentId': typeof AuthenticatedResultsStudentsStudentIdRoute
   '/tests/$testId/edit': typeof AuthenticatedTestsTestIdEditRoute
@@ -476,7 +468,6 @@ export interface FileRoutesById {
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
   '/_authenticated/tests/': typeof AuthenticatedTestsIndexRoute
-  '/_authenticated/usage/': typeof AuthenticatedUsageIndexRoute
   '/_test/practice/$bookSlug/$testSlug': typeof TestPracticeBookSlugTestSlugRouteRouteWithChildren
   '/_test/take-test/$bookSlug/$testSlug': typeof TestTakeTestBookSlugTestSlugRouteRouteWithChildren
   '/_test/tests/$testId/preview': typeof TestTestsTestIdPreviewRouteRouteWithChildren
@@ -528,7 +519,6 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/students/'
     | '/tests/'
-    | '/usage/'
     | '/practice/$bookSlug/$testSlug'
     | '/take-test/$bookSlug/$testSlug'
     | '/tests/$testId/preview'
@@ -576,7 +566,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/students'
     | '/tests'
-    | '/usage'
     | '/practice/$bookSlug/$testSlug'
     | '/results/students/$studentId'
     | '/tests/$testId/edit'
@@ -625,7 +614,6 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/'
     | '/_authenticated/students/'
     | '/_authenticated/tests/'
-    | '/_authenticated/usage/'
     | '/_test/practice/$bookSlug/$testSlug'
     | '/_test/take-test/$bookSlug/$testSlug'
     | '/_test/tests/$testId/preview'
@@ -661,11 +649,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_test': {
-      id: '/_test'
+    '/_authenticated': {
+      id: '/_authenticated'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof TestRouteRouteImport
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_student': {
@@ -675,60 +663,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
+    '/_test': {
+      id: '/_test'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/speaking-examiner': {
-      id: '/_authenticated/speaking-examiner'
-      path: '/speaking-examiner'
-      fullPath: '/speaking-examiner'
-      preLoaderRoute: typeof AuthenticatedSpeakingExaminerRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/(errors)/503': {
-      id: '/(errors)/503'
-      path: '/503'
-      fullPath: '/503'
-      preLoaderRoute: typeof errors503RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(errors)/500': {
-      id: '/(errors)/500'
-      path: '/500'
-      fullPath: '/500'
-      preLoaderRoute: typeof errors500RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(errors)/404': {
-      id: '/(errors)/404'
-      path: '/404'
-      fullPath: '/404'
-      preLoaderRoute: typeof errors404RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(errors)/403': {
-      id: '/(errors)/403'
-      path: '/403'
-      fullPath: '/403'
-      preLoaderRoute: typeof errors403RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(errors)/401': {
-      id: '/(errors)/401'
-      path: '/401'
-      fullPath: '/401'
-      preLoaderRoute: typeof errors401RouteImport
+      preLoaderRoute: typeof TestRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)/login': {
@@ -738,6 +677,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(errors)/401': {
+      id: '/(errors)/401'
+      path: '/401'
+      fullPath: '/401'
+      preLoaderRoute: typeof errors401RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(errors)/403': {
+      id: '/(errors)/403'
+      path: '/403'
+      fullPath: '/403'
+      preLoaderRoute: typeof errors403RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(errors)/404': {
+      id: '/(errors)/404'
+      path: '/404'
+      fullPath: '/404'
+      preLoaderRoute: typeof errors404RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(errors)/500': {
+      id: '/(errors)/500'
+      path: '/500'
+      fullPath: '/500'
+      preLoaderRoute: typeof errors500RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(errors)/503': {
+      id: '/(errors)/503'
+      path: '/503'
+      fullPath: '/503'
+      preLoaderRoute: typeof errors503RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -745,53 +726,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/usage/': {
-      id: '/_authenticated/usage/'
-      path: '/usage'
-      fullPath: '/usage/'
-      preLoaderRoute: typeof AuthenticatedUsageIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tests/': {
-      id: '/_authenticated/tests/'
-      path: '/tests'
-      fullPath: '/tests/'
-      preLoaderRoute: typeof AuthenticatedTestsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/students/': {
-      id: '/_authenticated/students/'
-      path: '/students'
-      fullPath: '/students/'
-      preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/': {
-      id: '/_authenticated/settings/'
-      path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
-      parentRoute: typeof AuthenticatedSettingsRouteRoute
-    }
-    '/_authenticated/results/': {
-      id: '/_authenticated/results/'
-      path: '/results'
-      fullPath: '/results/'
-      preLoaderRoute: typeof AuthenticatedResultsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/help-center/': {
-      id: '/_authenticated/help-center/'
-      path: '/help-center'
-      fullPath: '/help-center/'
-      preLoaderRoute: typeof AuthenticatedHelpCenterIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/devices/': {
-      id: '/_authenticated/devices/'
-      path: '/devices'
-      fullPath: '/devices/'
-      preLoaderRoute: typeof AuthenticatedDevicesIndexRouteImport
+    '/_authenticated/speaking-examiner': {
+      id: '/_authenticated/speaking-examiner'
+      path: '/speaking-examiner'
+      fullPath: '/speaking-examiner'
+      preLoaderRoute: typeof AuthenticatedSpeakingExaminerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/analytics/': {
@@ -801,81 +740,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_test/take-test/$testId': {
-      id: '/_test/take-test/$testId'
-      path: '/take-test/$testId'
-      fullPath: '/take-test/$testId'
-      preLoaderRoute: typeof TestTakeTestTestIdRouteImport
-      parentRoute: typeof TestRouteRoute
-    }
-    '/_student/student/tests': {
-      id: '/_student/student/tests'
-      path: '/student/tests'
-      fullPath: '/student/tests'
-      preLoaderRoute: typeof StudentStudentTestsRouteImport
-      parentRoute: typeof StudentRouteRoute
-    }
-    '/_student/student/profile': {
-      id: '/_student/student/profile'
-      path: '/student/profile'
-      fullPath: '/student/profile'
-      preLoaderRoute: typeof StudentStudentProfileRouteImport
-      parentRoute: typeof StudentRouteRoute
-    }
-    '/_student/student/dashboard': {
-      id: '/_student/student/dashboard'
-      path: '/student/dashboard'
-      fullPath: '/student/dashboard'
-      preLoaderRoute: typeof StudentStudentDashboardRouteImport
-      parentRoute: typeof StudentRouteRoute
-    }
-    '/_authenticated/tests/import': {
-      id: '/_authenticated/tests/import'
-      path: '/tests/import'
-      fullPath: '/tests/import'
-      preLoaderRoute: typeof AuthenticatedTestsImportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tests/create': {
-      id: '/_authenticated/tests/create'
-      path: '/tests/create'
-      fullPath: '/tests/create'
-      preLoaderRoute: typeof AuthenticatedTestsCreateRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tests/$testId': {
-      id: '/_authenticated/tests/$testId'
-      path: '/tests/$testId'
-      fullPath: '/tests/$testId'
-      preLoaderRoute: typeof AuthenticatedTestsTestIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/students/$studentId': {
-      id: '/_authenticated/students/$studentId'
-      path: '/students/$studentId'
-      fullPath: '/students/$studentId'
-      preLoaderRoute: typeof AuthenticatedStudentsStudentIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/appearance': {
-      id: '/_authenticated/settings/appearance'
-      path: '/appearance'
-      fullPath: '/settings/appearance'
-      preLoaderRoute: typeof AuthenticatedSettingsAppearanceRouteImport
-      parentRoute: typeof AuthenticatedSettingsRouteRoute
-    }
-    '/_authenticated/settings/account': {
-      id: '/_authenticated/settings/account'
-      path: '/account'
-      fullPath: '/settings/account'
-      preLoaderRoute: typeof AuthenticatedSettingsAccountRouteImport
-      parentRoute: typeof AuthenticatedSettingsRouteRoute
-    }
-    '/_authenticated/results/$attemptId': {
-      id: '/_authenticated/results/$attemptId'
-      path: '/results/$attemptId'
-      fullPath: '/results/$attemptId'
-      preLoaderRoute: typeof AuthenticatedResultsAttemptIdRouteImport
+    '/_authenticated/devices/': {
+      id: '/_authenticated/devices/'
+      path: '/devices'
+      fullPath: '/devices/'
+      preLoaderRoute: typeof AuthenticatedDevicesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/errors/$error': {
@@ -885,33 +754,117 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedErrorsErrorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_student/student/results/': {
-      id: '/_student/student/results/'
-      path: '/student/results'
-      fullPath: '/student/results/'
-      preLoaderRoute: typeof StudentStudentResultsIndexRouteImport
-      parentRoute: typeof StudentRouteRoute
+    '/_authenticated/help-center/': {
+      id: '/_authenticated/help-center/'
+      path: '/help-center'
+      fullPath: '/help-center/'
+      preLoaderRoute: typeof AuthenticatedHelpCenterIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/tests/$testId/': {
-      id: '/_authenticated/tests/$testId/'
+    '/_authenticated/results/': {
+      id: '/_authenticated/results/'
+      path: '/results'
+      fullPath: '/results/'
+      preLoaderRoute: typeof AuthenticatedResultsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/results/$attemptId': {
+      id: '/_authenticated/results/$attemptId'
+      path: '/results/$attemptId'
+      fullPath: '/results/$attemptId'
+      preLoaderRoute: typeof AuthenticatedResultsAttemptIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
       path: '/'
-      fullPath: '/tests/$testId/'
-      preLoaderRoute: typeof AuthenticatedTestsTestIdIndexRouteImport
-      parentRoute: typeof AuthenticatedTestsTestIdRoute
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsRouteRoute
     }
-    '/_student/student/results/$attemptId': {
-      id: '/_student/student/results/$attemptId'
-      path: '/student/results/$attemptId'
-      fullPath: '/student/results/$attemptId'
-      preLoaderRoute: typeof StudentStudentResultsAttemptIdRouteImport
+    '/_authenticated/settings/account': {
+      id: '/_authenticated/settings/account'
+      path: '/account'
+      fullPath: '/settings/account'
+      preLoaderRoute: typeof AuthenticatedSettingsAccountRouteImport
+      parentRoute: typeof AuthenticatedSettingsRouteRoute
+    }
+    '/_authenticated/settings/appearance': {
+      id: '/_authenticated/settings/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof AuthenticatedSettingsAppearanceRouteImport
+      parentRoute: typeof AuthenticatedSettingsRouteRoute
+    }
+    '/_authenticated/students/': {
+      id: '/_authenticated/students/'
+      path: '/students'
+      fullPath: '/students/'
+      preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/students/$studentId': {
+      id: '/_authenticated/students/$studentId'
+      path: '/students/$studentId'
+      fullPath: '/students/$studentId'
+      preLoaderRoute: typeof AuthenticatedStudentsStudentIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tests/': {
+      id: '/_authenticated/tests/'
+      path: '/tests'
+      fullPath: '/tests/'
+      preLoaderRoute: typeof AuthenticatedTestsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tests/$testId': {
+      id: '/_authenticated/tests/$testId'
+      path: '/tests/$testId'
+      fullPath: '/tests/$testId'
+      preLoaderRoute: typeof AuthenticatedTestsTestIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tests/create': {
+      id: '/_authenticated/tests/create'
+      path: '/tests/create'
+      fullPath: '/tests/create'
+      preLoaderRoute: typeof AuthenticatedTestsCreateRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tests/import': {
+      id: '/_authenticated/tests/import'
+      path: '/tests/import'
+      fullPath: '/tests/import'
+      preLoaderRoute: typeof AuthenticatedTestsImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_student/student/dashboard': {
+      id: '/_student/student/dashboard'
+      path: '/student/dashboard'
+      fullPath: '/student/dashboard'
+      preLoaderRoute: typeof StudentStudentDashboardRouteImport
       parentRoute: typeof StudentRouteRoute
     }
-    '/_authenticated/tests/$testId/edit': {
-      id: '/_authenticated/tests/$testId/edit'
-      path: '/edit'
-      fullPath: '/tests/$testId/edit'
-      preLoaderRoute: typeof AuthenticatedTestsTestIdEditRouteImport
-      parentRoute: typeof AuthenticatedTestsTestIdRoute
+    '/_student/student/profile': {
+      id: '/_student/student/profile'
+      path: '/student/profile'
+      fullPath: '/student/profile'
+      preLoaderRoute: typeof StudentStudentProfileRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/_student/student/tests': {
+      id: '/_student/student/tests'
+      path: '/student/tests'
+      fullPath: '/student/tests'
+      preLoaderRoute: typeof StudentStudentTestsRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/_test/take-test/$testId': {
+      id: '/_test/take-test/$testId'
+      path: '/take-test/$testId'
+      fullPath: '/take-test/$testId'
+      preLoaderRoute: typeof TestTakeTestTestIdRouteImport
+      parentRoute: typeof TestRouteRoute
     }
     '/_authenticated/results/students/$studentId': {
       id: '/_authenticated/results/students/$studentId'
@@ -920,11 +873,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResultsStudentsStudentIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_test/tests/$testId/preview': {
-      id: '/_test/tests/$testId/preview'
-      path: '/tests/$testId/preview'
-      fullPath: '/tests/$testId/preview'
-      preLoaderRoute: typeof TestTestsTestIdPreviewRouteRouteImport
+    '/_authenticated/tests/$testId/': {
+      id: '/_authenticated/tests/$testId/'
+      path: '/'
+      fullPath: '/tests/$testId/'
+      preLoaderRoute: typeof AuthenticatedTestsTestIdIndexRouteImport
+      parentRoute: typeof AuthenticatedTestsTestIdRoute
+    }
+    '/_authenticated/tests/$testId/edit': {
+      id: '/_authenticated/tests/$testId/edit'
+      path: '/edit'
+      fullPath: '/tests/$testId/edit'
+      preLoaderRoute: typeof AuthenticatedTestsTestIdEditRouteImport
+      parentRoute: typeof AuthenticatedTestsTestIdRoute
+    }
+    '/_student/student/results/': {
+      id: '/_student/student/results/'
+      path: '/student/results'
+      fullPath: '/student/results/'
+      preLoaderRoute: typeof StudentStudentResultsIndexRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/_student/student/results/$attemptId': {
+      id: '/_student/student/results/$attemptId'
+      path: '/student/results/$attemptId'
+      fullPath: '/student/results/$attemptId'
+      preLoaderRoute: typeof StudentStudentResultsAttemptIdRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/_test/practice/$bookSlug/$testSlug': {
+      id: '/_test/practice/$bookSlug/$testSlug'
+      path: '/practice/$bookSlug/$testSlug'
+      fullPath: '/practice/$bookSlug/$testSlug'
+      preLoaderRoute: typeof TestPracticeBookSlugTestSlugRouteRouteImport
       parentRoute: typeof TestRouteRoute
     }
     '/_test/take-test/$bookSlug/$testSlug': {
@@ -934,25 +915,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestTakeTestBookSlugTestSlugRouteRouteImport
       parentRoute: typeof TestRouteRoute
     }
-    '/_test/practice/$bookSlug/$testSlug': {
-      id: '/_test/practice/$bookSlug/$testSlug'
-      path: '/practice/$bookSlug/$testSlug'
-      fullPath: '/practice/$bookSlug/$testSlug'
-      preLoaderRoute: typeof TestPracticeBookSlugTestSlugRouteRouteImport
+    '/_test/tests/$testId/preview': {
+      id: '/_test/tests/$testId/preview'
+      path: '/tests/$testId/preview'
+      fullPath: '/tests/$testId/preview'
+      preLoaderRoute: typeof TestTestsTestIdPreviewRouteRouteImport
       parentRoute: typeof TestRouteRoute
     }
-    '/_test/tests/$testId/preview/': {
-      id: '/_test/tests/$testId/preview/'
-      path: '/'
-      fullPath: '/tests/$testId/preview/'
-      preLoaderRoute: typeof TestTestsTestIdPreviewIndexRouteImport
-      parentRoute: typeof TestTestsTestIdPreviewRouteRoute
+    '/_test/practice/$bookSlug/$testSlug/$section': {
+      id: '/_test/practice/$bookSlug/$testSlug/$section'
+      path: '/$section'
+      fullPath: '/practice/$bookSlug/$testSlug/$section'
+      preLoaderRoute: typeof TestPracticeBookSlugTestSlugSectionRouteRouteImport
+      parentRoute: typeof TestPracticeBookSlugTestSlugRouteRoute
     }
     '/_test/take-test/$bookSlug/$testSlug/': {
       id: '/_test/take-test/$bookSlug/$testSlug/'
       path: '/'
       fullPath: '/take-test/$bookSlug/$testSlug/'
       preLoaderRoute: typeof TestTakeTestBookSlugTestSlugIndexRouteImport
+      parentRoute: typeof TestTakeTestBookSlugTestSlugRouteRoute
+    }
+    '/_test/take-test/$bookSlug/$testSlug/$section': {
+      id: '/_test/take-test/$bookSlug/$testSlug/$section'
+      path: '/$section'
+      fullPath: '/take-test/$bookSlug/$testSlug/$section'
+      preLoaderRoute: typeof TestTakeTestBookSlugTestSlugSectionRouteRouteImport
       parentRoute: typeof TestTakeTestBookSlugTestSlugRouteRoute
     }
     '/_test/take-test/$bookSlug/$testSlug/review': {
@@ -962,6 +950,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestTakeTestBookSlugTestSlugReviewRouteImport
       parentRoute: typeof TestTakeTestBookSlugTestSlugRouteRoute
     }
+    '/_test/tests/$testId/preview/': {
+      id: '/_test/tests/$testId/preview/'
+      path: '/'
+      fullPath: '/tests/$testId/preview/'
+      preLoaderRoute: typeof TestTestsTestIdPreviewIndexRouteImport
+      parentRoute: typeof TestTestsTestIdPreviewRouteRoute
+    }
     '/_test/tests/$testId/preview/$section': {
       id: '/_test/tests/$testId/preview/$section'
       path: '/$section'
@@ -969,26 +964,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestTestsTestIdPreviewSectionRouteRouteImport
       parentRoute: typeof TestTestsTestIdPreviewRouteRoute
     }
-    '/_test/take-test/$bookSlug/$testSlug/$section': {
-      id: '/_test/take-test/$bookSlug/$testSlug/$section'
-      path: '/$section'
-      fullPath: '/take-test/$bookSlug/$testSlug/$section'
-      preLoaderRoute: typeof TestTakeTestBookSlugTestSlugSectionRouteRouteImport
-      parentRoute: typeof TestTakeTestBookSlugTestSlugRouteRoute
-    }
-    '/_test/practice/$bookSlug/$testSlug/$section': {
-      id: '/_test/practice/$bookSlug/$testSlug/$section'
-      path: '/$section'
-      fullPath: '/practice/$bookSlug/$testSlug/$section'
-      preLoaderRoute: typeof TestPracticeBookSlugTestSlugSectionRouteRouteImport
-      parentRoute: typeof TestPracticeBookSlugTestSlugRouteRoute
-    }
-    '/_test/tests/$testId/preview/$section/': {
-      id: '/_test/tests/$testId/preview/$section/'
-      path: '/'
-      fullPath: '/tests/$testId/preview/$section/'
-      preLoaderRoute: typeof TestTestsTestIdPreviewSectionIndexRouteImport
-      parentRoute: typeof TestTestsTestIdPreviewSectionRouteRoute
+    '/_test/practice/$bookSlug/$testSlug/$section/$part': {
+      id: '/_test/practice/$bookSlug/$testSlug/$section/$part'
+      path: '/$part'
+      fullPath: '/practice/$bookSlug/$testSlug/$section/$part'
+      preLoaderRoute: typeof TestPracticeBookSlugTestSlugSectionPartRouteImport
+      parentRoute: typeof TestPracticeBookSlugTestSlugSectionRouteRoute
     }
     '/_test/take-test/$bookSlug/$testSlug/$section/': {
       id: '/_test/take-test/$bookSlug/$testSlug/$section/'
@@ -997,13 +978,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestTakeTestBookSlugTestSlugSectionIndexRouteImport
       parentRoute: typeof TestTakeTestBookSlugTestSlugSectionRouteRoute
     }
-    '/_test/tests/$testId/preview/$section/$part': {
-      id: '/_test/tests/$testId/preview/$section/$part'
-      path: '/$part'
-      fullPath: '/tests/$testId/preview/$section/$part'
-      preLoaderRoute: typeof TestTestsTestIdPreviewSectionPartRouteImport
-      parentRoute: typeof TestTestsTestIdPreviewSectionRouteRoute
-    }
     '/_test/take-test/$bookSlug/$testSlug/$section/$part': {
       id: '/_test/take-test/$bookSlug/$testSlug/$section/$part'
       path: '/$part'
@@ -1011,12 +985,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestTakeTestBookSlugTestSlugSectionPartRouteImport
       parentRoute: typeof TestTakeTestBookSlugTestSlugSectionRouteRoute
     }
-    '/_test/practice/$bookSlug/$testSlug/$section/$part': {
-      id: '/_test/practice/$bookSlug/$testSlug/$section/$part'
+    '/_test/tests/$testId/preview/$section/': {
+      id: '/_test/tests/$testId/preview/$section/'
+      path: '/'
+      fullPath: '/tests/$testId/preview/$section/'
+      preLoaderRoute: typeof TestTestsTestIdPreviewSectionIndexRouteImport
+      parentRoute: typeof TestTestsTestIdPreviewSectionRouteRoute
+    }
+    '/_test/tests/$testId/preview/$section/$part': {
+      id: '/_test/tests/$testId/preview/$section/$part'
       path: '/$part'
-      fullPath: '/practice/$bookSlug/$testSlug/$section/$part'
-      preLoaderRoute: typeof TestPracticeBookSlugTestSlugSectionPartRouteImport
-      parentRoute: typeof TestPracticeBookSlugTestSlugSectionRouteRoute
+      fullPath: '/tests/$testId/preview/$section/$part'
+      preLoaderRoute: typeof TestTestsTestIdPreviewSectionPartRouteImport
+      parentRoute: typeof TestTestsTestIdPreviewSectionRouteRoute
     }
   }
 }
@@ -1071,7 +1052,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedResultsIndexRoute: typeof AuthenticatedResultsIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
   AuthenticatedTestsIndexRoute: typeof AuthenticatedTestsIndexRoute
-  AuthenticatedUsageIndexRoute: typeof AuthenticatedUsageIndexRoute
   AuthenticatedResultsStudentsStudentIdRoute: typeof AuthenticatedResultsStudentsStudentIdRoute
 }
 
@@ -1091,7 +1071,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedResultsIndexRoute: AuthenticatedResultsIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedTestsIndexRoute: AuthenticatedTestsIndexRoute,
-  AuthenticatedUsageIndexRoute: AuthenticatedUsageIndexRoute,
   AuthenticatedResultsStudentsStudentIdRoute:
     AuthenticatedResultsStudentsStudentIdRoute,
 }
