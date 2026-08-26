@@ -43,6 +43,7 @@ from app.services.scoring import (
     correct_to_reading_band,
     score_section,
 )
+from app.services.student_mock import title_for_actor
 from app.utils.labels import format_test_label
 
 router = APIRouter(prefix="/results", tags=["Results"])
@@ -128,13 +129,35 @@ def _require_admin(actor: Actor) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
 
 
-async def _attempt_list_item(db: AsyncSession, attempt: Attempt) -> AttemptListItem:
+async def _attempt_list_item(
+    db: AsyncSession,
+    attempt: Attempt,
+    actor: Actor | None = None,
+) -> AttemptListItem:
     test = await db.get(Test, attempt.test_id)
     user = await db.get(User, attempt.user_id) if attempt.user_id else None
     base = AttemptRead.model_validate(attempt)
+    if test is None:
+        title = ""
+    elif actor is not None:
+        kind = "practice" if attempt.mode in (
+            AttemptMode.SINGLE_PART.value,
+            AttemptMode.SINGLE_SECTION.value,
+        ) else "mock"
+        title = await title_for_actor(
+            db,
+            role=actor.role,
+            user_id=actor.user_id,
+            test_id=attempt.test_id,
+            real_title=test.title,
+            test_number=test.test_number,
+            kind=kind,
+        )
+    else:
+        title = format_test_label(test.title, test.test_number)
     return AttemptListItem(
         **base.model_dump(),
-        test_title=format_test_label(test.title, test.test_number) if test else "",
+        test_title=title,
         student_name=user.full_name if user else None,
         student_id=str(user.id) if user else None,
     )
@@ -179,12 +202,26 @@ async def list_results(
     )
 
     result = await db.execute(stmt)
+    rows = result.all()
     items = []
-    for attempt, title, test_number, user_name, uid in result.all():
+    for attempt, title, test_number, user_name, uid in rows:
         base = AttemptRead.model_validate(attempt)
+        kind = "practice" if attempt.mode in (
+            AttemptMode.SINGLE_PART.value,
+            AttemptMode.SINGLE_SECTION.value,
+        ) else "mock"
+        display_title = await title_for_actor(
+            db,
+            role=actor.role,
+            user_id=actor.user_id,
+            test_id=attempt.test_id,
+            real_title=title,
+            test_number=test_number,
+            kind=kind,
+        )
         d = AttemptListItem(
             **base.model_dump(),
-            test_title=format_test_label(title, test_number),
+            test_title=display_title,
             student_name=user_name,
             student_id=str(uid) if uid else None,
         )
@@ -580,7 +617,23 @@ async def get_result_detail(
         evaluation_jobs=[EvaluationJobRead.model_validate(j) for j in attempt.evaluation_jobs],
         speaking_session=speaking_session_out,
         test_title=(
-            format_test_label(test.title, test.test_number)
+            await title_for_actor(
+                db,
+                role=actor.role,
+                user_id=actor.user_id,
+                test_id=attempt.test_id,
+                real_title=test.title,
+                test_number=test.test_number,
+                kind=(
+                    "practice"
+                    if attempt.mode
+                    in (
+                        AttemptMode.SINGLE_PART.value,
+                        AttemptMode.SINGLE_SECTION.value,
+                    )
+                    else "mock"
+                ),
+            )
             if test is not None
             else None
         ),

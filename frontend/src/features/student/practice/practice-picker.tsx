@@ -10,7 +10,6 @@ import {
   type PracticeSectionUnit,
   type PracticeUnit,
 } from '@/lib/api/practice'
-import { fetchSlugRedirect } from '@/lib/api/tests'
 import { useAuthStore } from '@/stores/auth-store'
 import type { SectionType } from '@/features/tests/data/schema'
 import {
@@ -133,13 +132,6 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
     enabled: open && signedIn,
   })
 
-  const slugsQuery = useQuery({
-    queryKey: ['slug-redirect', testId],
-    queryFn: () => fetchSlugRedirect(testId),
-    enabled: open && signedIn,
-    staleTime: Infinity,
-  })
-
   const startMutation = useMutation({
     mutationFn: async (target: StartTarget) => {
       const attempt = await startPracticeAttempt(testId, {
@@ -148,24 +140,20 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
         part_number:
           target.scope === 'part' ? target.unit.part_number : undefined,
       })
-      const slugs = slugsQuery.data ?? (await fetchSlugRedirect(testId))
-      return { attempt, slugs, target }
+      return { attempt, target }
     },
-    onSuccess: async ({ attempt, slugs, target }) => {
+    onSuccess: async ({ attempt, target }) => {
       onOpenChange(false)
       const part =
         target.scope === 'part' ? String(target.unit.part_number) : '1'
       await navigate({
-        to: '/practice/$bookSlug/$testSlug/$section/$part',
-        params: {
-          bookSlug: slugs.book_slug,
-          testSlug: `test-${slugs.test_number}`,
-          section: target.unit.section_type,
-          part,
-        },
+        to: '/practice/$testId',
+        params: { testId },
         search: {
           attempt: attempt.id,
           scope: target.scope as PracticeScope,
+          section: target.unit.section_type,
+          part,
         },
       })
     },

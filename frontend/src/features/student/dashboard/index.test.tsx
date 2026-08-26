@@ -25,7 +25,7 @@ const dashboard: DashboardResponse = {
     {
       id: 'a2',
       test_id: 't1',
-      test_title: 'Cambridge IELTS 15 – Test 1',
+      test_title: 'Mock #2',
       overall_band: 7,
       status: 'fully_scored',
       finished_at: '2026-02-01T00:00:00.000Z',
@@ -75,7 +75,7 @@ describe('StudentDashboard', () => {
       .toBeInTheDocument()
     await expect.element(screen.getByText('Skills')).toBeInTheDocument()
     await expect
-      .element(screen.getByText('Cambridge IELTS 15 – Test 1'))
+      .element(screen.getByText('Mock #2'))
       .toBeInTheDocument()
     await expect.element(screen.getByText('Listening')).toBeInTheDocument()
   })

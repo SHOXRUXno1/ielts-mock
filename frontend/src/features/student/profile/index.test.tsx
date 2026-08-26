@@ -28,7 +28,7 @@ vi.mock('@/lib/api/student', () => ({
       {
         id: 'a1',
         test_id: 't1',
-        test_title: 'Cambridge IELTS 15 – Test 1',
+        test_title: 'Mock #1',
         status: 'fully_scored',
         overall_band: 6.5,
         listening_band: 7,

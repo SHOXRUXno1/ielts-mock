@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +15,19 @@ from app.models.section import Section
 from app.models.test import Test
 from app.services import section_settings as settings_service
 from app.services.section_settings import timed_total_minutes
-from app.utils.labels import format_test_label
+from app.schemas.attempt import AttemptRead
+from app.services.student_mock import (
+    NoUnusedMocks,
+    http_no_mocks,
+    in_progress_full_mock,
+    practice_set_label,
+    published_index_map,
+    published_test_ids,
+    remaining_count,
+    slot_map_for_user,
+    start_next_full_mock,
+    student_mock_label,
+)
 
 
 def _practice_band_for(att: Attempt, section_type: str | None) -> float | None:
@@ -119,6 +131,14 @@ class TestListItem(BaseModel):
     in_progress_attempt_id: uuid.UUID | None = None
 
 
+class FullMockStatus(BaseModel):
+    remaining: int
+    total_published: int
+    in_progress_attempt_id: uuid.UUID | None = None
+    in_progress_test_id: uuid.UUID | None = None
+    in_progress_title: str | None = None
+
+
 @router.get("/dashboard", response_model=DashboardResponse)
 async def student_dashboard(
     actor: Actor = Depends(get_current_student),
@@ -143,13 +163,14 @@ async def student_dashboard(
     )
     result = await db.execute(stmt)
     rows = result.all()
+    slots = await slot_map_for_user(db, actor.user_id)
 
     bands = [r.Attempt.overall_band for r in rows if r.Attempt.overall_band is not None]
     recent = [
         DashboardAttempt(
             id=r.Attempt.id,
             test_id=r.Attempt.test_id,
-            test_title=format_test_label(r.title, r.test_number),
+            test_title=student_mock_label(slots.get(r.Attempt.test_id)),
             overall_band=r.Attempt.overall_band,
             status=r.Attempt.status,
             finished_at=r.Attempt.finished_at,
@@ -213,7 +234,7 @@ async def student_dashboard(
         in_progress = InProgressAttempt(
             id=att.id,
             test_id=att.test_id,
-            test_title=format_test_label(ip_row.title, ip_row.test_number),
+            test_title=student_mock_label(slots.get(att.test_id)),
             answered=answered_count,
             total=total_count,
             updated_at=att.updated_at or att.created_at,
@@ -336,6 +357,7 @@ async def student_tests(
     )
     last_attempt_result = await db.execute(last_attempt_stmt)
     last_attempt_by_test = {row.test_id: row.last_at for row in last_attempt_result.all()}
+    practice_indexes = await published_index_map(db)
 
     def _make_catalog_test(t: Test) -> CatalogTest:
         scores = section_scores_by_test.get(t.id, {})
@@ -355,8 +377,8 @@ async def student_tests(
 
         return CatalogTest(
             id=t.id,
-            title=format_test_label(t.title, t.test_number),
-            book_name=t.book_name,
+            title=practice_set_label(practice_indexes.get(t.id)),
+            book_name=None,
             test_type=t.type or "academic",
             duration_minutes=duration,
             section_count=len(unique_types),
@@ -367,14 +389,8 @@ async def student_tests(
             last_attempt_at=last_at.isoformat() if last_at else None,
         )
 
-    # Group by book_name (preserve insertion order; unknown → "Other")
-    groups_map: dict[str, list[CatalogTest]] = {}
-    for t in tests:
-        group_name = t.book_name or "Other"
-        groups_map.setdefault(group_name, []).append(_make_catalog_test(t))
-
     return CatalogResponse(
-        groups=[TestGroup(name=name, tests=items) for name, items in groups_map.items()]
+        groups=[TestGroup(name="Practice", tests=[_make_catalog_test(t) for t in tests])]
     )
 
 
@@ -403,11 +419,12 @@ async def student_results(
         .offset(offset)
     )
     result = await db.execute(stmt)
+    slots = await slot_map_for_user(db, actor.user_id)
     items = [
         {
             "id": str(r.Attempt.id),
             "test_id": str(r.Attempt.test_id),
-            "test_title": format_test_label(r.title, r.test_number),
+            "test_title": student_mock_label(slots.get(r.Attempt.test_id)),
             "status": r.Attempt.status,
             "overall_band": r.Attempt.overall_band,
             "listening_band": r.Attempt.listening_band,
@@ -439,6 +456,7 @@ async def student_practice_results(
         .order_by(Attempt.created_at.desc())
     )
     result = await db.execute(stmt)
+    practice_indexes = await published_index_map(db)
 
     payload: list[dict] = []
     for r in result.all():
@@ -450,7 +468,7 @@ async def student_practice_results(
             {
                 "id": str(att.id),
                 "test_id": str(att.test_id),
-                "test_title": format_test_label(r.title, r.test_number),
+                "test_title": practice_set_label(practice_indexes.get(att.test_id)),
                 "status": att.status,
                 "mode": mode,
                 "scope": scope,
@@ -465,3 +483,38 @@ async def student_practice_results(
             }
         )
     return payload
+
+
+@router.get("/full-mock/status", response_model=FullMockStatus)
+async def full_mock_status(
+    actor: Actor = Depends(get_current_student),
+    db: AsyncSession = Depends(get_db),
+):
+    if actor.user_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    live = await in_progress_full_mock(db, actor.user_id)
+    title = None
+    if live is not None:
+        slots = await slot_map_for_user(db, actor.user_id)
+        title = student_mock_label(slots.get(live.test_id))
+    published = await published_test_ids(db)
+    return FullMockStatus(
+        remaining=await remaining_count(db, actor.user_id),
+        total_published=len(published),
+        in_progress_attempt_id=live.id if live is not None else None,
+        in_progress_test_id=live.test_id if live is not None else None,
+        in_progress_title=title,
+    )
+
+
+@router.post("/full-mock/start", response_model=AttemptRead)
+async def start_full_mock(
+    actor: Actor = Depends(get_current_student),
+    db: AsyncSession = Depends(get_db),
+):
+    if actor.user_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    try:
+        return await start_next_full_mock(db, actor.user_id)
+    except NoUnusedMocks:
+        raise http_no_mocks() from None

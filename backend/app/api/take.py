@@ -22,6 +22,7 @@ from app.models.test import Test
 from app.schemas.question import QuestionRead
 from app.schemas.test import TestDetailRead
 from app.services import section_settings as settings_service
+from app.services.student_mock import cloak_test_read, student_facing_title
 from app.services.question_numbering import (
     annotate_question_numbers,
     annotate_questions_list,
@@ -75,6 +76,19 @@ async def _load_test_detail(db: AsyncSession, test_id: uuid.UUID) -> Test:
     return test
 
 
+async def _to_detail(db: AsyncSession, test: Test, actor: Actor) -> TestDetailRead:
+    if actor.role != "student":
+        return TestDetailRead.model_validate(test)
+    _strip_answer_keys(test)
+    payload = TestDetailRead.model_validate(test)
+    title = (
+        await student_facing_title(db, actor.user_id, test.id)
+        if actor.user_id is not None
+        else "Full mock"
+    )
+    return cloak_test_read(payload, title)
+
+
 @router.get("/tests/{test_id}/slug-redirect", response_model=SlugRedirectRead)
 async def take_slug_redirect(
     test_id: uuid.UUID,
@@ -85,6 +99,11 @@ async def take_slug_redirect(
     if test is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test not found")
     _assert_take_access(test, actor)
+    if actor.role == "student":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Test location is not available",
+        )
     return {"book_slug": test.book_slug, "test_number": test.test_number}
 
 
@@ -105,10 +124,13 @@ async def take_test_by_slug(
     if test is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test not found")
     _assert_take_access(test, actor)
+    if actor.role == "student":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Test location is not available",
+        )
     annotate_question_numbers(test)
     await settings_service.ensure_loaded(db, test)
-    if actor.role == "student":
-        _strip_answer_keys(test)
     return test
 
 
@@ -120,9 +142,7 @@ async def take_test_detail(
 ):
     test = await _load_test_detail(db, test_id)
     _assert_take_access(test, actor)
-    if actor.role == "student":
-        _strip_answer_keys(test)
-    return test
+    return await _to_detail(db, test, actor)
 
 
 @router.get(

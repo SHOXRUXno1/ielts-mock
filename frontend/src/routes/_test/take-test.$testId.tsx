@@ -1,79 +1,30 @@
-import { useEffect } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { Loader2 } from 'lucide-react'
-import { fetchSlugRedirect } from '@/lib/api/tests'
+import { SectionContent } from '@/features/tests/take/section-content'
+import { TakeTestShell } from '@/features/tests/take/take-test-shell'
 
 const searchSchema = z.object({
   resume: z.string().optional(),
+  section: z.string().optional(),
+  part: z.string().optional(),
 })
 
 export const Route = createFileRoute('/_test/take-test/$testId')({
   validateSearch: searchSchema,
-  component: UuidRedirect,
+  component: UuidTake,
 })
 
 /**
- * Backward-compat redirect:
- * /take-test/:uuid → intro, or /listening/1 when ?resume= is present.
+ * Student (and UUID) exam URL. One path segment — no Cambridge slug.
+ * Section/part live in the query string so this route does not clash with
+ * /take-test/$bookSlug/$testSlug.
  */
-function UuidRedirect() {
+function UuidTake() {
   const { testId } = Route.useParams()
-  const { resume } = Route.useSearch()
-  const navigate = useNavigate()
-
-  const { data, isError, error } = useQuery({
-    queryKey: ['slug-redirect', testId],
-    queryFn: () => fetchSlugRedirect(testId),
-    retry: false,
-  })
-
-  useEffect(() => {
-    if (!data) return
-    if (resume) {
-      void navigate({
-        to: '/take-test/$bookSlug/$testSlug/$section/$part',
-        params: {
-          bookSlug: data.book_slug,
-          testSlug: `test-${data.test_number}`,
-          section: 'listening',
-          part: '1',
-        },
-        search: { resume },
-        replace: true,
-      })
-      return
-    }
-    void navigate({
-      to: '/take-test/$bookSlug/$testSlug',
-      params: {
-        bookSlug: data.book_slug,
-        testSlug: `test-${data.test_number}`,
-      },
-      replace: true,
-    })
-  }, [data, navigate, resume])
-
-  if (isError) {
-    const status = (error as { response?: { status?: number } })?.response
-      ?.status
-    return (
-      <div className='flex h-screen items-center justify-center bg-white px-4'>
-        <p className='text-sm text-slate-600'>
-          {status === 403
-            ? 'This test is not available. It may be unpublished.'
-            : status === 404
-              ? 'Test not found.'
-              : 'Failed to open test. Please try again.'}
-        </p>
-      </div>
-    )
-  }
-
+  const { resume, section } = Route.useSearch()
   return (
-    <div className='flex h-screen items-center justify-center bg-white'>
-      <Loader2 className='size-8 animate-spin text-slate-400' />
-    </div>
+    <TakeTestShell mode='live' testId={testId} resume={resume}>
+      {section ? <SectionContent /> : null}
+    </TakeTestShell>
   )
 }

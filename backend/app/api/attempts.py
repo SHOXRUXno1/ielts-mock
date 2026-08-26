@@ -38,6 +38,7 @@ from app.services.scoring import (
 )
 from app.services import section_progress as sp
 from app.services import section_settings as settings_service
+from app.services.student_mock import in_progress_full_mock
 
 logger = logging.getLogger(__name__)
 
@@ -676,6 +677,19 @@ async def start_attempt(
     # Students can only take published tests; admins can take any
     if actor.role == "student" and not test.is_published:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Test not available")
+
+    if actor.role == "student":
+        if actor.user_id is not None:
+            live = await in_progress_full_mock(db, actor.user_id)
+            if live is not None and live.test_id == test_id:
+                await _ensure_progress_rows_for_attempt(db, live)
+                await db.commit()
+                await db.refresh(live)
+                return live
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Full mocks are assigned automatically",
+        )
 
     # Return existing in-progress FULL MOCK for this user+test (idempotent).
     # Practice attempts live under their own uniqueness scope and never satisfy

@@ -24,6 +24,7 @@ import {
   type AttemptDetailRead,
   type AttemptRead,
 } from '@/lib/api/attempts'
+import { startFullMock } from '@/lib/api/student'
 import { markScoreReveal } from '@/features/results/lib/score-reveal-flag'
 import { fetchQuestions } from '@/lib/api/questions'
 import { fetchTest, fetchTestBySlug } from '@/lib/api/tests'
@@ -137,25 +138,34 @@ export function TakeTestShell({
   const isPractice = mode === 'practice'
   const isPracticePart = isPractice && practiceScope === 'part'
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const routeSearch = useRouterState({
+    select: (s) => s.location.search as {
+      resume?: string
+      section?: string
+      part?: string
+    },
+  })
 
   const testNumber = testSlug
     ? parseInt(testSlug.replace(/^test-/i, ''), 10)
     : NaN
+  const liveById = !bookSlug && !!testIdProp
+  const usingSlug = !!bookSlug && !isNaN(testNumber)
 
   const slugQuery = useQuery({
     queryKey: ['test-by-slug', bookSlug, testNumber],
     queryFn: () => fetchTestBySlug(bookSlug!, testNumber),
-    enabled: !isPreview && !!bookSlug && !isNaN(testNumber),
+    enabled: !isPreview && usingSlug,
   })
 
   const idQuery = useQuery({
     queryKey: ['tests', testIdProp],
     queryFn: () => fetchTest(testIdProp!),
-    enabled: isPreview && !!testIdProp,
+    enabled: !!testIdProp && (isPreview || !usingSlug),
   })
 
-  const test = isPreview ? idQuery.data : slugQuery.data
-  const testLoading = isPreview ? idQuery.isLoading : slugQuery.isLoading
+  const test = usingSlug ? slugQuery.data : idQuery.data
+  const testLoading = usingSlug ? slugQuery.isLoading : idQuery.isLoading
   const testId = test ? String(test.id) : (testIdProp ?? '')
 
   const sortedSections = useMemo(() => {
@@ -185,17 +195,23 @@ export function TakeTestShell({
   const isIntroRoute =
     !isPreview &&
     !isPractice &&
-    !!bookSlug &&
-    !!testSlug &&
-    (pathname === `/take-test/${bookSlug}/${testSlug}` ||
-      pathname === `/take-test/${bookSlug}/${testSlug}/`)
+    (liveById
+      ? !routeSearch.section &&
+        (pathname === `/take-test/${testIdProp}` ||
+          pathname === `/take-test/${testIdProp}/`)
+      : !!bookSlug &&
+        !!testSlug &&
+        (pathname === `/take-test/${bookSlug}/${testSlug}` ||
+          pathname === `/take-test/${bookSlug}/${testSlug}/`))
 
   const isReviewRoute =
     !isPreview &&
-    !!bookSlug &&
-    !!testSlug &&
-    (pathname === `/take-test/${bookSlug}/${testSlug}/review` ||
-      pathname.endsWith('/review'))
+    (liveById
+      ? pathname.endsWith('/review')
+      : !!bookSlug &&
+        !!testSlug &&
+        (pathname === `/take-test/${bookSlug}/${testSlug}/review` ||
+          pathname.endsWith('/review')))
 
   const [localAttemptId, setLocalAttemptId] = useState<string | null>(null)
   const attemptId = isPreview
@@ -223,6 +239,7 @@ export function TakeTestShell({
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const answersRef = useRef(answers)
   const resumeNavDoneRef = useRef<string | null>(null)
+  const startedThisVisitRef = useRef(false)
   const activeTypeRef = useRef<SectionType | null>(null)
 
   useEffect(() => {
@@ -373,7 +390,8 @@ export function TakeTestShell({
     (currentAttemptQuery.isLoading || currentAttemptQuery.isFetching)
 
   useEffect(() => {
-    if (!shouldResolveCurrent || !bookSlug || !testSlug) return
+    const canSlug = !!bookSlug && !!testSlug
+    if (!shouldResolveCurrent || (!canSlug && !liveById)) return
     if (currentAttemptQuery.isLoading || currentAttemptQuery.isFetching) return
     if (currentAttemptQuery.isError) return
 
@@ -383,6 +401,28 @@ export function TakeTestShell({
     resumeNavDoneRef.current = navKey
 
     if (current) {
+      if (isIntroRoute && !resume) {
+        setLocalAttemptId(current.id)
+        return
+      }
+      if (liveById && testIdProp) {
+        const section = routeSearch.section
+        void navigate({
+          to: '/take-test/$testId',
+          params: { testId: testIdProp },
+          search: {
+            resume: current.id,
+            section: section && isSectionType(section) ? section : 'listening',
+            part:
+              section === 'speaking'
+                ? undefined
+                : (routeSearch.part ?? '1'),
+          },
+          replace: true,
+        })
+        return
+      }
+      if (!bookSlug || !testSlug) return
       if (isIntroRoute) {
         void navigate({
           to: '/take-test/$bookSlug/$testSlug/$section/$part',
@@ -435,11 +475,21 @@ export function TakeTestShell({
     }
 
     if (!isIntroRoute && !attemptId) {
-      void navigate({
-        to: '/take-test/$bookSlug/$testSlug',
-        params: { bookSlug, testSlug },
-        replace: true,
-      })
+      if (liveById && testIdProp) {
+        void navigate({
+          to: '/take-test/$testId',
+          params: { testId: testIdProp },
+          replace: true,
+        })
+        return
+      }
+      if (bookSlug && testSlug) {
+        void navigate({
+          to: '/take-test/$bookSlug/$testSlug',
+          params: { bookSlug, testSlug },
+          replace: true,
+        })
+      }
     }
   }, [
     shouldResolveCurrent,
@@ -451,9 +501,14 @@ export function TakeTestShell({
     bookSlug,
     testSlug,
     testId,
+    testIdProp,
+    liveById,
     isIntroRoute,
     pathname,
     navigate,
+    resume,
+    routeSearch.section,
+    routeSearch.part,
   ])
 
   useEffect(() => {
@@ -487,13 +542,25 @@ export function TakeTestShell({
     // Single-part practice has only one section row — no URL part lookup.
     if (isPracticePart) return sortedSections[0] ?? null
     const m = pathname.match(/\/(listening|reading|writing|speaking)(?:\/(\d+))?/)
-    if (!m) return sortedSections[0] ?? null
-    const type = m[1] as SectionType
-    const part = m[2] ? parseInt(m[2], 10) : 1
+    const typeRaw = m?.[1] ?? routeSearch.section
+    if (!typeRaw || !isSectionType(typeRaw)) return sortedSections[0] ?? null
+    const type = typeRaw as SectionType
+    const part = m?.[2]
+      ? parseInt(m[2], 10)
+      : routeSearch.part
+        ? parseInt(routeSearch.part, 10)
+        : 1
     const siblings = sortedSections.filter((s) => s.type === type)
     if (type === 'writing') return siblings[0] ?? null
     return siblings[Math.max(0, part - 1)] ?? siblings[0] ?? null
-  }, [pathname, sortedSections, isReviewRoute, isPracticePart])
+  }, [
+    pathname,
+    sortedSections,
+    isReviewRoute,
+    isPracticePart,
+    routeSearch.section,
+    routeSearch.part,
+  ])
 
   useEffect(() => {
     if (!test) return
@@ -667,25 +734,54 @@ export function TakeTestShell({
   ])
 
   const startMutation = useMutation({
-    mutationFn: () => startAttempt(testId),
+    mutationFn: () =>
+      role === 'student' ? startFullMock() : startAttempt(testId),
     onSuccess: (data) => {
+      startedThisVisitRef.current = true
+      if (role === 'student' && data.test_id !== testId) {
+        void navigate({
+          to: '/take-test/$testId',
+          params: { testId: data.test_id },
+          replace: true,
+        })
+        return
+      }
       setLocalAttemptId(data.id)
       setAttempt(data)
       toast.success('Test started')
     },
-    onError: () => toast.error('Failed to start test'),
+    onError: (err: unknown) => {
+      const detail =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail
+      toast.error(detail || 'Failed to start test')
+    },
   })
 
   useEffect(() => {
-    if (isPreview || isPractice || !isIntroRoute || !attemptId || !bookSlug || !testSlug) {
+    if (isPreview || isPractice || !isIntroRoute || !attemptId) return
+    if (!resume && !startedThisVisitRef.current) return
+    const first = presentTypes[0] ?? 'listening'
+    if (liveById && testIdProp) {
+      void navigate({
+        to: '/take-test/$testId',
+        params: { testId: testIdProp },
+        search: {
+          resume: attemptId,
+          section: first,
+          part: first === 'speaking' ? undefined : '1',
+        },
+        replace: true,
+      })
       return
     }
+    if (!bookSlug || !testSlug) return
     void navigate({
       to: '/take-test/$bookSlug/$testSlug/$section/$part',
       params: {
         bookSlug,
         testSlug,
-        section: presentTypes[0] ?? 'listening',
+        section: first,
         part: '1',
       },
       search: { resume: attemptId },
@@ -693,29 +789,57 @@ export function TakeTestShell({
     })
   }, [
     isPreview,
+    isPractice,
     isIntroRoute,
     attemptId,
     bookSlug,
     testSlug,
+    testIdProp,
+    liveById,
     presentTypes,
     navigate,
+    resume,
   ])
 
   // Redirect /review to active section (review page removed; submit is a modal now).
   useEffect(() => {
-    if (!isReviewRoute || !attemptId || !bookSlug || !testSlug) return
+    if (!isReviewRoute || !attemptId) return
+    const first = presentTypes[0] ?? 'listening'
+    if (liveById && testIdProp) {
+      void navigate({
+        to: '/take-test/$testId',
+        params: { testId: testIdProp },
+        search: {
+          resume: attemptId,
+          section: first,
+          part: first === 'speaking' ? undefined : '1',
+        },
+        replace: true,
+      })
+      return
+    }
+    if (!bookSlug || !testSlug) return
     void navigate({
       to: '/take-test/$bookSlug/$testSlug/$section/$part',
       params: {
         bookSlug,
         testSlug,
-        section: presentTypes[0] ?? 'listening',
+        section: first,
         part: '1',
       },
       search: { resume: attemptId },
       replace: true,
     })
-  }, [isReviewRoute, attemptId, bookSlug, testSlug, presentTypes, navigate])
+  }, [
+    isReviewRoute,
+    attemptId,
+    bookSlug,
+    testSlug,
+    testIdProp,
+    liveById,
+    presentTypes,
+    navigate,
+  ])
 
   const finishMutation = useMutation({
     mutationFn: async () => {
@@ -879,7 +1003,7 @@ export function TakeTestShell({
       }
     : null
 
-  const testError = isPreview ? idQuery.isError : slugQuery.isError
+  const testError = usingSlug ? slugQuery.isError : idQuery.isError
 
   if (testLoading || resolvingAttempt) {
     return (
@@ -1067,8 +1191,8 @@ function ActiveChrome({
   })
 
   const onTimeoutExhausted = useCallback(() => {
-    if (bookSlug && testSlug && attemptId) guard.triggerSubmit()
-  }, [bookSlug, testSlug, attemptId, guard])
+    if (attemptId && (bookSlug || ctx.testId)) guard.triggerSubmit()
+  }, [bookSlug, attemptId, guard, ctx.testId])
 
   useSectionTimeWarnings({
     remainingMs,

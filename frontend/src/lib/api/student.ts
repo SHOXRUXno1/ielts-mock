@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios'
+import type { AttemptRead } from '@/lib/api/attempts'
 
 export type DashboardAttempt = {
   id: string
@@ -100,6 +101,24 @@ export async function getTestCatalog(): Promise<CatalogResponse> {
   if (!data || !Array.isArray(data.groups)) {
     throw new Error('Invalid catalog response')
   }
+  return data
+}
+
+export type FullMockStatus = {
+  remaining: number
+  total_published: number
+  in_progress_attempt_id: string | null
+  in_progress_test_id: string | null
+  in_progress_title: string | null
+}
+
+export async function getFullMockStatus(): Promise<FullMockStatus> {
+  const { data } = await api.get<FullMockStatus>('/student/full-mock/status')
+  return data
+}
+
+export async function startFullMock(): Promise<AttemptRead> {
+  const { data } = await api.post<AttemptRead>('/student/full-mock/start')
   return data
 }
 

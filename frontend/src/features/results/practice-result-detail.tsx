@@ -11,7 +11,6 @@ import {
   type PracticeSectionUnit,
   type PracticeUnit,
 } from '@/lib/api/practice'
-import { fetchSlugRedirect } from '@/lib/api/tests'
 import type { SectionType } from '@/features/tests/data/schema'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -97,12 +96,6 @@ export function PracticeResultDetail({ attempt }: Props) {
     queryFn: () => fetchPracticeUnits(attempt.test_id),
   })
 
-  const slugsQuery = useQuery({
-    queryKey: ['slug-redirect', attempt.test_id],
-    queryFn: () => fetchSlugRedirect(attempt.test_id),
-    staleTime: Infinity,
-  })
-
   const nextPart = useMemo<PracticeUnit | null>(() => {
     if (isWholeSection || !unitsQuery.data || !sectionType || partNumber == null)
       return null
@@ -129,22 +122,21 @@ export function PracticeResultDetail({ attempt }: Props) {
         scope: 'part',
         part_number: unit.part_number,
       })
-      const slugs = slugsQuery.data ?? (await fetchSlugRedirect(attempt.test_id))
-      return { attempt: attemptOut, slugs, unit, scope: 'part' as PracticeScope }
+      return { attempt: attemptOut, unit, scope: 'part' as PracticeScope }
     },
-    onSuccess: async ({ attempt: newAttempt, slugs, unit, scope }) => {
+    onSuccess: async ({ attempt: newAttempt, unit, scope }) => {
       await queryClient.invalidateQueries({
         queryKey: ['practice-units', attempt.test_id],
       })
       await navigate({
-        to: '/practice/$bookSlug/$testSlug/$section/$part',
-        params: {
-          bookSlug: slugs.book_slug,
-          testSlug: `test-${slugs.test_number}`,
+        to: '/practice/$testId',
+        params: { testId: attempt.test_id },
+        search: {
+          attempt: newAttempt.id,
+          scope,
           section: unit.section_type,
           part: String(unit.part_number),
         },
-        search: { attempt: newAttempt.id, scope },
       })
     },
     onError: (err: unknown) => {
@@ -161,22 +153,21 @@ export function PracticeResultDetail({ attempt }: Props) {
         section_type: unit.section_type,
         scope: 'section',
       })
-      const slugs = slugsQuery.data ?? (await fetchSlugRedirect(attempt.test_id))
-      return { attempt: attemptOut, slugs, unit, scope: 'section' as PracticeScope }
+      return { attempt: attemptOut, unit, scope: 'section' as PracticeScope }
     },
-    onSuccess: async ({ attempt: newAttempt, slugs, unit, scope }) => {
+    onSuccess: async ({ attempt: newAttempt, unit, scope }) => {
       await queryClient.invalidateQueries({
         queryKey: ['practice-units', attempt.test_id],
       })
       await navigate({
-        to: '/practice/$bookSlug/$testSlug/$section/$part',
-        params: {
-          bookSlug: slugs.book_slug,
-          testSlug: `test-${slugs.test_number}`,
+        to: '/practice/$testId',
+        params: { testId: attempt.test_id },
+        search: {
+          attempt: newAttempt.id,
+          scope,
           section: unit.section_type,
           part: '1',
         },
-        search: { attempt: newAttempt.id, scope },
       })
     },
     onError: (err: unknown) => {

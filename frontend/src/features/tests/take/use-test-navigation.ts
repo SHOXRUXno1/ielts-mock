@@ -34,11 +34,17 @@ export function useTestNavigation() {
     part?: string
   }
   const hash = useRouterState({ select: (s) => s.location.hash })
+  const search = useRouterState({
+    select: (s) =>
+      s.location.search as { section?: string; part?: string },
+  })
+  const sectionParam = params.section ?? search.section
+  const partParam = params.part ?? search.part
 
   const isPracticePart = ctx.isPractice && ctx.practiceScope === 'part'
 
-  const currentType: SectionType = isSectionType(params.section ?? '')
-    ? (params.section as SectionType)
+  const currentType: SectionType = isSectionType(sectionParam ?? '')
+    ? (sectionParam as SectionType)
     : (ctx.presentTypes[0] ?? 'listening')
 
   const writingQs = useMemo(() => {
@@ -46,7 +52,7 @@ export function useTestNavigation() {
     return writingSec ? (ctx.sectionQuestions[writingSec.id] ?? []) : []
   }, [ctx.sortedSections, ctx.sectionQuestions])
 
-  const rawPart = parsePartParam(params.part)
+  const rawPart = parsePartParam(partParam)
   // Single-part practice scopes sortedSections to one sibling, so clampPart
   // would collapse Part 3 → 1 and kick off an ensureValidPart ↔ flush loop.
   // Trust the URL part number. Whole-section practice uses normal clamping.
@@ -129,6 +135,22 @@ export function useTestNavigation() {
 
       // Whole-section practice: stay on /practice routes, keep attempt + scope.
       if (ctx.mode === 'practice') {
+        const practiceTestId = params.testId ?? ctx.testId
+        if (practiceTestId && !params.bookSlug) {
+          await navigate({
+            to: '/practice/$testId',
+            params: { testId: practiceTestId },
+            search: {
+              attempt: ctx.attemptId ?? '',
+              scope: 'section',
+              section,
+              part: String(safePart),
+            },
+            hash: hashTarget,
+            replace: opts?.replace,
+          })
+          return
+        }
         const bookSlug = params.bookSlug!
         const testSlug = params.testSlug!
         await navigate({
@@ -142,6 +164,22 @@ export function useTestNavigation() {
           search: {
             attempt: ctx.attemptId ?? undefined,
             scope: 'section',
+          },
+          hash: hashTarget,
+          replace: opts?.replace,
+        })
+        return
+      }
+
+      const liveTestId = params.testId ?? ctx.testId
+      if (liveTestId && !params.bookSlug) {
+        await navigate({
+          to: '/take-test/$testId',
+          params: { testId: liveTestId },
+          search: {
+            resume: ctx.attemptId,
+            section,
+            part: section === 'speaking' ? undefined : String(safePart),
           },
           hash: hashTarget,
           replace: opts?.replace,
@@ -265,7 +303,7 @@ export function useTestNavigation() {
   const ensureValidPart = useCallback(async () => {
     if (isPracticePart) return
     if (currentType === 'speaking') return
-    if (!params.part) return
+    if (!partParam) return
     const count = partCount(ctx.sortedSections, currentType, writingQs)
     if (count <= 0) return
     if (rawPart !== currentPart) {
@@ -276,7 +314,7 @@ export function useTestNavigation() {
     currentType,
     currentPart,
     rawPart,
-    params.part,
+    partParam,
     ctx.sortedSections,
     writingQs,
     goTo,
