@@ -77,6 +77,7 @@ class InProgressAttempt(BaseModel):
     answered: int
     total: int
     updated_at: datetime
+    section: str | None = None
 
 
 class DashboardResponse(BaseModel):
@@ -240,6 +241,7 @@ async def student_dashboard(
             answered=answered_count,
             total=total_count,
             updated_at=att.updated_at or att.created_at,
+            section=await resume_section_for_attempt(db, att.id),
         )
 
     return DashboardResponse(

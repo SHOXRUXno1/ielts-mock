@@ -195,6 +195,7 @@ export function TakeTestShell({
   const isIntroRoute =
     !isPreview &&
     !isPractice &&
+    !resume &&
     (liveById
       ? !routeSearch.section &&
         (pathname === `/take-test/${testIdProp}` ||

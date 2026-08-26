@@ -232,8 +232,8 @@ export function StudentTests() {
               Full mock
             </h1>
             <p className='mt-2 text-sm leading-relaxed text-muted-foreground'>
-              One complete IELTS paper, assigned at random from the set you have
-              not sat yet. Refreshing this page does not change the paper.
+              One unused paper, assigned at random when you start. Refreshing
+              this page does not pick a paper or change one already assigned.
             </p>
           </div>
 

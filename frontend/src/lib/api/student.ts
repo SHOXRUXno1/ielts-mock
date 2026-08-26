@@ -31,6 +31,7 @@ export type InProgressAttempt = {
   answered: number
   total: number
   updated_at: string
+  section: string | null
 }
 
 export type DashboardResponse = {

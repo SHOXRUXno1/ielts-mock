@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import type { InProgressAttempt } from '@/lib/api/student'
 import { ENTER } from '@/features/results/lib/motion'
+import { continueTakeSearch } from '@/features/student/tests/continue-search'
 
 type ResumeBannerProps = {
   attempt: InProgressAttempt
@@ -44,7 +45,7 @@ export function ResumeBanner({ attempt }: ResumeBannerProps) {
           <Link
             to='/take-test/$testId'
             params={{ testId: attempt.test_id }}
-            search={{ resume: attempt.id }}
+            search={continueTakeSearch(attempt.id, attempt.section)}
           >
             Continue
             <ArrowRight className='ml-1.5 size-3.5' />
