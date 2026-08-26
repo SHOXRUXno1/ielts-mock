@@ -1,8 +1,10 @@
 """Blind full-mock assignment for students.
 
 The student never picks a Cambridge booklet. The server hands them one
-unused published test, remembers it for resume, and the next Start draws
-a different unused one. Student-facing titles never include book names.
+published test, remembers it for resume, and prefers a paper they have
+not sat yet. After every paper has been sat they can still Start — a
+random published paper is drawn again. Student-facing titles never
+include book names.
 """
 
 from __future__ import annotations
@@ -27,7 +29,7 @@ from app.utils.labels import format_test_label
 
 
 class NoUnusedMocks(Exception):
-    """Every published test already has a full-mock attempt for this student."""
+    """No published test exists to assign."""
 
 
 def student_mock_label(slot: int | None) -> str:
@@ -50,6 +52,19 @@ def pick_unused_id(
     if not pool:
         return None
     return secrets.choice(pool)
+
+
+def pick_next_id(
+    published_ids: list[uuid.UUID],
+    used_ids: set[uuid.UUID],
+) -> uuid.UUID | None:
+    """Prefer an unseen paper; once the set is exhausted, recycle at random."""
+    unused = pick_unused_id(published_ids, used_ids)
+    if unused is not None:
+        return unused
+    if not published_ids:
+        return None
+    return secrets.choice(published_ids)
 
 
 def cloak_test_read(detail: TestDetailRead, title: str) -> TestDetailRead:
@@ -194,7 +209,7 @@ async def start_next_full_mock(
     db: AsyncSession,
     user_id: uuid.UUID,
 ) -> Attempt:
-    """Resume a live sitting, or draw an unused published test and start it."""
+    """Resume a live sitting, or assign the next published paper and start it."""
     locked = (
         await db.execute(select(User).where(User.id == user_id).with_for_update())
     ).scalar_one_or_none()
@@ -207,7 +222,7 @@ async def start_next_full_mock(
 
     used = await used_full_mock_test_ids(db, user_id)
     published = await published_test_ids(db)
-    test_id = pick_unused_id(published, used)
+    test_id = pick_next_id(published, used)
     if test_id is None:
         raise NoUnusedMocks
 
@@ -247,5 +262,5 @@ async def start_next_full_mock(
 def http_no_mocks() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_409_CONFLICT,
-        detail="You have completed every available full mock",
+        detail="No published full mocks are available",
     )

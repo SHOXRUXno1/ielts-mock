@@ -18,6 +18,7 @@ from app.models.section_progress import SectionProgress, SectionState
 from app.services import section_progress as sp
 from app.services.student_mock import (
     cloak_test_read,
+    pick_next_id,
     pick_unused_id,
     practice_set_label,
     start_next_full_mock,
@@ -35,6 +36,13 @@ def test_pick_unused_id_empty_pool():
     a = uuid.uuid4()
     assert pick_unused_id([a], {a}) is None
     assert pick_unused_id([], set()) is None
+
+
+def test_pick_next_id_recycles_when_every_paper_is_used():
+    a, b = uuid.uuid4(), uuid.uuid4()
+    recycled = pick_next_id([a, b], {a, b})
+    assert recycled in {a, b}
+    assert pick_next_id([], {a}) is None
 
 
 def test_labels():

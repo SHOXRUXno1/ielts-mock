@@ -216,9 +216,9 @@ export function StudentTests() {
   })
 
   const mock = mockQuery.data
-  const canStart = (mock?.remaining ?? 0) > 0 && !mock?.in_progress_attempt_id
+  const canStart =
+    (mock?.total_published ?? 0) > 0 && !mock?.in_progress_attempt_id
   const canContinue = Boolean(mock?.in_progress_attempt_id && mock.in_progress_test_id)
-  const exhausted = Boolean(mock && mock.remaining === 0 && !mock.in_progress_attempt_id)
 
   return (
     <div className='space-y-6'>
@@ -232,16 +232,17 @@ export function StudentTests() {
               Full mock
             </h1>
             <p className='mt-2 text-sm leading-relaxed text-muted-foreground'>
-              One unused paper, assigned at random when you start. Refreshing
-              this page does not pick a paper or change one already assigned.
+              A random paper when you start — new ones first, then repeats.
+              Refreshing this page does not pick a paper or change one already
+              assigned. You can sit as many as you want.
             </p>
           </div>
 
           <div className='flex flex-wrap items-end gap-4'>
-            {mock && (
+            {mock && mock.remaining > 0 && (
               <Metric
                 icon={GraduationCap}
-                label='Remaining'
+                label='Unseen'
                 value={String(mock.remaining)}
               />
             )}
@@ -276,11 +277,6 @@ export function StudentTests() {
             )}
           </div>
         </div>
-        {exhausted && (
-          <p className='mt-4 text-sm text-muted-foreground'>
-            You have completed every available full mock.
-          </p>
-        )}
       </Panel>
 
       <div className='flex flex-wrap items-end justify-between gap-3'>
