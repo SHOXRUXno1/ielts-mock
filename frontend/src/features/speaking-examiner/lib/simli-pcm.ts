@@ -113,3 +113,36 @@ export async function mp3Base64ToPcm16(
 export function iceServersKey(servers?: RTCIceServer[] | null): string {
   return servers?.length ? JSON.stringify(servers) : ''
 }
+
+/** 187.5 ms of 16 kHz PCM16 silence — Simli's documented keepalive chunk. */
+export function silentPcmChunk(bytes = PCM_CHUNK_BYTES): Uint8Array {
+  return new Uint8Array(bytes)
+}
+
+/**
+ * getUserMedia for the candidate mic often pauses other media elements.
+ * Simli's video then sits on its last frame, and the next utterance looks
+ * like a still photo even though PCM is being sent. Nudge both elements
+ * back into playing before we hand the avatar audio.
+ */
+export async function resumeSimliMedia(
+  video: HTMLVideoElement | null | undefined,
+  audio: HTMLAudioElement | null | undefined,
+  unmuteAudio = false,
+): Promise<void> {
+  if (audio) {
+    if (unmuteAudio) audio.volume = 1
+    try {
+      await audio.play()
+    } catch {
+      /* autoplay can still be blocked; the next user gesture will retry */
+    }
+  }
+  if (video) {
+    try {
+      await video.play()
+    } catch {
+      /* muted video should play; ignore if the browser refuses */
+    }
+  }
+}

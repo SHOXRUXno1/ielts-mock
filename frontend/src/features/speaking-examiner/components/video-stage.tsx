@@ -36,6 +36,7 @@ type VideoStageProps = {
   onSimliReady: (ready: boolean) => void
   onSimliFallback: () => void
   onSimliConnectionLost?: () => void
+  forceSimliFallback?: boolean
   controlsOverlay?: ReactNode
   centerOverlay?: ReactNode
   expanded?: boolean
@@ -66,6 +67,7 @@ export function VideoStageInner({
   onSimliReady,
   onSimliFallback,
   onSimliConnectionLost,
+  forceSimliFallback = false,
   controlsOverlay,
   centerOverlay,
   expanded = false,
@@ -111,6 +113,7 @@ export function VideoStageInner({
             onReady={onSimliReady}
             onFallback={onSimliFallback}
             onConnectionLost={onSimliConnectionLost}
+            forceFallback={forceSimliFallback}
             suppressConnectingUI={isLoading}
             className='h-full w-full'
           />
@@ -240,6 +243,7 @@ function videoStagePropsEqual(prev: VideoStageProps, next: VideoStageProps): boo
     'onSimliReady',
     'onSimliFallback',
     'onSimliConnectionLost',
+    'forceSimliFallback',
   ]
 
   for (const key of keysToCompare) {

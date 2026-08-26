@@ -808,6 +808,7 @@ export function SpeakingExaminerSession({
       onSimliReady={handleSimliReady}
       onSimliFallback={handleSimliFallback}
       onSimliConnectionLost={handleSimliConnectionLost}
+      forceSimliFallback={simliFallback}
       controlsOverlay={showLoading ? undefined : actionControlsOverlay}
       centerOverlay={showLoading ? undefined : centerOverlay}
       expanded={isActiveSession || (autoStart && showLoading)}

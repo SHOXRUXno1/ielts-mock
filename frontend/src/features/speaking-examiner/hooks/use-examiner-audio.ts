@@ -276,10 +276,14 @@ export function useExaminerAudio({
               if (synth.tts_error) {
                 toast.warning(`Examiner voice fallback — ${synth.tts_error}`)
               }
+              // Browser TTS cannot move Simli's mouth — drop the still
+              // video so the candidate is not watching a frozen face.
+              handleSimliFallback()
               await speakWithWebSpeech(text)
               handleSimliDone()
             }
           } catch {
+            handleSimliFallback()
             await speakWithWebSpeech(text)
             handleSimliDone()
           }
@@ -296,6 +300,7 @@ export function useExaminerAudio({
               ? 'ElevenLabs returned no audio — check backend logs'
               : 'Voice service unavailable')
           toast.warning(`Examiner voice fallback — ${detail}`)
+          handleSimliFallback()
           await speakWithWebSpeech(text)
           handleSimliDone()
         }
@@ -340,6 +345,7 @@ export function useExaminerAudio({
       playBase64Audio,
       speakWithWebSpeech,
       handleSimliDone,
+      handleSimliFallback,
       announceAudioStart,
     ],
   )

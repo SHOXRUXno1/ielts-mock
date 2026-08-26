@@ -6,6 +6,8 @@ import {
   iceServersKey,
   mp3Base64ToPcm16,
   PCM_CHUNK_BYTES,
+  resumeSimliMedia,
+  silentPcmChunk,
 } from '../lib/simli-pcm'
 import { endTimerDelayMs, silenceEndsTurn } from '../lib/speech-end'
 import { LottieAvatar } from './lottie-avatar'
@@ -13,6 +15,8 @@ import { LottieAvatar } from './lottie-avatar'
 const CLOSE_COOLDOWN_MS = 2000
 const MAX_CONNECT_ATTEMPTS = 2
 const AUDIO_QUEUE_TIMEOUT_MS = 20_000
+/** Simli's video track stalls if we send nothing while the candidate talks. */
+const KEEPALIVE_MS = 4000
 
 let sharedAudioContext: AudioContext | null = null
 let lastSuccessfulCloseAt = 0
@@ -47,6 +51,8 @@ type SimliAvatarProps = {
   onReady?: (ready: boolean) => void
   onFallback?: () => void
   onConnectionLost?: () => void
+  /** Switch to Lottie when the parent had to use a voice Simli cannot lip-sync. */
+  forceFallback?: boolean
   suppressConnectingUI?: boolean
   className?: string
 }
@@ -62,6 +68,7 @@ function SimliAvatarInner({
   onReady,
   onFallback,
   onConnectionLost,
+  forceFallback = false,
   suppressConnectingUI = false,
   className,
 }: SimliAvatarProps) {
@@ -219,9 +226,7 @@ function SimliAvatarInner({
 
         clearEndTimer()
         client.ClearBuffer()
-        if (audioRef.current) {
-          audioRef.current.volume = 1
-        }
+        await resumeSimliMedia(videoRef.current, audioRef.current, true)
 
         speakingDoneRef.current = false
         audioSentRef.current = true
@@ -286,7 +291,13 @@ function SimliAvatarInner({
   }, [iceServers])
 
   useEffect(() => {
-    if (!sessionToken || !faceId) return
+    if (forceFallback && !useLottieFallback) {
+      activateLottieFallback()
+    }
+  }, [forceFallback, useLottieFallback, activateLottieFallback])
+
+  useEffect(() => {
+    if (forceFallback || !sessionToken || !faceId) return
 
     let cancelled = false
     let client: SimliClient | null = null
@@ -314,6 +325,7 @@ function SimliAvatarInner({
       if (!video || !audio) return
 
       audio.volume = 0
+      void resumeSimliMedia(video, audio, false)
 
       for (let attempt = 1; attempt <= MAX_CONNECT_ATTEMPTS; attempt++) {
         if (cancelled) return
@@ -372,6 +384,15 @@ function SimliAvatarInner({
             }
           })
 
+          client.on('stop', () => {
+            simliError('[Simli] Session stopped')
+            if (readyRef.current) {
+              requestReconnectInternalRef.current(
+                queuedAudioRef.current ?? lastAudioRef.current,
+              )
+            }
+          })
+
           await client.start()
           if (cancelled) {
             stopClient(client)
@@ -379,9 +400,10 @@ function SimliAvatarInner({
           }
           startedSuccessfully = true
 
-          if (audioRef.current) {
-            audioRef.current.volume = 0
-          }
+          // Stay muted until real speech so handshake noise does not leak,
+          // but the elements must be playing or the video freezes on frame 1.
+          await resumeSimliMedia(videoRef.current, audioRef.current, false)
+          if (audioRef.current) audioRef.current.volume = 0
 
           simliLog('[Simli] Connected — video stream active')
           reconnectPendingRef.current = false
@@ -431,7 +453,7 @@ function SimliAvatarInner({
       setReady(false)
       onReadyRef.current?.(false)
     }
-  }, [sessionToken, faceId, iceKey, clearEndTimer, activateLottieFallback])
+  }, [sessionToken, faceId, iceKey, forceFallback, clearEndTimer, activateLottieFallback])
 
   useEffect(() => {
     if (!audioBase64 || audioBase64 === lastAudioRef.current) return
@@ -459,6 +481,26 @@ function SimliAvatarInner({
       void flushQueuedAudio()
     }
   }, [ready, flushQueuedAudio])
+
+  useEffect(() => {
+    if (!ready || useLottieFallback) return
+    const tick = () => {
+      const client = simliRef.current
+      if (!client || audioSentRef.current) return
+      try {
+        client.sendAudioData(silentPcmChunk())
+      } catch {
+        requestReconnect()
+      }
+    }
+    const id = window.setInterval(tick, KEEPALIVE_MS)
+    return () => window.clearInterval(id)
+  }, [ready, useLottieFallback, requestReconnect])
+
+  useEffect(() => {
+    if (!isSpeaking || !ready || useLottieFallback) return
+    void resumeSimliMedia(videoRef.current, audioRef.current, true)
+  }, [isSpeaking, ready, useLottieFallback])
 
   useEffect(() => {
     if (!audioBase64 || ready || useLottieFallback) return
@@ -537,6 +579,7 @@ function simliAvatarPropsEqual(
     prev.isSpeaking === next.isSpeaking &&
     prev.isListening === next.isListening &&
     prev.suppressConnectingUI === next.suppressConnectingUI &&
+    prev.forceFallback === next.forceFallback &&
     prev.className === next.className
   )
 }

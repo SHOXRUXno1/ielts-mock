@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   floatToPcm16,
   forEachPcmChunk,
   iceServersKey,
   PCM_CHUNK_BYTES,
   resampleLinear,
+  resumeSimliMedia,
+  silentPcmChunk,
 } from './simli-pcm'
 
 describe('simli-pcm', () => {
@@ -46,5 +48,26 @@ describe('simli-pcm', () => {
     const servers = [{ urls: 'stun:stun.l.google.com:19302' }]
     expect(iceServersKey(servers)).toBe(iceServersKey([...servers]))
     expect(iceServersKey(null)).toBe('')
+  })
+
+  it('builds a silent keepalive chunk of the documented size', () => {
+    const chunk = silentPcmChunk()
+    expect(chunk).toHaveLength(PCM_CHUNK_BYTES)
+    expect(chunk.every((b) => b === 0)).toBe(true)
+  })
+
+  it('resumes a paused Simli video and unmutes audio when asked', async () => {
+    const video = { play: vi.fn().mockResolvedValue(undefined) }
+    const audio = { volume: 0, play: vi.fn().mockResolvedValue(undefined) }
+
+    await resumeSimliMedia(
+      video as unknown as HTMLVideoElement,
+      audio as unknown as HTMLAudioElement,
+      true,
+    )
+
+    expect(audio.volume).toBe(1)
+    expect(audio.play).toHaveBeenCalledOnce()
+    expect(video.play).toHaveBeenCalledOnce()
   })
 })

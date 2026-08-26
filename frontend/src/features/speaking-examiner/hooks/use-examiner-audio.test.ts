@@ -95,6 +95,7 @@ describe('useExaminerAudio', () => {
     expect(speak).toHaveBeenCalledOnce()
     expect(onAudioComplete).toHaveBeenCalledOnce()
     expect(result.current.pendingAudioB64).toBeNull()
+    expect(result.current.simliFallback).toBe(true)
   })
 
   it('cancelBrowserSpeech clears an active utterance', async () => {
