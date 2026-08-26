@@ -30,6 +30,20 @@ def _reset_rate_limiter():
     feedback._user_last_request.clear()
 
 
+@pytest.fixture(autouse=True)
+def _disable_google_stt(monkeypatch):
+    """A local service-account JSON must not change Groq/Gemini STT tests."""
+    from app.core.config import settings
+    from app.services import google_stt
+
+    monkeypatch.setattr(settings, "google_stt_credentials_json", "")
+    monkeypatch.setattr(settings, "google_application_credentials", "")
+    monkeypatch.setattr(settings, "google_cloud_project", "")
+    google_stt.reset()
+    yield
+    google_stt.reset()
+
+
 @pytest.fixture
 def auth_client():
     app.dependency_overrides[get_current_admin] = lambda: TEST_ADMIN

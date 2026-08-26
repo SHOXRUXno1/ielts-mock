@@ -11,6 +11,11 @@ backend/venv/
 backend/.env
 .env
 
+# GCP service-account keys (Speech-to-Text). Never commit these.
+backend/secrets/
+secrets/
+**/gcp-stt.json
+
 # Media uploads
 backend/media/
 

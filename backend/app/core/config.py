@@ -41,6 +41,19 @@ class Settings(BaseSettings):
     def gemini_key_list(self) -> list[str]:
         return [k.strip() for k in self.gemini_api_keys.split(",") if k.strip()]
 
+    # ── Google Cloud Speech-to-Text (Chirp) ──────────────
+    # Primary live Speaking transcription. Groq Whisper stays
+    # as the fallback when Chirp is unset, down, or over the
+    # one-minute synchronous Recognize limit. Paste the
+    # service-account JSON into GOOGLE_STT_CREDENTIALS_JSON
+    # or point GOOGLE_APPLICATION_CREDENTIALS at a file.
+    # Never commit the JSON.
+    google_stt_credentials_json: str = ""
+    google_application_credentials: str = ""
+    google_cloud_project: str = ""
+    google_stt_location: str = "us"
+    google_stt_model: str = "chirp_3"
+
     # ── Groq Whisper (Speech-to-Text) ────────────────────
     groq_api_key: str = ""
     groq_examiner_model: str = "llama-3.3-70b-versatile"

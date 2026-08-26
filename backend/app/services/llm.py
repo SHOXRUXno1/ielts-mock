@@ -1,4 +1,4 @@
-"""LLM integration: Gemini for writing/speaking evaluation, Groq Whisper for transcription."""
+"""LLM integration: Gemini for writing/speaking evaluation, Chirp then Whisper for transcription."""
 
 import asyncio
 import base64
@@ -18,7 +18,7 @@ from app.core.rate_limiter import (
     get_groq_stt_bucket,
     get_whisper_pool,
 )
-from app.services import usage_meter
+from app.services import google_stt, usage_meter
 from app.services.scoring import compute_writing_band
 from app.services.shared_http import get_http_client
 from app.services.storage import resolve_local_path
@@ -1011,7 +1011,7 @@ class NonEnglishError(ValueError):
 
 
 async def transcribe_audio(audio_url: str) -> str:
-    """Transcribe audio. Groq Whisper first, Gemini if Groq is blocked."""
+    """Transcribe audio. Chirp first, then Groq Whisper, then Gemini."""
     local_path = resolve_local_path(audio_url)
     if local_path is not None:
         audio_bytes = local_path.read_bytes()
@@ -1030,12 +1030,13 @@ async def transcribe_audio(audio_url: str) -> str:
 class Transcription:
     """A transcript together with the engine that produced it.
 
-    Which engine ran stops being an implementation detail once two of them serve
-    the same exam. Groq's minute budget sends the overflow to Gemini, so one
-    candidate's turns can be split between two models with different failure
-    habits — and a transcript can only be judged next to its source. Keeping
-    that on the record is what turns "recognition is sometimes wrong" from an
-    impression into something countable.
+    Which engine ran stops being an implementation detail once more than one
+    of them serves the same exam. Chirp is the first ear; Groq Whisper and
+    Gemini take the overflow, so one candidate's turns can be split between
+    models with different failure habits — and a transcript can only be
+    judged next to its source. Keeping that on the record is what turns
+    "recognition is sometimes wrong" from an impression into something
+    countable.
     """
 
     text: str
@@ -1062,9 +1063,10 @@ async def transcribe_audio_bytes_detailed(
     *,
     content_type: str | None = None,
 ) -> Transcription:
-    """Transcribe raw audio. Groq Whisper is the fast path within its minute
-    budget; everything else spills over to Gemini STT, which has far more
-    headroom. A candidate's turn must never fail just because Groq is busy.
+    """Transcribe raw audio. Chirp is the first ear when a service account
+    is configured. Groq Whisper takes the rest of the live traffic within
+    its minute budget; Gemini STT is the last resort. A candidate's turn
+    must never fail just because one engine is busy.
 
     Lenient: never raises NonEnglishError.
     """
@@ -1073,8 +1075,11 @@ async def transcribe_audio_bytes_detailed(
             "Recording too short or empty — please speak for at least a few seconds"
         )
 
+    can_use_google = google_stt.is_configured() and not google_stt.is_blocked()
     can_use_gemini = bool(settings.gemini_key_list)
+    can_use_groq_fallback = bool(settings.groq_api_key) and not _groq_stt_blocked
     groq_error: Exception | None = None
+    google_error: Exception | None = None
     reason: str | None = None
     started = time.perf_counter()
 
@@ -1097,11 +1102,35 @@ async def transcribe_audio_bytes_detailed(
         )
         return record
 
+    if can_use_google:
+        try:
+            return done(await _transcribe_with_google(audio_bytes), "google")
+        except httpx.HTTPStatusError as exc:
+            google_error = exc
+            status = exc.response.status_code
+            reason = f"google_http_{status}"
+            if status in (401, 403):
+                google_stt.block(f"HTTP {status}")
+            elif not can_use_groq_fallback and not can_use_gemini:
+                raise
+            else:
+                logger.warning("Google STT returned %s — falling back", status)
+        except Exception as exc:
+            google_error = exc
+            reason = "google_error"
+            if not can_use_groq_fallback and not can_use_gemini:
+                raise
+            logger.warning(
+                "Google STT failed (%s) — falling back", type(exc).__name__
+            )
+    elif google_stt.is_configured() and google_stt.is_blocked():
+        reason = "google_blocked"
+
     if settings.groq_api_key and not _groq_stt_blocked:
         # Skip Groq outright when its budget is spent, so we neither queue
         # behind the window nor spend a request we know will be refused.
         if can_use_gemini and not get_groq_stt_bucket().try_acquire():
-            reason = "groq_budget_spent"
+            reason = reason or "groq_budget_spent"
             logger.info("Groq STT budget spent — routing this turn to Gemini")
         else:
             try:
@@ -1118,11 +1147,11 @@ async def transcribe_audio_bytes_detailed(
                     raise
                 else:
                     logger.warning("Groq STT returned %s — falling back", status)
-    elif can_use_gemini:
+    elif can_use_gemini and reason is None:
         reason = "groq_blocked" if _groq_stt_blocked else "groq_not_configured"
 
     if can_use_gemini:
-        if groq_error is not None:
+        if groq_error is not None or google_error is not None:
             logger.warning("Transcribing via Gemini STT fallback")
         return done(
             await _transcribe_with_gemini(audio_bytes, content_type), "gemini"
@@ -1130,7 +1159,13 @@ async def transcribe_audio_bytes_detailed(
 
     if groq_error is not None:
         raise groq_error
+    if google_error is not None:
+        raise google_error
     raise RuntimeError("No speech-to-text provider configured")
+
+
+async def _transcribe_with_google(audio_bytes: bytes) -> str:
+    return _normalize_stt_text(await google_stt.recognize(audio_bytes))
 
 
 async def _transcribe_with_groq(

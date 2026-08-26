@@ -207,6 +207,28 @@ def _gemini() -> dict[str, Any]:
     )
 
 
+def _google_speech() -> dict[str, Any]:
+    from app.services import google_stt
+
+    if not google_stt.is_configured():
+        return _card(
+            "Google Speech",
+            False,
+            "unknown",
+            detail="No service account configured",
+        )
+    return _card(
+        "Google Speech",
+        True,
+        "unknown",
+        stt_model=settings.google_stt_model,
+        detail=(
+            "Primary live Speaking transcription. Google has no remaining-quota "
+            "endpoint for Chirp; spend shows up on the Cloud bill."
+        ),
+    )
+
+
 def _groq() -> dict[str, Any]:
     if not settings.groq_api_key:
         return _card("Groq", False, "unknown", detail="No API key configured")
@@ -278,6 +300,7 @@ async def collect_usage() -> dict[str, Any]:
         "providers": [
             digitalocean,
             _gemini(),
+            _google_speech(),
             _groq(),
             elevenlabs,
             _simli(),

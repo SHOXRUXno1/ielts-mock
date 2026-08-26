@@ -147,6 +147,16 @@ function ProviderDetails({ p }: { p: ProviderUsage }) {
         </div>
       )
 
+    case 'Google Speech':
+      return (
+        <div className='space-y-2'>
+          <Row label='Speech-to-text' value={p.stt_model ?? '—'} />
+          {p.detail && (
+            <p className='pt-1 text-xs text-muted-foreground'>{p.detail}</p>
+          )}
+        </div>
+      )
+
     case 'Groq':
       return (
         <div className='space-y-2'>
@@ -323,7 +333,7 @@ export function Usage() {
           </div>
         ) : isLoading || !data ? (
           <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className='h-52 rounded-xl' />
             ))}
           </div>
@@ -337,9 +347,11 @@ export function Usage() {
 
         <p className='text-xs text-muted-foreground'>
           Gemini has no quota API, so its figure is our own tally of calls since
-          the last redeploy. Groq reports its ceiling only on a real request, so
-          the numbers here are from the most recent one. Simli exposes no quota at
-          all — an exhausted plan shows up as a failed Speaking session.
+          the last redeploy. Google Speech (Chirp) is the primary ear for live
+          Speaking; spend shows up on the Cloud bill. Groq reports its ceiling
+          only on a real request, so the numbers here are from the most recent
+          one. Simli exposes no quota at all — an exhausted plan shows up as a
+          failed Speaking session.
         </p>
       </Main>
     </>

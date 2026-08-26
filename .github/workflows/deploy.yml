@@ -85,14 +85,20 @@ jobs:
     steps:
       - name: Pull images and restart stack
         uses: appleboy/ssh-action@v1.2.2
+        env:
+          GOOGLE_STT_CREDENTIALS_B64: ${{ secrets.GOOGLE_STT_CREDENTIALS_B64 }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: root
           key: ${{ secrets.VPS_SSH_KEY }}
+          envs: GOOGLE_STT_CREDENTIALS_B64
           script: |
             set -e
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             cd /opt/ielts-mock
+            if [ -n "$GOOGLE_STT_CREDENTIALS_B64" ]; then
+              python3 -c 'import base64,json,os,pathlib; raw=base64.b64decode(os.environ["GOOGLE_STT_CREDENTIALS_B64"]); blob=json.dumps(json.loads(raw),separators=(",",":")); p=pathlib.Path("/opt/ielts-mock/.env"); lines=[ln for ln in p.read_text().splitlines() if not ln.startswith("GOOGLE_STT_CREDENTIALS_JSON=")] if p.exists() else []; lines.append("GOOGLE_STT_CREDENTIALS_JSON="+blob); p.write_text("\n".join(lines)+"\n")'
+            fi
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
             docker image prune -f

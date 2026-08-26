@@ -1,10 +1,10 @@
-"""Report which engine transcribed each Speaking turn, and how the two compare.
+"""Report which engine transcribed each Speaking turn, and how they compare.
 
-Two engines serve the same exam: Groq Whisper while its minute budget lasts,
-Gemini for the overflow. Until now nobody could tell which one had heard a given
-answer, so "recognition is sometimes wrong" had no denominator — there was no way
-to say whether the misses cluster on one engine, on the intro, or on nothing in
-particular, and no way to know whether raising the budget would help at all.
+Chirp is the first ear when a Google service account is configured. Groq
+Whisper and Gemini take the overflow. Until the label existed nobody could
+tell which one had heard a given answer, so "recognition is sometimes
+wrong" had no denominator — there was no way to say whether the misses
+cluster on one engine, on the intro, or on nothing in particular.
 
 Turns now carry the engine that produced them. This counts them, and reports
 sittings split between both engines separately, because a candidate whose answers
@@ -190,11 +190,11 @@ def render(report: Report, days: int, show_turns: bool) -> list[str]:
         for reason, count in report.reasons.most_common():
             out.append(f"  {reason:<22} {count:>5}  ({pct(count, total)} of all turns)")
     else:
-        out += ["", "The fallback never ran: every turn went to Groq Whisper."]
+        out += ["", "The fallback never ran: every turn stayed on one engine."]
 
     out += [
         "",
-        f"Sittings split between both engines: {len(report.split)} of "
+        f"Sittings split between engines: {len(report.split)} of "
         f"{report.labelled_sittings} "
         f"({pct(len(report.split), report.labelled_sittings)})",
     ]

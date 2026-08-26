@@ -69,10 +69,32 @@ def test_unconfigured_providers_report_rather_than_raise(monkeypatch):
     monkeypatch.setattr(usage_quota.settings, "groq_api_key", "")
     monkeypatch.setattr(usage_quota.settings, "simli_api_key", "")
 
-    for card in (usage_quota._gemini(), usage_quota._groq(), usage_quota._simli()):
+    for card in (
+        usage_quota._gemini(),
+        usage_quota._google_speech(),
+        usage_quota._groq(),
+        usage_quota._simli(),
+    ):
         assert card["configured"] is False
         assert card["status"] == "unknown"
         assert card["detail"]
+
+
+def test_google_speech_card_names_chirp_when_configured(monkeypatch):
+    monkeypatch.setattr(
+        usage_quota.settings,
+        "google_stt_credentials_json",
+        '{"client_email":"ielts-stt@example.iam.gserviceaccount.com","private_key":"x"}',
+    )
+    monkeypatch.setattr(usage_quota.settings, "google_stt_model", "chirp_3")
+    from app.services import google_stt
+
+    google_stt.reset()
+    card = usage_quota._google_speech()
+
+    assert card["configured"] is True
+    assert card["stt_model"] == "chirp_3"
+    assert "Primary" in card["detail"]
 
 
 def test_groq_card_uses_last_seen_headers(monkeypatch):
@@ -212,5 +234,12 @@ async def test_collect_usage_returns_every_provider(monkeypatch):
     payload = await usage_quota.collect_usage()
 
     names = [p["name"] for p in payload["providers"]]
-    assert names == ["DigitalOcean", "Gemini", "Groq", "ElevenLabs", "Simli"]
+    assert names == [
+        "DigitalOcean",
+        "Gemini",
+        "Google Speech",
+        "Groq",
+        "ElevenLabs",
+        "Simli",
+    ]
     assert payload["generated_at"]
