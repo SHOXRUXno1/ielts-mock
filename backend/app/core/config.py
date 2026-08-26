@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     google_cloud_project: str = ""
     google_stt_location: str = "us"
     google_stt_model: str = "chirp_3"
+    # Temporary probe: live turns use Chirp only. Set False to restore
+    # Groq Whisper + Gemini STT fallbacks after we know the 60s cliff.
+    stt_google_only: bool = True
 
     # ── Groq Whisper (Speech-to-Text) ────────────────────
     groq_api_key: str = ""

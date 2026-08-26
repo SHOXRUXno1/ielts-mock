@@ -138,6 +138,7 @@ class TestGroqTranscribeRetry:
     async def test_falls_back_to_gemini_on_403(self, mock_get_client, mock_settings):
         mock_settings.groq_api_key = "gsk_test"
         mock_settings.gemini_key_list = ["gem-test"]
+        mock_settings.stt_google_only = False
 
         request = httpx.Request(
             "POST", "https://api.groq.com/openai/v1/audio/transcriptions"

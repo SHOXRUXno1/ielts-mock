@@ -1068,6 +1068,10 @@ async def transcribe_audio_bytes_detailed(
     its minute budget; Gemini STT is the last resort. A candidate's turn
     must never fail just because one engine is busy.
 
+    ``stt_google_only`` is a temporary probe: it leaves Chirp as the only
+    ear so we can see the one-minute Recognize cliff on a real sitting.
+    The Groq/Gemini helpers stay in this file; flip the flag to restore.
+
     Lenient: never raises NonEnglishError.
     """
     if len(audio_bytes) < 1024:
@@ -1075,9 +1079,12 @@ async def transcribe_audio_bytes_detailed(
             "Recording too short or empty — please speak for at least a few seconds"
         )
 
+    google_only = settings.stt_google_only
     can_use_google = google_stt.is_configured() and not google_stt.is_blocked()
-    can_use_gemini = bool(settings.gemini_key_list)
-    can_use_groq_fallback = bool(settings.groq_api_key) and not _groq_stt_blocked
+    can_use_gemini = (not google_only) and bool(settings.gemini_key_list)
+    can_use_groq_fallback = (
+        (not google_only) and bool(settings.groq_api_key) and not _groq_stt_blocked
+    )
     groq_error: Exception | None = None
     google_error: Exception | None = None
     reason: str | None = None
@@ -1125,6 +1132,13 @@ async def transcribe_audio_bytes_detailed(
             )
     elif google_stt.is_configured() and google_stt.is_blocked():
         reason = "google_blocked"
+
+    if google_only:
+        if google_error is not None:
+            raise google_error
+        raise RuntimeError(
+            "Google STT is not available — Chirp-only mode has no Whisper/Gemini fallback"
+        )
 
     if settings.groq_api_key and not _groq_stt_blocked:
         # Skip Groq outright when its budget is spent, so we neither queue

@@ -18,6 +18,7 @@ AUDIO = b"x" * 4096
 def _reset_stt_state(monkeypatch):
     rate_limiter._groq_stt_bucket = None
     monkeypatch.setattr(llm, "_groq_stt_blocked", False)
+    monkeypatch.setattr(llm.settings, "stt_google_only", False)
     monkeypatch.setattr(llm.settings, "groq_api_key", "gsk_test")
     monkeypatch.setattr(llm.settings, "gemini_api_keys", "key-a")
     google_stt.reset()
@@ -135,3 +136,35 @@ class TestChirpGoesFirst:
 
         with pytest.raises(httpx.HTTPStatusError):
             await llm.transcribe_audio_bytes(AUDIO)
+
+
+class TestChirpOnlyProbe:
+    """Live sittings can pin the ear to Chirp so the 60s cliff is visible."""
+
+    @pytest.mark.asyncio
+    async def test_a_google_failure_does_not_call_groq_or_gemini(self, monkeypatch):
+        monkeypatch.setattr(llm.settings, "stt_google_only", True)
+        calls = _record_calls(
+            monkeypatch,
+            google_result=_http_error(
+                "https://us-speech.googleapis.com/v2/recognize", 400
+            ),
+        )
+
+        with pytest.raises(httpx.HTTPStatusError):
+            await llm.transcribe_audio_bytes_detailed(AUDIO)
+
+        assert calls == {"google": 1, "groq": 0, "gemini": 0}
+
+    @pytest.mark.asyncio
+    async def test_without_google_there_is_no_whisper_rescue(self, monkeypatch):
+        monkeypatch.setattr(llm.settings, "stt_google_only", True)
+        calls = _record_calls(monkeypatch, google_result="unused")
+        monkeypatch.setattr(google_stt, "is_configured", lambda: False)
+
+        with pytest.raises(RuntimeError, match="Chirp-only"):
+            await llm.transcribe_audio_bytes(AUDIO)
+
+        assert calls["google"] == 0
+        assert calls["groq"] == 0
+        assert calls["gemini"] == 0

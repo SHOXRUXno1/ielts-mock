@@ -17,6 +17,7 @@ AUDIO = b"x" * 4096
 def _reset_stt_state(monkeypatch):
     rate_limiter._groq_stt_bucket = None
     monkeypatch.setattr(llm, "_groq_stt_blocked", False)
+    monkeypatch.setattr(llm.settings, "stt_google_only", False)
     monkeypatch.setattr(llm.settings, "groq_api_key", "gsk_test")
     monkeypatch.setattr(llm.settings, "gemini_api_keys", "key-a")
     yield

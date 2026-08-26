@@ -211,7 +211,9 @@ async def recognize(audio_bytes: bytes) -> str:
         url,
         headers={"Authorization": f"Bearer {token}"},
         json=payload,
-        timeout=60.0,
+        # Wall-clock wait is longer than the 60s *audio* limit so a 55s
+        # clip that Chirp is still chewing is not cut by our client first.
+        timeout=120.0,
     )
     if resp.status_code >= 400:
         logger.error(
