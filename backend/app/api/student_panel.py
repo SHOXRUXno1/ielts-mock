@@ -24,7 +24,7 @@ from app.services.student_mock import (
     published_index_map,
     published_test_ids,
     remaining_count,
-    resume_section_for_attempt,
+    resume_position_for_attempt,
     slot_map_for_user,
     start_next_full_mock,
     student_mock_label,
@@ -78,6 +78,7 @@ class InProgressAttempt(BaseModel):
     total: int
     updated_at: datetime
     section: str | None = None
+    part: int | None = None
 
 
 class DashboardResponse(BaseModel):
@@ -140,6 +141,7 @@ class FullMockStatus(BaseModel):
     in_progress_test_id: uuid.UUID | None = None
     in_progress_title: str | None = None
     in_progress_section: str | None = None
+    in_progress_part: int | None = None
 
 
 @router.get("/dashboard", response_model=DashboardResponse)
@@ -234,6 +236,7 @@ async def student_dashboard(
             .join(Section, Question.section_id == Section.id)
             .where(Section.test_id == att.test_id)
         )).scalar_one()
+        position = await resume_position_for_attempt(db, att.id)
         in_progress = InProgressAttempt(
             id=att.id,
             test_id=att.test_id,
@@ -241,7 +244,8 @@ async def student_dashboard(
             answered=answered_count,
             total=total_count,
             updated_at=att.updated_at or att.created_at,
-            section=await resume_section_for_attempt(db, att.id),
+            section=position[0],
+            part=position[1],
         )
 
     return DashboardResponse(
@@ -499,10 +503,11 @@ async def full_mock_status(
     live = await in_progress_full_mock(db, actor.user_id)
     title = None
     section = None
+    part = None
     if live is not None:
         slots = await slot_map_for_user(db, actor.user_id)
         title = student_mock_label(slots.get(live.test_id))
-        section = await resume_section_for_attempt(db, live.id)
+        section, part = await resume_position_for_attempt(db, live.id)
     published = await published_test_ids(db)
     return FullMockStatus(
         remaining=await remaining_count(db, actor.user_id),
@@ -511,6 +516,7 @@ async def full_mock_status(
         in_progress_test_id=live.test_id if live is not None else None,
         in_progress_title=title,
         in_progress_section=section,
+        in_progress_part=part,
     )
 
 

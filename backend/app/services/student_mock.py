@@ -19,7 +19,10 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.answer import Answer
 from app.models.attempt import Attempt, AttemptMode, AttemptStatus
+from app.models.question import Question
+from app.models.section import Section
 from app.models.section_progress import SectionProgress
 from app.models.test import Test
 from app.models.user import User
@@ -155,6 +158,85 @@ async def resume_section_for_attempt(
         )
     ).scalars().all()
     return sp.resume_section_type(list(rows))
+
+
+def _section_type_value(value: object) -> str:
+    return value.value if hasattr(value, "value") else str(value)
+
+
+async def resume_part_for_attempt(
+    db: AsyncSession,
+    attempt: Attempt,
+    section_type: str,
+) -> int | None:
+    if section_type == "speaking":
+        return None
+    answered = set(
+        (
+            await db.execute(
+                select(Answer.question_id).where(Answer.attempt_id == attempt.id)
+            )
+        ).scalars().all()
+    )
+    sections = list(
+        (
+            await db.execute(
+                select(Section)
+                .where(Section.test_id == attempt.test_id)
+                .order_by(Section.order.asc())
+            )
+        ).scalars().all()
+    )
+    skill_sections = [s for s in sections if _section_type_value(s.type) == section_type]
+    if not skill_sections:
+        return 1
+
+    if section_type == "writing":
+        writing = skill_sections[0]
+        questions = list(
+            (
+                await db.execute(
+                    select(Question)
+                    .where(Question.section_id == writing.id)
+                    .order_by(Question.order.asc())
+                )
+            ).scalars().all()
+        )
+        by_task: dict[int, list[uuid.UUID]] = {}
+        for q in questions:
+            qtype = _section_type_value(q.question_type)
+            if qtype != "essay":
+                continue
+            task = q.task_number if q.task_number in (1, 2) else (
+                q.order if q.order in (1, 2) else None
+            )
+            if task is None:
+                continue
+            by_task.setdefault(task, []).append(q.id)
+        part_qids = [by_task[t] for t in sorted(by_task)]
+    else:
+        part_qids = []
+        for skill_section in skill_sections:
+            qids = list(
+                (
+                    await db.execute(
+                        select(Question.id).where(Question.section_id == skill_section.id)
+                    )
+                ).scalars().all()
+            )
+            part_qids.append(qids)
+    return sp.resume_part_number(section_type, part_qids, answered)
+
+
+async def resume_position_for_attempt(
+    db: AsyncSession,
+    attempt_id: uuid.UUID,
+) -> tuple[str | None, int | None]:
+    attempt = await db.get(Attempt, attempt_id)
+    section = await resume_section_for_attempt(db, attempt_id)
+    if attempt is None or section is None:
+        return section, None
+    return section, await resume_part_for_attempt(db, attempt, section)
 
 
 async def remaining_count(db: AsyncSession, user_id: uuid.UUID) -> int:

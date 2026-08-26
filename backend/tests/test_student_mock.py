@@ -89,6 +89,24 @@ def test_resume_section_all_sealed_is_none():
     assert sp.resume_section_type(rows) is None
 
 
+def test_resume_part_first_unanswered():
+    a, b, c, d = uuid.uuid4(), uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    assert (
+        sp.resume_part_number("listening", [[a, b], [c, d]], {a, b}) == 2
+    )
+    assert sp.resume_part_number("reading", [[a], [b], [c]], {a, b}) == 3
+
+
+def test_resume_part_all_answered_returns_last():
+    a, b = uuid.uuid4(), uuid.uuid4()
+    assert sp.resume_part_number("writing", [[a], [b]], {a, b}) == 2
+
+
+def test_resume_part_speaking_is_none():
+    a = uuid.uuid4()
+    assert sp.resume_part_number("speaking", [[a]], {a}) is None
+
+
 def test_cloak_test_read_strips_cambridge():
     tid = uuid.uuid4()
     raw = TestDetailRead(

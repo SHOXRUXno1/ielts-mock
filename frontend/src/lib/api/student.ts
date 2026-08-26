@@ -32,6 +32,7 @@ export type InProgressAttempt = {
   total: number
   updated_at: string
   section: string | null
+  part: number | null
 }
 
 export type DashboardResponse = {
@@ -112,6 +113,7 @@ export type FullMockStatus = {
   in_progress_test_id: string | null
   in_progress_title: string | null
   in_progress_section: string | null
+  in_progress_part: number | null
 }
 
 export async function getFullMockStatus(): Promise<FullMockStatus> {

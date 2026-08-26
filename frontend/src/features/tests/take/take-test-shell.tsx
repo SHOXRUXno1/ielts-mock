@@ -618,7 +618,7 @@ export function TakeTestShell({
       if (raw) {
         const saved = JSON.parse(raw) as {
           answers?: Record<string, SectionAnswers>
-          // Legacy cumulative-timer keys — ignored (startedAt, timeLeft*, deadlines)
+          resume?: { section?: string; part?: string }
         }
         if (saved.answers) {
           setAnswers((prev) => {
@@ -628,10 +628,12 @@ export function TakeTestShell({
             }
             return merged as Record<string, SectionAnswers>
           })
-          // Rewrite without legacy timer fields if present
           localStorage.setItem(
             LS_KEY,
-            JSON.stringify({ answers: saved.answers }),
+            JSON.stringify({
+              answers: saved.answers,
+              resume: saved.resume,
+            }),
           )
         }
       }
@@ -643,16 +645,38 @@ export function TakeTestShell({
   const persistLocal = useCallback(() => {
     if (!LS_KEY) return
     try {
+      const m = pathname.match(
+        /\/(listening|reading|writing|speaking)(?:\/(\d+))?/,
+      )
+      const section = m?.[1] ?? routeSearch.section
+      let resume: { section?: string; part?: string } | undefined
+      if (section) {
+        resume = { section, part: m?.[2] ?? routeSearch.part }
+      } else {
+        try {
+          const prev = JSON.parse(localStorage.getItem(LS_KEY) ?? '{}') as {
+            resume?: { section?: string; part?: string }
+          }
+          resume = prev.resume
+        } catch {
+          resume = undefined
+        }
+      }
       localStorage.setItem(
         LS_KEY,
         JSON.stringify({
           answers: answersRef.current,
+          resume,
         }),
       )
     } catch {
       // quota
     }
-  }, [LS_KEY])
+  }, [LS_KEY, pathname, routeSearch.section, routeSearch.part])
+
+  useEffect(() => {
+    persistLocal()
+  }, [persistLocal, pathname, routeSearch.section, routeSearch.part])
 
   const cancelAutoSave = useCallback(() => {
     if (autoSaveRef.current) {

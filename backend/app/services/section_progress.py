@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Iterable, Sequence
 
@@ -276,6 +277,30 @@ def resume_section_type(rows: Sequence[SectionProgress]) -> str | None:
         if by_type.get(t) == SectionState.NOT_STARTED:
             return t
     return None
+
+
+def resume_part_number(
+    section_type: str | None,
+    part_question_ids: Sequence[Sequence[uuid.UUID]],
+    answered_ids: set[uuid.UUID],
+) -> int | None:
+    """1-based part to reopen inside the live section.
+
+    First part that still has unanswered questions; if every question in the
+    skill is answered, the last part. Speaking has no part URL.
+    """
+    if section_type is None or section_type == SectionType.SPEAKING.value:
+        return None
+    if not part_question_ids:
+        return 1
+    last = 1
+    for index, qids in enumerate(part_question_ids, start=1):
+        last = index
+        if not qids:
+            continue
+        if any(qid not in answered_ids for qid in qids):
+            return index
+    return last
 
 
 def ensure_progress_rows(

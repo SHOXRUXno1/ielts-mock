@@ -257,6 +257,7 @@ export function StudentTests() {
                     search: continueTakeSearch(
                       mock!.in_progress_attempt_id!,
                       mock!.in_progress_section,
+                      mock!.in_progress_part,
                     ),
                   })
                 }

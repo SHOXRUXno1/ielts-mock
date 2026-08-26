@@ -45,7 +45,11 @@ export function ResumeBanner({ attempt }: ResumeBannerProps) {
           <Link
             to='/take-test/$testId'
             params={{ testId: attempt.test_id }}
-            search={continueTakeSearch(attempt.id, attempt.section)}
+            search={continueTakeSearch(
+              attempt.id,
+              attempt.section,
+              attempt.part,
+            )}
           >
             Continue
             <ArrowRight className='ml-1.5 size-3.5' />
