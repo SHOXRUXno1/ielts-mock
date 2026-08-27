@@ -1,11 +1,13 @@
 import { useEffect, type ReactNode } from 'react'
 import { useRouterState } from '@tanstack/react-router'
+import { Loader2 } from 'lucide-react'
 import { ListeningSection } from '../components/take/listening-section'
 import { ReadingSection } from '../components/take/reading-section'
 import { WritingSection } from '../components/take/writing-section'
 import { SpeakingSection } from '../components/take/speaking-section'
 import { SpeakingReadyGate } from '../components/take/speaking-ready-gate'
 import { scrollAndFlashQuestion } from './flash-question'
+import { resolveSpeakingExamView } from './speaking-exam-view'
 import { useTakeTest } from './take-test-context'
 import { useTestNavigation } from './use-test-navigation'
 
@@ -131,7 +133,20 @@ export function SectionContent() {
       // Start. Only then does enterSection() kick off the safety cap.
       // Preview and practice paths keep their existing behaviour.
       const isLiveExam = !ctx.isPreview && !ctx.isPractice && !!ctx.attemptId
-      if (isLiveExam && ctx.stateOf('speaking') === 'not_started') {
+      const speakingView = resolveSpeakingExamView({
+        isLiveExam,
+        progressLoaded: ctx.progress != null,
+        speakingState: ctx.stateOf('speaking'),
+      })
+      if (speakingView === 'loading') {
+        body = (
+          <div className='flex h-full items-center justify-center'>
+            <Loader2 className='size-8 animate-spin text-slate-400' />
+          </div>
+        )
+        break
+      }
+      if (speakingView === 'gate') {
         body = <SpeakingReadyGate />
         break
       }

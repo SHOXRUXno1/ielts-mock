@@ -108,6 +108,22 @@ describe('useSpeakingInit', () => {
     expect(beginLoading).toHaveBeenCalledTimes(2)
   })
 
+  it('does not call beginLoading again when already bootstrapped', async () => {
+    const { options, beginLoading } = createInitOptions()
+    const { Wrapper } = createWrapper()
+
+    const { rerender } = await renderHook(() => useSpeakingInit(options), {
+      wrapper: Wrapper,
+    })
+
+    await vi.waitFor(() => expect(beginLoading).toHaveBeenCalledOnce())
+
+    options.phase = 'idle'
+    rerender()
+
+    expect(beginLoading).toHaveBeenCalledOnce()
+  })
+
   it('completes loading after stable simliReady via double rAF', async () => {
     const rafCallbacks: FrameRequestCallback[] = []
     vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {

@@ -4,6 +4,8 @@ import {
   synthesizeExaminerTurn,
   type SynthesizeTurnResponse,
 } from '@/lib/api/speaking-examiner'
+import { isLiveSpeakingPhase } from '../lib/is-live-phase'
+import { iceServersKey } from '../lib/simli-pcm'
 import type { Phase } from '../types/phase'
 
 const PLAYING_SAFETY_TIMEOUT_MS = 120_000
@@ -90,7 +92,11 @@ export function useExaminerAudio({
 
   const handleSimliReady = useCallback(
     (ready: boolean) => {
-      if (!ready && phaseRef.current === 'loading') {
+      if (
+        !ready &&
+        (phaseRef.current === 'loading' ||
+          isLiveSpeakingPhase(phaseRef.current))
+      ) {
         return
       }
       simliReadyRef.current = ready
@@ -102,6 +108,15 @@ export function useExaminerAudio({
       }
     },
     [phaseRef],
+  )
+
+  const setSimliIceServersStable = useCallback(
+    (servers: RTCIceServer[] | null) => {
+      setSimliIceServers((prev) =>
+        iceServersKey(prev) === iceServersKey(servers) ? prev : servers,
+      )
+    },
+    [],
   )
 
   const handleSimliFallback = useCallback(() => {
@@ -387,7 +402,7 @@ export function useExaminerAudio({
     simliFaceId,
     setSimliFaceId,
     simliIceServers,
-    setSimliIceServers,
+    setSimliIceServers: setSimliIceServersStable,
     simliEnabled,
     setSimliEnabled,
     simliReady,

@@ -126,11 +126,6 @@ export function useSpeakingInit({
       if (!initState.bootstrapped) {
         initState.bootstrapped = true
         beginLoading()
-        return
-      }
-
-      if (phaseRef.current === 'idle') {
-        beginLoading()
       }
       return
     }

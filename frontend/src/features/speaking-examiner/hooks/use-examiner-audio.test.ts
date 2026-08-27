@@ -272,4 +272,21 @@ describe('useExaminerAudio', () => {
 
     expect(result.current.simliReady).toBe(false)
   })
+
+  it('ignores onReady(false) during a live examiner turn', async () => {
+    const phaseRef = { current: 'playing' as Phase }
+    const { result, act } = await renderHook(() =>
+      useExaminerAudio({ phaseRef, onAudioComplete: vi.fn() }),
+    )
+
+    await act(() => {
+      result.current.handleSimliReady(true)
+    })
+    expect(result.current.simliReady).toBe(true)
+
+    await act(() => {
+      result.current.handleSimliReady(false)
+    })
+    expect(result.current.simliReady).toBe(true)
+  })
 })

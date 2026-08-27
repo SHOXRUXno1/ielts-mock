@@ -368,29 +368,28 @@ function SimliAvatarInner({
 
           client.on('error', (detail: string) => {
             simliError('[Simli] Error:', detail)
-            if (readyRef.current) {
-              requestReconnectInternalRef.current(
-                queuedAudioRef.current ?? lastAudioRef.current,
-              )
-            }
+            if (cancelled || !readyRef.current) return
+            requestReconnectInternalRef.current(
+              queuedAudioRef.current ?? lastAudioRef.current,
+            )
           })
 
           client.on('startup_error', (message: string) => {
             simliError('[Simli] Startup error:', message)
-            if (readyRef.current) {
-              requestReconnectInternalRef.current(
-                queuedAudioRef.current ?? lastAudioRef.current,
-              )
-            }
+            if (cancelled || !readyRef.current) return
+            requestReconnectInternalRef.current(
+              queuedAudioRef.current ?? lastAudioRef.current,
+            )
           })
 
           client.on('stop', () => {
             simliError('[Simli] Session stopped')
-            if (readyRef.current) {
-              requestReconnectInternalRef.current(
-                queuedAudioRef.current ?? lastAudioRef.current,
-              )
-            }
+            // Cleanup calls stop() — that must not look like a dropped
+            // connection or we remount the client in a setState loop.
+            if (cancelled || !readyRef.current) return
+            requestReconnectInternalRef.current(
+              queuedAudioRef.current ?? lastAudioRef.current,
+            )
           })
 
           await client.start()
@@ -451,7 +450,9 @@ function SimliAvatarInner({
       }
       simliRef.current = null
       setReady(false)
-      onReadyRef.current?.(false)
+      // Do not tell the parent we went unready. Effect teardown (token
+      // refresh, Strict Mode, remount) is expected; onReady(false) after
+      // autostart is what produced React error #185 on the exam page.
     }
   }, [sessionToken, faceId, iceKey, forceFallback, clearEndTimer, activateLottieFallback])
 
