@@ -11,23 +11,10 @@ describe('parseResultSearch', () => {
     expect(parseResultSearch({ tab: 'writing' })).toEqual({ tab: 'writing' })
   })
 
-  it('passes reveal through when truthy', () => {
-    expect(parseResultSearch({ reveal: true })).toEqual({ reveal: true })
-    expect(parseResultSearch({ reveal: 1 })).toEqual({ reveal: true })
-    expect(parseResultSearch({ reveal: '1' })).toEqual({ reveal: true })
-    expect(parseResultSearch({ reveal: 'true' })).toEqual({ reveal: true })
-  })
-
-  it('drops reveal when falsy or missing', () => {
-    expect(parseResultSearch({ reveal: false })).toEqual({})
-    expect(parseResultSearch({ reveal: 0 })).toEqual({})
-    expect(parseResultSearch({ reveal: 'no' })).toEqual({})
-  })
-
-  it('combines tab and reveal', () => {
+  it('ignores leftover reveal query params', () => {
+    expect(parseResultSearch({ reveal: true })).toEqual({})
     expect(parseResultSearch({ tab: 'listening', reveal: '1' })).toEqual({
       tab: 'listening',
-      reveal: true,
     })
   })
 })

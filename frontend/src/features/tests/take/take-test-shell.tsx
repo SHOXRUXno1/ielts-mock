@@ -25,7 +25,6 @@ import {
   type AttemptRead,
 } from '@/lib/api/attempts'
 import { startFullMock } from '@/lib/api/student'
-import { markScoreReveal } from '@/features/results/lib/score-reveal-flag'
 import { fetchQuestions } from '@/lib/api/questions'
 import { fetchTest, fetchTestBySlug } from '@/lib/api/tests'
 import {
@@ -313,22 +312,17 @@ export function TakeTestShell({
   )
 
   const goToResult = useCallback(
-    (id: string, options?: { reveal?: boolean }) => {
-      // Every finished-attempt path leaves through here — drop exam fullscreen.
+    (id: string) => {
       exitExamFullscreen()
-      if (options?.reveal) markScoreReveal(id)
-      const search = options?.reveal ? { reveal: true } : undefined
       if (role === 'student') {
         void navigate({
           to: '/student/results/$attemptId',
           params: { attemptId: id },
-          search,
         })
       } else {
         void navigate({
           to: '/results/$attemptId',
           params: { attemptId: id },
-          search,
         })
       }
     },
@@ -907,13 +901,12 @@ export function TakeTestShell({
       } catch {
         /* ignore */
       }
-      toast.success('Test submitted!')
-      goToResult(result.id, { reveal: true })
+      goToResult(result.id)
     },
     onError: (err: unknown) => {
       isFinishingRef.current = false
       if (isAttemptDone(err)) {
-        if (attemptId) goToResult(attemptId, { reveal: true })
+        if (attemptId) goToResult(attemptId)
         return
       }
       toast.error('Failed to submit test. Please try again.')

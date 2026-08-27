@@ -3,12 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { ArrowLeft, FileQuestion } from 'lucide-react'
 import { toast } from 'sonner'
-import {
-  downloadResultPdf,
-  fetchResultDetail,
-  finalizeAttempt,
-  type EvaluationJobRead,
-} from '@/lib/api/attempts'
+import { fetchResultDetail, finalizeAttempt } from '@/lib/api/attempts'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -19,7 +14,6 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
-import { ScoreReveal, type ScoreRevealSection } from '@/components/report'
 import { EvaluationProgressCard, isJobActive, showEvalProgress } from './evaluation-progress'
 import { PracticeResultDetail } from './practice-result-detail'
 import { AnswerReviewPanel } from './components/answer-review-panel'
@@ -31,23 +25,7 @@ import { ResultNav } from './components/result-nav'
 import { ScoreSummary } from './components/score-summary'
 import { SpeakingReportPanel } from './components/speaking-report-panel'
 import { WritingReportPanel } from './components/writing-report-panel'
-import {
-  clearScoreReveal,
-  hasScoreReveal,
-} from './lib/score-reveal-flag'
-import { SKILL_BAND_FIELD, SKILL_KEYS, type SkillKey } from './lib/skill'
 import { RESULT_TABS, type ResultTab } from './lib/tabs'
-
-function jobStatusForSkill(
-  skill: SkillKey,
-  jobs: EvaluationJobRead[],
-): 'pending' | 'done' | null {
-  const relevant = jobs.filter((j) => j.section_type === skill)
-  if (relevant.length === 0) return null
-  if (relevant.some((j) => j.status === 'pending' || j.status === 'processing'))
-    return 'pending'
-  return 'done'
-}
 
 function AdminHeader() {
   return (
@@ -74,10 +52,8 @@ export function ResultDetail() {
   const { attemptId } = useParams({ strict: false }) as { attemptId: string }
   const search = useSearch({ strict: false }) as {
     tab?: ResultTab
-    reveal?: boolean
   }
   const tab = search.tab ?? 'overview'
-  const revealRequested = !!search.reveal
   const role = useAuthStore((s) => s.auth.user?.role)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -198,54 +174,6 @@ export function ResultDetail() {
     </Button>
   ) : null
 
-  const showReveal = revealRequested || hasScoreReveal(attemptId)
-  const revealSections: ScoreRevealSection[] = SKILL_KEYS.map((skill) => {
-    const band = report[SKILL_BAND_FIELD[skill]]
-    if (band != null) return { skill, band, status: 'scored' as const }
-    const jobStatus = jobStatusForSkill(skill, evaluationJobs)
-    return {
-      skill,
-      band: null,
-      status: jobStatus === 'pending' ? ('pending' as const) : ('not_attempted' as const),
-    }
-  })
-
-  const dropReveal = () => {
-    clearScoreReveal(attemptId)
-    void navigate({
-      to: '.',
-      search: (prev) => {
-        const next = { ...(prev as Record<string, unknown>) }
-        delete next.reveal
-        return next
-      },
-      replace: true,
-    })
-  }
-
-  const handleRevealView = () => {
-    clearScoreReveal(attemptId)
-    const firstScored = SKILL_KEYS.find(
-      (skill) => report[SKILL_BAND_FIELD[skill]] != null,
-    )
-    void navigate({
-      to: '.',
-      search: (prev) => {
-        const next = { ...(prev as Record<string, unknown>) }
-        delete next.reveal
-        next.tab = firstScored ?? 'listening'
-        return next
-      },
-      replace: true,
-    })
-  }
-
-  const handleRevealDownload = () => {
-    void downloadResultPdf(attemptId).catch(() =>
-      toast.error('Could not generate the PDF'),
-    )
-  }
-
   return (
     <TooltipProvider>
       <PageShell>
@@ -333,16 +261,6 @@ export function ResultDetail() {
           </Tabs>
         </Main>
       </PageShell>
-      {showReveal && (
-        <ScoreReveal
-          overallBand={report.overall_band}
-          sections={revealSections}
-          testTitle={report.test_title ?? null}
-          onViewResults={handleRevealView}
-          onDownloadPdf={handleRevealDownload}
-          onClose={dropReveal}
-        />
-      )}
     </TooltipProvider>
   )
 }
