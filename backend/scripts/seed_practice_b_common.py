@@ -37,6 +37,7 @@ def data_dir(test_number: int) -> Path:
 AUDIO_URL = "/media/audio/practice_b_t{test}_listening_p{part}.mp3"
 MAP_IMAGE_URL = "/media/images/practice_b_t{test}_listening_map.png"
 CHART_IMAGE_URL = "/media/images/practice_b_t{test}_writing_task1.png"
+SNOWGUN_IMAGE_URL = "/media/images/practice_b_t{test}_reading_snowgun.png"
 
 
 async def get_test(db: AsyncSession, test_number: int) -> Test:
