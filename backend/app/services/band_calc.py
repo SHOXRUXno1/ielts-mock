@@ -1,8 +1,8 @@
 """Centralized overall band calculation.
 
-Sections that were not attempted have band = None and are excluded
-from the average.  Sections attempted but scored 0.0 (all wrong) ARE
-included — they represent a real score, not a skip.
+A full-mock overall is always the official 4-skill IELTS average.
+Skipped or missing skills count as 0.0 — otherwise a student who
+walks out of Speaking would keep the same overall as someone who sat it.
 
 IELTS official rounding: averages are rounded to the nearest 0.5 half-up
 (.25 → .5, .75 → next whole).
@@ -25,17 +25,15 @@ def round_ielts_band(value: float) -> float:
 
 def compute_overall_band(attempt: Attempt) -> float | None:
     bands = [
-        b for b in [
-            attempt.listening_band,
-            attempt.reading_band,
-            attempt.writing_band,
-            attempt.speaking_band,
-        ]
-        if b is not None
+        attempt.listening_band,
+        attempt.reading_band,
+        attempt.writing_band,
+        attempt.speaking_band,
     ]
-    if len(bands) < 3:
+    if all(b is None for b in bands):
         return None
-    return round_ielts_band(sum(bands) / len(bands))
+    total = sum(0.0 if b is None else float(b) for b in bands)
+    return round_ielts_band(total / 4)
 
 
 def derive_scored_status(attempt: Attempt) -> AttemptStatus:

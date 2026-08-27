@@ -1141,16 +1141,21 @@ async def _finish_full_mock_attempt(
         attempt.reading_band = correct_to_reading_band(totals["reading"][0])
         attempt.reading_raw = totals["reading"][0]
 
-    attempt.overall_band = compute_overall_band(attempt)
-
     # Flush so we can see pending evaluation jobs created above
     await db.flush()
     jobs_result = await db.execute(
         select(EvaluationJob).where(EvaluationJob.attempt_id == attempt_id)
     )
-    pending_jobs = jobs_result.scalars().all()
-    if not pending_jobs:
-        # L/R-only (or no AI sections answered) — mark auto_scored immediately
+    in_flight = [
+        j
+        for j in jobs_result.scalars().all()
+        if j.status in (JobStatus.PENDING, JobStatus.PROCESSING)
+    ]
+    if in_flight:
+        # Don't treat in-flight Writing/Speaking as a skip (0).
+        attempt.overall_band = None
+    else:
+        attempt.overall_band = compute_overall_band(attempt)
         attempt.status = derive_scored_status(attempt)
 
     await db.commit()
@@ -1288,7 +1293,8 @@ async def finalize_attempt(
     """Explicitly complete an attempt without speaking.
 
     Transitions from auto_scored → completed_without_speaking,
-    keeping speaking_band None and recomputing overall from L/R/W only.
+    keeping speaking_band None. Overall still uses all four skills
+    (Speaking counts as 0).
     """
     from app.models.speaking_session import SpeakingSession
 

@@ -95,7 +95,23 @@ describe('profileInsights', () => {
     expect(insights.weakest).toBeNull()
     expect(insights.spread).toBeNull()
     expect(insights.even).toBeNull()
-    expect(insights.rawAverage).toBeNull()
+    expect(insights.rawAverage).toBe(2)
+    expect(insights.roundedAverage).toBe(2)
+  })
+
+  it('counts a skipped skill as 0 in the four-skill overall', () => {
+    const insights = profileInsights(
+      attempt({
+        listening_band: 5,
+        reading_band: 5,
+        writing_band: 5,
+        speaking_band: null,
+        overall_band: 4,
+      }),
+    )
+    expect(insights.rawAverage).toBe(3.75)
+    expect(insights.roundedAverage).toBe(4)
+    expect(formatRoundingExample(insights)).toBe('3.8 → 4.0')
   })
 })
 

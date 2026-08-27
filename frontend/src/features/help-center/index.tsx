@@ -87,7 +87,7 @@ const sections = [
       },
       {
         q: 'How is the overall band score calculated?',
-        a: 'The overall band is the average of all section band scores, rounded to the nearest 0.5 per IELTS convention. A manual override on any section directly affects the overall score.',
+        a: 'The overall band is the official four-skill IELTS average, rounded to the nearest 0.5. A skipped section counts as 0. A manual override on any section directly affects the overall score.',
       },
     ],
   },

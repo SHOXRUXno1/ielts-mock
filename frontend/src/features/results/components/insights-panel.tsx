@@ -60,8 +60,8 @@ export function InsightsPanel({ attempt }: InsightsPanelProps) {
           label='Overall'
           value={
             rounding
-              ? `Average of scored sections, rounded to the nearest 0.5. ${rounding}. At least three sections required.`
-              : 'Average of scored sections, rounded to the nearest 0.5. At least three sections required.'
+              ? `Average of all four skills (skipped count as 0), rounded to the nearest 0.5. ${rounding}.`
+              : 'Average of all four skills (skipped count as 0), rounded to the nearest 0.5.'
           }
         />
       </PanelBody>

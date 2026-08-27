@@ -482,11 +482,12 @@ async def rescore_attempt(
         attempt.reading_band = correct_to_reading_band(totals["reading"][0])
         attempt.reading_raw = totals["reading"][0]
 
-    attempt.overall_band = compute_overall_band(attempt)
-
     if has_new_jobs:
+        # Don't treat in-flight Writing/Speaking as a skip (0).
+        attempt.overall_band = None
         attempt.status = AttemptStatus.COMPLETED
     else:
+        attempt.overall_band = compute_overall_band(attempt)
         attempt.status = derive_scored_status(attempt)
 
     await db.commit()

@@ -1,6 +1,6 @@
-"""Overall band calculation — incomplete sections must not become 0.0.
+"""Overall band is always the official 4-skill IELTS average.
 
-IELTS half-up rounding: .25 → .5, .75 → next whole.
+Skipped skills count as 0. IELTS half-up rounding: .25 → .5, .75 → next whole.
 """
 
 from types import SimpleNamespace
@@ -41,37 +41,46 @@ class TestRoundIeltsBand:
 
 
 class TestComputeOverallBand:
-    def test_fewer_than_three_returns_none(self):
-        # Only L+R available (2 bands) → below minimum 3 → None
+    def test_skipped_speaking_counts_as_zero(self):
+        # (5 + 5 + 5 + 0) / 4 = 3.75 → 4.0
+        assert compute_overall_band(
+            _attempt(listening=5.0, reading=5.0, writing=5.0, speaking=None)
+        ) == 4.0
+
+    def test_explicit_zero_speaking_same_as_skip(self):
+        assert compute_overall_band(
+            _attempt(listening=5.0, reading=5.0, writing=5.0, speaking=0.0)
+        ) == 4.0
+
+    def test_two_skills_still_divide_by_four(self):
+        # (7 + 6.5 + 0 + 0) / 4 = 3.375 → 3.5
         assert compute_overall_band(
             _attempt(listening=7.0, reading=6.5, writing=None, speaking=None)
-        ) is None
+        ) == 3.5
 
-    def test_single_band_returns_none(self):
-        # Only W available (1 band) → below minimum 3 → None
+    def test_single_skill_still_divide_by_four(self):
+        # (0 + 0 + 9 + 0) / 4 = 2.25 → 2.5
         assert compute_overall_band(
             _attempt(listening=None, reading=None, writing=9.0, speaking=None)
-        ) is None
+        ) == 2.5
 
     def test_includes_zero_attempted_section(self):
-        # 0.0 = attempted but all wrong → included in average
-        # (7 + 6.5 + 0) / 3 = 4.5
+        # (7 + 6.5 + 0 + 0) / 4 = 3.375 → 3.5
         assert compute_overall_band(
             _attempt(listening=7.0, reading=6.5, writing=0.0, speaking=None)
-        ) == 4.5
+        ) == 3.5
 
-    def test_includes_writing_when_present(self):
-        # (7 + 7 + 6.5) / 3 = 6.833… → half-up → 7.0
+    def test_three_scored_skills_include_the_skip(self):
+        # (7 + 7 + 6.5 + 0) / 4 = 5.125 → 5.0
         assert compute_overall_band(
             _attempt(listening=7.0, reading=7.0, writing=6.5, speaking=None)
-        ) == 7.0
+        ) == 5.0
 
     def test_three_sections_quarter_case(self):
-        # (6.0 + 6.0 + 6.5) / 3 = 6.166… → 6.0; use values that hit .25
-        # (6.0 + 6.5 + 6.5) / 3 = 6.333… → 6.5
+        # (6.0 + 6.5 + 6.5 + 0) / 4 = 4.75 → 5.0
         assert compute_overall_band(
             _attempt(listening=6.0, reading=6.5, writing=6.5, speaking=None)
-        ) == 6.5
+        ) == 5.0
 
     def test_four_sections_average(self):
         # (7 + 7 + 6.5 + 6.5) / 4 = 6.75 → 7.0

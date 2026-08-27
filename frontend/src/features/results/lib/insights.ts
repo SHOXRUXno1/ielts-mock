@@ -53,10 +53,10 @@ export function profileInsights(attempt: AttemptDetailRead): ProfileInsights {
       ? strongest.band - weakest.band
       : null
   const even = spread == null ? null : spread <= 1
-  const rawAverage =
-    scored.length >= 3
-      ? scored.reduce((sum, row) => sum + row.band, 0) / scored.length
-      : null
+  const allBands = SKILL_KEYS.map((key) => attempt[SKILL_BAND_FIELD[key]])
+  const rawAverage = allBands.some((band) => band != null)
+    ? allBands.reduce((sum, band) => sum + (band ?? 0), 0) / 4
+    : null
   const roundedAverage = rawAverage == null ? null : nearestHalf(rawAverage)
 
   return {

@@ -185,7 +185,7 @@ async def _update_attempt_bands(attempt_id, db: AsyncSession) -> None:
             attempt.status = derive_scored_status(attempt)
     else:
         # Practice flips to AUTO_SCORED once the job settles. overall_band
-        # stays None (compute_overall_band needs 3+ skills).
+        # stays None — a single-skill paper is not a 4-skill IELTS overall.
         attempt.status = AttemptStatus.AUTO_SCORED
 
     await db.commit()
