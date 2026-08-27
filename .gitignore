@@ -52,3 +52,4 @@ backend/scripts/_grammar_audio/
 # Working copies of source booster PDFs and audio, re-extractable from the
 # originals by the _*_booster_* scripts
 backend/scripts/_booster_text/
+backend/scripts/_plus2_pages/
