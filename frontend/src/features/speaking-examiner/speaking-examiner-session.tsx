@@ -126,8 +126,7 @@ export function SpeakingExaminerSession({
   const sessionIdRef = useRef(0)
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  const { playWarningBeep, playRecordEnd, playPartTransition } =
-    useSpeakingSounds()
+  const { playWarningBeep, playPartTransition } = useSpeakingSounds()
   const { micStatus, checkMicrophone, resetMicCheck } = useMicCheck()
 
   const resolvedAttemptId = attemptId ?? undefined
@@ -423,7 +422,6 @@ export function SpeakingExaminerSession({
     onRecordingComplete: processRecording,
     setPhase,
     onRecordStart: handleRecordStart,
-    onRecordEnd: playRecordEnd,
   })
 
   useEffect(() => {
