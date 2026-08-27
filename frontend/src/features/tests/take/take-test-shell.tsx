@@ -40,9 +40,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuthStore } from '@/stores/auth-store'
 import type { SpeakingSessionControls } from '@/features/speaking-examiner/speaking-examiner-session'
-import { ExamHeader } from '../components/take/exam-header'
 import { QuestionNavBar } from '../components/take/question-nav-bar'
-import { TimeoutDialog } from '../components/take/timeout-dialog'
 import { durationByType } from '../data/duration-rules'
 import {
   countScoringSlots,
@@ -83,12 +81,8 @@ import {
 } from './use-section-expiry-dialog'
 import { useSectionGuard } from './use-section-guard'
 import { useSectionProgress } from './use-section-progress'
-import { useSectionTimeWarnings } from './use-section-time-warnings'
-import { useSectionTimeout } from './use-section-timeout'
-import {
-  TakeTestTimerProvider,
-  useTakeTestTimer,
-} from './take-test-timer-context'
+import { ExamTimerChrome } from './exam-timer-chrome'
+import { TakeTestTimerProvider } from './take-test-timer-context'
 import { useTestNavigation } from './use-test-navigation'
 import { exitExamFullscreen } from './exam-fullscreen'
 import { FullscreenGuardOverlay } from './fullscreen-guard-overlay'
@@ -1151,7 +1145,6 @@ function ActiveChrome({
   onIntegrityTerminated: () => void
 }) {
   const ctx = useTakeTest()
-  const { remainingMs, remainingSec, timerExpired } = useTakeTestTimer()
   const nav = useTestNavigation()
   const guard = useSectionGuard()
 
@@ -1166,25 +1159,18 @@ function ActiveChrome({
     showSubmitDialog,
     setShowSubmitDialog,
     isFlushing,
-    isSubmitting,
-    submitTest,
     attemptId,
     sealedTypes,
-    progress,
-    flushBeforeNavigate,
     sealSection,
     enterSection,
     isSealing,
     bookSlug,
-    reportSectionExpired,
     activeSectionType,
     stateOf,
   } = ctx
 
   const currentType = nav.currentType
   const currentTypeIdx = nav.currentTypeIdx
-  /** Progress-active section — not URL (URL can briefly point at a skipped tab). */
-  const timedSectionType = activeSectionType ?? currentType
   const unlockableType = nextUnlockableType(
     presentTypes,
     stateOf,
@@ -1208,35 +1194,6 @@ function ActiveChrome({
   const onTimeoutExhausted = useCallback(() => {
     if (attemptId && (bookSlug || ctx.testId)) guard.triggerSubmit()
   }, [bookSlug, attemptId, guard, ctx.testId])
-
-  useSectionTimeWarnings({
-    remainingMs,
-    sectionType: timedSectionType,
-    enabled: !isPreview && !!attemptId,
-    // Single-part practice is often ≤8 min — a "5 minutes remaining" toast
-    // at the start is noise. Full mock + whole-section practice keep it.
-    suppressFiveMin: isPractice && ctx.practiceScope === 'part',
-  })
-
-  const { handleContinue: handleTimeoutContinue } = useSectionTimeout({
-    enabled: !isPreview && !!attemptId,
-    timerExpired,
-    deadlineType: activeSectionType,
-    expiredType: timedSectionType,
-    presentTypes,
-    answers,
-    sortedSections,
-    timeoutDialog,
-    countdown: timeoutCountdown,
-    peekNext: peekTimeoutNext,
-    reportSectionExpired,
-    clearTimeoutDialog,
-    flushBeforeNavigate,
-    sealSection,
-    enterSection,
-    goToSection: nav.goToSection,
-    onExhausted: onTimeoutExhausted,
-  })
 
   const handleFinishSection = useCallback(async () => {
     if (isSealing || isFinishingSection) return
@@ -1342,35 +1299,6 @@ function ActiveChrome({
     0,
   )
 
-  const sectionStates = useMemo(() => {
-    const map: Partial<
-      Record<SectionType, { state: string; sealedAt?: string | null }>
-    > = {}
-    for (const s of progress?.sections ?? []) {
-      map[s.section_type as SectionType] = {
-        state: s.state,
-        sealedAt: s.sealed_at,
-      }
-    }
-    for (const t of sealedTypes) {
-      if (!map[t]) map[t] = { state: 'sealed' }
-    }
-    return map
-  }, [progress, sealedTypes])
-
-  const speakingActiveChrome = currentType === 'speaking' && !isPreview
-  // Speaking is AI-paced; only surface the safety-cap countdown when <5 min left.
-  const showAiPaced = speakingActiveChrome && remainingSec > 300
-  // Bind the countdown to an actual server deadline (`remainingMs != null`)
-  // instead of `remainingSec >= 0` — the readiness gate before Speaking has
-  // no active section, so remainingSec is a placeholder 0 there.
-  const showCountdown =
-    !isPreview &&
-    !!attemptId &&
-    !!progress &&
-    remainingMs != null &&
-    (!speakingActiveChrome || remainingSec <= 300)
-
   const switchToDuration = guard.pendingSwitch
     ? durationByType(test.section_settings)[guard.pendingSwitch.to]
     : null
@@ -1397,32 +1325,25 @@ function ActiveChrome({
           </div>
         )}
 
-        <ExamHeader
-          title={test.title}
-          isPreview={isPreview}
-          isPractice={isPractice}
-          presentTypes={presentTypes}
-          currentType={currentType}
-          sectionStates={isPreview ? undefined : sectionStates}
-          unlockableType={isPreview ? null : unlockableType}
-          onSwitchType={(type) =>
-            isPreview ? void nav.goToSection(type) : guard.requestSwitch(type)
-          }
-          showAiPaced={showAiPaced}
-          showCountdown={showCountdown}
-          remainingSec={remainingSec}
+        {/* Sibling of <main>, not its parent — ticks must not reach Speaking. */}
+        <ExamTimerChrome
           totalAnswered={totalAnswered}
           totalQuestions={totalQuestions}
-          showFinishSection={!isPreview && !isPractice}
-          onFinishSection={() => setFinishSectionOpen(true)}
           finishDisabled={
             isSealing ||
             isFinishingSection ||
             !activeSectionType ||
             sealedTypes.has(activeSectionType)
           }
-          onSubmit={submitTest}
-          isSubmitting={isSubmitting}
+          onFinishSection={() => setFinishSectionOpen(true)}
+          onSwitchType={(type) =>
+            isPreview ? void nav.goToSection(type) : guard.requestSwitch(type)
+          }
+          timeoutDialog={timeoutDialog}
+          timeoutCountdown={timeoutCountdown}
+          clearTimeoutDialog={clearTimeoutDialog}
+          peekTimeoutNext={peekTimeoutNext}
+          onTimeoutExhausted={onTimeoutExhausted}
         />
 
         <main className='relative min-h-0 flex-1 overflow-hidden'>
@@ -1565,12 +1486,6 @@ function ActiveChrome({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <TimeoutDialog
-        info={timeoutDialog}
-        countdown={timeoutCountdown}
-        onContinue={() => void handleTimeoutContinue()}
-      />
 
       <AlertDialog open={finishSectionOpen} onOpenChange={setFinishSectionOpen}>
         <AlertDialogContent>

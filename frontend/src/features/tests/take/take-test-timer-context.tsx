@@ -17,9 +17,11 @@ type TakeTestTimerProviderProps = {
 }
 
 /**
- * Owns the 2Hz section countdown. Keep this below TakeTestProvider and do not
- * put remainingSec on the main exam context — that re-rendered WebRTC Speaking
- * on every tick.
+ * Owns the 2Hz section countdown. Keep this below TakeTestProvider.
+ *
+ * Only ExamTimerChrome (a sibling of the section body) should call
+ * useTakeTestTimer. A parent that wraps Speaking and also reads remainingSec
+ * re-renders WebRTC on every tick.
  */
 export function TakeTestTimerProvider({
   endsAt,
