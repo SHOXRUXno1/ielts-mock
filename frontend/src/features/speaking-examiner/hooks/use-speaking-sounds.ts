@@ -37,8 +37,6 @@ export function useSpeakingSounds() {
 
   const playWarningBeep = useCallback(() => playTone(660, 200, 0.2), [playTone])
 
-  const playRecordStart = useCallback(() => playTone(520, 80), [playTone])
-
   const playRecordEnd = useCallback(() => playTone(400, 150), [playTone])
 
   const playPartTransition = useCallback(
@@ -52,7 +50,6 @@ export function useSpeakingSounds() {
   return {
     playBeep,
     playWarningBeep,
-    playRecordStart,
     playRecordEnd,
     playPartTransition,
   }

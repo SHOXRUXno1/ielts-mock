@@ -126,7 +126,7 @@ export function SpeakingExaminerSession({
   const sessionIdRef = useRef(0)
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  const { playWarningBeep, playRecordStart, playRecordEnd, playPartTransition } =
+  const { playWarningBeep, playRecordEnd, playPartTransition } =
     useSpeakingSounds()
   const { micStatus, checkMicrophone, resetMicCheck } = useMicCheck()
 
@@ -243,8 +243,7 @@ export function SpeakingExaminerSession({
 
   const handleRecordStart = useCallback(() => {
     cancelBrowserSpeech()
-    playRecordStart()
-  }, [cancelBrowserSpeech, playRecordStart])
+  }, [cancelBrowserSpeech])
 
   const playExaminerTurn = useCallback(
     async (
