@@ -42,6 +42,15 @@ function formatAnswerKey(answerKey: Record<string, unknown> | null): string {
 const chip =
   'inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-primary'
 
+function questionImageSrc(question: Question): string | undefined {
+  const fromColumn = question.image_url?.trim()
+  if (fromColumn) return fromColumn
+  const fromContent = question.content.image_url
+  return typeof fromContent === 'string' && fromContent.trim()
+    ? fromContent.trim()
+    : undefined
+}
+
 function QuestionNum({ question }: { question: Question }) {
   const n = question.computed_number ?? question.order
   return (
@@ -659,6 +668,7 @@ export function QuestionRenderer({
     // Support both "question" and legacy "prompt" field names
     const questionText =
       ((content.question ?? content.prompt) as string | undefined) ?? ''
+    const imageSrc = questionImageSrc(question)
     // "Choose TWO" variant when max_choices > 1
     const maxChoices = (content.max_choices as number | undefined) ?? 1
 
@@ -695,6 +705,7 @@ export function QuestionRenderer({
               {String.fromCharCode(64 + options.length)}.
             </p>
           </div>
+          {imageSrc && <ExamMapImage src={imageSrc} />}
           <div className='space-y-2'>
             {options.map((opt, i) => {
               const letter = String.fromCharCode(65 + i)
@@ -736,6 +747,7 @@ export function QuestionRenderer({
           <QuestionNum question={question} />
           {questionText}
         </p>
+        {imageSrc && <ExamMapImage src={imageSrc} />}
         <RadioGroup
           value={selectedLetter}
           onValueChange={(v) => onAnswer({ answer: v })}
