@@ -73,6 +73,7 @@ type RuntimeGroup = {
   options?: string[]
   structure?: CompoundStructure
   questionsHeading?: string
+  optionsHeading?: string
   imageUrl?: string
 }
 
@@ -186,14 +187,18 @@ function buildRenderGroups(apiGroups: QuestionGroup[], questions: Question[]): R
       group.question_type === 'matching_information' ||
       group.question_type === 'matching_features'
     ) {
-      const qHeading = (group.options_shared as { questions_heading?: string } | null)?.questions_heading
+      const shared = group.options_shared as {
+        questions_heading?: string
+        options_heading?: string
+      } | null
       result.push({
         type: group.question_type,
         questions: groupQs,
         instruction: group.instruction || undefined,
         subtitle: group.subtitle,
         options: opts ?? [],
-        questionsHeading: qHeading || undefined,
+        questionsHeading: shared?.questions_heading || undefined,
+        optionsHeading: shared?.options_heading || undefined,
       })
     } else if (group.question_type === 'map_labeling') {
       const imgUrl =
@@ -513,7 +518,7 @@ export function ReadingSection({
                   options={group.options ?? []}
                   answers={answers}
                   onAnswer={onAnswer}
-                  listTitle={group.subtitle || 'List of People / Places'}
+                  listTitle={group.optionsHeading || group.subtitle || undefined}
                   questionsTitle={group.questionsHeading}
                   repeatable
                   previewMode={previewMode}

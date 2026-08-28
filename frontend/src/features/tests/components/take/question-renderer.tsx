@@ -1042,7 +1042,7 @@ export function MatchingLetterRenderer({
   options,
   answers,
   onAnswer,
-  listTitle = 'List of Options',
+  listTitle,
   questionsTitle,
   repeatable = true,
   /** When false, options still feed the dropdown but the list card is hidden
@@ -1069,9 +1069,11 @@ export function MatchingLetterRenderer({
     <div className='space-y-5'>
       {showOptionsList && options.length > 0 && (
         <div className='mx-auto max-w-lg rounded-lg border border-foreground/20'>
-          <div className='border-b border-foreground/20 px-5 py-2.5 text-center text-[15px] font-bold text-foreground'>
-            {listTitle}
-          </div>
+          {listTitle ? (
+            <div className='border-b border-foreground/20 px-5 py-2.5 text-center text-[15px] font-bold text-foreground'>
+              {listTitle}
+            </div>
+          ) : null}
           <div className='space-y-1.5 px-6 py-4'>
             {options.map((opt, i) => (
               <p key={i} className='text-[14px] leading-relaxed text-foreground'>{opt}</p>

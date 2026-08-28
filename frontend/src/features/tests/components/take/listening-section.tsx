@@ -194,14 +194,18 @@ function buildRenderGroups(apiGroups: QuestionGroup[], questions: Question[]): R
       group.question_type === 'matching_features'
     ) {
       const instruction = group.instruction || ''
-      const qHeading = (group.options_shared as { questions_heading?: string } | null)?.questions_heading
+      const shared = group.options_shared as {
+        questions_heading?: string
+        options_heading?: string
+      } | null
       result.push({
         type: group.question_type,
         questions: groupQs,
         instruction,
         subtitle: group.subtitle,
         options: opts ?? [],
-        questionsHeading: qHeading || undefined,
+        questionsHeading: shared?.questions_heading || undefined,
+        optionsHeading: shared?.options_heading || undefined,
       })
     } else if (group.question_type === 'map_labeling') {
       const instruction = group.instruction || LISTENING_INSTRUCTIONS.map_labeling || ''
@@ -523,7 +527,7 @@ export function ListeningSection({
                   options={group.options ?? []}
                   answers={answers}
                   onAnswer={onAnswer}
-                  listTitle={group.subtitle || 'List of People / Places'}
+                  listTitle={group.optionsHeading || group.subtitle || undefined}
                   questionsTitle={group.questionsHeading}
                   repeatable={false}
                   previewMode={previewMode}

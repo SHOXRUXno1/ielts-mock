@@ -667,7 +667,6 @@ async def seed(db: AsyncSession) -> None:
         "Write the correct letter, A, B or C next to Questions 21-25.",
         PROJECT_OPTIONS,
         PROJECT_ITEMS,
-        questions_heading="What instructions were the students given about their project?",
     )
     await w.compound(
         QuestionType.NOTE_COMPLETION,
