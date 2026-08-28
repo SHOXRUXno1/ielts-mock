@@ -324,9 +324,9 @@ TABLE2_ANSWERS: list[tuple[str, list[str], int]] = [
 # ── Part 3 ───────────────────────────────────────────────────────────────────
 
 PROJECT_OPTIONS = [
-    "they must do this",
-    "they can do this if they want to",
-    "they can't do this",
+    "A. they must do this",
+    "B. they can do this if they want to",
+    "C. they can't do this",
 ]
 
 PROJECT_ITEMS: list[tuple[str, str]] = [

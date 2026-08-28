@@ -12,7 +12,7 @@ import {
 import { mediaUrl } from '@/lib/api/attempts'
 import { cn } from '@/lib/utils'
 import { highlightCaps } from './shared/instruction-block'
-import type { Question } from '../../data/schema'
+import { matchingOptionParts, type Question } from '../../data/schema'
 
 type Props = {
   question: Question
@@ -1075,10 +1075,7 @@ export function MatchingLetterRenderer({
   showOptionsList?: boolean
   previewMode?: boolean
 }) {
-  const prefixes = options.map((opt) => {
-    const dot = opt.indexOf('.')
-    return dot > 0 ? opt.slice(0, dot).trim() : opt.trim()
-  })
+  const choices = options.map((opt, i) => matchingOptionParts(opt, i))
 
   return (
     <div className='space-y-5'>
@@ -1090,8 +1087,11 @@ export function MatchingLetterRenderer({
             </div>
           ) : null}
           <div className='space-y-1.5 px-6 py-4'>
-            {options.map((opt, i) => (
-              <p key={i} className='text-[14px] leading-relaxed text-foreground'>{opt}</p>
+            {choices.map((choice, i) => (
+              <p key={i} className='text-[14px] leading-relaxed text-foreground'>
+                <span className='font-semibold'>{choice.letter}</span>
+                {choice.text ? ` ${choice.text}` : ''}
+              </p>
             ))}
             {repeatable && (
               <p className='mt-3 text-[12px] italic text-muted-foreground'>
@@ -1126,12 +1126,12 @@ export function MatchingLetterRenderer({
                   onValueChange={(v) => onAnswer(q.id, { answer: v })}
                 >
                   <SelectTrigger className='h-7 w-14 shrink-0 justify-center gap-1 border-border bg-card px-2 text-[13px] font-medium shadow-sm [&>svg]:size-3'>
-                    <SelectValue placeholder={String(displayN)} />
+                    <SelectValue placeholder='—' />
                   </SelectTrigger>
                   <SelectContent align='center' className='min-w-14'>
-                    {prefixes.map((prefix, i) => (
-                      <SelectItem key={i} value={prefix} className='justify-center text-[13px]'>
-                        {prefix}
+                    {choices.map((choice, i) => (
+                      <SelectItem key={`${choice.letter}-${i}`} value={choice.letter} className='justify-center text-[13px]'>
+                        {choice.letter}
                       </SelectItem>
                     ))}
                   </SelectContent>

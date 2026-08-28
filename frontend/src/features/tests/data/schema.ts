@@ -191,6 +191,20 @@ export function optionPrefix(opt: string): string {
   return opt.trim()
 }
 
+/** Letter + remainder for a classification box: "A. they must…" or bare text. */
+export function matchingOptionParts(
+  opt: string,
+  index: number,
+): { letter: string; text: string } {
+  const trimmed = opt.trim()
+  const dotted = trimmed.match(/^([A-Z]{1,2}|[ivx]+)\.\s*(.*)$/i)
+  if (dotted) return { letter: dotted[1], text: dotted[2] ?? '' }
+  if (/^[A-Z]$/i.test(trimmed) || /^[ivx]+$/i.test(trimmed)) {
+    return { letter: trimmed, text: '' }
+  }
+  return { letter: String.fromCharCode(65 + index), text: trimmed }
+}
+
 /** How many IELTS marks / display numbers one Question row contributes. */
 export function scoringSlotsForQuestion(
   q: Pick<Question, 'question_type' | 'content' | 'answer_key'> | {
