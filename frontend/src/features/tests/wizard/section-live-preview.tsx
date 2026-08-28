@@ -49,6 +49,18 @@ function applyRange(q: Question, range: SlotRange | undefined): Question {
   return { ...q, order: range.start }
 }
 
+function questionImageUrl(
+  row: unknown,
+  fallback: string | null | undefined,
+): string | null {
+  if (row && typeof row === 'object' && 'image_url' in row) {
+    const value = (row as { image_url?: unknown }).image_url
+    if (typeof value === 'string') return value.trim() || null
+    if (value === null) return null
+  }
+  return fallback ?? null
+}
+
 function questionsForGroup(
   group: QuestionGroup,
   draft: CompoundGroupDraft | undefined,
@@ -85,7 +97,7 @@ function questionsForGroup(
         answer_key: d.answer_key ?? null,
         task_number: null,
         min_words: null,
-        image_url: 'image_url' in d ? (d.image_url ?? null) : (savedImage ?? null),
+        image_url: questionImageUrl(d, savedImage),
         essay_type: null,
         created_at: '',
         updated_at: '',
