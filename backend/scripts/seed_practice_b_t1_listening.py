@@ -634,7 +634,6 @@ async def seed(db: AsyncSession) -> None:
     await w.mcq(
         "Choose the correct letter, A, B or C.",
         [Q10],
-        subtitle="X = 41 Oak Rise",
     )
     totals.append(w.slots)
     print(f"  {w.slots} scoring slots")
