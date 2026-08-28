@@ -147,7 +147,7 @@ export function Devices() {
               <p className='font-medium'>No one is online</p>
               <p className='max-w-sm text-sm text-muted-foreground'>
                 Active admin sessions appear here. Closing the tab marks the
-                device offline after 15 minutes of inactivity.
+                device offline after 1 hour of inactivity.
               </p>
             </div>
           )}

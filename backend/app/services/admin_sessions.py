@@ -22,7 +22,7 @@ from app.services.user_agent import parse_user_agent
 
 logger = logging.getLogger(__name__)
 
-ONLINE_WINDOW = timedelta(minutes=15)
+ONLINE_WINDOW = timedelta(hours=1)
 TOUCH_THROTTLE_SECONDS = 60.0
 CLEANUP_INTERVAL = 300  # 5 minutes
 
