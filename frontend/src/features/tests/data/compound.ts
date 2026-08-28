@@ -173,6 +173,7 @@ export type CompoundGroupDraft = {
     order: number
     content: Record<string, unknown>
     answer_key: Record<string, unknown> | null
+    image_url?: string | null
   }>
   /** Editor cell focus — used to highlight matching preview cell */
   focusedCell?: { row: number; col: number } | null

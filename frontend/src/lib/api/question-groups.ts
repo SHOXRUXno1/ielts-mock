@@ -17,6 +17,7 @@ export type QuestionInGroupPayload = {
   question_type?: string  // omit to inherit from group
   content: Record<string, unknown>
   answer_key?: Record<string, unknown> | null
+  image_url?: string | null
 }
 
 export async function fetchQuestionGroups(sectionId: string): Promise<QuestionGroup[]> {

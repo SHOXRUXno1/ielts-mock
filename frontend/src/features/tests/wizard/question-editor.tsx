@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Eye, ImageIcon, Loader2, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { uploadImage } from '@/lib/api/attempts'
+import { mediaUrl, uploadImage } from '@/lib/api/attempts'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -221,8 +221,10 @@ function QuestionTypeFields({
         <McqFields
           content={question.content}
           answerKey={question.answer_key}
+          imageUrl={question.image_url}
           onContentChange={setContent}
           onAnswerKeyChange={setAnswer}
+          onImageUrlChange={(image_url) => onChange({ ...question, image_url })}
         />
       )
     case 'multi_select':
@@ -417,8 +419,125 @@ function mcqCorrectLetter(raw: string, options: string[]): string {
   return idx >= 0 ? String.fromCharCode(65 + idx) : ''
 }
 
+function QuestionImageField({
+  imageUrl,
+  label,
+  emptyHint,
+  onImageUrlChange,
+}: {
+  imageUrl?: string | null
+  label: string
+  emptyHint: string
+  onImageUrlChange: (url: string | null) => void
+}) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const displayImageUrl = imageUrl ? mediaUrl(imageUrl) : undefined
+
+  const handleImage = async (file: File) => {
+    setUploading(true)
+    try {
+      const url = await uploadImage(file)
+      onImageUrlChange(url)
+      toast.success('Image uploaded')
+    } catch {
+      toast.error('Failed to upload image')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className='space-y-1.5'>
+      <Label className='text-xs'>{label}</Label>
+      <input
+        ref={fileRef}
+        type='file'
+        accept='image/*'
+        className='hidden'
+        onChange={(e) => {
+          const f = e.target.files?.[0]
+          if (f) void handleImage(f)
+        }}
+      />
+      {imageUrl ? (
+        <div className='space-y-2'>
+          <div className='overflow-hidden rounded-lg border border-border bg-muted'>
+            <img
+              src={displayImageUrl}
+              alt={label}
+              className='mx-auto block max-h-64 w-full object-contain p-2'
+            />
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            <Button
+              type='button'
+              size='sm'
+              variant='secondary'
+              onClick={() => window.open(displayImageUrl, '_blank')}
+            >
+              <Eye className='mr-1 size-3.5' />
+              View
+            </Button>
+            <Button
+              type='button'
+              size='sm'
+              variant='secondary'
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <Loader2 className='mr-1 size-3.5 animate-spin' />
+              ) : (
+                <ImageIcon className='mr-1 size-3.5' />
+              )}
+              Replace
+            </Button>
+            <Button
+              type='button'
+              size='sm'
+              variant='destructive'
+              onClick={() => onImageUrlChange(null)}
+            >
+              <Trash2 className='mr-1 size-3.5' />
+              Remove
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type='button'
+          disabled={uploading}
+          onClick={() => fileRef.current?.click()}
+          className='flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/50 px-4 py-6 text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60'
+        >
+          {uploading ? (
+            <Loader2 className='size-6 animate-spin' />
+          ) : (
+            <ImageIcon className='size-6' />
+          )}
+          <span className='text-sm font-medium'>
+            {uploading ? 'Uploading…' : emptyHint}
+          </span>
+          <span className='text-xs'>PNG, JPG, GIF up to 10 MB</span>
+        </button>
+      )}
+    </div>
+  )
+}
+
 /* ── MCQ ── */
-function McqFields({ content, answerKey, onContentChange, onAnswerKeyChange }: FieldProps) {
+function McqFields({
+  content,
+  answerKey,
+  imageUrl,
+  onContentChange,
+  onAnswerKeyChange,
+  onImageUrlChange,
+}: FieldProps & {
+  imageUrl?: string | null
+  onImageUrlChange: (url: string | null) => void
+}) {
   const rawOpts = content.options
   const options: string[] = Array.isArray(rawOpts) ? rawOpts : ['', '', '', '']
   const correctLetter = mcqCorrectLetter((answerKey?.correct as string) ?? '', options)
@@ -434,6 +553,12 @@ function McqFields({ content, answerKey, onContentChange, onAnswerKeyChange }: F
           placeholder='What is the main topic?'
         />
       </div>
+      <QuestionImageField
+        imageUrl={imageUrl}
+        label='Question image'
+        emptyHint='Click to upload map or diagram'
+        onImageUrlChange={onImageUrlChange}
+      />
       <div className='space-y-1.5'>
         <Label className='text-xs'>Options</Label>
         {options.map((opt: string, i: number) => (

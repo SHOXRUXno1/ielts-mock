@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.question import QuestionCreate, QuestionUpdate
+from app.schemas.question import QuestionCreate, QuestionCreateInGroup, QuestionUpdate
 
 
 class TestEssayTypeValidation:
@@ -58,3 +58,14 @@ class TestEssayTypeValidation:
     def test_update_task1_rejects_essay_type(self):
         with pytest.raises(ValidationError):
             QuestionUpdate(task_number=1, essay_type="discussion")
+
+
+class TestCreateInGroupImage:
+    def test_accepts_image_url_for_mcq(self):
+        q = QuestionCreateInGroup(
+            order=10,
+            question_type="mcq",
+            content={"question": "Which map?", "options": ["A", "B", "C"]},
+            image_url="/media/images/practice_b_t1_listening_map.png",
+        )
+        assert q.image_url == "/media/images/practice_b_t1_listening_map.png"

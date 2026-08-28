@@ -382,6 +382,7 @@ async def create_question_in_group(
         question_type=effective_type,
         content=payload.content,
         answer_key=payload.answer_key,
+        image_url=payload.image_url,
     )
     db.add(question)
     try:

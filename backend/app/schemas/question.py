@@ -97,6 +97,7 @@ class QuestionCreateInGroup(BaseModel):
     question_type: str | None = Field(default=None, pattern=_QUESTION_TYPE_RE)
     content: dict[str, Any] = Field(default_factory=dict)
     answer_key: dict[str, Any] | None = None
+    image_url: str | None = None
 
     @model_validator(mode="after")
     def _validate_multi_select(self) -> "QuestionCreateInGroup":

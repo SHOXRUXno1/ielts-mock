@@ -210,6 +210,7 @@ function draftFromQuestion(q: Question): QuestionDraft {
     question_type: q.question_type,
     content: q.content,
     answer_key: q.answer_key,
+    image_url: q.image_url ?? (q.content?.image_url as string | undefined) ?? null,
   }
 }
 
@@ -496,6 +497,7 @@ export function QuestionGroupEditor({
         order: d.order,
         content: d.content,
         answer_key: d.answer_key,
+        image_url: d.image_url ?? null,
       }))
       if (!compound) {
         const liveOpts = MATCHING_SUBTYPES.has(questionType)
@@ -833,26 +835,18 @@ export function QuestionGroupEditor({
           order: draft.order,
           content: draft.content,
           answer_key: draft.answer_key ?? undefined,
+          image_url: draft.image_url ?? null,
         })
       } else {
         saved = await createQuestionInGroup(group.id, {
           order: draft.order,
           content: draft.content,
           answer_key: draft.answer_key ?? undefined,
+          image_url: draft.image_url ?? null,
         })
       }
       setLocalQuestions((prev) =>
-        prev.map((q, i) =>
-          i === idx
-            ? {
-                id: saved.id,
-                order: saved.order,
-                question_type: saved.question_type,
-                content: saved.content,
-                answer_key: saved.answer_key,
-              }
-            : q,
-        ),
+        prev.map((q, i) => (i === idx ? draftFromQuestion(saved) : q)),
       )
       const needsKey = !['essay', 'speaking_part'].includes(saved.question_type)
       const keyEmpty = !saved.answer_key || Object.keys(saved.answer_key).length === 0

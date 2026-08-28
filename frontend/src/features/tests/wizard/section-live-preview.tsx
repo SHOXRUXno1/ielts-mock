@@ -13,7 +13,10 @@ import {
   type SlotRange,
 } from '../data/schema'
 import { CompoundCompletionRenderer } from '../components/take/compound-completion-renderer'
-import { MapLabelingRenderer } from '../components/take/question-renderer'
+import {
+  ExamMapImage,
+  MapLabelingRenderer,
+} from '../components/take/question-renderer'
 import { highlightCaps } from '../components/take/shared/instruction-block'
 import { buildLiveSectionGroups } from './section-groups-live'
 
@@ -65,11 +68,13 @@ function questionsForGroup(
             order: q.order,
             content: q.content,
             answer_key: q.answer_key,
+            image_url: q.image_url,
           }))
 
   return [...rows]
     .map((d, i) => {
       const id = d.id ?? `__draft-${group.id}-${i}`
+      const savedImage = group.questions.find((q) => q.id === d.id)?.image_url
       const base: Question = {
         id,
         section_id: section.id,
@@ -80,7 +85,7 @@ function questionsForGroup(
         answer_key: d.answer_key ?? null,
         task_number: null,
         min_words: null,
-        image_url: null,
+        image_url: 'image_url' in d ? (d.image_url ?? null) : (savedImage ?? null),
         essay_type: null,
         created_at: '',
         updated_at: '',
@@ -201,6 +206,11 @@ function PreviewGroup({
                     <span className='italic text-muted-foreground'>No question text</span>
                   )}
                 </p>
+                {q.image_url?.trim() && (
+                  <div className='py-1'>
+                    <ExamMapImage src={q.image_url} />
+                  </div>
+                )}
                 <ul className='space-y-0.5 pl-3'>
                   {opts.map((opt, i) => (
                     <li
