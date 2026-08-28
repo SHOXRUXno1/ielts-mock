@@ -16,6 +16,7 @@ import { CompoundCompletionRenderer } from '../components/take/compound-completi
 import {
   ExamMapImage,
   MapLabelingRenderer,
+  stripLeadingQuestionNumber,
 } from '../components/take/question-renderer'
 import { highlightCaps } from '../components/take/shared/instruction-block'
 import { buildLiveSectionGroups } from './section-groups-live'
@@ -206,14 +207,18 @@ function PreviewGroup({
         <div className='mt-2 space-y-3'>
           {questions.map((q) => {
             const opts = (q.content.options as string[]) ?? []
-            const questionText =
+            const questionText = stripLeadingQuestionNumber(
               (q.content.question as string) ||
-              (q.content.prompt as string) ||
-              ''
+                (q.content.prompt as string) ||
+                '',
+              q.computed_number ?? q.order,
+            )
             return (
               <div key={q.id} className='space-y-1'>
                 <p className='text-[12px] text-foreground'>
-                  <span className='font-semibold'>{qLabel(q)}.</span>{' '}
+                  {questions.length > 1 && (
+                    <span className='font-semibold'>{qLabel(q)}. </span>
+                  )}
                   {questionText || (
                     <span className='italic text-muted-foreground'>No question text</span>
                   )}

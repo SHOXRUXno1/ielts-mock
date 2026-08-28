@@ -22,6 +22,8 @@ type Props = {
   onToggleFlag?: () => void
   /** Teacher preview: show answer key under the question */
   previewMode?: boolean
+  /** Group already shows "Question N" — do not repeat N before the stem. */
+  hideQuestionNumber?: boolean
 }
 
 function formatAnswerKey(answerKey: Record<string, unknown> | null): string {
@@ -61,6 +63,15 @@ function QuestionNum({ question }: { question: Question }) {
     >
       {n}
     </span>
+  )
+}
+
+/** Drop a stem that repeats its own number: "10. Which map…" → "Which map…". */
+export function stripLeadingQuestionNumber(text: string, n: number): string {
+  if (!text) return text
+  return text.replace(
+    new RegExp(`^\\s*(?:Q\\s*)?${n}(?:[.)]\\s*|\\s+)(?=[A-Z“"'])`, 'i'),
+    '',
   )
 }
 
@@ -640,6 +651,7 @@ export function QuestionRenderer({
   flagged: _flagged,
   onToggleFlag: _onToggleFlag,
   previewMode: _previewMode = false,
+  hideQuestionNumber = false,
 }: Props) {
   const qType = question.question_type
   const content = question.content
@@ -666,8 +678,11 @@ export function QuestionRenderer({
   if (qType === 'mcq') {
     const options = (content.options as string[]) ?? []
     // Support both "question" and legacy "prompt" field names
-    const questionText =
-      ((content.question ?? content.prompt) as string | undefined) ?? ''
+    const questionNumber = question.computed_number ?? question.order
+    const questionText = stripLeadingQuestionNumber(
+      ((content.question ?? content.prompt) as string | undefined) ?? '',
+      questionNumber,
+    )
     const imageSrc = questionImageSrc(question)
     // "Choose TWO" variant when max_choices > 1
     const maxChoices = (content.max_choices as number | undefined) ?? 1
@@ -696,7 +711,7 @@ export function QuestionRenderer({
         <div className='space-y-3'>
           <div className='space-y-1'>
             <p className='text-[15px] font-[500] text-foreground'>
-              <QuestionNum question={question} />
+              {!hideQuestionNumber && <QuestionNum question={question} />}
               {questionText}
             </p>
             <p className='text-[13px] text-muted-foreground'>
@@ -744,7 +759,7 @@ export function QuestionRenderer({
     return (
       <div className='space-y-3'>
         <p className='text-[15px] font-[500] leading-6 text-foreground'>
-          <QuestionNum question={question} />
+          {!hideQuestionNumber && <QuestionNum question={question} />}
           {questionText}
         </p>
         {imageSrc && <ExamMapImage src={imageSrc} />}

@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
-import { QuestionRenderer } from './question-renderer'
+import {
+  QuestionRenderer,
+  stripLeadingQuestionNumber,
+} from './question-renderer'
 import type { Question } from '../../data/schema'
 
 vi.mock('@/lib/api/attempts', () => ({
@@ -60,5 +63,48 @@ describe('MCQ image', () => {
     )
 
     expect(screen.container.querySelector('img')).toBeNull()
+  })
+
+  it('does not repeat the number on a single map question', async () => {
+    const question = makeMcq('/media/images/practice_b_t1_listening_map.png')
+    question.content.question =
+      "10. Which map shows the correct location of the seller's house?"
+    const screen = await render(
+      <QuestionRenderer
+        question={question}
+        answer={{}}
+        onAnswer={() => {}}
+        hideQuestionNumber
+      />,
+    )
+
+    await expect
+      .element(
+        screen.getByText("Which map shows the correct location of the seller's house?"),
+      )
+      .toBeVisible()
+    expect(screen.container.textContent).not.toMatch(
+      /10\.\s*Which map shows the correct location/,
+    )
+    expect(
+      screen.container.querySelector('p [data-q-chip][data-q-n="10"]'),
+    ).toBeNull()
+  })
+})
+
+describe('stripLeadingQuestionNumber', () => {
+  it('removes a repeated 10. before the stem', () => {
+    expect(
+      stripLeadingQuestionNumber(
+        "10. Which map shows the correct location of the seller's house?",
+        10,
+      ),
+    ).toBe("Which map shows the correct location of the seller's house?")
+    expect(
+      stripLeadingQuestionNumber(
+        "10 Which map shows the correct location of the seller's house?",
+        10,
+      ),
+    ).toBe("Which map shows the correct location of the seller's house?")
   })
 })

@@ -580,6 +580,7 @@ export function ListeningSection({
                           onToggleFlag ? () => onToggleFlag(q.id) : undefined
                         }
                         previewMode={previewMode}
+                        hideQuestionNumber={group.questions.length === 1}
                       />
                     </div>
                   ))}
