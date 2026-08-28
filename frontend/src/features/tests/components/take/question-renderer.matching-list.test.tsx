@@ -58,7 +58,7 @@ describe('MatchingLetterRenderer list title', () => {
     const letters = [...screen.container.querySelectorAll('p .font-semibold')].map(
       (el) => el.textContent,
     )
-    expect(letters).toEqual(['A', 'B', 'C'])
+    expect(letters).toEqual(['A.', 'B.', 'C.'])
     await expect.element(screen.getByText('they must do this')).toBeVisible()
     expect(screen.container.querySelector('[data-q-chip]')?.textContent).toBe('21')
     const trigger = screen.container.querySelector('[data-slot="select-trigger"]')

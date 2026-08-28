@@ -1089,7 +1089,7 @@ export function MatchingLetterRenderer({
           <div className='space-y-1.5 px-6 py-4'>
             {choices.map((choice, i) => (
               <p key={i} className='text-[14px] leading-relaxed text-foreground'>
-                <span className='font-semibold'>{choice.letter}</span>
+                <span className='font-semibold'>{choice.letter}.</span>
                 {choice.text ? ` ${choice.text}` : ''}
               </p>
             ))}
