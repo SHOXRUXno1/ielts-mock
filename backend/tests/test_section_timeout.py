@@ -70,6 +70,33 @@ async def _aset_ends_at(attempt_id: str, section_type: str, ends_at: datetime) -
         await eng.dispose()
 
 
+async def _aseal_sections(attempt_id: str, section_types: tuple[str, ...]) -> None:
+    """Mark prior sections as sealed so entering a later section satisfies the
+    ordering guard ('Previous sections must be completed first')."""
+    eng = create_async_engine(settings.database_url)
+    try:
+        async with eng.begin() as conn:
+            await conn.execute(
+                text(
+                    """
+                    UPDATE section_progress
+                    SET state = 'sealed',
+                        sealed_at = NOW(),
+                        sealed_reason = 'submit'
+                    WHERE attempt_id = CAST(:aid AS uuid)
+                      AND section_type = ANY(:stypes)
+                    """
+                ),
+                {"aid": attempt_id, "stypes": list(section_types)},
+            )
+    finally:
+        await eng.dispose()
+
+
+def _seal_sections(attempt_id: str, section_types: tuple[str, ...]) -> None:
+    _run_async(_aseal_sections(attempt_id, section_types))
+
+
 async def _aprogress_row(attempt_id: str, section_type: str) -> dict:
     eng = create_async_engine(settings.database_url)
     try:
@@ -249,6 +276,11 @@ class TestSectionDeadlineEnforcement:
         attempt = client.post(f"/tests/{test_id}/attempts")
         assert attempt.status_code == 201
         attempt_id = attempt.json()["id"]
+
+        # New sequential-order guard: Speaking cannot be entered while any
+        # prior skill is still NOT_STARTED. Seal them directly — this test is
+        # about the safety-cap timeout, not the ordering flow.
+        _seal_sections(attempt_id, ("listening", "reading", "writing"))
 
         enter = client.post(f"/attempts/{attempt_id}/sections/speaking/enter")
         assert enter.status_code == 200, enter.text

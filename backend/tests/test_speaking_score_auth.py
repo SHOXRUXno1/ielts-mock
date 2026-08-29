@@ -28,6 +28,12 @@ def _attempt(user_id: uuid.UUID) -> MagicMock:
     att.user_id = user_id
     att.test_id = uuid.uuid4()
     att.status = AttemptStatus.COMPLETED.value
+    att.mode = "full_mock"
+    att.practice_section_id = None
+    att.practice_part_number = None
+    att.practice_section_type = None
+    att.practice_correct = None
+    att.practice_total = None
     att.speaking_band = None
     att.listening_band = 7.0
     att.reading_band = 7.0
@@ -38,6 +44,7 @@ def _attempt(user_id: uuid.UUID) -> MagicMock:
     att.created_at = now
     att.updated_at = now
     att.flagged_overtime = False
+    att.integrity_events = None
     att.listening_raw = None
     att.reading_raw = None
     return att

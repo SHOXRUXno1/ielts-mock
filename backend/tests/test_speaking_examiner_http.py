@@ -16,8 +16,10 @@ from app.api.speaking_examiner import (
 
 class TestAuth:
     def test_part2_begin_phrase_requires_auth(self, anon_client):
+        # HTTPBearer(auto_error=False) — get_current_actor raises 401 explicitly
+        # for a missing bearer credential (see app/api/deps.py).
         resp = anon_client.get("/admin/speaking-examiner/part2-begin-phrase")
-        assert resp.status_code == 403
+        assert resp.status_code == 401
 
 
 class TestPart2BeginPhrase:

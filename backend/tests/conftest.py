@@ -44,6 +44,18 @@ def _disable_google_stt(monkeypatch):
     google_stt.reset()
 
 
+@pytest.fixture(autouse=True)
+def _disable_elevenlabs(monkeypatch):
+    """The lifespan handler calls validate_voice_config() when the key is set,
+    which makes a real httpx request. That connection's cleanup runs after the
+    test's event loop has closed, and the resulting 'Event loop is closed'
+    error poisons any later test that also opens an httpx client.
+    """
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "elevenlabs_api_key", "")
+
+
 @pytest.fixture
 def auth_client():
     app.dependency_overrides[get_current_admin] = lambda: TEST_ADMIN

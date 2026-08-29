@@ -72,6 +72,12 @@ def test_current_attempt_returns_in_progress(student_id, test_id):
     attempt.test_id = test_id
     attempt.user_id = student_id
     attempt.status = AttemptStatus.IN_PROGRESS
+    attempt.mode = "full_mock"
+    attempt.practice_section_id = None
+    attempt.practice_part_number = None
+    attempt.practice_section_type = None
+    attempt.practice_correct = None
+    attempt.practice_total = None
     attempt.started_at = datetime.now(timezone.utc)
     attempt.finished_at = None
     attempt.overall_band = None
@@ -82,6 +88,7 @@ def test_current_attempt_returns_in_progress(student_id, test_id):
     attempt.listening_raw = None
     attempt.reading_raw = None
     attempt.flagged_overtime = False
+    attempt.integrity_events = None
     attempt.created_at = datetime.now(timezone.utc)
     attempt.updated_at = datetime.now(timezone.utc)
 

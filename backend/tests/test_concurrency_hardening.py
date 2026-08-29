@@ -222,10 +222,14 @@ class TestStartAttemptIntegrityError:
 
         db.execute = AsyncMock(side_effect=execute_side_effect)
 
+        # Students no longer create attempts via this endpoint (returns 403
+        # "Full mocks are assigned automatically"); the IntegrityError catch
+        # branch is now only reachable for non-student actors carrying a
+        # user_id — see app/api/attempts.py :: start_attempt.
         actor = Actor(
-            role="student",
+            role="admin",
             sub=str(user_id),
-            login="race-student",
+            login="race-admin",
             user_id=user_id,
         )
 

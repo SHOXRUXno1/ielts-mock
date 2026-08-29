@@ -147,7 +147,14 @@ def admin_actor_client():
 
 
 class TestDeleteSectionGuard:
-    def test_delete_listening_returns_400(self, admin_actor_client):
+    """The endpoint no longer blocks deleting a listening part or reading
+    passage — admins can rearrange sections freely during editing, and the
+    publish-time validation in _collect_publish_errors catches missing counts
+    (see TestPublishListeningCounts above and PublishReading in test_scoring).
+    These tests keep DELETE covered so a future re-added guard is noticed.
+    """
+
+    def test_delete_listening_succeeds(self, admin_actor_client):
         client = admin_actor_client
         title = f"Delete Guard {uuid.uuid4().hex[:8]}"
         resp = client.post(
@@ -159,12 +166,11 @@ class TestDeleteSectionGuard:
         listening = next(s for s in test["sections"] if s["type"] == "listening")
 
         delete_resp = client.delete(f"/admin/sections/{listening['id']}")
-        assert delete_resp.status_code == 400, delete_resp.text
-        assert "Cannot delete listening part" in delete_resp.json()["detail"]
+        assert delete_resp.status_code == 204, delete_resp.text
 
         client.delete(f"/admin/tests/{test['id']}")
 
-    def test_delete_reading_returns_400(self, admin_actor_client):
+    def test_delete_reading_succeeds(self, admin_actor_client):
         client = admin_actor_client
         title = f"Delete Guard R {uuid.uuid4().hex[:8]}"
         resp = client.post(
@@ -176,8 +182,7 @@ class TestDeleteSectionGuard:
         reading = next(s for s in test["sections"] if s["type"] == "reading")
 
         delete_resp = client.delete(f"/admin/sections/{reading['id']}")
-        assert delete_resp.status_code == 400, delete_resp.text
-        assert "Cannot delete reading passage" in delete_resp.json()["detail"]
+        assert delete_resp.status_code == 204, delete_resp.text
 
         client.delete(f"/admin/tests/{test['id']}")
 
