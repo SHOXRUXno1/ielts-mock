@@ -4,6 +4,7 @@ import asyncio
 import base64
 import json
 import logging
+import math
 import mimetypes
 import re
 import time
@@ -19,6 +20,7 @@ from app.core.rate_limiter import (
     get_whisper_pool,
 )
 from app.services import google_stt, usage_meter
+from app.services.band_calc import round_ielts_band
 from app.services.scoring import compute_writing_band
 from app.services.shared_http import get_http_client
 from app.services.storage import resolve_local_path
@@ -296,8 +298,9 @@ Evaluate the following IELTS Writing **{task_label}** response.
 {task_type_description}
 
 ### Minimum word count
-{min_words} words. If the response is significantly under the minimum, penalise
-{task_criterion_name} accordingly (typically -1 band).
+{min_words} words. If the response is significantly under the minimum, consider
+a small deduction on {task_criterion_name} (do not exceed -0.5 band, and only
+when the shortfall is substantial).
 
 {image_instruction}
 {essay_type_criteria}
@@ -336,7 +339,9 @@ Evaluate the following IELTS Writing **{task_label}** response.
    - Band 5: Limited range of structures; attempts complex sentences but errors are frequent.
 
 ### Off-topic penalty
-If the response is largely irrelevant to the prompt, cap {task_criterion_name} at 4.
+If the response is largely irrelevant to the prompt, cap {task_criterion_name} at 5
+(only apply this cap when the response is clearly off-topic; partial relevance
+does not trigger it).
 Coherence and Cohesion, Lexical Resource and Grammatical Range are assessed ONLY
 on the quality of the language itself. Never reduce, zero out or "nullify" them
 because the content is off-topic, irrelevant or describes the wrong data — a
@@ -420,7 +425,12 @@ Half bands like 6.5, 7.5, 8.5 are NOT allowed at the individual criterion level.
 Only the final Task Band (overall_band, average of 4 criteria) may contain .5 values.
 Return integer values for individual criteria in the JSON output.
 overall_band = average of 4 criteria rounded to nearest 0.5.
-Be strict but fair, calibrated to official Cambridge IELTS sample answers.
+Mark with the official best-fit approach a certified examiner uses: award the
+band whose descriptors the performance actually meets, without inflating or
+deflating it. Where a performance genuinely sits between two bands, award the
+higher one, as a live examiner does. Judge what the candidate demonstrated,
+not what is missing from a short exam answer. Reward evidence of competence
+rather than penalising every gap.
 Every "quote" in errors MUST be an EXACT substring of the student's response — copy it character-for-character."""
 
 _SENTENCE_CATEGORIES = frozenset({
@@ -468,31 +478,31 @@ _ESSAY_TYPE_CRITERIA: dict[str, str] = {
         "### Essay subtype: Opinion (Agree/Disagree)\n"
         "The student must take a clear side in the introduction and maintain that position "
         "consistently. Supporting reasons should include concrete examples. "
-        "Penalise Task Response if the essay is balanced without a clear stance, "
-        "or if the position shifts mid-essay."
+        "Take Task Response down modestly if the essay is balanced without a clear "
+        "stance, or if the position shifts mid-essay."
     ),
     "discussion": (
         "### Essay subtype: Discussion (Both views + opinion)\n"
         "The student must cover both views fairly before giving a clear personal opinion "
-        "with reasoning. Penalise Task Response if one side is missing or if the personal "
-        "opinion is skipped or only vaguely stated."
+        "with reasoning. Take Task Response down modestly if one side is missing or "
+        "if the personal opinion is skipped or only vaguely stated."
     ),
     "problem_solution": (
         "### Essay subtype: Problem & Solution\n"
         "Problems must be clearly identified and solutions must directly address those "
-        "problems with some feasibility. Penalise Task Response for imbalance "
+        "problems with some feasibility. Take Task Response down modestly for imbalance "
         "(only problems, or only solutions) or for solutions that do not match the problems."
     ),
     "advantages_disadvantages": (
         "### Essay subtype: Advantages & Disadvantages\n"
         "Both advantages and disadvantages must be covered in a balanced way. "
         "If the prompt asks for a verdict or opinion, it must be present with reasoning. "
-        "Penalise Task Response for one-sided coverage or a missing required verdict."
+        "Take Task Response down modestly for one-sided coverage or a missing required verdict."
     ),
     "double_question": (
         "### Essay subtype: Double Question\n"
         "Both questions in the prompt must be answered directly with roughly equal depth. "
-        "Penalise Task Response heavily if one question is skipped or answered only tangentially."
+        "Take Task Response down modestly if one question is skipped or answered only tangentially."
     ),
 }
 
@@ -759,7 +769,8 @@ def _coerce_writing_criteria_to_int(result: dict) -> dict:
             raw = float(val["band"])
         except (TypeError, ValueError):
             continue
-        rounded = max(0, min(9, int(round(raw))))
+        # Half-up rounding matches IELTS convention (6.5 → 7, not banker's 6).
+        rounded = max(0, min(9, math.floor(raw + 0.5)))
         if rounded != raw:
             logger.warning(
                 "Gemini returned non-integer Writing criterion %s=%s; "
@@ -972,7 +983,7 @@ async def evaluate_writing(
                 except (TypeError, ValueError):
                     pass
         if crit_bands:
-            result["overall_band"] = round(sum(crit_bands) / len(crit_bands) * 2) / 2
+            result["overall_band"] = round_ielts_band(sum(crit_bands) / len(crit_bands))
         result["text"] = text
         result["word_count"] = _count_words(text)
         return task_key, result

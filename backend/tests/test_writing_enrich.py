@@ -131,7 +131,7 @@ class TestCoerceWritingCriteriaToInt:
     """IELTS: individual criteria must be whole bands 0-9."""
 
     def test_rounds_half_bands(self):
-        # Python round uses banker's rounding: 6.5 -> 6, 7.5 -> 8, 8.5 -> 8.
+        # IELTS half-up rounding: 6.5 -> 7, 7.5 -> 8, 8.5 -> 9.
         result = {
             "task_achievement": {"band": 6.5, "feedback": "a"},
             "coherence_cohesion": {"band": 7.4, "feedback": "b"},
@@ -139,9 +139,9 @@ class TestCoerceWritingCriteriaToInt:
             "grammatical_range": {"band": 7.6, "feedback": "d"},
         }
         out = _coerce_writing_criteria_to_int(result)
-        assert out["task_achievement"]["band"] == 6  # banker's round 6.5 -> 6
+        assert out["task_achievement"]["band"] == 7  # half-up 6.5 -> 7
         assert out["coherence_cohesion"]["band"] == 7
-        assert out["lexical_resource"]["band"] == 8  # banker's round 8.5 -> 8
+        assert out["lexical_resource"]["band"] == 9  # half-up 8.5 -> 9
         assert out["grammatical_range"]["band"] == 8
 
     def test_integers_unchanged(self):
@@ -177,7 +177,7 @@ class TestCoerceWritingCriteriaToInt:
         }
         out = _coerce_writing_criteria_to_int(result)
         assert out["task_achievement"]["band"] == "n/a"
-        assert out["coherence_cohesion"]["band"] == 6
+        assert out["coherence_cohesion"]["band"] == 7  # half-up 6.5 -> 7
 
     def test_task_response_key(self):
         result = {"task_response": {"band": 7.4, "feedback": "essay"}}

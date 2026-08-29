@@ -15,6 +15,7 @@ from types import SimpleNamespace
 
 from app.models.answer import Answer
 from app.models.question import Question
+from app.services.band_calc import round_ielts_band
 
 # Official IELTS band conversion: correct_answers -> band
 # Source: Cambridge IELTS official score charts
@@ -79,13 +80,16 @@ def compute_writing_band(
 ) -> float | None:
     """IELTS Writing overall: Task 2 is weighted double Task 1.
 
-    writing_band = round((T1 * 1 + T2 * 2) / 3 * 2) / 2
+    writing_band = round_ielts_band((T1 * 1 + T2 * 2) / 3)
+
+    Uses IELTS half-up rounding (6.5 → 7), matching the canonical
+    round_ielts_band used everywhere else in the pipeline.
 
     Returns None if either task band is missing (do not average a single task).
     """
     if task_1 is None or task_2 is None:
         return None
-    return round((task_1 * 1 + task_2 * 2) / 3 * 2) / 2
+    return round_ielts_band((task_1 * 1 + task_2 * 2) / 3)
 
 
 def _normalize(text: str) -> str:
