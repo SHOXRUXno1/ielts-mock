@@ -1390,6 +1390,7 @@ async def evaluate_speaking(transcript: str, questions: list[str] | None = None)
     result = await _call_gemini(full_prompt)
     result["transcript"] = transcript
     _coerce_speaking_criteria_to_int(result)
+    _apply_speaking_boost(result)
     if all(
         isinstance(result.get(k), dict) and result[k].get("band") is not None
         for k in _SCORE_CRITERION_KEYS
@@ -1650,6 +1651,37 @@ _SCORE_CRITERION_KEYS = (
 )
 
 
+# How many bands to lift Gemini's Speaking output before recomputing the
+# overall. Applied after _coerce_speaking_criteria_to_int, so the operand
+# is already an integer 0-9; the sum is clamped back to that range.
+# _cap_score_bands in speaking_examiner.py still caps the result for the
+# short-answer guard tiers (<10, <30 words), so cheaters do not benefit.
+SPEAKING_BAND_BOOST = 1.5
+
+
+def _apply_speaking_boost(result: dict) -> dict:
+    """Lift each Speaking criterion by SPEAKING_BAND_BOOST and clamp to 0-9.
+
+    Mutates *result* in place. No-op when the boost is 0. Criteria stay
+    whole bands (IELTS convention) via round-to-nearest-int after boost.
+    """
+    if SPEAKING_BAND_BOOST <= 0:
+        return result
+    for key in _SCORE_CRITERION_KEYS:
+        val = result.get(key)
+        if not isinstance(val, dict) or val.get("band") is None:
+            continue
+        try:
+            raw = float(val["band"])
+        except (TypeError, ValueError):
+            continue
+        boosted = max(0.0, min(9.0, raw + SPEAKING_BAND_BOOST))
+        # Half-up rounding matches _coerce_speaking_criteria_to_int elsewhere
+        # in this module (banker's round would map 8.5 → 8, not the IELTS 9).
+        val["band"] = max(0, min(9, math.floor(boosted + 0.5)))
+    return result
+
+
 def _coerce_speaking_criteria_to_int(result: dict) -> dict:
     """IELTS: individual Speaking criteria are whole bands only (0-9).
 
@@ -1701,4 +1733,5 @@ async def evaluate_speaking_dialog(conversation_history: list[dict]) -> dict:
     result = await _call_gemini(full_prompt)
     result["transcript"] = transcript
     _coerce_speaking_criteria_to_int(result)
+    _apply_speaking_boost(result)
     return _recompute_overall_band(result)
