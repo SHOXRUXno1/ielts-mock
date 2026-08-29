@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import Actor, get_current_actor
 from app.core.database import get_db
 from app.models.writing_feedback import WritingFeedback
+from app.services.band_calc import round_ielts_band
 from app.services.llm import evaluate_writing
 from app.services.writing_presets import (
     TASK1_DEFAULT_INSTRUCTION,
@@ -56,10 +57,6 @@ _CRITERION_KEYS = (
 )
 
 
-def _round_band(band: float) -> float:
-    return round(band * 2) / 2
-
-
 def _resolve_task_overall_band(task_data: dict) -> float | None:
     """Prefer task overall_band; if missing/0, average criterion bands.
 
@@ -70,7 +67,7 @@ def _resolve_task_overall_band(task_data: dict) -> float | None:
         if raw is not None:
             band = float(raw)
             if 0.5 <= band <= 9.0:
-                return _round_band(band)
+                return round_ielts_band(band)
     except (TypeError, ValueError):
         pass
 
@@ -86,7 +83,7 @@ def _resolve_task_overall_band(task_data: dict) -> float | None:
                 continue
     if not bands:
         return None
-    return _round_band(sum(bands) / len(bands))
+    return round_ielts_band(sum(bands) / len(bands))
 
 
 def _find_fuzzy_quote(quote: str, essay_text: str) -> str | None:

@@ -130,6 +130,10 @@ def _normalize_stt_text(text: str) -> str:
         return ""
     if _is_silence_hallucination(cleaned):
         logger.info("Discarding silence hallucination from STT: %r", cleaned[:80])
+        # Feed the sample to usage_meter so /admin/usage snapshots can surface
+        # new stock phrases Whisper begins to invent — the guard list stays
+        # accurate only while somebody is watching what it drops.
+        usage_meter.record_stt_discarded(cleaned)
         return ""
     return cleaned
 
@@ -1646,10 +1650,6 @@ _SCORE_CRITERION_KEYS = (
 )
 
 
-def _round_band(band: float) -> float:
-    return round(band * 2) / 2
-
-
 def _coerce_speaking_criteria_to_int(result: dict) -> dict:
     """IELTS: individual Speaking criteria are whole bands only (0-9).
 
@@ -1664,7 +1664,8 @@ def _coerce_speaking_criteria_to_int(result: dict) -> dict:
             raw = float(val["band"])
         except (TypeError, ValueError):
             continue
-        rounded = max(0, min(9, int(round(raw))))
+        # Half-up rounding matches IELTS convention (6.5 → 7, not banker's 6).
+        rounded = max(0, min(9, math.floor(raw + 0.5)))
         if rounded != raw:
             logger.warning(
                 "Gemini returned non-integer Speaking criterion %s=%s; "
@@ -1679,7 +1680,7 @@ def _coerce_speaking_criteria_to_int(result: dict) -> dict:
 
 def _recompute_overall_band(result: dict) -> dict:
     avg = sum(result[key]["band"] for key in _SCORE_CRITERION_KEYS) / 4
-    result["overall_band"] = _round_band(avg)
+    result["overall_band"] = round_ielts_band(avg)
     return result
 
 

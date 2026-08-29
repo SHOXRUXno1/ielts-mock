@@ -14,7 +14,7 @@ an absolute truth.
 from __future__ import annotations
 
 import threading
-from collections import defaultdict
+from collections import defaultdict, deque
 from datetime import date, datetime, timezone
 from typing import Any, Mapping
 
@@ -26,6 +26,13 @@ _process_started_at = datetime.now(timezone.utc)
 _gemini_calls: dict[date, int] = defaultdict(int)
 # date -> number of Gemini calls rejected with 429 RESOURCE_EXHAUSTED
 _gemini_rate_limited: dict[date, int] = defaultdict(int)
+
+# STT transcripts our silence-guard threw away. The static list of stock
+# hallucinations in llm.py needs to grow as Whisper evolves; without a
+# sample we would only find out when a new phrase slips through and is
+# stored as a candidate answer.
+_stt_discarded: dict[date, int] = defaultdict(int)
+_stt_discarded_recent: deque[str] = deque(maxlen=20)
 
 # Last rate-limit headers Groq returned, per endpoint kind ("stt" / "chat")
 _groq_limits: dict[str, dict[str, Any]] = {}
@@ -63,6 +70,20 @@ def record_gemini_rate_limited() -> None:
         _prune(_gemini_rate_limited)
 
 
+def record_stt_discarded(text: str) -> None:
+    """Called when the silence-guard drops a suspicious transcript.
+
+    Keeps a per-day count plus a ring of the last 20 samples so an operator
+    can see which new phrases Whisper is inventing and extend the guard list.
+    """
+    sample = (text or "").strip()[:80]
+    with _lock:
+        _stt_discarded[_today()] += 1
+        _prune(_stt_discarded)
+        if sample:
+            _stt_discarded_recent.append(sample)
+
+
 def record_groq_headers(headers: Mapping[str, str], kind: str) -> None:
     """Remember Groq's own reported ceiling from a response we already made."""
     seen = {name: headers[name] for name in _GROQ_HEADERS if name in headers}
@@ -79,6 +100,8 @@ def snapshot() -> dict[str, Any]:
         calls = _gemini_calls.get(today, 0)
         throttled = _gemini_rate_limited.get(today, 0)
         groq = {kind: dict(vals) for kind, vals in _groq_limits.items()}
+        stt_dropped_today = _stt_discarded.get(today, 0)
+        stt_recent = list(_stt_discarded_recent)
 
     return {
         "counting_since": _process_started_at.isoformat(),
@@ -87,4 +110,8 @@ def snapshot() -> dict[str, Any]:
             "rate_limited_today": throttled,
         },
         "groq": groq,
+        "stt_silence_guard": {
+            "dropped_today": stt_dropped_today,
+            "recent_samples": stt_recent,
+        },
     }

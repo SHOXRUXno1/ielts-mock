@@ -49,10 +49,10 @@ class TestCoerceSpeakingCriteriaToInt:
     """IELTS: individual Speaking criteria must be whole bands 0-9."""
 
     def test_rounds_half_bands(self):
-        # Python round uses banker's rounding: 6.5 -> 6, 7.5 -> 8.
+        # IELTS half-up rounding: 6.5 -> 7, 7.5 -> 8, 8.6 -> 9.
         result = _score_result(6.5, 7.4, 7.5, 8.6, 9.0)
         out = _coerce_speaking_criteria_to_int(result)
-        assert out["fluency_coherence"]["band"] == 6
+        assert out["fluency_coherence"]["band"] == 7
         assert out["lexical_resource"]["band"] == 7
         assert out["grammatical_range"]["band"] == 8
         assert out["pronunciation"]["band"] == 9
@@ -83,7 +83,7 @@ class TestCoerceSpeakingCriteriaToInt:
         }
         out = _coerce_speaking_criteria_to_int(result)
         assert out["fluency_coherence"]["band"] == "n/a"
-        assert out["lexical_resource"]["band"] == 6
+        assert out["lexical_resource"]["band"] == 7  # half-up 6.5 -> 7
 
 
 class TestEvaluateSpeakingDialogOverall:
@@ -105,7 +105,7 @@ class TestEvaluateSpeakingDialogOverall:
     @pytest.mark.asyncio
     @patch("app.services.llm._call_gemini", new_callable=AsyncMock)
     async def test_evaluate_speaking_dialog_coerces_half_band_criteria(self, mock_gemini):
-        # 6.5, 6.5, 7.0, 7.0 → coerce to 6, 6, 7, 7 → overall 6.5
+        # Half-up: 6.5→7, 6.5→7, 7.0→7, 7.0→7 → overall (7+7+7+7)/4 = 7.0
         mock_gemini.return_value = _score_result(6.5, 6.5, 7.0, 7.0, 8.0)
 
         result = await evaluate_speaking_dialog(
@@ -115,11 +115,11 @@ class TestEvaluateSpeakingDialogOverall:
             ],
         )
 
-        assert result["fluency_coherence"]["band"] == 6
-        assert result["lexical_resource"]["band"] == 6
+        assert result["fluency_coherence"]["band"] == 7
+        assert result["lexical_resource"]["band"] == 7
         assert result["grammatical_range"]["band"] == 7
         assert result["pronunciation"]["band"] == 7
-        assert result["overall_band"] == 6.5
+        assert result["overall_band"] == 7.0
 
 
 class TestEvaluateSpeaking:
@@ -134,10 +134,10 @@ class TestEvaluateSpeaking:
             questions=["What do you do in your free time?"],
         )
 
-        # banker's: 6.5 -> 6; 7.4 -> 7; 7.0 -> 7; 6.0 -> 6 → avg 6.5
-        assert result["fluency_coherence"]["band"] == 6
+        # half-up: 6.5 -> 7; 7.4 -> 7; 7.0 -> 7; 6.0 -> 6 → avg (7+7+7+6)/4 = 6.75 → 7.0
+        assert result["fluency_coherence"]["band"] == 7
         assert result["lexical_resource"]["band"] == 7
         assert result["grammatical_range"]["band"] == 7
         assert result["pronunciation"]["band"] == 6
-        assert result["overall_band"] == 6.5
+        assert result["overall_band"] == 7.0
         assert result["transcript"] == "I enjoy reading books in my free time."

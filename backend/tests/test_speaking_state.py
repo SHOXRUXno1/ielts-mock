@@ -117,6 +117,46 @@ class TestRoundingQuestion:
         assert rounding_question(session).endswith("?")
 
 
+class TestAdvanceTurnExhaustiveness:
+    """A new SpeakingState added to the enum must also be handled in
+    ``_advance_turn``. The state machine is a hand-rolled if/elif chain, so
+    without this check a missed state would only surface in production when
+    a live session lands in it and falls into the InvalidStateTransition
+    else-branch. Terminal states (ENDED / SCORING / ABANDONED) are excluded:
+    ``_advance_turn`` is not meant to be called from them at all.
+    """
+
+    _TERMINAL: frozenset[SpeakingState] = frozenset({
+        SpeakingState.ENDED,
+        SpeakingState.SCORING,
+        SpeakingState.ABANDONED,
+    })
+
+    def test_every_non_terminal_state_is_handled(self):
+        import inspect
+
+        from app.api.speaking_examiner import _advance_turn
+
+        source = inspect.getsource(_advance_turn)
+
+        missing: list[str] = []
+        for state in SpeakingState:
+            if state in self._TERMINAL:
+                continue
+            # The function references states as either SpeakingState.X.value
+            # (in string-equality branches) or SpeakingState.X (in tuples).
+            token_value = f"SpeakingState.{state.name}.value"
+            token_enum = f"SpeakingState.{state.name}"
+            if token_value not in source and token_enum not in source:
+                missing.append(state.name)
+
+        assert not missing, (
+            f"_advance_turn does not handle these SpeakingState members: "
+            f"{missing}. Add a branch for each, or move them into "
+            f"TestAdvanceTurnExhaustiveness._TERMINAL if they are terminal."
+        )
+
+
 class TestForUpdateLock:
     @pytest.mark.asyncio
     async def test_get_live_session_compiles_for_update(self):

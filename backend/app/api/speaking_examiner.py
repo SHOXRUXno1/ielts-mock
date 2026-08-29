@@ -23,6 +23,7 @@ from app.models.section_progress import SectionProgress, SectionState
 from app.models.speaking_session import SpeakingSession, SpeakingState
 from app.services import section_progress as sp
 from app.services import section_settings as settings_service
+from app.services.band_calc import round_ielts_band
 from app.schemas.speaking_examiner import (
     ConversationTurn,
     CriterionScore,
@@ -1543,10 +1544,6 @@ _SCORE_CRITERION_KEYS = (
 )
 
 
-def _round_band(band: float) -> float:
-    return round(band * 2) / 2
-
-
 def _candidate_speech_stats(history: list[dict]) -> tuple[list[str], int, int]:
     candidate_lines = [t["text"] for t in history if t.get("role") == "candidate"]
     total_words = sum(len(line.split()) for line in candidate_lines)
@@ -1644,7 +1641,7 @@ def _cap_score_bands(result: dict, max_band: float) -> dict:
         if result[key]["band"] > max_band:
             result[key]["band"] = max_band
     avg = sum(result[key]["band"] for key in _SCORE_CRITERION_KEYS) / 4
-    result["overall_band"] = min(_round_band(avg), max_band)
+    result["overall_band"] = min(round_ielts_band(avg), max_band)
     return result
 
 
