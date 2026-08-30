@@ -1656,7 +1656,7 @@ _SCORE_CRITERION_KEYS = (
 # is already an integer 0-9; the sum is clamped back to that range.
 # _cap_score_bands in speaking_examiner.py still caps the result for the
 # short-answer guard tiers (<10, <30 words), so cheaters do not benefit.
-SPEAKING_BAND_BOOST = 1.5
+SPEAKING_BAND_BOOST = 1.0
 
 
 def _apply_speaking_boost(result: dict) -> dict:

@@ -91,23 +91,24 @@ class TestCoerceSpeakingCriteriaToInt:
 class TestApplySpeakingBoost:
     """Post-processing boost lifts each Speaking criterion by SPEAKING_BAND_BOOST."""
 
-    def test_boost_is_configured_to_1_5(self):
+    def test_boost_is_configured_to_1_0(self):
         # If someone tunes it, both the code branch AND these tests will move.
-        assert SPEAKING_BAND_BOOST == 1.5
+        assert SPEAKING_BAND_BOOST == 1.0
 
     def test_lifts_each_criterion(self):
         result = _score_result(5, 6, 4, 7, 5.5)
         _apply_speaking_boost(result)
-        # 5+1.5=6.5→7, 6+1.5=7.5→8, 4+1.5=5.5→6, 7+1.5=8.5→9
-        assert result["fluency_coherence"]["band"] == 7
-        assert result["lexical_resource"]["band"] == 8
-        assert result["grammatical_range"]["band"] == 6
-        assert result["pronunciation"]["band"] == 9
+        # +1.0 to each, half-up rounding on integers is exact.
+        assert result["fluency_coherence"]["band"] == 6
+        assert result["lexical_resource"]["band"] == 7
+        assert result["grammatical_range"]["band"] == 5
+        assert result["pronunciation"]["band"] == 8
 
     def test_clamps_at_9(self):
-        # 8 + 1.5 = 9.5 → clamp to 9, not overflow
+        # 9 + 1.0 = 10 → clamp to 9, not overflow.
         result = _score_result(8, 9, 8, 9, 8.5)
         _apply_speaking_boost(result)
+        # 8+1=9, 9+1=10→9, 8+1=9, 9+1=10→9
         for key in ("fluency_coherence", "lexical_resource",
                     "grammatical_range", "pronunciation"):
             assert result[key]["band"] == 9
@@ -118,10 +119,10 @@ class TestApplySpeakingBoost:
         # never reaching this helper.
         result = _score_result(0, 0, 0, 0, 0.0)
         _apply_speaking_boost(result)
-        # 0 + 1.5 = 1.5 half-up → 2
+        # 0 + 1.0 = 1
         for key in ("fluency_coherence", "lexical_resource",
                     "grammatical_range", "pronunciation"):
-            assert result[key]["band"] == 2
+            assert result[key]["band"] == 1
 
     def test_missing_band_key_is_skipped(self):
         result = {
@@ -131,14 +132,14 @@ class TestApplySpeakingBoost:
         # Must not raise even without all criteria present.
         _apply_speaking_boost(result)
         assert result["fluency_coherence"]["band"] is None
-        assert result["lexical_resource"]["band"] == 8
+        assert result["lexical_resource"]["band"] == 7
 
     def test_non_numeric_band_is_skipped(self):
         result = _score_result(6, 5, 7, 6, 6.0)
         result["fluency_coherence"]["band"] = "n/a"
         _apply_speaking_boost(result)
         assert result["fluency_coherence"]["band"] == "n/a"
-        assert result["lexical_resource"]["band"] == 7  # 5+1.5=6.5→7
+        assert result["lexical_resource"]["band"] == 6  # 5+1=6
 
 
 class TestEvaluateSpeakingDialogOverall:
@@ -154,16 +155,16 @@ class TestEvaluateSpeakingDialogOverall:
             ],
         )
 
-        # +1.5 boost: 6→8, 6→8, 7→9 (7+1.5=8.5 half-up), 7→9 → avg 8.5
-        assert result["overall_band"] == 8.5
+        # +1.0 boost: 6→7, 6→7, 7→8, 7→8 → avg (7+7+8+8)/4 = 7.5
+        assert result["overall_band"] == 7.5
         assert result["transcript"] == "I live in a small city near the mountains."
 
     @pytest.mark.asyncio
     @patch("app.services.llm._call_gemini", new_callable=AsyncMock)
     async def test_evaluate_speaking_dialog_coerces_half_band_criteria(self, mock_gemini):
         # coerce: 6.5→7, 6.5→7, 7.0→7, 7.0→7
-        # +1.5 boost:  7→8+, 7→8+, 7→8+, 7→8+ (7+1.5=8.5 half-up → 9)
-        # overall = (9+9+9+9)/4 = 9.0
+        # +1.0 boost:  7→8, 7→8, 7→8, 7→8
+        # overall = (8+8+8+8)/4 = 8.0
         mock_gemini.return_value = _score_result(6.5, 6.5, 7.0, 7.0, 8.0)
 
         result = await evaluate_speaking_dialog(
@@ -173,11 +174,11 @@ class TestEvaluateSpeakingDialogOverall:
             ],
         )
 
-        assert result["fluency_coherence"]["band"] == 9
-        assert result["lexical_resource"]["band"] == 9
-        assert result["grammatical_range"]["band"] == 9
-        assert result["pronunciation"]["band"] == 9
-        assert result["overall_band"] == 9.0
+        assert result["fluency_coherence"]["band"] == 8
+        assert result["lexical_resource"]["band"] == 8
+        assert result["grammatical_range"]["band"] == 8
+        assert result["pronunciation"]["band"] == 8
+        assert result["overall_band"] == 8.0
 
 
 class TestEvaluateSpeaking:
@@ -193,11 +194,11 @@ class TestEvaluateSpeaking:
         )
 
         # coerce (half-up): 6.5→7, 7.4→7, 7.0→7, 6.0→6
-        # +1.5 boost:       7→9,  7→9,  7→9,  6→8 (6+1.5=7.5 half-up → 8)
-        # overall = (9+9+9+8)/4 = 8.75 → 9.0 (round_ielts_band half-up)
-        assert result["fluency_coherence"]["band"] == 9
-        assert result["lexical_resource"]["band"] == 9
-        assert result["grammatical_range"]["band"] == 9
-        assert result["pronunciation"]["band"] == 8
-        assert result["overall_band"] == 9.0
+        # +1.0 boost:       7→8,  7→8,  7→8,  6→7
+        # overall = (8+8+8+7)/4 = 7.75 → 8.0 (round_ielts_band half-up)
+        assert result["fluency_coherence"]["band"] == 8
+        assert result["lexical_resource"]["band"] == 8
+        assert result["grammatical_range"]["band"] == 8
+        assert result["pronunciation"]["band"] == 7
+        assert result["overall_band"] == 8.0
         assert result["transcript"] == "I enjoy reading books in my free time."
