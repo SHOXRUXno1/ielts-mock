@@ -1,0 +1,7 @@
+Why risks can go wrong
+
+TODO — paste the passage body here from your licensed copy of the source book,
+Test 2 Reading Passage 1 (nine paragraphs A-I, ~800 words). Mark each
+paragraph with [A], [B], … [I] on its own line, same style as reading_p1.txt
+for Test 1. The first line above is the passage title and must stay as-is
+(the seed script splits title from body on the first blank line).
