@@ -96,3 +96,17 @@ The `@` path alias resolves to `src/`.
 | Variable | Purpose |
 |---|---|
 | `VITE_API_URL` | Base URL for the backend REST API |
+
+## Adding a full mock from a PDF / book
+
+There is **no admin PDF upload**. Author seed scripts + media, then publish on the VPS.
+
+**Follow:** [`backend/scripts/SEED_FROM_PDF.md`](backend/scripts/SEED_FROM_PDF.md)
+
+Summary:
+
+1. Copy Practice Set B Test 1 (`seed_practice_b_t1_*.py`) or Set A seeds as the template.
+2. Add `data/practice_*_t{N}/` passages + `sections.json`, and gitignored mp3/png under `backend/media/`.
+3. Seed locally: bootstrap → listening → reading → writing → speaking → `verify_*` → `check_*_scoring`.
+4. `git push main` only ships **code**. Content on prod: stage files + `deploy_practice_b.sh {N} --publish` (docker cp into `ielts-mock-backend-1`).
+5. Never show Longman / Plus 2 / Cambridge book titles to students; omit Tip Strips.
