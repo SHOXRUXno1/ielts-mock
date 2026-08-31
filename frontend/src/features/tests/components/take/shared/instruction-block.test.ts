@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatPassageParagraphLabel,
   hasTfngKeyLegend,
   hasYnngKeyLegend,
   splitPassageParagraphs,
@@ -51,5 +52,17 @@ describe('splitPassageParagraphs', () => {
       'One.',
       'Two.',
     ])
+  })
+})
+
+describe('formatPassageParagraphLabel', () => {
+  it('strips brackets from a single-letter paragraph label', () => {
+    expect(formatPassageParagraphLabel('[A]')).toBe('A')
+    expect(formatPassageParagraphLabel('[J]')).toBe('J')
+  })
+
+  it('leaves normal paragraphs unchanged', () => {
+    expect(formatPassageParagraphLabel('Some body text.')).toBe('Some body text.')
+    expect(formatPassageParagraphLabel('[A] extra')).toBe('[A] extra')
   })
 })

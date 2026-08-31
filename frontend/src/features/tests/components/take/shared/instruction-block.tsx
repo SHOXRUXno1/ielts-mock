@@ -111,6 +111,12 @@ export function splitPassageParagraphs(text: string): string[] {
     .filter((p) => p.length > 0)
 }
 
+/** Passage seeds use "[A]" on its own line; students see the letter only. */
+export function formatPassageParagraphLabel(paragraph: string): string {
+  const match = paragraph.match(/^\[([A-Z])\]$/)
+  return match ? match[1] : paragraph
+}
+
 /**
  * Renders text with paragraph breaks and inline markdown (**bold**, *italic*).
  */
@@ -123,7 +129,7 @@ export function renderFormattedText(
 
   return paragraphs.map((para, i) =>
     createElement('p', { key: i, className: paragraphClassName },
-      ...parseInlineFormatting(para),
+      ...parseInlineFormatting(formatPassageParagraphLabel(para)),
     ),
   )
 }

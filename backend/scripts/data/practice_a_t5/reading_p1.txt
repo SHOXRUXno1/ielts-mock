@@ -1,18 +1,18 @@
 Wildfires
 
-[A]
+A
 Wildfires are usually the product of human negligence. Humans start about 90% of wild fires and lightning causes the other 10%. Regular causes for wildfires include arson, camping fires, throwing away cigarettes, burning rubbish, and playing with fireworks or matches. Once begun, wildfires can spread at a rate of up to 23 kph and, as a fire spreads over a landscape, it could undertake a life of its own – doing different things to keep itself going, even creating other blazes by throwing cinders miles away.
 Three components are necessary to start a fire: oxygen, fuel and heat. These three make up “the fire triangle” and fire fighters frequently talk about this when they are attempting to put out blazes. The theory is that if the fire fighters can remove one of the triangle pillars, they can take control of and eventually put out the fire.
-[B]
+B
 The speed at which wildfires spread depends on the fuel around them. Fuel is any living or dead material that will burn. Types of fuel include anything from trees, underbrush and grassland to houses. The quantity of inflammable material around a fire is known as “the fuel load” and is determined by the amount of available fuel per unit area, usually tons per acre. How dry the fuel is can also influence how fires behave. When the fuel is very dry, it burns much more quickly and forms fires that are much harder to control.
 Basic fuel characteristics affecting a fire are size and shape, arrangement and moisture, but with wildfires, where fuel usually consists of the same type of material, the main factor influencing ignition time is the ratio of the fuel’s total surface area to its volume. Because the surface area of a twig is not much bigger than its volume, it ignites rapidly. However, a tree’s surface area is much smaller than its volume, so it requires more time to heat up before ignition.
-[C]
+C
 Three weather variables that affect wildfires are temperature, wind and moisture. Temperature directly influences the sparking of wildfires, as heat is one of the three pillars of the fire triangle. Sticks, trees and underbrush on the ground receive heat from the sun, which heats and dries these potential fuels. Higher temperatures allow fuels to ignite and burn more quickly and add to the speed of a wildfire’s spread. Consequently, wildfires tend to rage in the afternoon, during the hottest temperatures.
 The biggest influence on a wildfire is probably wind and this is also the most unpredictable variable. Winds provide fires with extra oxygen, more dry fuel, and wind also makes wildfires spread more quickly. Fires also create winds of their own that can be up to ten times faster than the ambient wind. Winds can even spread embers that can generate additional fires, an event known as spotting. Winds also change the course of fires, and gusts can take flames into trees, starting a “crown fire”.
 Humidity and precipitation provide moisture that can slow fires down and reduce their intensity, as it is hard for fuel to ignite if it has high moisture levels. Higher levels of humidity mean fewer wildfires.
-[D]
+D
 Topography can also hugely influence wildfire behaviour. In contrast to fuel and weather, topography hardly changes over time and can help or hamper the spread of a wildfire. The principal topographical factor relating to wildfires is slope. As a rule, fires move uphill much faster than downhill and the steeper the slope, the quicker fires move. This is because fires move in the same direction of the ambient wind, which generally blows uphill. Moreover, the fire can preheat fuel further uphill as smoke and heat rise in that direction. On the other hand, when the fire reaches the top of a hill, it has to struggle to come back down.
-[E]
+E
 Each year thousands of fire fighters risk their lives in their jobs. Elite fire fighters come in two categories: Hotshots and Smokejumpers. Operating in 20 man units, the key task of hotshots is to construct firebreaks around fires. A firebreak is a strip of land with all potential fuel removed. As their name suggests, smokejumpers jump out of aircraft to reach smaller fires situated in inaccessible regions. They attempt to contain these smaller fires before they turn into bigger ones.
 As well as constructing firebreaks and putting water and fire retardant on fires, fire fighters also use “backfires”. Backfires are created by fire fighters and burn towards the main fire incinerating any potential fuel in its path.
 Fire fighters on the ground also receive extensive support from the air with tankers dropping thousands of gallons of water and retardant. Dropped from planes and helicopters, retardant is a red chemical containing phosphate fertilizer, which slows and cools fires.
