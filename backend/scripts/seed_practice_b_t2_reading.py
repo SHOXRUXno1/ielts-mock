@@ -42,6 +42,7 @@ from app.models.section import Section, SectionType  # noqa: E402
 from app.services.compound import validate_compound_structure  # noqa: E402
 from app.services.seed_compound import gap_answer_key  # noqa: E402
 from seed_practice_b_common import (  # noqa: E402
+    SCREEN_LETTER_HINT,
     SNOWGUN_IMAGE_URL,
     clear_section,
     get_section,
@@ -623,7 +624,8 @@ async def seed(db: AsyncSession) -> None:
     await w.compound(
         QuestionType.NOTE_COMPLETION,
         "Complete the notes below using the list of words A-K from the box below.\n"
-        "Write the correct letters in boxes 19-25 on your answer sheet.",
+        "Write the correct letters in boxes 19-25 on your answer sheet.\n"
+        f"{SCREEN_LETTER_HINT}",
         P2_NOTES_STRUCTURE,
         P2_NOTES_ANSWERS,
         max_words=3,
@@ -666,7 +668,8 @@ async def seed(db: AsyncSession) -> None:
     await w.compound(
         QuestionType.TABLE_COMPLETION,
         "Complete the table below using the list of words A-K from the box below.\n"
-        "Write the correct letters in boxes 36-40 on your answer sheet.",
+        "Write the correct letters in boxes 36-40 on your answer sheet.\n"
+        f"{SCREEN_LETTER_HINT}",
         P3_TABLE_STRUCTURE,
         P3_TABLE_ANSWERS,
         max_words=3,

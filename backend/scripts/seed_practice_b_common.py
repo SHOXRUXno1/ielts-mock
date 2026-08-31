@@ -29,6 +29,9 @@ PLUS2_ROOT = Path(r"C:\Users\brawl\Desktop\Ielts boosters\IELTS Practice Tests P
 PLUS2_PDF = PLUS2_ROOT / "IELTS Practice Tests Plus 2.pdf"
 PLUS2_AUDIO = PLUS2_ROOT / "IELTS Practice Tests Plus 2 Audio"
 
+# Appended to word-bank instructions: students pick a letter, not write on paper.
+SCREEN_LETTER_HINT = "On screen, select the correct letter from the list for each gap."
+
 
 def data_dir(test_number: int) -> Path:
     return DATA_ROOT / f"practice_b_t{test_number}"
