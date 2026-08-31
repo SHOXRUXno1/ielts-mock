@@ -117,6 +117,140 @@ export function formatPassageParagraphLabel(paragraph: string): string {
   return match ? match[1] : paragraph
 }
 
+const SCREEN_LETTER_HINT_RE =
+  /on screen, select the correct letter from the list/i
+
+const SELECT_LETTER_GROUP_TYPES = new Set([
+  'matching_information',
+  'matching_features',
+  'matching_headings',
+  'map_labeling',
+  'matching',
+])
+
+const CHOICE_GROUP_TYPES = new Set(['true_false_ng', 'yes_no_ng', 'mcq'])
+
+type AdaptInstructionOptions = {
+  /** Compound note/table/summary tasks with a letter word bank. */
+  hasWordBank?: boolean
+}
+
+function normalizeLetterRange(raw: string): string {
+  return raw.trim().replace(/\s*[-–]\s*/, '–')
+}
+
+/** One instruction line: paper "write in boxes" → on-screen select copy. */
+function adaptInstructionLine(
+  line: string,
+  groupType: string,
+  options?: AdaptInstructionOptions,
+): string {
+  const trimmed = line.trim()
+  if (!trimmed || SCREEN_LETTER_HINT_RE.test(trimmed)) return line
+
+  const letterInBoxes =
+    /^(Write the correct letters?|Write the appropriate letters?|Choose the correct letters?),?\s+(?:\(([A-Z])\s*[-–]\s*([A-Z])\)|([A-Z](?:\s*[-–]\s*[A-Z])?))\s*,?\s+in boxes?\s+[\d\s–-]+ on your answer sheet\.?\s*$/i.exec(
+      trimmed,
+    )
+  if (letterInBoxes && SELECT_LETTER_GROUP_TYPES.has(groupType)) {
+    const range = normalizeLetterRange(
+      letterInBoxes[2] && letterInBoxes[3]
+        ? `${letterInBoxes[2]}–${letterInBoxes[3]}`
+        : (letterInBoxes[4] ?? ''),
+    )
+    return range
+      ? `Select the correct letter, ${range}, for each question.`
+      : 'Select the correct letter for each question.'
+  }
+
+  if (
+    /^Write the correct letters in boxes?\s+[\d\s–-]+ on your answer sheet\.?\s*$/i.test(
+      trimmed,
+    ) &&
+    (options?.hasWordBank || groupType === 'compound')
+  ) {
+    return 'Select the correct letter from the list for each gap.'
+  }
+
+  if (
+    groupType === 'matching_headings' &&
+    /^(Write|Choose) the (correct|appropriate) number/i.test(trimmed) &&
+    /on your answer sheet/i.test(trimmed)
+  ) {
+    return 'Select the correct heading for each paragraph.'
+  }
+
+  if (
+    CHOICE_GROUP_TYPES.has(groupType) &&
+    /^In boxes\s+[\d\s–-]+ on your answer sheet,?\s*write\s*$/i.test(trimmed)
+  ) {
+    return ''
+  }
+
+  if (
+    CHOICE_GROUP_TYPES.has(groupType) &&
+    /^In boxes\s+[\d\s–-]+ on your answer sheet,?\s*choose\s*$/i.test(trimmed)
+  ) {
+    return 'For each statement, choose:'
+  }
+
+  if (
+    groupType === 'mcq' &&
+    /^Write your answer in box\s+[\d\s–-]+ on your answer sheet\.?\s*$/i.test(
+      trimmed,
+    )
+  ) {
+    return 'Select the correct answer below.'
+  }
+
+  if (/^Write the correct letter/i.test(trimmed) && /next to Questions/i.test(trimmed)) {
+    return trimmed.replace(/^Write the correct letter/i, 'Choose the correct letter')
+  }
+
+  return line
+}
+
+/**
+ * Paper tests say "write in boxes on your answer sheet"; on-screen tasks use
+ * dropdowns or radio buttons. Reword only the lines that mismatch the UI.
+ */
+export function adaptInstructionForScreen(
+  instruction: string,
+  groupType: string,
+  options?: AdaptInstructionOptions,
+): string {
+  if (!instruction.trim()) return instruction
+
+  const adapted = instruction
+    .split('\n')
+    .map((line) => adaptInstructionLine(line, groupType, options))
+
+  const seenSelectFromList = new Set<string>()
+  const lines: string[] = []
+
+  for (const line of adapted) {
+    const trimmed = line.trim()
+    if (!trimmed) continue
+
+    if (/select the correct letter from the list/i.test(trimmed)) {
+      const key = trimmed.toLowerCase()
+      if (seenSelectFromList.has(key)) continue
+      seenSelectFromList.add(key)
+    }
+
+    if (
+      SCREEN_LETTER_HINT_RE.test(trimmed) &&
+      [...seenSelectFromList].some((k) => k.includes('select the correct letter from the list'))
+    ) {
+      continue
+    }
+
+    lines.push(line)
+  }
+
+  return lines.join('\n')
+}
+
 /**
  * Renders text with paragraph breaks and inline markdown (**bold**, *italic*).
  */

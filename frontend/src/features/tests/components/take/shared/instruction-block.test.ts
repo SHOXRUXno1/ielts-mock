@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  adaptInstructionForScreen,
   formatPassageParagraphLabel,
   hasTfngKeyLegend,
   hasYnngKeyLegend,
@@ -64,5 +65,63 @@ describe('formatPassageParagraphLabel', () => {
   it('leaves normal paragraphs unchanged', () => {
     expect(formatPassageParagraphLabel('Some body text.')).toBe('Some body text.')
     expect(formatPassageParagraphLabel('[A] extra')).toBe('[A] extra')
+  })
+})
+
+describe('adaptInstructionForScreen', () => {
+  it('rewords matching information letter instructions for dropdowns', () => {
+    expect(
+      adaptInstructionForScreen(
+        'Reading Passage 3 has ten paragraphs labelled A-J.\n'
+          + 'Which paragraph contains the following information?\n'
+          + 'Write the correct letter A-J in boxes 27-32 on your answer sheet.',
+        'matching_information',
+      ),
+    ).toBe(
+      'Reading Passage 3 has ten paragraphs labelled A-J.\n'
+        + 'Which paragraph contains the following information?\n'
+        + 'Select the correct letter, A–J, for each question.',
+    )
+  })
+
+  it('rewords word-bank compound instructions and drops duplicate screen hints', () => {
+    expect(
+      adaptInstructionForScreen(
+        'Complete the notes below using the list of words A-K from the box below.\n'
+          + 'Write the correct letters in boxes 19-25 on your answer sheet.\n'
+          + 'On screen, select the correct letter from the list for each gap.',
+        'compound',
+        { hasWordBank: true },
+      ),
+    ).toBe(
+      'Complete the notes below using the list of words A-K from the box below.\n'
+        + 'Select the correct letter from the list for each gap.',
+    )
+  })
+
+  it('drops the paper-only TFNG lead-in when the key legend follows', () => {
+    expect(
+      adaptInstructionForScreen(
+        'Do the following statements agree with the information given in Reading Passage 2?\n'
+          + 'In boxes 14-18 on your answer sheet write\n'
+          + 'TRUE if the statement agrees with the information\n'
+          + 'FALSE if the statement contradicts the information\n'
+          + 'NOT GIVEN if there is no information on this',
+        'true_false_ng',
+      ),
+    ).toBe(
+      'Do the following statements agree with the information given in Reading Passage 2?\n'
+        + 'TRUE if the statement agrees with the information\n'
+        + 'FALSE if the statement contradicts the information\n'
+        + 'NOT GIVEN if there is no information on this',
+    )
+  })
+
+  it('leaves free-text completion instructions unchanged', () => {
+    const instruction =
+      'Label the diagram below.\n'
+      + 'Choose NO MORE THAN ONE WORD AND/OR A NUMBER from the passage for each answer.\n'
+      + 'Write your answers in boxes 33-35 on your answer sheet.'
+    expect(adaptInstructionForScreen(instruction, 'compound')).toBe(instruction)
   })
 })

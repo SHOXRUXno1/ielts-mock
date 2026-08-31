@@ -8,7 +8,11 @@ import {
 import { useIsDesktop } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 import { ListeningAudioPlayer } from './listening-audio-player'
-import { highlightCaps, InstructionBlock } from './shared/instruction-block'
+import {
+  adaptInstructionForScreen,
+  highlightCaps,
+  InstructionBlock,
+} from './shared/instruction-block'
 import { QuestionRangeTitle } from './shared/question-range-title'
 import { PassageHighlighter } from './shared/passage-highlighter'
 import {
@@ -260,7 +264,12 @@ function ListeningGroupHeader({ group }: { group: RenderGroup }) {
   const rawInstruction =
     group.type === 'notes_card' || group.type === 'table'
       ? ''
-      : (group.instruction ?? '')
+      : adaptInstructionForScreen(group.instruction ?? '', group.type, {
+          hasWordBank:
+            group.type === 'compound' &&
+            Array.isArray(group.structure?.options) &&
+            group.structure.options.length > 0,
+        })
   const subtitle = group.subtitle?.trim() || ''
   // Legacy per-question section_title (prefer group.subtitle when set)
   const sectionTitle =

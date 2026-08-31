@@ -8,6 +8,7 @@ import {
 import { useIsDesktop } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 import {
+  adaptInstructionForScreen,
   hasTfngKeyLegend,
   hasYnngKeyLegend,
   highlightCaps,
@@ -240,7 +241,12 @@ function GroupHeader({ group }: { group: RuntimeGroup }) {
   })
   const minQ = Math.min(...starts)
   const maxQ = Math.max(...ends)
-  const instruction = group.instruction ?? ''
+  const instruction = adaptInstructionForScreen(group.instruction ?? '', group.type, {
+    hasWordBank:
+      group.type === 'compound' &&
+      Array.isArray(group.structure?.options) &&
+      group.structure.options.length > 0,
+  })
   const subtitle = group.subtitle?.trim() || ''
 
   return (
