@@ -1,0 +1,31 @@
+Reducing electricity consumption on the Isle of Eigg
+
+Background
+
+The Isle of Eigg is situated off the West Coast of Scotland, and is reached by ferry from the mainland. For the island community of about a hundred residents, it has always been expensive to import products, materials and skilled labour from the mainland, and this has encouraged a culture of self-sufficiency and careful use of resources. Today, although the island now has most modern conveniences, CO2 emissions per household are 20 percent lower than the UK average, and electricity use is 50 percent lower.
+
+When Eigg designed its electricity grid, which was switched on in February 2008, it quickly became apparent that in order to keep the capital building costs down, it would be necessary to manage demand. This would also allow the island to generate most of its electricity from renewable sources, mainly water, wind and solar power. This goal was overseen by the Eigg Heritage Trust (EHT).
+
+The technology
+
+Eigg manages electricity demand mainly by capping the instantaneous power that can be used to five kilowatts (kW) for a household and ten kW for a business. If usage goes over the limit, the electricity supply is cut off and the maintenance team must be called to come and switch it back on again. All households and businesses have energy monitors, which display current and cumulative electricity usage, and sound an alarm when consumption reaches a user-defined level, usually set a few hundred watts below the actual limit. The result is that Eigg residents have a keen sense of how much power different electrical appliances use, and are careful to minimise energy consumption.
+
+Demand is also managed by warning the entire island when renewable energy generation is lower than demand, and diesel generators are operating to back it up — a so-called 'red light day', as opposed to 'green light days' when there is sufficient renewable energy. Residents then take steps to temporarily reduce electricity demand further still, or postpone demand until renewable energy generation has increased.
+
+Energy use on the island has also been reduced through improved wall and loft insulation in homes, new boilers, solar water heating, car-sharing and various small, energy-saving measures in households. New energy supplies are being developed, including sustainably harvested forests to supply wood for heating.
+
+Eigg Heritage Trust has installed insulation in all of its own properties at no cost to the tenants, while private properties have paid for their own insulation to be installed. The same applies for installations of solar water heating, although not all Trust properties have received this as yet. The Trust also operates a Green Grants scheme, where residents can claim 50 percent of the cost of equipment to reduce carbon emissions, up to a limit of £300. Purchases included bikes, solar water heating, secondary glazing, thicker curtains, and greenhouses to grow food locally, rather than importing it.
+
+Environmental benefits
+
+Prior to the installation of the new electricity grid and renewable energy generation, most households on Eigg used diesel generators to supply electricity, resulting in significant carbon emissions. Homes were also poorly insulated and had old, inefficient oil-burning boilers, or used coal for heating.
+
+The work by the Eigg Heritage Trust to reduce energy use has resulted in significant reductions in carbon emissions from the island's households and businesses. The average annual electricity use per household is just 2,160 kilowatt hours (kWh), compared to a UK average in 2008 of 4,198 kWh. Domestic carbon emissions have fallen by 47 percent, from 8.4 to 4.45 tonnes per year. This compares to average UK household emissions of 5.5 to 6 tonnes per year. The emissions should fall even further over the next few years as the supply of wood for heating increases.
+
+Social benefits
+
+The completion of Eigg's electricity grid has made a significant difference to the island's residents, freeing them from dependence on diesel generators and providing them with a stable and affordable power supply. A reliable electricity supply has brought improvements in other areas, for example, better treatment of drinking water in some houses, and the elimination of the constant noise of diesel generators. Improved home insulation and heating has also yielded benefits, making it more affordable to keep homes at a comfortable temperature. One of the incentives for capping electricity use, rather than charging different amounts according to usage, was to make access to energy equitable. Every household has the same five kW cap, irrespective of income, so distributing the available resources equally across the island's population.
+
+Economic and employment benefits
+
+Eigg's electricity grid supports four part-time maintenance jobs on the island, and residents have also been employed for building work to improve Trust-owned houses and other buildings. Likewise, the start of organised harvesting of wood for heating has created several forestry jobs for residents. A part-time 'green project manager' post has also been created. A wider economic impact has come from having a reliable and affordable electricity supply, which has enabled several new businesses to start up, including restaurants, shops, guest houses and self-catering accommodation. As Eigg has become known for cutting carbon emissions and protecting the environment, an increasing number of visitors have come to the island to learn about its work, bringing a further economic benefit to the residents.
