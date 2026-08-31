@@ -38,6 +38,8 @@ export type TableCell =
 export type TableStructure = CompoundStructureBase & {
   variant: 'table'
   title?: string
+  /** Optional word bank (lettered A, B, C…) for list-matching completions */
+  options?: string[]
   headers: string[]
   rows: TableCell[][]
 }
@@ -54,6 +56,8 @@ export type NoteSection = {
 export type NoteStructure = CompoundStructureBase & {
   variant: 'notes'
   title?: string
+  /** Optional word bank (lettered A, B, C…) shown above the notes */
+  options?: string[]
   /** When false, render items as plain lines (no bullet markers). Default true. */
   bullets?: boolean
   sections: NoteSection[]

@@ -85,6 +85,21 @@ function optionPrefix(opt: string): string {
   return dot > 0 ? opt.slice(0, dot).trim() : opt.trim()
 }
 
+function WordBankList({ options }: { options: string[] }) {
+  if (options.length === 0) return null
+  return (
+    <div className='mx-auto max-w-xs rounded-lg border border-foreground/20'>
+      <div className='space-y-1.5 px-6 py-4'>
+        {options.map((opt, i) => (
+          <p key={i} className='text-[14px] leading-relaxed text-foreground'>
+            {opt}
+          </p>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function GapInput({
   question,
   value,
@@ -279,6 +294,7 @@ function renderTableCell(
   readOnly: boolean | undefined,
   highlighted?: boolean,
   previewMode?: boolean,
+  choiceOptions?: string[],
 ) {
   const body =
     cell.variant === 'bullets' ? (
@@ -293,6 +309,7 @@ function renderTableCell(
               maxWords,
               readOnly,
               previewMode,
+              choiceOptions,
             )}
           </li>
         ))}
@@ -307,6 +324,7 @@ function renderTableCell(
           maxWords,
           readOnly,
           previewMode,
+          choiceOptions,
         )}
       </span>
     )
@@ -342,9 +360,13 @@ function TableCompletion({
 }) {
   const gapToQ = buildGapMap(questions)
   const maxWords = structure.max_words_per_gap
+  const options = structure.options ?? []
+  const choiceOptions = options.length > 0 ? options : undefined
 
   return (
-    <div className='overflow-x-auto rounded-lg border border-border bg-card p-4'>
+    <div className='space-y-5'>
+      <WordBankList options={options} />
+      <div className='overflow-x-auto rounded-lg border border-border bg-card p-4'>
       {structure.title && (
         <p className='mb-3 text-center text-[15px] font-bold text-foreground'>
           {structure.title}
@@ -382,6 +404,7 @@ function TableCompletion({
                     readOnly,
                     highlightCell?.row === ri && highlightCell?.col === ci,
                     previewMode,
+                    choiceOptions,
                   )}
                 </td>
               ))}
@@ -389,6 +412,7 @@ function TableCompletion({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }
@@ -410,9 +434,13 @@ function NoteCompletion({
 }) {
   const gapToQ = buildGapMap(questions)
   const maxWords = structure.max_words_per_gap
+  const options = structure.options ?? []
+  const choiceOptions = options.length > 0 ? options : undefined
 
   return (
-    <div className='mx-auto rounded-lg border border-border bg-card px-8 py-7'>
+    <div className='space-y-5'>
+      <WordBankList options={options} />
+      <div className='mx-auto rounded-lg border border-border bg-card px-8 py-7'>
       {structure.title && (
         <p className='mb-6 text-center text-[17px] font-bold text-foreground'>
           {structure.title}
@@ -445,6 +473,7 @@ function NoteCompletion({
                     maxWords,
                     readOnly,
                     previewMode,
+                    choiceOptions,
                   )}
                 </div>
               ))}
@@ -469,6 +498,7 @@ function NoteCompletion({
                       maxWords,
                       readOnly,
                       previewMode,
+                      choiceOptions,
                     )}
                   </li>
                 )
@@ -477,6 +507,7 @@ function NoteCompletion({
           )}
         </div>
       ))}
+      </div>
     </div>
   )
 }
@@ -566,17 +597,7 @@ function SummaryCompletion({
 
   return (
     <div className='space-y-5'>
-      {options.length > 0 && (
-        <div className='mx-auto max-w-xs rounded-lg border border-foreground/20'>
-          <div className='space-y-1.5 px-6 py-4'>
-            {options.map((opt, i) => (
-              <p key={i} className='text-[14px] leading-relaxed text-foreground'>
-                {opt}
-              </p>
-            ))}
-          </div>
-        </div>
-      )}
+      <WordBankList options={options} />
       <div className='rounded-lg border border-foreground/20 bg-card px-8 py-7'>
         {title && (
           <p className='mb-5 text-center text-[16px] font-bold text-foreground'>
