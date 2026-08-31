@@ -644,6 +644,16 @@ function normalizeFormField(field: Record<string, unknown>): FormField {
   }
 }
 
+function parseWordBankOptions(raw: Record<string, unknown>): string[] | undefined {
+  const options = Array.isArray(raw.options)
+    ? (raw.options as unknown[])
+        .filter((o): o is string => typeof o === 'string')
+        .map((o) => o.trim())
+        .filter(Boolean)
+    : undefined
+  return options && options.length > 0 ? options : undefined
+}
+
 function normalizeStructure(raw: Record<string, unknown>): CompoundStructure | null {
   const variant = raw.variant
   const instruction_words =
@@ -682,7 +692,15 @@ function normalizeStructure(raw: Record<string, unknown>): CompoundStructure | n
           )
         : [],
     )
-    return { variant: 'table', ...base, ...(typeof raw.title === 'string' && raw.title.trim() ? { title: raw.title.trim() } : {}), headers, rows }
+    const wordBank = parseWordBankOptions(raw)
+    return {
+      variant: 'table',
+      ...base,
+      ...(typeof raw.title === 'string' && raw.title.trim() ? { title: raw.title.trim() } : {}),
+      ...(wordBank ? { options: wordBank } : {}),
+      headers,
+      rows,
+    }
   }
 
   if (variant === 'notes') {
@@ -700,11 +718,13 @@ function normalizeStructure(raw: Record<string, unknown>): CompoundStructure | n
         ),
       }
     })
+    const wordBank = parseWordBankOptions(raw)
     return {
       variant: 'notes',
       ...base,
       title: typeof raw.title === 'string' ? raw.title : '',
       bullets: raw.bullets === false ? false : true,
+      ...(wordBank ? { options: wordBank } : {}),
       sections,
     }
   }
@@ -737,17 +757,12 @@ function normalizeStructure(raw: Record<string, unknown>): CompoundStructure | n
           : [{ type: 'text', value: '' }],
       }
     })
-    const options = Array.isArray(raw.options)
-      ? (raw.options as unknown[])
-          .filter((o): o is string => typeof o === 'string')
-          .map((o) => o.trim())
-          .filter(Boolean)
-      : undefined
+    const options = parseWordBankOptions(raw)
     return {
       variant: 'summary',
       ...base,
       title: typeof raw.title === 'string' ? raw.title : '',
-      ...(options && options.length > 0 ? { options } : {}),
+      ...(options ? { options } : {}),
       paragraphs,
     }
   }

@@ -41,6 +41,25 @@ describe('asCompoundStructure notes bullets', () => {
       expect(result.bullets).toBe(true)
     }
   })
+
+  it('keeps word-bank options on notes completion structures', () => {
+    const result = asCompoundStructure({
+      variant: 'notes',
+      instruction_words: 'list of words A-K',
+      max_words_per_gap: 3,
+      options: ['A. emotional', 'B. negative', 'D. silent'],
+      sections: [
+        {
+          heading: 'Chinese cinema',
+          items: [{ segments: [{ type: 'gap', gap_id: 'n19' }] }],
+        },
+      ],
+    })
+    expect(result).not.toBeNull()
+    if (result?.variant === 'notes') {
+      expect(result.options).toEqual(['A. emotional', 'B. negative', 'D. silent'])
+    }
+  })
 })
 
 describe('extractGapIds', () => {
