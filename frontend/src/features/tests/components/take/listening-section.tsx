@@ -17,6 +17,7 @@ import { QuestionRangeTitle } from './shared/question-range-title'
 import { PassageHighlighter } from './shared/passage-highlighter'
 import {
   asCompoundStructure,
+  compoundHasWordBank,
   isCompoundType,
   type CompoundStructure,
 } from '../../data/compound'
@@ -265,10 +266,7 @@ function ListeningGroupHeader({ group }: { group: RenderGroup }) {
     group.type === 'notes_card' || group.type === 'table'
       ? ''
       : adaptInstructionForScreen(group.instruction ?? '', group.type, {
-          hasWordBank:
-            group.type === 'compound' &&
-            Array.isArray(group.structure?.options) &&
-            group.structure.options.length > 0,
+          hasWordBank: group.type === 'compound' && compoundHasWordBank(group.structure),
         })
   const subtitle = group.subtitle?.trim() || ''
   // Legacy per-question section_title (prefer group.subtitle when set)

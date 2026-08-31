@@ -103,6 +103,14 @@ export type CompoundStructure =
   | SummaryStructure
   | FlowStructure
 
+export function compoundHasWordBank(
+  structure: CompoundStructure | undefined,
+): boolean {
+  if (!structure || !('options' in structure)) return false
+  const { options } = structure
+  return Array.isArray(options) && options.length > 0
+}
+
 export function isCompoundType(
   type: string | null | undefined,
 ): type is CompoundQuestionType {

@@ -19,6 +19,7 @@ import { QuestionRangeTitle } from './shared/question-range-title'
 import { PassageHighlighter } from './shared/passage-highlighter'
 import {
   asCompoundStructure,
+  compoundHasWordBank,
   isCompoundType,
   type CompoundStructure,
 } from '../../data/compound'
@@ -242,10 +243,7 @@ function GroupHeader({ group }: { group: RuntimeGroup }) {
   const minQ = Math.min(...starts)
   const maxQ = Math.max(...ends)
   const instruction = adaptInstructionForScreen(group.instruction ?? '', group.type, {
-    hasWordBank:
-      group.type === 'compound' &&
-      Array.isArray(group.structure?.options) &&
-      group.structure.options.length > 0,
+    hasWordBank: group.type === 'compound' && compoundHasWordBank(group.structure),
   })
   const subtitle = group.subtitle?.trim() || ''
 
