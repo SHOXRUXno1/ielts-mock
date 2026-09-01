@@ -45,6 +45,7 @@ from seed_practice_d_common import (  # noqa: E402
 )
 
 TEST_NUMBER = 2
+DIAGRAM_URL = f"/media/images/practice_d_t{TEST_NUMBER}_listening_diagram.png"
 
 
 def text(value: str) -> dict:
@@ -93,7 +94,7 @@ FORM1_ANSWERS: list[tuple[str, list[str], int]] = [
     ("n4", ["MH66G4"], 2),
     ("n5", ["credit card"], 2),
     ("n6", ["Gold Star"], 2),
-    ("n7", ["winter"], 2),
+    ("n7", ["Mid-winter", "mid-winter", "Midwinter", "midwinter"], 2),
     ("n8", ["16 January", "16th January", "January 16"], 2),
     ("n9", ["taxi"], 2),
     ("n10", ["bicycle"], 2),
@@ -280,6 +281,7 @@ DIAGRAM4_STRUCTURE: dict = {
     "title": "The London Eye — Construction Diagram",
     "instruction_words": "TWO WORDS",
     "max_words_per_gap": 2,
+    "image_url": DIAGRAM_URL,
     "sections": [
         {
             "heading": "",
@@ -297,8 +299,8 @@ DIAGRAM4_STRUCTURE: dict = {
                     text(" — attached to the plinths"),
                 ]},
                 {"segments": [
+                    text("mounting "),
                     gap("d39"),
-                    text(" — between passenger capsule and rim"),
                 ]},
                 {"segments": [
                     gap("d40"),
@@ -312,8 +314,8 @@ DIAGRAM4_STRUCTURE: dict = {
 DIAGRAM4_ANSWERS: list[tuple[str, list[str], int]] = [
     ("d36", ["tension"], 2),
     ("d37", ["base cap"], 2),
-    ("d38", ["A-frame", "a-frame"], 2),
-    ("d39", ["rings", "mounting rings"], 2),
+    ("d38", ["A-frame", "a-frame", "A frame"], 2),
+    ("d39", ["rings"], 2),
     ("d40", ["boarding platform"], 2),
 ]
 
