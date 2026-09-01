@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # Install one Practice Set D test into the running production backend.
 #
 # Runs ON THE SERVER. Expects the test's files already staged in /tmp/pd_stage:
