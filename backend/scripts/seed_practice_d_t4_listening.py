@@ -186,7 +186,7 @@ MAP2_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
 
 MAP2_ITEMS: list[tuple[str, str]] = [
     ("Park Hotel", "E"),
-    ("The Smed Cafe", "F"),
+    ("Internet Cafe", "F"),
     ("Tourist Information Office", "A"),
     ("Royal House Restaurant", "D"),
 ]
@@ -298,7 +298,7 @@ TABLE4_STRUCTURE: dict = {
 }
 
 TABLE4_ANSWERS: list[tuple[str, list[str], int]] = [
-    ("t31", ["joke"], 2),
+    ("t31", ["crisis"], 2),
     ("t32", ["specialist knowledge"], 2),
     ("t33", ["definite market"], 2),
     ("t34", ["obvious"], 2),
