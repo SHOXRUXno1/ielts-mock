@@ -126,6 +126,18 @@ export async function startFullMock(): Promise<AttemptRead> {
   return data
 }
 
+/** Start a full mock on a specific paper the student picked from the
+ * practice picker's 'Start this paper' CTA. Backend enforces the same
+ * one-in-progress guard as the random-rotation endpoint. */
+export async function startFullMockOnTest(
+  testId: string,
+): Promise<AttemptRead> {
+  const { data } = await api.post<AttemptRead>(
+    `/student/full-mock/start/${testId}`,
+  )
+  return data
+}
+
 export async function getMyResults(params?: {
   limit?: number
   offset?: number

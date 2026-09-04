@@ -13,6 +13,7 @@ import {
 import {
   getFullMockStatus,
   startFullMock,
+  startFullMockOnTest,
   type FullMockStatus,
 } from '@/lib/api/student'
 import { useAuthStore } from '@/stores/auth-store'
@@ -144,26 +145,36 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
     enabled: open && signedIn,
   })
 
-  const startMockMutation = useMutation({
+  const mockOnSuccess = async (attempt: { test_id: string }) => {
+    await queryClient.invalidateQueries({
+      queryKey: ['student-full-mock-status'],
+    })
+    onOpenChange(false)
+    await navigate({
+      to: '/take-test/$testId',
+      params: { testId: attempt.test_id },
+    })
+  }
+
+  const mockOnError = (err: unknown) => {
+    const detail = (
+      err as { response?: { data?: { detail?: unknown } } }
+    )?.response?.data?.detail
+    toast.error(
+      typeof detail === 'string' ? detail : 'Could not start a full mock',
+    )
+  }
+
+  const startThisMockMutation = useMutation({
+    mutationFn: () => startFullMockOnTest(testId),
+    onSuccess: mockOnSuccess,
+    onError: mockOnError,
+  })
+
+  const startRandomMockMutation = useMutation({
     mutationFn: startFullMock,
-    onSuccess: async (attempt) => {
-      await queryClient.invalidateQueries({
-        queryKey: ['student-full-mock-status'],
-      })
-      onOpenChange(false)
-      await navigate({
-        to: '/take-test/$testId',
-        params: { testId: attempt.test_id },
-      })
-    },
-    onError: (err: unknown) => {
-      const detail = (
-        err as { response?: { data?: { detail?: unknown } } }
-      )?.response?.data?.detail
-      toast.error(
-        typeof detail === 'string' ? detail : 'Could not start a full mock',
-      )
-    },
+    onSuccess: mockOnSuccess,
+    onError: mockOnError,
   })
 
   const startMutation = useMutation({
@@ -244,8 +255,10 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
           <div className='max-h-[min(70vh,640px)] space-y-6 overflow-y-auto px-6 py-5'>
             <FullMockCard
               status={mockStatusQuery.data}
-              pending={startMockMutation.isPending}
-              onStart={() => startMockMutation.mutate()}
+              pendingThis={startThisMockMutation.isPending}
+              pendingRandom={startRandomMockMutation.isPending}
+              onStartThis={() => startThisMockMutation.mutate()}
+              onStartRandom={() => startRandomMockMutation.mutate()}
               onContinue={(inProgressTestId) => {
                 onOpenChange(false)
                 void navigate({
@@ -515,100 +528,129 @@ function PartCard({
 
 function FullMockCard({
   status,
-  pending,
-  onStart,
+  pendingThis,
+  pendingRandom,
+  onStartThis,
+  onStartRandom,
   onContinue,
 }: {
   status: FullMockStatus | undefined
-  pending: boolean
-  onStart: () => void
+  pendingThis: boolean
+  pendingRandom: boolean
+  onStartThis: () => void
+  onStartRandom: () => void
   onContinue: (inProgressTestId: string) => void
 }) {
   const hasInProgress = Boolean(
     status?.in_progress_attempt_id && status?.in_progress_test_id,
   )
-  const canStart =
-    !hasInProgress && (status?.total_published ?? 0) > 0
-  const disabled = pending || (!hasInProgress && !canStart)
+  const anyPending = pendingThis || pendingRandom
+  const noPapers = (status?.total_published ?? 0) === 0
 
-  const handleClick = () => {
-    if (disabled) return
-    if (hasInProgress && status?.in_progress_test_id) {
-      onContinue(status.in_progress_test_id)
-    } else {
-      onStart()
-    }
-  }
-
-  const ctaLabel = hasInProgress ? 'Continue' : 'Start full mock'
   const subLine = hasInProgress
     ? status?.in_progress_title
       ? `In progress · ${status.in_progress_title}`
       : 'In progress · pick up where you left off'
-    : (status?.total_published ?? 0) === 0
+    : noPapers
       ? 'No papers available yet'
       : (status?.remaining ?? 0) > 0
         ? `${status?.remaining} unseen ${status!.remaining === 1 ? 'paper' : 'papers'} left in rotation`
         : 'Every paper reshuffled — you may see a repeat'
 
   return (
-    <button
-      type='button'
-      disabled={disabled}
-      onClick={handleClick}
+    <div
       className={cn(
-        'group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border p-4 text-left ring-1 transition-all',
+        'relative overflow-hidden rounded-2xl border p-4 ring-1',
         'bg-gradient-to-br from-primary/10 via-background to-background',
         'border-primary/20 ring-primary/10',
-        disabled
-          ? 'cursor-not-allowed opacity-60'
-          : 'hover:-translate-y-0.5 hover:shadow-lg hover:ring-primary/25',
-        pending && 'ring-2 ring-primary/50',
       )}
     >
-      <div className='flex size-16 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-sm ring-1 ring-primary/20'>
-        <GraduationCap className='size-8' strokeWidth={1.7} />
-      </div>
-
-      <div className='min-w-0 flex-1'>
-        <div className='flex flex-wrap items-center gap-2'>
-          <span className='text-[15px] font-semibold tracking-tight'>
-            Full mock
-          </span>
-          <span className='rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground'>
-            Counts toward results
-          </span>
-          {pending && (
-            <Loader2 className='size-3.5 animate-spin text-primary' />
-          )}
+      <div className='flex items-start gap-4'>
+        <div className='flex size-16 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-sm ring-1 ring-primary/20'>
+          <GraduationCap className='size-8' strokeWidth={1.7} />
         </div>
 
-        <div className='mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] text-muted-foreground'>
-          <span className='inline-flex items-center gap-1'>
-            <Clock className='size-3 opacity-70' />
-            All four skills · timed
-          </span>
-          <span className='text-muted-foreground/40'>·</span>
-          <span>Paper chosen for you</span>
-        </div>
+        <div className='min-w-0 flex-1'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <span className='text-[15px] font-semibold tracking-tight'>
+              Full mock
+            </span>
+            <span className='rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground'>
+              Counts toward results
+            </span>
+          </div>
 
-        <p className='mt-1.5 text-[12px] font-medium text-primary/80'>
-          {subLine}
-        </p>
+          <div className='mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] text-muted-foreground'>
+            <span className='inline-flex items-center gap-1'>
+              <Clock className='size-3 opacity-70' />
+              All four skills · timed
+            </span>
+          </div>
+
+          <p className='mt-1.5 text-[12px] font-medium text-primary/80'>
+            {subLine}
+          </p>
+        </div>
       </div>
 
-      <span
-        className={cn(
-          'hidden shrink-0 items-center gap-1 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground transition-transform sm:inline-flex',
-          !disabled && 'group-hover:translate-x-0.5',
-        )}
-      >
+      <div className='mt-4 flex flex-wrap items-center gap-x-4 gap-y-2'>
         {hasInProgress ? (
-          <PlayCircle className='size-3.5' />
-        ) : null}
-        {ctaLabel}
-        {!hasInProgress && <ArrowRight className='size-3.5' />}
-      </span>
-    </button>
+          <button
+            type='button'
+            disabled={anyPending}
+            onClick={() => {
+              if (status?.in_progress_test_id) {
+                onContinue(status.in_progress_test_id)
+              }
+            }}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground transition-transform',
+              anyPending
+                ? 'cursor-not-allowed opacity-60'
+                : 'hover:translate-x-0.5 hover:shadow-md',
+            )}
+          >
+            <PlayCircle className='size-3.5' />
+            Continue
+          </button>
+        ) : (
+          <>
+            <button
+              type='button'
+              disabled={anyPending || noPapers}
+              onClick={onStartThis}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground transition-transform',
+                anyPending || noPapers
+                  ? 'cursor-not-allowed opacity-60'
+                  : 'hover:translate-x-0.5 hover:shadow-md',
+                pendingThis && 'ring-2 ring-primary/40',
+              )}
+            >
+              {pendingThis && (
+                <Loader2 className='size-3.5 animate-spin' />
+              )}
+              Start this paper
+              {!pendingThis && <ArrowRight className='size-3.5' />}
+            </button>
+
+            <button
+              type='button'
+              disabled={anyPending || noPapers}
+              onClick={onStartRandom}
+              className={cn(
+                'inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline',
+                (anyPending || noPapers) && 'cursor-not-allowed opacity-60',
+              )}
+            >
+              {pendingRandom && (
+                <Loader2 className='size-3.5 animate-spin' />
+              )}
+              or start a random paper
+            </button>
+          </>
+        )}
+      </div>
+    </div>
   )
 }

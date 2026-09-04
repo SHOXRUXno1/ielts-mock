@@ -26,6 +26,7 @@ from app.services.student_mock import (
     remaining_count,
     resume_position_for_attempt,
     slot_map_for_user,
+    start_full_mock_on_test,
     start_next_full_mock,
     student_mock_label,
 )
@@ -532,3 +533,20 @@ async def start_full_mock(
         return AttemptRead.model_validate(attempt)
     except NoUnusedMocks:
         raise http_no_mocks() from None
+
+
+@router.post("/full-mock/start/{test_id}", response_model=AttemptRead)
+async def start_full_mock_specific(
+    test_id: uuid.UUID,
+    actor: Actor = Depends(get_current_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Start a full mock on a paper the caller picked (from the practice
+    picker's 'Start this paper' CTA). Same one-in-progress guard as the
+    random-rotation endpoint; idempotent when the live sitting is already
+    on this test.
+    """
+    if actor.user_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    attempt = await start_full_mock_on_test(db, actor.user_id, test_id)
+    return AttemptRead.model_validate(attempt)

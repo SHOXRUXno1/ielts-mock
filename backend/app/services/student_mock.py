@@ -341,6 +341,64 @@ async def start_next_full_mock(
     return attempt
 
 
+async def start_full_mock_on_test(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    test_id: uuid.UUID,
+) -> Attempt:
+    """Start (or resume) a full mock on a specific paper the caller picked.
+
+    Same guards as start_next_full_mock — one in-progress full mock per
+    student, idempotent when the live sitting is already on this test, and
+    the row-level user lock prevents parallel starts from opening two
+    attempts on different tests at once.
+    """
+    locked = (
+        await db.execute(select(User).where(User.id == user_id).with_for_update())
+    ).scalar_one_or_none()
+    if locked is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    live = await in_progress_full_mock(db, user_id)
+    if live is not None:
+        if live.test_id == test_id:
+            return live
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You already have a full mock in progress on another paper.",
+        )
+
+    test = await db.get(Test, test_id)
+    if test is None or not test.is_published:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Test not found or not published.",
+        )
+
+    attempt = Attempt(
+        test_id=test_id,
+        user_id=user_id,
+        status=AttemptStatus.IN_PROGRESS,
+        mode=AttemptMode.FULL_MOCK.value,
+        started_at=datetime.now(timezone.utc),
+    )
+    db.add(attempt)
+    try:
+        await db.flush()
+        for row in sp.ensure_progress_rows(attempt.id):
+            db.add(row)
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raced = await in_progress_full_mock(db, user_id)
+        if raced is None:
+            raise
+        return raced
+
+    await db.refresh(attempt)
+    return attempt
+
+
 def http_no_mocks() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_409_CONFLICT,
