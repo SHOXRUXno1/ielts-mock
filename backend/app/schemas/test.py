@@ -27,6 +27,17 @@ class TestUpdate(BaseModel):
     test_number: int | None = None
 
 
+class SectionCounts(BaseModel):
+    """Scoring slots per skill for a test, so the list page can show an
+    accurate 'L 40 · R 40 · W 2 · S 3' summary without a per-row detail
+    fetch. Populated by the list endpoint; single-test detail can skip it.
+    """
+    listening: int = 0
+    reading: int = 0
+    writing: int = 0
+    speaking: int = 0
+
+
 class TestRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -38,6 +49,7 @@ class TestRead(BaseModel):
     book_name: str | None = None
     book_slug: str
     test_number: int
+    section_counts: SectionCounts | None = None
     created_at: datetime
     updated_at: datetime
 

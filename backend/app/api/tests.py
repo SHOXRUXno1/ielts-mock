@@ -11,7 +11,13 @@ from app.core.database import get_db
 from app.models.question_group import QuestionGroup
 from app.models.section import Section, SectionType
 from app.models.test import Test
-from app.schemas.test import TestCreate, TestDetailRead, TestRead, TestUpdate
+from app.schemas.test import (
+    SectionCounts,
+    TestCreate,
+    TestDetailRead,
+    TestRead,
+    TestUpdate,
+)
 from app.services import section_settings as settings_service
 from app.services.compound import check_compound_group_completeness, is_compound_type
 from app.services.question_integrity import orphan_question_errors
@@ -83,8 +89,25 @@ async def _resolve_slug(db: AsyncSession, payload_slug: str | None, book_name: s
 
 @router.get("/", response_model=list[TestRead])
 async def list_tests(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Test).order_by(Test.created_at.desc()))
-    return result.scalars().all()
+    stmt = (
+        select(Test)
+        .options(selectinload(Test.sections).selectinload(Section.questions))
+        .order_by(Test.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    tests = result.scalars().all()
+
+    output: list[TestRead] = []
+    for t in tests:
+        counts = {"listening": 0, "reading": 0, "writing": 0, "speaking": 0}
+        for s in t.sections:
+            stype = s.type.value if hasattr(s.type, "value") else str(s.type)
+            if stype in counts:
+                counts[stype] += count_questions_in_section(s)
+        model = TestRead.model_validate(t)
+        model.section_counts = SectionCounts(**counts)
+        output.append(model)
+    return output
 
 
 # ── Slug-based lookup (must be before /{test_id} to avoid UUID parse clash) ──

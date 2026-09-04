@@ -73,6 +73,13 @@ export type Section = {
   updated_at: string
 }
 
+export type SectionCounts = {
+  listening: number
+  reading: number
+  writing: number
+  speaking: number
+}
+
 export type Test = {
   id: string
   title: string
@@ -82,6 +89,9 @@ export type Test = {
   book_name: string | null
   book_slug: string
   test_number: number
+  /** Scoring slots per skill. Present on the list endpoint; absent on
+   * legacy caches until refetched. */
+  section_counts?: SectionCounts | null
   created_at: string
   updated_at: string
 }
