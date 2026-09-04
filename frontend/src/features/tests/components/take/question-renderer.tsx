@@ -53,6 +53,14 @@ function questionImageSrc(question: Question): string | undefined {
     : undefined
 }
 
+/** Diagram MCQs store options as A/B/C — don't print "A. A". */
+function mcqChoiceText(opt: string, letter: string): string | null {
+  const trimmed = opt.trim()
+  if (!trimmed) return null
+  if (/^[A-Z]$/i.test(trimmed) && trimmed.toUpperCase() === letter) return null
+  return opt
+}
+
 function QuestionNum({ question }: { question: Question }) {
   const n = question.computed_number ?? question.order
   return (
@@ -743,8 +751,8 @@ export function QuestionRenderer({
                     onCheckedChange={() => toggle(letter)}
                   />
                   <ChoiceLabel htmlFor={id}>
-                    <span className={cn('mr-1 text-[13px] font-medium', checked ? 'text-primary' : 'text-muted-foreground')}>{letter}.</span>{' '}
-                    {opt}
+                    <span className={cn('mr-1 text-[13px] font-medium', checked ? 'text-primary' : 'text-muted-foreground')}>{letter}.</span>
+                    {mcqChoiceText(opt, letter) ? ` ${opt}` : ''}
                   </ChoiceLabel>
                 </div>
               )
@@ -776,7 +784,7 @@ export function QuestionRenderer({
                 <RadioGroupItem value={letter} id={id} />
                 <ChoiceLabel htmlFor={id}>
                   <span className='mr-1 font-medium'>{letter}.</span>
-                  {opt}
+                  {mcqChoiceText(opt, letter) ? ` ${opt}` : ''}
                 </ChoiceLabel>
               </div>
             )

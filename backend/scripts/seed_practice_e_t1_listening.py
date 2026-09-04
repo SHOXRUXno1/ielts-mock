@@ -50,6 +50,7 @@ from seed_practice_e_common import (  # noqa: E402
 
 TEST_NUMBER = 1
 MAP_URL = MAP_IMAGE_URL.format(test=TEST_NUMBER)
+Q30_IMAGE_URL = f"/media/images/practice_e_t{TEST_NUMBER}_listening_q30.png"
 
 
 def text(value: str) -> dict:
@@ -349,6 +350,7 @@ MCQ3_ITEM: dict = {
         "D",
     ],
     "correct": "B",
+    "image_url": Q30_IMAGE_URL,
 }
 
 
@@ -500,11 +502,18 @@ class SectionWriter:
     async def mcq(self, instruction: str, items: list[dict]) -> None:
         group = await self._group(QuestionType.MCQ, instruction)
         for item in items:
+            content = {
+                "question": item["question"],
+                "options": item["options"],
+            }
+            if item.get("image_url"):
+                content["image_url"] = item["image_url"]
             self._add(
                 group,
                 QuestionType.MCQ,
-                {"question": item["question"], "options": item["options"]},
+                content,
                 {"correct": item["correct"]},
+                image_url=item.get("image_url"),
             )
 
     async def short_answer(
