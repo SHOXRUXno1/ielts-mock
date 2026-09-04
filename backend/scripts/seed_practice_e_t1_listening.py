@@ -62,86 +62,63 @@ def gap(gap_id: str) -> dict:
 
 # ── Part 1 — Clark's Bicycle Hire ────────────────────────────────────────────
 
+# Wording follows the printed notes on p.10 (not paraphrased).
 NOTES1_STRUCTURE: dict = {
     "variant": "notes",
-    "title": "Clark\u2019s Bicycle Hire",
+    "title": "Notes \u2013 Clark\u2019s Bicycle Hire",
     "instruction_words": "THREE WORDS AND/OR A NUMBER",
     "max_words_per_gap": 3,
     "sections": [
         {
             "heading": "",
             "items": [
-                {
-                    "segments": [
-                        text("Type: touring bike"),
-                    ]
-                },
+                {"segments": [text("Example  Type: touring bike")]},
                 {
                     "segments": [
                         text("Rental: \u00a350 a week, or \u00a3"),
                         gap("n1"),
-                        text(" per day"),
+                        text(" a day"),
                     ]
                 },
                 {
                     "segments": [
                         text("Late return fee: \u00a3"),
                         gap("n2"),
-                        text(" per hour"),
+                        text(" per extra hour"),
                     ]
                 },
                 {
                     "segments": [
                         text("Deposit: \u00a3"),
                         gap("n3"),
-                        text(" \u2014 returnable"),
+                        text(" returnable"),
                     ]
                 },
                 {
                     "segments": [
                         text("Accessories: \u00a35 for "),
                         gap("n4"),
-                        text(" (pannier or handlebar type)"),
+                        text(": pannier or handlebar type"),
                     ]
                 },
+                {"segments": [text("free: pump")]},
+                {"segments": [text("repair kit")]},
                 {
                     "segments": [
-                        text("Free: pump, repair kit, "),
+                        text("strong "),
                         gap("n5"),
                     ]
                 },
-            ],
-        },
-    ],
-}
-
-NOTES1_ANSWERS: list[tuple[str, list[str], int]] = [
-    ("n1", ["14", "\u00a314"], 3),
-    ("n2", ["1.25", "\u00a31.25", "1.25 pounds"], 3),
-    ("n3", ["60", "\u00a360"], 3),
-    ("n4", ["(lightweight) bags", "lightweight bags", "bags"], 3),
-    ("n5", ["lock"], 3),
-]
-
-NOTES1B_STRUCTURE: dict = {
-    "variant": "notes",
-    "title": "Insurance and Payment",
-    "instruction_words": "THREE WORDS AND/OR A NUMBER",
-    "max_words_per_gap": 3,
-    "sections": [
-        {
-            "heading": "",
-            "items": [
                 {
                     "segments": [
-                        text("Insurance included; first \u00a3"),
+                        text("Insurance: included, but must pay first \u00a3"),
                         gap("n6"),
-                        text(" of any claim payable by renter"),
+                        text(" of claim"),
                     ]
                 },
                 {
                     "segments": [
-                        text("Payment: "),
+                        text("Pay: by "),
                         gap("n7"),
                         text(" only"),
                     ]
@@ -151,7 +128,12 @@ NOTES1B_STRUCTURE: dict = {
     ],
 }
 
-NOTES1B_ANSWERS: list[tuple[str, list[str], int]] = [
+NOTES1_ANSWERS: list[tuple[str, list[str], int]] = [
+    ("n1", ["14", "\u00a314"], 3),
+    ("n2", ["1.25", "\u00a31.25"], 3),
+    ("n3", ["60", "\u00a360"], 3),
+    ("n4", ["(lightweight) bags", "bags"], 3),
+    ("n5", ["lock"], 3),
     ("n6", ["100", "\u00a3100"], 3),
     ("n7", ["credit card"], 3),
 ]
@@ -603,13 +585,6 @@ async def seed(db: AsyncSession) -> None:
         "Write NO MORE THAN THREE WORDS AND/OR A NUMBER for each answer.",
         NOTES1_STRUCTURE,
         NOTES1_ANSWERS,
-    )
-    await w.compound(
-        QuestionType.NOTE_COMPLETION,
-        "Complete the notes below.\n"
-        "Write NO MORE THAN THREE WORDS AND/OR A NUMBER for each answer.",
-        NOTES1B_STRUCTURE,
-        NOTES1B_ANSWERS,
     )
     await w.map_labeling(
         "Label the map below.\n"
