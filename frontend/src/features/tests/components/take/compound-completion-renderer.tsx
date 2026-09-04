@@ -25,30 +25,27 @@ import type {
 type Answers = Record<string, Record<string, unknown>>
 type OnAnswer = (questionId: string, response: Record<string, unknown>) => void
 
-/** IELTS paper uses fat outlined chevrons, not a thin icon. */
-function FlowBlockArrow({
-  tilt = 'down',
+function FlowChartArrow({
+  dir = 'down',
 }: {
-  tilt?: 'down' | 'left' | 'right'
+  dir?: 'down' | 'down-left' | 'down-right'
 }) {
-  const rotate =
-    tilt === 'left' ? '-38deg' : tilt === 'right' ? '38deg' : '0deg'
+  const glyph = dir === 'down-left' ? '↙' : dir === 'down-right' ? '↘' : '↓'
   return (
-    <svg
-      viewBox='0 0 40 44'
-      className='my-1 size-9 shrink-0 text-foreground/65'
-      style={{ transform: `rotate(${rotate})` }}
+    <span
+      className='select-none py-0.5 text-[28px] leading-none text-foreground/75'
       aria-hidden
     >
-      <path
-        d='M13 2h14v15h8.5L20 41.5 4.5 17H13z'
-        fill='currentColor'
-        fillOpacity='0.12'
-        stroke='currentColor'
-        strokeWidth='1.8'
-        strokeLinejoin='round'
-      />
-    </svg>
+      {glyph}
+    </span>
+  )
+}
+
+function FlowStepCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className='w-full rounded-xl border border-border bg-card px-4 py-3 text-[14px] leading-7 text-foreground shadow-sm'>
+      {children}
+    </div>
   )
 }
 
@@ -136,6 +133,7 @@ export function GapInput({
   /** When set (word-bank summary), render a letter dropdown instead of text. */
   choiceOptions,
   showNumber = true,
+  appearance = 'box',
 }: {
   question: Question
   value: string
@@ -146,6 +144,8 @@ export function GapInput({
   choiceOptions?: string[]
   /** Official "7 ______ and ______" numbers only the first blank. */
   showNumber?: boolean
+  /** Flow-charts use an IELTS underline blank, not a boxed field. */
+  appearance?: 'box' | 'blank'
 }) {
   const limit = effectiveMaxWords(maxWords, question.answer_key)
   const overLimit = limit != null && countWords(value) > limit
@@ -157,54 +157,37 @@ export function GapInput({
       : null
 
   const displayN = question.computed_number ?? question.order
+  const blank = appearance === 'blank' && !letters
 
   return (
     <span
       id={showNumber ? `q-${displayN}` : undefined}
-      className='mx-0.5 inline-flex scroll-mt-20 items-center gap-1 align-middle'
+      className={cn(
+        'scroll-mt-20 align-baseline',
+        blank
+          ? 'mx-1 inline-flex flex-col items-center'
+          : 'mx-0.5 inline-flex items-center gap-1 align-middle',
+      )}
     >
       {showNumber && (
         <span
           data-q-chip
           data-q-n={displayN}
-          className='inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground'
+          className={cn(
+            'inline-flex shrink-0 items-center justify-center font-medium text-muted-foreground',
+            blank
+              ? 'mb-0.5 text-[11px] leading-none'
+              : 'size-5 rounded-full bg-muted text-[11px]',
+          )}
         >
           {displayN}
         </span>
       )}
-      <span className='inline-flex flex-col items-center'>
-        {letters ? (
-          <Select
-            value={value || undefined}
-            onValueChange={(v) => {
-              if (readOnly) return
-              onChange(question.id, v)
-            }}
-            disabled={readOnly}
-          >
-            <SelectTrigger
-              aria-label={`Question ${displayN}`}
-              className={cn(
-                'h-7 min-w-14 justify-center gap-1 border bg-card px-1.5 text-center text-[13px] font-medium shadow-sm [&>svg]:size-3',
-                readOnly && 'cursor-default bg-muted',
-                'border-border',
-              )}
-            >
-              <SelectValue placeholder={String(displayN)} />
-            </SelectTrigger>
-            <SelectContent align='center' className='min-w-14'>
-              {letters.map((letter) => (
-                <SelectItem key={letter} value={letter} className='justify-center text-[13px]'>
-                  {letter}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
+      {blank ? (
+        <>
           <input
             type='text'
             value={value}
-            size={inputSize}
             readOnly={readOnly}
             disabled={readOnly}
             onChange={(e) => {
@@ -213,20 +196,76 @@ export function GapInput({
             }}
             aria-label={`Question ${displayN}`}
             className={cn(
-              'inline-block h-7 min-w-32 max-w-[18rem] rounded-md border bg-card px-2 text-center text-[13px] shadow-sm transition-colors focus:outline-none focus:ring-1',
-              readOnly && 'cursor-default bg-muted',
+              'h-6 w-[140px] border-0 border-b-2 bg-transparent px-1 text-center text-[13px] outline-none transition-colors',
+              readOnly && 'cursor-default',
               overLimit
-                ? 'border-destructive focus:border-destructive focus:ring-destructive/30'
-                : 'border-border focus:border-primary focus:ring-primary/30',
+                ? 'border-destructive focus:border-destructive'
+                : 'border-foreground/70 focus:border-primary',
             )}
           />
-        )}
-        {previewMode && hint && (
-          <span className='mt-0.5 text-[9px] font-medium leading-none text-success-foreground'>
-            {hint}
-          </span>
-        )}
-      </span>
+          {previewMode && hint && (
+            <span className='mt-0.5 text-[9px] font-medium leading-none text-success-foreground'>
+              {hint}
+            </span>
+          )}
+        </>
+      ) : (
+        <span className='inline-flex flex-col items-center'>
+          {letters ? (
+            <Select
+              value={value || undefined}
+              onValueChange={(v) => {
+                if (readOnly) return
+                onChange(question.id, v)
+              }}
+              disabled={readOnly}
+            >
+              <SelectTrigger
+                aria-label={`Question ${displayN}`}
+                className={cn(
+                  'h-7 min-w-14 justify-center gap-1 border bg-card px-1.5 text-center text-[13px] font-medium shadow-sm [&>svg]:size-3',
+                  readOnly && 'cursor-default bg-muted',
+                  'border-border',
+                )}
+              >
+                <SelectValue placeholder={String(displayN)} />
+              </SelectTrigger>
+              <SelectContent align='center' className='min-w-14'>
+                {letters.map((letter) => (
+                  <SelectItem key={letter} value={letter} className='justify-center text-[13px]'>
+                    {letter}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <input
+              type='text'
+              value={value}
+              size={inputSize}
+              readOnly={readOnly}
+              disabled={readOnly}
+              onChange={(e) => {
+                if (readOnly) return
+                onChange(question.id, e.target.value)
+              }}
+              aria-label={`Question ${displayN}`}
+              className={cn(
+                'inline-block h-7 min-w-32 max-w-[18rem] rounded-md border bg-card px-2 text-center text-[13px] shadow-sm transition-colors focus:outline-none focus:ring-1',
+                readOnly && 'cursor-default bg-muted',
+                overLimit
+                  ? 'border-destructive focus:border-destructive focus:ring-destructive/30'
+                  : 'border-border focus:border-primary focus:ring-primary/30',
+              )}
+            />
+          )}
+          {previewMode && hint && (
+            <span className='mt-0.5 text-[9px] font-medium leading-none text-success-foreground'>
+              {hint}
+            </span>
+          )}
+        </span>
+      )}
     </span>
   )
 }
@@ -253,6 +292,7 @@ function renderSegments(
   readOnly: boolean | undefined,
   previewMode?: boolean,
   choiceOptions?: string[],
+  inputAppearance: 'box' | 'blank' = 'box',
 ) {
   const seenQuestion = new Set<string>()
   const seenNumber = new Set<number>()
@@ -306,6 +346,7 @@ function renderSegments(
         readOnly={readOnly}
         previewMode={previewMode}
         choiceOptions={choiceOptions}
+        appearance={inputAppearance}
       />
     )
   })
@@ -669,10 +710,23 @@ function FlowCompletion({
   const gapToQ = buildGapMap(questions)
   const maxWords = structure.max_words_per_gap
 
+  const renderFlowSegments = (segments: CellSegment[]) =>
+    renderSegments(
+      segments,
+      gapToQ,
+      answers,
+      onAnswer,
+      maxWords,
+      readOnly,
+      previewMode,
+      undefined,
+      'blank',
+    )
+
   return (
-    <div className='mx-auto max-w-xl rounded-lg border border-border bg-card p-6'>
+    <div className='mx-auto w-full max-w-xl' data-flow-chart>
       {structure.title && (
-        <p className='mb-6 text-center text-sm font-medium text-foreground'>
+        <p className='mb-5 text-center text-[13px] font-semibold tracking-wide text-foreground'>
           {structure.title}
         </p>
       )}
@@ -684,49 +738,30 @@ function FlowCompletion({
           return (
             <div key={si} className='flex w-full flex-col items-center'>
               {branches ? (
-                <div className='grid w-full grid-cols-2 gap-3'>
+                <div className='grid w-full grid-cols-2 items-stretch gap-3'>
                   {branches.map((branch, bi) => (
-                    <div
-                      key={bi}
-                      className='rounded-lg border border-border px-4 py-3 text-sm leading-relaxed text-foreground'
-                    >
-                      {renderSegments(
-                        branch.segments,
-                        gapToQ,
-                        answers,
-                        onAnswer,
-                        maxWords,
-                        readOnly,
-                        previewMode,
-                      )}
-                    </div>
+                    <FlowStepCard key={bi}>
+                      {renderFlowSegments(branch.segments)}
+                    </FlowStepCard>
                   ))}
                 </div>
               ) : (
-                <div className='w-full rounded-lg border border-border px-4 py-3 text-sm leading-relaxed text-foreground'>
-                  {renderSegments(
-                    step.segments,
-                    gapToQ,
-                    answers,
-                    onAnswer,
-                    maxWords,
-                    readOnly,
-                    previewMode,
-                  )}
+                <div className='w-full max-w-md'>
+                  <FlowStepCard>{renderFlowSegments(step.segments)}</FlowStepCard>
                 </div>
               )}
               {si < structure.steps.length - 1 &&
                 (splitsIntoFork ? (
                   <div className='grid w-full grid-cols-2'>
                     <div className='flex justify-center'>
-                      <FlowBlockArrow tilt='left' />
+                      <FlowChartArrow dir='down-left' />
                     </div>
                     <div className='flex justify-center'>
-                      <FlowBlockArrow tilt='right' />
+                      <FlowChartArrow dir='down-right' />
                     </div>
                   </div>
                 ) : branches ? null : (
-                  <FlowBlockArrow />
+                  <FlowChartArrow />
                 ))}
             </div>
           )

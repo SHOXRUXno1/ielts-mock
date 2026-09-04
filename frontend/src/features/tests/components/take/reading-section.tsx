@@ -320,6 +320,15 @@ function GroupHeader({ group }: { group: RuntimeGroup }) {
   )
 }
 
+function questionsForApiGroup(
+  group: QuestionGroup,
+  displayQuestions: Question[],
+): Question[] {
+  const fromFlat = displayQuestions.filter((q) => q.question_group_id === group.id)
+  const source = fromFlat.length > 0 ? fromFlat : group.questions
+  return [...source].sort((a, b) => a.order - b.order)
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function ReadingSection({
@@ -357,16 +366,13 @@ export function ReadingSection({
     section != null
       ? withDisplayOrders(section, questions, numberOffset)
       : questions
-  const remappedById = new Map(displayQuestions.map((q) => [q.id, q]))
   const displaySection =
     section != null
       ? {
           ...section,
           question_groups: (section.question_groups ?? []).map((g) => ({
             ...g,
-            questions: g.questions
-              .map((q) => remappedById.get(q.id) ?? q)
-              .sort((a, b) => a.order - b.order),
+            questions: questionsForApiGroup(g, displayQuestions),
           })),
         }
       : undefined
