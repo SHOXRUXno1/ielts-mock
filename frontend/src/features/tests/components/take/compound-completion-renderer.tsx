@@ -1,4 +1,3 @@
-import { ArrowDown } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -25,6 +24,33 @@ import type {
 
 type Answers = Record<string, Record<string, unknown>>
 type OnAnswer = (questionId: string, response: Record<string, unknown>) => void
+
+/** IELTS paper uses fat outlined chevrons, not a thin icon. */
+function FlowBlockArrow({
+  tilt = 'down',
+}: {
+  tilt?: 'down' | 'left' | 'right'
+}) {
+  const rotate =
+    tilt === 'left' ? '-38deg' : tilt === 'right' ? '38deg' : '0deg'
+  return (
+    <svg
+      viewBox='0 0 40 44'
+      className='my-1 size-9 shrink-0 text-foreground/65'
+      style={{ transform: `rotate(${rotate})` }}
+      aria-hidden
+    >
+      <path
+        d='M13 2h14v15h8.5L20 41.5 4.5 17H13z'
+        fill='currentColor'
+        fillOpacity='0.12'
+        stroke='currentColor'
+        strokeWidth='1.8'
+        strokeLinejoin='round'
+      />
+    </svg>
+  )
+}
 
 function buildGapMap(questions: Question[]): Map<string, Question> {
   const map = new Map<string, Question>()
@@ -653,6 +679,8 @@ function FlowCompletion({
       <div className='flex flex-col items-center'>
         {structure.steps.map((step, si) => {
           const branches = step.fork?.length ? step.fork : null
+          const next = structure.steps[si + 1]
+          const splitsIntoFork = Boolean(next?.fork?.length)
           return (
             <div key={si} className='flex w-full flex-col items-center'>
               {branches ? (
@@ -687,9 +715,19 @@ function FlowCompletion({
                   )}
                 </div>
               )}
-              {si < structure.steps.length - 1 && (
-                <ArrowDown className='my-2 size-6 text-muted-foreground' />
-              )}
+              {si < structure.steps.length - 1 &&
+                (splitsIntoFork ? (
+                  <div className='grid w-full grid-cols-2'>
+                    <div className='flex justify-center'>
+                      <FlowBlockArrow tilt='left' />
+                    </div>
+                    <div className='flex justify-center'>
+                      <FlowBlockArrow tilt='right' />
+                    </div>
+                  </div>
+                ) : branches ? null : (
+                  <FlowBlockArrow />
+                ))}
             </div>
           )
         })}
