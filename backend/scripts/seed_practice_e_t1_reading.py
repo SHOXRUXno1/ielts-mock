@@ -6,7 +6,7 @@ Keys from the printed Explanatory Answer Key (pp.126-130).
 Passage 1  Q1-5   matching_headings    paragraphs B-G (headings i-x)
            Q6-7   short_answer         space biomedicine (THREE WORDS)
            Q8-12  yes_no_ng
-           Q13-14 short_answer         applications table (THREE WORDS from passage)
+           Q13-14  table_completion    space research applications (THREE WORDS)
 Passage 2  Q15-19 summary_completion   Mediterranean discovery (THREE WORDS)
            Q20-22 matching_features    sentence endings (A-G)
            Q23-27 mcq                  Ryan and Hsü (A-D)
@@ -120,14 +120,68 @@ P1_YESNO: list[tuple[str, str]] = [
     ),
 ]
 
-P1_SHORT_Q13_14: list[tuple[str, list[str]]] = [
+P1_TABLE_STRUCTURE: dict = {
+    "variant": "table",
+    "instruction_words": "NO MORE THAN THREE WORDS",
+    "max_words_per_gap": 3,
+    "headers": [
+        "Research area",
+        "Application in space",
+        "Application on Earth",
+    ],
+    "rows": [
+        [
+            {"variant": "plain", "segments": [text("Telemedicine")]},
+            {"variant": "plain", "segments": [text("treating astronauts")]},
+            {
+                "variant": "plain",
+                "segments": [
+                    gap("t13"),
+                    text(" in remote areas"),
+                ],
+            },
+        ],
+        [
+            {"variant": "plain", "segments": [text("Sterilization")]},
+            {
+                "variant": "plain",
+                "segments": [text("sterilizing waste water")],
+            },
+            {
+                "variant": "plain",
+                "segments": [
+                    gap("t14"),
+                    text(" in disaster zones"),
+                ],
+            },
+        ],
+        [
+            {"variant": "plain", "segments": [text("Miniaturization")]},
+            {"variant": "plain", "segments": [text("saving weight")]},
+            {
+                "variant": "plain",
+                "segments": [
+                    text("wearing small monitors comfortably"),
+                ],
+            },
+        ],
+    ],
+}
+
+P1_TABLE_ANSWERS: list[tuple[str, list[str]]] = [
     (
-        "What application on Earth has telemedicine research led to?",
-        ["communicating with patients"],
+        "t13",
+        [
+            "communicating with patients",
+            "communicate with patients",
+        ],
     ),
     (
-        "What application on Earth has sterilization research led to?",
-        ["filtering contaminated water"],
+        "t14",
+        [
+            "filtering contaminated water",
+            "filter contaminated water",
+        ],
     ),
 ]
 
@@ -538,11 +592,13 @@ async def seed(db: AsyncSession) -> None:
         "passage",
         P1_YESNO,
     )
-    await w.short_answer(
+    await w.compound(
+        QuestionType.TABLE_COMPLETION,
         "Complete the table below.\n"
         "Choose NO MORE THAN THREE WORDS from the passage for "
         "each answer.",
-        P1_SHORT_Q13_14,
+        P1_TABLE_STRUCTURE,
+        P1_TABLE_ANSWERS,
         max_words=3,
     )
     counts.append(w.count)
