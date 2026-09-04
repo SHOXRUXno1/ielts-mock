@@ -64,7 +64,10 @@ describe('formatPassageParagraphLabel', () => {
 
   it('leaves normal paragraphs unchanged', () => {
     expect(formatPassageParagraphLabel('Some body text.')).toBe('Some body text.')
-    expect(formatPassageParagraphLabel('[A] extra')).toBe('[A] extra')
+  })
+
+  it('moves an inline [A] label in front of the paragraph', () => {
+    expect(formatPassageParagraphLabel('[A] extra')).toBe('A extra')
   })
 })
 

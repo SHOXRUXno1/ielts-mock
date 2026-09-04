@@ -111,10 +111,22 @@ export function splitPassageParagraphs(text: string): string[] {
     .filter((p) => p.length > 0)
 }
 
-/** Passage seeds use "[A]" on its own line; students see the letter only. */
+/** Passage seeds use "[A]" on its own line or "[A] body…"; students see the letter only. */
+export function parsePassageParagraphLabel(paragraph: string): {
+  label: string | null
+  body: string
+} {
+  const ownLine = paragraph.match(/^\[([A-Z])\]$/)
+  if (ownLine) return { label: ownLine[1], body: '' }
+  const inline = paragraph.match(/^\[([A-Z])\]\s+([\s\S]+)$/)
+  if (inline) return { label: inline[1], body: inline[2] }
+  return { label: null, body: paragraph }
+}
+
 export function formatPassageParagraphLabel(paragraph: string): string {
-  const match = paragraph.match(/^\[([A-Z])\]$/)
-  return match ? match[1] : paragraph
+  const { label, body } = parsePassageParagraphLabel(paragraph)
+  if (!label) return paragraph
+  return body ? `${label} ${body}` : label
 }
 
 const SCREEN_LETTER_HINT_RE =
@@ -261,9 +273,28 @@ export function renderFormattedText(
   const paragraphs = splitPassageParagraphs(text)
   if (paragraphs.length === 0) return []
 
-  return paragraphs.map((para, i) =>
-    createElement('p', { key: i, className: paragraphClassName },
-      ...parseInlineFormatting(formatPassageParagraphLabel(para)),
-    ),
-  )
+  return paragraphs.map((para, i) => {
+    const { label, body } = parsePassageParagraphLabel(para)
+    const bodyText = body || (label ? '' : para)
+    const children = [
+      ...(label
+        ? [
+            createElement(
+              'span',
+              {
+                key: 'label',
+                className: 'mr-2 font-bold text-foreground',
+              },
+              label,
+            ),
+          ]
+        : []),
+      ...parseInlineFormatting(bodyText),
+    ]
+    return createElement(
+      'p',
+      { key: i, className: paragraphClassName },
+      ...children,
+    )
+  })
 }
