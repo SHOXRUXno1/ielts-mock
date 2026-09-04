@@ -72,6 +72,48 @@ export function FlowStructureEditor({ structure, onChange, gapEdit }: Props) {
       </div>
 
       {structure.steps.map((step, idx) => {
+        if (step.fork?.length) {
+          return (
+            <div
+              key={idx}
+              className='grid grid-cols-2 gap-2 rounded border border-border p-2'
+            >
+              {step.fork.map((branch, bi) => (
+                <div key={bi} className='space-y-1'>
+                  <span className='text-[10px] font-semibold text-muted-foreground'>
+                    Branch {bi + 1}
+                  </span>
+                  <Textarea
+                    rows={2}
+                    className='font-mono text-sm'
+                    value={segmentsToText(branch.segments)}
+                    onChange={(e) => {
+                      const otherIds = extractGapIds({
+                        ...structure,
+                        steps: structure.steps.map((s, i) => {
+                          if (i !== idx) return s
+                          return {
+                            segments: [],
+                            fork: (s.fork ?? []).map((b, j) =>
+                              j === bi ? { segments: [] } : b,
+                            ),
+                          }
+                        }),
+                      })
+                      const nextFork = (step.fork ?? []).map((b, j) =>
+                        j === bi
+                          ? { segments: parseCellText(e.target.value, otherIds) }
+                          : b,
+                      )
+                      setStep(idx, { segments: [], fork: nextFork })
+                    }}
+                    placeholder='Revise before {gap}'
+                  />
+                </div>
+              ))}
+            </div>
+          )
+        }
         const text = segmentsToText(step.segments)
         const preview = step.segments
           .map((s) => (s.type === 'text' ? s.value : '___'))

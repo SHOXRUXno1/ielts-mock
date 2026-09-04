@@ -86,4 +86,39 @@ describe('extractGapIds', () => {
       }),
     ).toEqual(['g7'])
   })
+
+  it('walks flow-chart forks left-to-right', () => {
+    expect(
+      extractGapIds({
+        variant: 'flow',
+        instruction_words: 'THREE WORDS',
+        max_words_per_gap: 3,
+        steps: [
+          {
+            segments: [
+              { type: 'text', value: 'Complete all ' },
+              { type: 'gap', gap_id: 'g1' },
+            ],
+          },
+          {
+            segments: [],
+            fork: [
+              {
+                segments: [
+                  { type: 'text', value: 'before ' },
+                  { type: 'gap', gap_id: 'g2' },
+                ],
+              },
+              {
+                segments: [
+                  { type: 'text', value: 'every ' },
+                  { type: 'gap', gap_id: 'g3' },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    ).toEqual(['g1', 'g2', 'g3'])
+  })
 })

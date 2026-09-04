@@ -264,6 +264,39 @@ class TestExtractGapIds:
     def test_summary(self):
         assert extract_gap_ids(_summary_structure()) == ["g1"]
 
+    def test_flow_fork(self):
+        structure = {
+            "variant": "flow",
+            "instruction_words": "THREE WORDS",
+            "max_words_per_gap": 3,
+            "steps": [
+                {
+                    "segments": [
+                        {"type": "text", "value": "Complete all "},
+                        {"type": "gap", "gap_id": "g1"},
+                    ]
+                },
+                {
+                    "fork": [
+                        {
+                            "segments": [
+                                {"type": "text", "value": "before "},
+                                {"type": "gap", "gap_id": "g2"},
+                            ]
+                        },
+                        {
+                            "segments": [
+                                {"type": "text", "value": "every "},
+                                {"type": "gap", "gap_id": "g3"},
+                            ]
+                        },
+                    ]
+                },
+            ],
+        }
+        assert extract_gap_ids(structure) == ["g1", "g2", "g3"]
+        validate_compound_structure("flow_chart_completion", structure)
+
     def test_empty(self):
         assert extract_gap_ids(None) == []
         assert extract_gap_ids({}) == []

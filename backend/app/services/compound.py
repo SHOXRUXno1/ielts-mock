@@ -135,7 +135,11 @@ def extract_gap_ids(structure: dict[str, Any] | None) -> list[str]:
         for step in structure.get("steps") or []:
             if not isinstance(step, dict):
                 continue
-            gaps.extend(_gaps_from_segments(step.get("segments")))
+            fork = step.get("fork")
+            children = fork if isinstance(fork, list) and fork else [step]
+            for child in children:
+                if isinstance(child, dict):
+                    gaps.extend(_gaps_from_segments(child.get("segments")))
 
     # Same gap_id may appear twice ("7 ______ and ______") — one question.
     seen: set[str] = set()
@@ -286,7 +290,23 @@ def validate_compound_structure(
         for si, step in enumerate(steps):
             if not isinstance(step, dict):
                 raise ValueError(f"flow step {si} must be an object")
-            _validate_segments(step.get("segments"), f"flow step {si}")
+            fork = step.get("fork")
+            if isinstance(fork, list) and fork:
+                if len(fork) < 2:
+                    raise ValueError(
+                        f"flow step {si} fork must have at least two branches"
+                    )
+                for fi, child in enumerate(fork):
+                    if not isinstance(child, dict):
+                        raise ValueError(
+                            f"flow step {si} fork {fi} must be an object"
+                        )
+                    _validate_segments(
+                        child.get("segments"),
+                        f"flow step {si} fork {fi}",
+                    )
+            else:
+                _validate_segments(step.get("segments"), f"flow step {si}")
 
     gap_ids = extract_gap_ids(options_shared)
     if not gap_ids:

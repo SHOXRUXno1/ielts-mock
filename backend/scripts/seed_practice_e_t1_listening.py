@@ -262,7 +262,7 @@ MCQ2_ITEMS: list[dict] = [
 
 FLOW3_STRUCTURE: dict = {
     "variant": "flow",
-    "title": "Lectures and Note Taking",
+    "title": "LECTURES AND NOTE TAKING",
     "instruction_words": "THREE WORDS",
     "max_words_per_gap": 3,
     "steps": [
@@ -292,15 +292,19 @@ FLOW3_STRUCTURE: dict = {
             ]
         },
         {
-            "segments": [
-                text("Revise before "),
-                gap("f24"),
-            ]
-        },
-        {
-            "segments": [
-                text("Revise every "),
-                gap("f25"),
+            "fork": [
+                {
+                    "segments": [
+                        text("Revise before "),
+                        gap("f24"),
+                    ]
+                },
+                {
+                    "segments": [
+                        text("Revise every "),
+                        gap("f25"),
+                    ]
+                },
             ]
         },
     ],
@@ -628,7 +632,7 @@ async def seed(db: AsyncSession) -> None:
     w = SectionWriter(db, part)
     await w.compound(
         QuestionType.FLOW_CHART_COMPLETION,
-        "Label the flow chart below.\n"
+        "Label the flow chart.\n"
         "Write NO MORE THAN THREE WORDS for each answer.",
         FLOW3_STRUCTURE,
         FLOW3_ANSWERS,

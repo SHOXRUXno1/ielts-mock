@@ -651,24 +651,48 @@ function FlowCompletion({
         </p>
       )}
       <div className='flex flex-col items-center'>
-        {structure.steps.map((step, si) => (
-          <div key={si} className='flex w-full flex-col items-center'>
-            <div className='w-full rounded-lg border border-border px-4 py-3 text-sm leading-relaxed text-foreground'>
-              {renderSegments(
-                step.segments,
-                gapToQ,
-                answers,
-                onAnswer,
-                maxWords,
-                readOnly,
-                previewMode,
+        {structure.steps.map((step, si) => {
+          const branches = step.fork?.length ? step.fork : null
+          return (
+            <div key={si} className='flex w-full flex-col items-center'>
+              {branches ? (
+                <div className='grid w-full grid-cols-2 gap-3'>
+                  {branches.map((branch, bi) => (
+                    <div
+                      key={bi}
+                      className='rounded-lg border border-border px-4 py-3 text-sm leading-relaxed text-foreground'
+                    >
+                      {renderSegments(
+                        branch.segments,
+                        gapToQ,
+                        answers,
+                        onAnswer,
+                        maxWords,
+                        readOnly,
+                        previewMode,
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className='w-full rounded-lg border border-border px-4 py-3 text-sm leading-relaxed text-foreground'>
+                  {renderSegments(
+                    step.segments,
+                    gapToQ,
+                    answers,
+                    onAnswer,
+                    maxWords,
+                    readOnly,
+                    previewMode,
+                  )}
+                </div>
+              )}
+              {si < structure.steps.length - 1 && (
+                <ArrowDown className='my-2 size-6 text-muted-foreground' />
               )}
             </div>
-            {si < structure.steps.length - 1 && (
-              <ArrowDown className='my-2 size-6 text-muted-foreground' />
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

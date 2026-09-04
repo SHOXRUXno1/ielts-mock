@@ -88,6 +88,8 @@ export type SummaryStructure = CompoundStructureBase & {
 
 export type FlowStep = {
   segments: CellSegment[]
+  /** Side-by-side boxes after a split (official IELTS fork). */
+  fork?: FlowStep[]
 }
 
 export type FlowStructure = CompoundStructureBase & {
@@ -327,7 +329,10 @@ export function extractGapIds(structure: CompoundStructure | null | undefined): 
     }
   } else if (structure.variant === 'flow') {
     for (const step of structure.steps) {
-      gaps.push(...gapsFromSegments(step.segments))
+      const leaves = step.fork?.length ? step.fork : [step]
+      for (const leaf of leaves) {
+        gaps.push(...gapsFromSegments(leaf.segments))
+      }
     }
   }
 
@@ -780,6 +785,19 @@ function normalizeStructure(raw: Record<string, unknown>): CompoundStructure | n
     const steps: FlowStep[] = stepsRaw.map((st) => {
       const step =
         st && typeof st === 'object' ? (st as Record<string, unknown>) : {}
+      const forkRaw = Array.isArray(step.fork) ? step.fork : []
+      if (forkRaw.length > 0) {
+        return {
+          segments: [],
+          fork: forkRaw.map((ch) => {
+            const child =
+              ch && typeof ch === 'object'
+                ? (ch as Record<string, unknown>)
+                : {}
+            return normalizeNoteItem(child) as FlowStep
+          }),
+        }
+      }
       return normalizeNoteItem(step) as FlowStep
     })
     return {
