@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowRight, Clock, Loader2 } from 'lucide-react'
+import { ArrowRight, Clock, GraduationCap, Loader2, PlayCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   fetchPracticeUnits,
@@ -10,6 +10,11 @@ import {
   type PracticeSectionUnit,
   type PracticeUnit,
 } from '@/lib/api/practice'
+import {
+  getFullMockStatus,
+  startFullMock,
+  type FullMockStatus,
+} from '@/lib/api/student'
 import { useAuthStore } from '@/stores/auth-store'
 import type { SectionType } from '@/features/tests/data/schema'
 import {
@@ -123,6 +128,7 @@ type StartTarget =
  */
 export function PracticePicker({ testId, open, onOpenChange }: Props) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [pending, setPending] = useState<string | null>(null)
   const signedIn = useAuthStore((s) => Boolean(s.auth.accessToken))
 
@@ -130,6 +136,34 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
     queryKey: ['practice-units', testId],
     queryFn: () => fetchPracticeUnits(testId),
     enabled: open && signedIn,
+  })
+
+  const mockStatusQuery = useQuery({
+    queryKey: ['student-full-mock-status'],
+    queryFn: getFullMockStatus,
+    enabled: open && signedIn,
+  })
+
+  const startMockMutation = useMutation({
+    mutationFn: startFullMock,
+    onSuccess: async (attempt) => {
+      await queryClient.invalidateQueries({
+        queryKey: ['student-full-mock-status'],
+      })
+      onOpenChange(false)
+      await navigate({
+        to: '/take-test/$testId',
+        params: { testId: attempt.test_id },
+      })
+    },
+    onError: (err: unknown) => {
+      const detail = (
+        err as { response?: { data?: { detail?: unknown } } }
+      )?.response?.data?.detail
+      toast.error(
+        typeof detail === 'string' ? detail : 'Could not start a full mock',
+      )
+    },
   })
 
   const startMutation = useMutation({
@@ -206,12 +240,27 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
           <div className='flex items-center justify-center py-16 text-sm text-muted-foreground'>
             <Loader2 className='mr-2 size-4 animate-spin' /> Loading…
           </div>
-        ) : orderedTypes.length === 0 ? (
-          <div className='px-6 py-14 text-center text-sm text-muted-foreground'>
-            This test does not have any practice-ready content yet.
-          </div>
         ) : (
           <div className='max-h-[min(70vh,640px)] space-y-6 overflow-y-auto px-6 py-5'>
+            <FullMockCard
+              status={mockStatusQuery.data}
+              pending={startMockMutation.isPending}
+              onStart={() => startMockMutation.mutate()}
+              onContinue={(inProgressTestId) => {
+                onOpenChange(false)
+                void navigate({
+                  to: '/take-test/$testId',
+                  params: { testId: inProgressTestId },
+                })
+              }}
+            />
+
+            {orderedTypes.length === 0 && (
+              <div className='rounded-xl border border-dashed py-10 text-center text-sm text-muted-foreground'>
+                No sub-parts to drill for this paper yet — a full mock is still available above.
+              </div>
+            )}
+
             {orderedTypes.map((type) => {
               const meta = TYPE_META[type]
               const full = sectionByType[type]
@@ -460,6 +509,106 @@ function PartCard({
           Not tried yet
         </span>
       )}
+    </button>
+  )
+}
+
+function FullMockCard({
+  status,
+  pending,
+  onStart,
+  onContinue,
+}: {
+  status: FullMockStatus | undefined
+  pending: boolean
+  onStart: () => void
+  onContinue: (inProgressTestId: string) => void
+}) {
+  const hasInProgress = Boolean(
+    status?.in_progress_attempt_id && status?.in_progress_test_id,
+  )
+  const canStart =
+    !hasInProgress && (status?.total_published ?? 0) > 0
+  const disabled = pending || (!hasInProgress && !canStart)
+
+  const handleClick = () => {
+    if (disabled) return
+    if (hasInProgress && status?.in_progress_test_id) {
+      onContinue(status.in_progress_test_id)
+    } else {
+      onStart()
+    }
+  }
+
+  const ctaLabel = hasInProgress ? 'Continue' : 'Start full mock'
+  const subLine = hasInProgress
+    ? status?.in_progress_title
+      ? `In progress · ${status.in_progress_title}`
+      : 'In progress · pick up where you left off'
+    : (status?.total_published ?? 0) === 0
+      ? 'No papers available yet'
+      : (status?.remaining ?? 0) > 0
+        ? `${status?.remaining} unseen ${status!.remaining === 1 ? 'paper' : 'papers'} left in rotation`
+        : 'Every paper reshuffled — you may see a repeat'
+
+  return (
+    <button
+      type='button'
+      disabled={disabled}
+      onClick={handleClick}
+      className={cn(
+        'group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border p-4 text-left ring-1 transition-all',
+        'bg-gradient-to-br from-primary/10 via-background to-background',
+        'border-primary/20 ring-primary/10',
+        disabled
+          ? 'cursor-not-allowed opacity-60'
+          : 'hover:-translate-y-0.5 hover:shadow-lg hover:ring-primary/25',
+        pending && 'ring-2 ring-primary/50',
+      )}
+    >
+      <div className='flex size-16 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-sm ring-1 ring-primary/20'>
+        <GraduationCap className='size-8' strokeWidth={1.7} />
+      </div>
+
+      <div className='min-w-0 flex-1'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <span className='text-[15px] font-semibold tracking-tight'>
+            Full mock
+          </span>
+          <span className='rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground'>
+            Counts toward results
+          </span>
+          {pending && (
+            <Loader2 className='size-3.5 animate-spin text-primary' />
+          )}
+        </div>
+
+        <div className='mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] text-muted-foreground'>
+          <span className='inline-flex items-center gap-1'>
+            <Clock className='size-3 opacity-70' />
+            All four skills · timed
+          </span>
+          <span className='text-muted-foreground/40'>·</span>
+          <span>Paper chosen for you</span>
+        </div>
+
+        <p className='mt-1.5 text-[12px] font-medium text-primary/80'>
+          {subLine}
+        </p>
+      </div>
+
+      <span
+        className={cn(
+          'hidden shrink-0 items-center gap-1 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground transition-transform sm:inline-flex',
+          !disabled && 'group-hover:translate-x-0.5',
+        )}
+      >
+        {hasInProgress ? (
+          <PlayCircle className='size-3.5' />
+        ) : null}
+        {ctaLabel}
+        {!hasInProgress && <ArrowRight className='size-3.5' />}
+      </span>
     </button>
   )
 }
