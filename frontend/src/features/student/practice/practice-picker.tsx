@@ -254,6 +254,7 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
         ) : (
           <div className='max-h-[min(70vh,640px)] space-y-6 overflow-y-auto px-6 py-5'>
             <FullMockCard
+              testId={testId}
               status={mockStatusQuery.data}
               pendingThis={startThisMockMutation.isPending}
               pendingRandom={startRandomMockMutation.isPending}
@@ -527,6 +528,7 @@ function PartCard({
 }
 
 function FullMockCard({
+  testId,
   status,
   pendingThis,
   pendingRandom,
@@ -534,6 +536,7 @@ function FullMockCard({
   onStartRandom,
   onContinue,
 }: {
+  testId: string
   status: FullMockStatus | undefined
   pendingThis: boolean
   pendingRandom: boolean
@@ -544,18 +547,29 @@ function FullMockCard({
   const hasInProgress = Boolean(
     status?.in_progress_attempt_id && status?.in_progress_test_id,
   )
+  // A live mock on THIS paper is a resume; on a different paper it is a hard
+  // block — the backend refuses to open a second attempt, and the picker must
+  // not disguise that as a normal 'Continue' button that quietly jumps to a
+  // different test.
+  const inProgressOnThisPaper =
+    hasInProgress && status?.in_progress_test_id === testId
+  const inProgressOnOtherPaper = hasInProgress && !inProgressOnThisPaper
   const anyPending = pendingThis || pendingRandom
   const noPapers = (status?.total_published ?? 0) === 0
 
-  const subLine = hasInProgress
+  const subLine = inProgressOnThisPaper
     ? status?.in_progress_title
-      ? `In progress · ${status.in_progress_title}`
-      : 'In progress · pick up where you left off'
-    : noPapers
-      ? 'No papers available yet'
-      : (status?.remaining ?? 0) > 0
-        ? `${status?.remaining} unseen ${status!.remaining === 1 ? 'paper' : 'papers'} left in rotation`
-        : 'Every paper reshuffled — you may see a repeat'
+      ? `In progress on this paper · ${status.in_progress_title}`
+      : 'In progress on this paper · pick up where you left off'
+    : inProgressOnOtherPaper
+      ? status?.in_progress_title
+        ? `You already have ${status.in_progress_title} in progress on another paper — finish it first.`
+        : 'You already have a full mock in progress on another paper — finish it first.'
+      : noPapers
+        ? 'No papers available yet'
+        : (status?.remaining ?? 0) > 0
+          ? `${status?.remaining} unseen ${status!.remaining === 1 ? 'paper' : 'papers'} left in rotation`
+          : 'Every paper reshuffled — you may see a repeat'
 
   return (
     <div
@@ -594,7 +608,7 @@ function FullMockCard({
       </div>
 
       <div className='mt-4 flex flex-wrap items-center gap-x-4 gap-y-2'>
-        {hasInProgress ? (
+        {inProgressOnThisPaper ? (
           <button
             type='button'
             disabled={anyPending}
@@ -611,8 +625,36 @@ function FullMockCard({
             )}
           >
             <PlayCircle className='size-3.5' />
-            Continue
+            Continue Mock
           </button>
+        ) : inProgressOnOtherPaper ? (
+          <>
+            <button
+              type='button'
+              disabled
+              className='inline-flex cursor-not-allowed items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground opacity-60'
+              title='Finish your live Mock first, then this paper will unlock.'
+            >
+              Start this paper
+              <ArrowRight className='size-3.5' />
+            </button>
+            <button
+              type='button'
+              disabled={anyPending}
+              onClick={() => {
+                if (status?.in_progress_test_id) {
+                  onContinue(status.in_progress_test_id)
+                }
+              }}
+              className={cn(
+                'inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline',
+                anyPending && 'cursor-not-allowed opacity-60',
+              )}
+            >
+              <PlayCircle className='size-3.5' />
+              Go to {status?.in_progress_title ?? 'your live mock'}
+            </button>
+          </>
         ) : (
           <>
             <button
