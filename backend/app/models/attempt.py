@@ -4,7 +4,7 @@ from datetime import datetime
 
 from typing import Any
 
-from sqlalchemy import DateTime, Float, ForeignKey, SmallInteger, String
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, SmallInteger, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -46,6 +46,13 @@ class Attempt(UUIDPrimaryKey, TimestampMixin, Base):
         String(16),
         default=AttemptMode.FULL_MOCK.value,
         server_default=AttemptMode.FULL_MOCK.value,
+    )
+    # True when a full mock was started on a paper the student deliberately
+    # chose (practice picker → "Start this paper"), so the exam screen names
+    # the paper ("Practice set #N") instead of the anonymous "Mock #N".
+    # False for random-rotation mocks and all practice attempts.
+    picked: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
     )
     # Practice-mode scope. NULL for full_mock attempts.
     practice_section_id: Mapped["uuid.UUID | None"] = mapped_column(

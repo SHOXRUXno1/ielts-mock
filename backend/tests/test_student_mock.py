@@ -52,6 +52,53 @@ def test_labels():
     assert practice_set_label(2) == "Practice set #2"
 
 
+@pytest.mark.asyncio
+async def test_student_facing_title_picked_shows_practice_set(monkeypatch):
+    """A deliberately-picked full mock is named by its catalogue number, even
+    when the student already has a Mock #N slot for the same paper."""
+    from app.services import student_mock as m
+
+    uid = uuid.uuid4()
+    tid = uuid.uuid4()
+
+    async def _picked(_db, _uid, _tid):
+        return True
+
+    async def _practice(_db, _tid):
+        return "Practice set #29"
+
+    async def _slots(_db, _uid):
+        return {tid: 14}  # would have been "Mock #14" without the pick
+
+    monkeypatch.setattr(m, "latest_full_mock_picked", _picked)
+    monkeypatch.setattr(m, "practice_label_for_test", _practice)
+    monkeypatch.setattr(m, "slot_map_for_user", _slots)
+
+    title = await m.student_facing_title(None, uid, tid)  # type: ignore[arg-type]
+    assert title == "Practice set #29"
+
+
+@pytest.mark.asyncio
+async def test_student_facing_title_random_stays_mock(monkeypatch):
+    """A random-rotation mock (not picked) keeps the anonymous Mock #N."""
+    from app.services import student_mock as m
+
+    uid = uuid.uuid4()
+    tid = uuid.uuid4()
+
+    async def _not_picked(_db, _uid, _tid):
+        return False
+
+    async def _slots(_db, _uid):
+        return {tid: 14}
+
+    monkeypatch.setattr(m, "latest_full_mock_picked", _not_picked)
+    monkeypatch.setattr(m, "slot_map_for_user", _slots)
+
+    title = await m.student_facing_title(None, uid, tid)  # type: ignore[arg-type]
+    assert title == "Mock #14"
+
+
 def _progress(stype: str, state: SectionState) -> SectionProgress:
     return SectionProgress(
         id=uuid.uuid4(),

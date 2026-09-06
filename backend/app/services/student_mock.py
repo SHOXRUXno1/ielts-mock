@@ -255,6 +255,30 @@ async def practice_label_for_test(db: AsyncSession, test_id: uuid.UUID) -> str:
     return practice_set_label(indexes.get(test_id))
 
 
+async def latest_full_mock_picked(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    test_id: uuid.UUID,
+) -> bool:
+    """True when the student's most recent full mock on this paper was a
+    deliberate pick. A later random sitting on the same paper flips it back,
+    so the label always reflects how the current attempt was started.
+    """
+    row = (
+        await db.execute(
+            select(Attempt.picked)
+            .where(
+                Attempt.user_id == user_id,
+                Attempt.test_id == test_id,
+                Attempt.mode == AttemptMode.FULL_MOCK.value,
+            )
+            .order_by(Attempt.created_at.desc())
+            .limit(1)
+        )
+    ).first()
+    return bool(row[0]) if row is not None else False
+
+
 async def student_facing_title(
     db: AsyncSession,
     user_id: uuid.UUID,
@@ -266,6 +290,10 @@ async def student_facing_title(
         return await practice_label_for_test(db, test_id)
     if kind == "mock":
         return await label_for_user_test(db, user_id, test_id)
+    # auto: a deliberately-picked paper is named by its catalogue number, so
+    # the student sees the very paper they chose; random mocks stay "Mock #N".
+    if await latest_full_mock_picked(db, user_id, test_id):
+        return await practice_label_for_test(db, test_id)
     slots = await slot_map_for_user(db, user_id)
     if test_id in slots:
         return student_mock_label(slots[test_id])
@@ -381,6 +409,7 @@ async def start_full_mock_on_test(
         status=AttemptStatus.IN_PROGRESS,
         mode=AttemptMode.FULL_MOCK.value,
         started_at=datetime.now(timezone.utc),
+        picked=True,
     )
     db.add(attempt)
     try:
