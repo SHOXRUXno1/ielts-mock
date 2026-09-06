@@ -96,6 +96,20 @@ def _normalize(text: str) -> str:
     return text.strip().lower()
 
 
+def _letter_prefix(value: str) -> str:
+    """Leading option token of a lettered answer, normalized.
+
+    Map/heading options render to the student as "E. garage" or
+    "iii. Some heading", but the answer key stores only the letter ("E",
+    "iii"). The frontend can submit either the full option or the bare
+    letter, so compare on the token before the first dot.
+    """
+    v = str(value).strip()
+    dot = v.find(".")
+    head = v[:dot] if dot > 0 else v
+    return _normalize(head)
+
+
 def scoring_slots_for_question(question: object) -> int:
     """How many IELTS marks / display numbers one Question row contributes.
 
@@ -355,7 +369,12 @@ def score_answer(question: Question, answer: Answer) -> tuple[int, int]:
 
     if qtype in ("matching_headings", "matching_information", "matching_features", "map_labeling"):
         correct = _get_correct_scalar(question.answer_key)
-        is_correct = _normalize(str(student_value)) == _normalize(correct)
+        # Options live on the group, not the question, so match on the letter
+        # token: the key is "E"/"iii" while the student may submit "E. garage".
+        is_correct = (
+            _normalize(str(student_value)) == _normalize(correct)
+            or _letter_prefix(student_value) == _letter_prefix(correct)
+        )
         answer.is_correct = is_correct
         answer.score = 1.0 if is_correct else 0.0
         return (1, 1) if is_correct else (0, 1)

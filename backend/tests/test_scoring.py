@@ -236,6 +236,40 @@ class TestMatchingOneItemPerRow:
         assert (c, t) == (1, 4)
 
 
+# ── MapLabeling / lettered matching: full-option answers ────────────────────────
+
+class TestLetteredFullOptionAnswer:
+    """The frontend submits the whole option ("E. garage") for map_labeling and
+    the matching_* types, while the key stores only the letter ("E"). Scoring
+    must credit the letter — this is the bug that marked E/A/C wrong even when
+    the student picked the right building.
+    """
+
+    def test_map_labeling_full_option_text_is_correct(self):
+        q = make_q(QuestionType.MAP_LABELING, {"correct": "E"}, {"location": "8"})
+        a = make_a(q, {"answer": "E. garage"})
+        assert score_answer(q, a) == (1, 1)
+        assert a.is_correct is True
+
+    def test_map_labeling_wrong_letter_full_text_is_wrong(self):
+        q = make_q(QuestionType.MAP_LABELING, {"correct": "E"}, {"location": "8"})
+        a = make_a(q, {"answer": "A. health centre"})
+        assert score_answer(q, a) == (0, 1)
+        assert a.is_correct is False
+
+    def test_map_labeling_bare_letter_still_correct(self):
+        q = make_q(QuestionType.MAP_LABELING, {"correct": "E"}, {"location": "8"})
+        a = make_a(q, {"answer": "E"})
+        assert score_answer(q, a) == (1, 1)
+
+    def test_matching_headings_roman_full_text_is_correct(self):
+        q = make_q(
+            QuestionType.MATCHING_HEADINGS, {"correct": "iii"}, {"question": "Para C"}
+        )
+        a = make_a(q, {"answer": "iii. A solution for the long term"})
+        assert score_answer(q, a) == (1, 1)
+
+
 # ── MultiSelect ────────────────────────────────────────────────────────────────
 
 class TestMultiSelect:
