@@ -390,6 +390,13 @@ async def start_full_mock_on_test(
     live = await in_progress_full_mock(db, user_id)
     if live is not None:
         if live.test_id == test_id:
+            # Resuming the paper the student is explicitly picking — mark it
+            # picked so the exam screen names it "Practice set #N" even if the
+            # live sitting was opened before pick-tracking existed.
+            if not live.picked:
+                live.picked = True
+                await db.commit()
+                await db.refresh(live)
             return live
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
