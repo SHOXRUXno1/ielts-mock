@@ -136,7 +136,7 @@ NOTES1_ANSWERS: list[tuple[str, list[str], int]] = [
     ("n2", ["wood"], 1),
     (
         "n3",
-        ["£15.00", "£15", "15.00", "15 pounds", "fifteen pounds", "£15.00 pounds"],
+        ["£15.00", "£15", "15.00", "15", "15 pounds", "fifteen pounds", "£15.00 pounds"],
         3,
     ),
     ("n4", ["cream"], 1),
@@ -149,6 +149,7 @@ NOTES1_ANSWERS: list[tuple[str, list[str], int]] = [
             "£95.00",
             "£95",
             "95.00",
+            "95",
             "95 pounds",
             "ninety-five pounds",
             "ninety five pounds",
