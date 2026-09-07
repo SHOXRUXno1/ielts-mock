@@ -42,9 +42,7 @@ TEST_NUMBER = 2
 
 TASK1_DESCRIPTION = (
     "The diagram below shows the environmental issues raised by a "
-    "product over its life cycle.\n\n"
-    "Summarize the information by selecting and reporting the main "
-    "features, and make comparisons where relevant."
+    "product over its life cycle."
 )
 
 TASK2_STATEMENT = (
@@ -79,8 +77,7 @@ async def seed(db: AsyncSession) -> None:
 
     task1_instruction = get_default_instruction(1)
     task1_description = (
-        f"{TASK1_DESCRIPTION}\n\n"
-        "You should spend about 20 minutes on this task."
+        f"{TASK1_DESCRIPTION}"
     )
     db.add(
         Question(

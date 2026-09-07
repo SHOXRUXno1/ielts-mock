@@ -44,9 +44,7 @@ TEST_NUMBER = 3
 
 TASK1_DESCRIPTION = (
     "The charts below show the number of girls per 100 boys "
-    "in all levels of education.\n\n"
-    "Summarize the information by selecting and reporting on "
-    "the main features, and make comparisons where relevant."
+    "in all levels of education."
 )
 
 TASK2_STATEMENT = (
@@ -81,8 +79,7 @@ async def seed(db: AsyncSession) -> None:
 
     task1_instruction = get_default_instruction(1)
     task1_description = (
-        f"{TASK1_DESCRIPTION}\n\n"
-        "You should spend about 20 minutes on this task."
+        f"{TASK1_DESCRIPTION}"
     )
     db.add(
         Question(

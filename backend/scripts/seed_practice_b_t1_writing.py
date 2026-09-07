@@ -73,8 +73,7 @@ async def seed(db: AsyncSession) -> None:
 
     task1_instruction = get_default_instruction(1)
     task1_description = (
-        f"{TASK1_DESCRIPTION}\n\n"
-        "You should spend about 20 minutes on this task."
+        f"{TASK1_DESCRIPTION}"
     )
     db.add(
         Question(

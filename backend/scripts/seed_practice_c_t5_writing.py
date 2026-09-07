@@ -40,9 +40,7 @@ TEST_NUMBER = 5
 
 TASK1_DESCRIPTION = (
     "The graph and bar chart below show the average monthly rainfall "
-    "and temperature for one region of East Africa.\n\n"
-    "Summarise the information by selecting and reporting the main features, "
-    "and making comparisons where relevant."
+    "and temperature for one region of East Africa."
 )
 
 TASK2_STATEMENT = (
@@ -79,8 +77,7 @@ async def seed(db: AsyncSession) -> None:
 
     task1_instruction = get_default_instruction(1)
     task1_description = (
-        f"{TASK1_DESCRIPTION}\n\n"
-        "You should spend about 20 minutes on this task."
+        f"{TASK1_DESCRIPTION}"
     )
     db.add(
         Question(

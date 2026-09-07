@@ -41,9 +41,7 @@ TEST_NUMBER = 6
 TASK1_DESCRIPTION = (
     "The tables below give information about the world population and "
     "distribution in 1950 and 2000, with an estimate of the situation in "
-    "2050.\n\n"
-    "Summarise the information by selecting and reporting the main features, "
-    "and make comparisons where relevant."
+    "2050."
 )
 
 TASK2_STATEMENT = (
@@ -76,8 +74,7 @@ async def seed(db: AsyncSession) -> None:
 
     task1_instruction = get_default_instruction(1)
     task1_description = (
-        f"{TASK1_DESCRIPTION}\n\n"
-        "You should spend about 20 minutes on this task."
+        f"{TASK1_DESCRIPTION}"
     )
     db.add(
         Question(

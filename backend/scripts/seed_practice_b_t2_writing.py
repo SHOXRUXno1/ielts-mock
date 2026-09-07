@@ -40,9 +40,7 @@ TEST_NUMBER = 2
 TASK1_DESCRIPTION = (
     "The table below shows the results of a survey to find out what members "
     "of a city sports club think about the club's activities, facilities and "
-    "opening hours.\n\n"
-    "Summarise the information by selecting and reporting the main features, "
-    "and make any comparisons where relevant."
+    "opening hours."
 )
 
 TASK2_STATEMENT = (
@@ -81,8 +79,7 @@ async def seed(db: AsyncSession) -> None:
 
     task1_instruction = get_default_instruction(1)
     task1_description = (
-        f"{TASK1_DESCRIPTION}\n\n"
-        "You should spend about 20 minutes on this task."
+        f"{TASK1_DESCRIPTION}"
     )
     db.add(
         Question(
