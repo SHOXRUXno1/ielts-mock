@@ -489,7 +489,7 @@ async def seed(db: AsyncSession) -> None:
 
     section = await get_section(db, test.id, SectionType.READING, 10)
     title, body = read_passage(TEST_NUMBER, "reading_p1.txt")
-    section.title = f"Passage 1 — {title}"
+    section.title = title
     section.passage = body
     section.passage_subtitle = None
     print(
@@ -521,7 +521,7 @@ async def seed(db: AsyncSession) -> None:
 
     section = await get_section(db, test.id, SectionType.READING, 11)
     title, body = read_passage(TEST_NUMBER, "reading_p2.txt")
-    section.title = f"Passage 2 — {title}"
+    section.title = title
     section.passage = body
     section.passage_subtitle = None
     print(
@@ -552,7 +552,7 @@ async def seed(db: AsyncSession) -> None:
 
     section = await get_section(db, test.id, SectionType.READING, 12)
     title, body = read_passage(TEST_NUMBER, "reading_p3.txt")
-    section.title = f"Passage 3 — {title}"
+    section.title = title
     section.passage = body
     section.passage_subtitle = None
     print(
