@@ -3,7 +3,7 @@
 Source: Peter May Oxford IELTS Practice Tests, Test 4.
 Every key is taken from the printed Explanatory Answer Key (pp.154-161).
 
-Section 1  Q1-4   short_answer         Proof of name / address (THREE WORDS)
+Section 1  Q1-4   note_completion      Proof of name / address (THREE WORDS)
            Q5-7   note_completion      Savings Bank details (TWO WORDS OR NUMBERS)
            Q8-10  map_labeling         Banks on the map (A-H)
 Section 2  Q11-14 table_completion     Preparing for the interview (THREE WORDS)
@@ -65,23 +65,53 @@ def gap(gap_id: str) -> dict:
 
 # ── Section 1 — Opening a bank account ───────────────────────────────────────
 
-SHORT1_ITEMS: list[tuple[str, list[str]]] = [
+SHORT1_STRUCTURE: dict = {
+    "variant": "notes",
+    "title": "",
+    "instruction_words": "THREE WORDS",
+    "max_words_per_gap": 3,
+    "sections": [
+        {
+            "heading": "Which documents could Sam use as proof of her name?",
+            "items": [
+                {"segments": [text("Example: passport")]},
+                {"segments": [gap("s1")]},
+                {"segments": [gap("s2")]},
+            ],
+        },
+        {
+            "heading": "Which could she use as proof of her address?",
+            "items": [
+                {"segments": [text("council tax bill")]},
+                {"segments": [gap("s3")]},
+                {"segments": [text("phone bill (fixed line)")]},
+                {"segments": [gap("s4")]},
+            ],
+        },
+    ],
+}
+
+SHORT1_ANSWERS: list[tuple[str, list[str], int]] = [
     (
-        "Which other document could Sam use as proof of her name?",
+        "s1",
         ["driving licence", "a driving licence", "(a) driving licence"],
+        3,
     ),
     (
-        "Which other document could she use as proof of her name?",
+        "s2",
         ["benefit book", "a benefit book", "(a) benefit book"],
+        3,
     ),
     (
-        "Which other document could she use as proof of her address?",
+        "s3",
         ["insurance certificate", "an insurance certificate",
          "(an) insurance certificate"],
+        3,
     ),
     (
-        "Which other document could she use as proof of her address?",
+        "s4",
         ["electricity bill", "an electricity bill", "(an) electricity bill"],
+        3,
     ),
 ]
 
@@ -707,11 +737,12 @@ async def seed(db: AsyncSession) -> None:
         f"{await clear_section(db, part.id)} old row(s)"
     )
     w = SectionWriter(db, part)
-    await w.short_answer(
+    await w.compound(
+        QuestionType.NOTE_COMPLETION,
         "Answer the questions below.\n"
         "Write NO MORE THAN THREE WORDS for each answer.",
-        SHORT1_ITEMS,
-        max_words=3,
+        SHORT1_STRUCTURE,
+        SHORT1_ANSWERS,
     )
     await w.compound(
         QuestionType.NOTE_COMPLETION,
