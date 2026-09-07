@@ -225,7 +225,7 @@ NOTES_STRUCTURE: dict = {
 NOTES_ANSWERS: list[tuple[str, list[str], int]] = [
     ("n15", ["2 hours", "two hours"], 2),
     ("n16", ["final exams", "finals"], 2),
-    ("n17", ["6pm", "6 pm", "6.00pm", "18.00"], 2),
+    ("n17", ["6pm", "6 pm", "6.00pm", "6:00pm", "18.00", "18:00"], 2),
     ("n18", ["vegetarian", "vegetarians"], 1),
     ("n19", ["fully insures", "insures"], 2),
     ("n20", ["50", "£50"], 1),
