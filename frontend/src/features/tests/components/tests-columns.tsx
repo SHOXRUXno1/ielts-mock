@@ -50,34 +50,44 @@ function bookDotClass(slug: string | null | undefined): string {
   return BOOK_DOT_PALETTE[Math.abs(hash) % BOOK_DOT_PALETTE.length]
 }
 
+const SECTION_DOTS: { key: keyof SectionCounts; label: string; color: string }[] = [
+  { key: 'listening', label: 'Listening', color: 'bg-sky-500' },
+  { key: 'reading', label: 'Reading', color: 'bg-emerald-500' },
+  { key: 'writing', label: 'Writing', color: 'bg-violet-500' },
+  { key: 'speaking', label: 'Speaking', color: 'bg-amber-500' },
+]
+
 function SectionsPill({ counts }: { counts: SectionCounts | null | undefined }) {
   if (!counts) {
     return <span className='text-muted-foreground text-sm'>—</span>
   }
-  const parts: [string, number][] = [
-    ['L', counts.listening],
-    ['R', counts.reading],
-    ['W', counts.writing],
-    ['S', counts.speaking],
-  ]
+  const total =
+    counts.listening + counts.reading + counts.writing + counts.speaking
+  const tip = SECTION_DOTS.map(
+    (s) => `${s.label}: ${counts[s.key]}`,
+  ).join(', ')
   return (
-    <div className='flex items-center gap-1.5 font-mono text-xs tabular-nums'>
-      {parts.map(([label, n]) => (
-        <span
-          key={label}
-          className={cn(
-            'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5',
-            n > 0
-              ? 'bg-muted text-foreground'
-              : 'bg-transparent text-muted-foreground/50',
-          )}
-          title={`${label === 'L' ? 'Listening' : label === 'R' ? 'Reading' : label === 'W' ? 'Writing' : 'Speaking'}: ${n}`}
-        >
-          <span className='font-semibold'>{label}</span>
-          {n}
-        </span>
-      ))}
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className='inline-flex cursor-help items-center gap-1.5'>
+          <div className='flex items-center gap-1'>
+            {SECTION_DOTS.map((s) => (
+              <span
+                key={s.key}
+                className={cn(
+                  'h-2.5 w-2.5 rounded-full',
+                  counts[s.key] > 0 ? s.color : 'bg-muted-foreground/20',
+                )}
+              />
+            ))}
+          </div>
+          <span className='text-xs tabular-nums text-muted-foreground'>
+            {total}q
+          </span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{tip}</TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -115,7 +125,7 @@ export const testsColumns: ColumnDef<Test>[] = [
     header: 'Sections',
     cell: ({ row }) => <SectionsPill counts={row.original.section_counts} />,
     enableSorting: false,
-    meta: { className: 'w-56' },
+    meta: { className: 'w-28' },
   },
   {
     accessorKey: 'type',
