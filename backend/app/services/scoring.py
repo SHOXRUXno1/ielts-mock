@@ -11,6 +11,7 @@ answer_key canonical formats (both legacy seed variants accepted):
     legacy    : {"answers": ["A", "B", ...]}  — paired with content.items order
 """
 
+import re
 from types import SimpleNamespace
 
 from app.models.answer import Answer
@@ -208,6 +209,33 @@ def _tokens_match(a: str, b: str, aliases: dict[str, set[str]]) -> bool:
     return bool(_expand_token(a, aliases) & _expand_token(b, aliases))
 
 
+_PAREN_RE = re.compile(r"\(([^)]*)\)")
+
+
+def _expand_optional_parens(variant: str) -> set[str]:
+    """Expand IELTS optional-word brackets into every accepted wording.
+
+    In IELTS answer keys a word in round brackets is optional, so
+    ``(lightweight) bags`` accepts both ``lightweight bags`` and ``bags``.
+    Each ``(...)`` group is branched on keep-content vs drop-whole-group, so
+    ``(the) health (centre)`` yields all four combinations. Whitespace is
+    collapsed after a group is dropped. A variant without brackets returns
+    just itself.
+    """
+    results: set[str] = set()
+    stack = [variant]
+    while stack:
+        cur = stack.pop()
+        m = _PAREN_RE.search(cur)
+        if not m:
+            results.add(re.sub(r"\s+", " ", cur).strip())
+            continue
+        inner = m.group(1)
+        stack.append(cur[: m.start()] + inner + cur[m.end():])  # keep word
+        stack.append(cur[: m.start()] + cur[m.end():])          # drop word
+    return results
+
+
 def check_text_answer(
     student: str,
     correct_variants: "str | list[str]",
@@ -218,6 +246,8 @@ def check_text_answer(
 
     - Normalises both sides (strip; lowercase unless case_sensitive).
     - Accepts a single string or a list of acceptable strings for *correct_variants*.
+    - Round brackets in a variant mark optional words, so ``(lightweight) bags``
+      accepts both ``lightweight bags`` and ``bags``.
     - A match against an accepted variant always counts as correct (even if the
       variant is longer than *max_words* — e.g. ``115`` / ``one hundred fifteen``).
     - *max_words* only rejects answers that do **not** match any variant.
@@ -227,11 +257,10 @@ def check_text_answer(
     if isinstance(correct_variants, str):
         correct_variants = [correct_variants]
     for v in correct_variants:
-        candidate = str(v).strip()
-        if not case_sensitive:
-            candidate = candidate.lower()
-        if candidate == student_norm:
-            return True
+        for form in _expand_optional_parens(str(v)):
+            candidate = form if case_sensitive else form.lower()
+            if candidate == student_norm:
+                return True
     if max_words is not None and len(student_raw.split()) > max_words:
         return False
     return False

@@ -130,6 +130,33 @@ class TestGapFill:
         a = make_a(q, {"answer": "design"})
         assert check_answer(q, a) is False
 
+    def test_optional_word_in_brackets_accepts_both(self):
+        # "(lightweight) bags" is IELTS shorthand for an optional word: both
+        # "lightweight bags" and "bags" must be marked correct.
+        q = make_q(
+            QuestionType.GAP_FILL,
+            {"correct": ["(lightweight) bags"], "max_words": 3},
+        )
+        assert check_answer(q, make_a(q, {"answer": "lightweight bags"})) is True
+        assert check_answer(q, make_a(q, {"answer": "bags"})) is True
+
+    def test_optional_word_does_not_accept_wrong_word(self):
+        q = make_q(
+            QuestionType.GAP_FILL,
+            {"correct": ["(lightweight) bags"], "max_words": 3},
+        )
+        assert check_answer(q, make_a(q, {"answer": "heavy bags"})) is False
+
+    def test_two_optional_groups_expand_all_forms(self):
+        q = make_q(
+            QuestionType.GAP_FILL,
+            {"correct": ["(the) health (centre)"], "max_words": 3},
+        )
+        for good in ("health centre", "the health centre", "health", "the health"):
+            assert check_answer(q, make_a(q, {"answer": good})) is True, good
+        # "centre" alone drops the non-optional "health" — still wrong.
+        assert check_answer(q, make_a(q, {"answer": "the centre"})) is False
+
 
 # ── Matching ───────────────────────────────────────────────────────────────────
 
