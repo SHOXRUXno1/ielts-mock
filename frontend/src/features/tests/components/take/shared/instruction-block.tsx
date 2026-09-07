@@ -111,7 +111,13 @@ export function splitPassageParagraphs(text: string): string[] {
     .filter((p) => p.length > 0)
 }
 
-/** Passage seeds use "[A]" on its own line or "[A] body…"; students see the letter only. */
+/**
+ * Passage seeds label paragraphs three ways: bracketed inline ("[A] body…"),
+ * bracketed on its own line ("[A]"), or a bare letter on its own line ("A",
+ * optionally "A." / "A)"). All resolve to the same label; students see just the
+ * letter. A bare letter counts only when it is the whole paragraph, never as the
+ * first word of a sentence.
+ */
 export function parsePassageParagraphLabel(paragraph: string): {
   label: string | null
   body: string
@@ -120,7 +126,43 @@ export function parsePassageParagraphLabel(paragraph: string): {
   if (ownLine) return { label: ownLine[1], body: '' }
   const inline = paragraph.match(/^\[([A-Z])\]\s+([\s\S]+)$/)
   if (inline) return { label: inline[1], body: inline[2] }
+  const bare = paragraph.match(/^([A-Z])[.)]?$/)
+  if (bare) return { label: bare[1], body: '' }
   return { label: null, body: paragraph }
+}
+
+/**
+ * Turn raw passage paragraphs into { label, body } render units. A standalone
+ * label line (bracketed or bare) attaches as the inline prefix of the paragraph
+ * that follows it, so a book's "A\n\nText…" renders identically to "[A] Text…".
+ * A section may span several paragraphs; only its first one carries the letter.
+ */
+export function assemblePassageParagraphs(
+  paragraphs: string[],
+): { label: string | null; body: string }[] {
+  const out: { label: string | null; body: string }[] = []
+  let pending: string | null = null
+  for (const para of paragraphs) {
+    const { label, body } = parsePassageParagraphLabel(para)
+    if (label && !body) {
+      // Standalone label. Flush a previous one (empty section) as its own line.
+      if (pending) out.push({ label: pending, body: '' })
+      pending = label
+      continue
+    }
+    if (label && body) {
+      if (pending) {
+        out.push({ label: pending, body: '' })
+        pending = null
+      }
+      out.push({ label, body })
+      continue
+    }
+    out.push({ label: pending, body: para })
+    pending = null
+  }
+  if (pending) out.push({ label: pending, body: '' })
+  return out
 }
 
 export function formatPassageParagraphLabel(paragraph: string): string {
@@ -270,12 +312,10 @@ export function renderFormattedText(
   text: string,
   paragraphClassName = 'text-[15px] leading-[1.9] text-slate-700 tracking-[-0.01em]',
 ): ReactNode[] {
-  const paragraphs = splitPassageParagraphs(text)
+  const paragraphs = assemblePassageParagraphs(splitPassageParagraphs(text))
   if (paragraphs.length === 0) return []
 
-  return paragraphs.map((para, i) => {
-    const { label, body } = parsePassageParagraphLabel(para)
-    const bodyText = body || (label ? '' : para)
+  return paragraphs.map(({ label, body }, i) => {
     const children = [
       ...(label
         ? [
@@ -289,7 +329,7 @@ export function renderFormattedText(
             ),
           ]
         : []),
-      ...parseInlineFormatting(bodyText),
+      ...parseInlineFormatting(body),
     ]
     return createElement(
       'p',

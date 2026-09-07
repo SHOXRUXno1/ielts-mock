@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   adaptInstructionForScreen,
+  assemblePassageParagraphs,
   formatPassageParagraphLabel,
   hasTfngKeyLegend,
   hasYnngKeyLegend,
+  parsePassageParagraphLabel,
   splitPassageParagraphs,
 } from './instruction-block'
 
@@ -68,6 +70,69 @@ describe('formatPassageParagraphLabel', () => {
 
   it('moves an inline [A] label in front of the paragraph', () => {
     expect(formatPassageParagraphLabel('[A] extra')).toBe('A extra')
+  })
+})
+
+describe('parsePassageParagraphLabel', () => {
+  it('reads a bare letter on its own line as a label', () => {
+    expect(parsePassageParagraphLabel('A')).toEqual({ label: 'A', body: '' })
+    expect(parsePassageParagraphLabel('K')).toEqual({ label: 'K', body: '' })
+  })
+
+  it('tolerates a trailing period or paren on a bare label', () => {
+    expect(parsePassageParagraphLabel('B.')).toEqual({ label: 'B', body: '' })
+    expect(parsePassageParagraphLabel('C)')).toEqual({ label: 'C', body: '' })
+  })
+
+  it('does not treat a capitalised sentence as a label', () => {
+    expect(parsePassageParagraphLabel('A wildfire spreads fast.')).toEqual({
+      label: null,
+      body: 'A wildfire spreads fast.',
+    })
+  })
+
+  it('still reads the bracketed inline form', () => {
+    expect(parsePassageParagraphLabel('[A] Space biomedicine is new.')).toEqual({
+      label: 'A',
+      body: 'Space biomedicine is new.',
+    })
+  })
+})
+
+describe('assemblePassageParagraphs', () => {
+  it('attaches a bare label line to the paragraph that follows it', () => {
+    expect(
+      assemblePassageParagraphs(['A', 'First body.', 'B', 'Second body.']),
+    ).toEqual([
+      { label: 'A', body: 'First body.' },
+      { label: 'B', body: 'Second body.' },
+    ])
+  })
+
+  it('labels only the first paragraph of a multi-paragraph section', () => {
+    expect(
+      assemblePassageParagraphs(['A', 'Intro.', 'More on A.', 'B', 'Next.']),
+    ).toEqual([
+      { label: 'A', body: 'Intro.' },
+      { label: null, body: 'More on A.' },
+      { label: 'B', body: 'Next.' },
+    ])
+  })
+
+  it('leaves inline bracketed labels as single units', () => {
+    expect(
+      assemblePassageParagraphs(['[A] Body one.', '[B] Body two.']),
+    ).toEqual([
+      { label: 'A', body: 'Body one.' },
+      { label: 'B', body: 'Body two.' },
+    ])
+  })
+
+  it('keeps unlabelled passages untouched', () => {
+    expect(assemblePassageParagraphs(['Just prose.', 'More prose.'])).toEqual([
+      { label: null, body: 'Just prose.' },
+      { label: null, body: 'More prose.' },
+    ])
   })
 })
 
