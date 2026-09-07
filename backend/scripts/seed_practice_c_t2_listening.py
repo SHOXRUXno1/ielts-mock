@@ -136,7 +136,7 @@ FORM_STRUCTURE: dict = {
 FORM_ANSWERS: list[tuple[str, list[str], int]] = [
     ("g1", ["Lamerton"], 1),
     ("g2", ["42 West Lane"], 3),
-    ("g3", ["11th June", "11.06", "06.11"], 2),
+    ("g3", ["11th June", "11 June", "June 11", "June 11th", "11.06", "06.11"], 2),
     ("g4", ["cook"], 1),
     ("g5", ["equipment"], 1),
     ("g6", ["food-handling", "food handling"], 2),

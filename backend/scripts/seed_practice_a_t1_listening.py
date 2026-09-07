@@ -289,7 +289,7 @@ SHORT_ANSWER_ITEMS: list[dict] = [
     },
     {
         "question": "When must the first essay be handed in by?",
-        "correct": ["30th October", "October 30th", "30 October", "30th of October"],
+        "correct": ["30th October", "October 30th", "30 October", "October 30", "30th of October"],
         "max_words": 3,
     },
 ]

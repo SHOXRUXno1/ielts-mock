@@ -95,7 +95,7 @@ FORM1_ANSWERS: list[tuple[str, list[str], int]] = [
     ("n5", ["credit card"], 2),
     ("n6", ["Gold Star"], 2),
     ("n7", ["Mid-winter", "mid-winter", "Midwinter", "midwinter"], 2),
-    ("n8", ["16 January", "16th January", "January 16"], 2),
+    ("n8", ["16 January", "16th January", "January 16", "January 16th"], 2),
     ("n9", ["taxi"], 2),
     ("n10", ["bicycle"], 2),
 ]

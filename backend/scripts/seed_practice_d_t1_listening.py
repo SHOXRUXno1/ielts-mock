@@ -205,7 +205,7 @@ TABLE2_STRUCTURE: dict = {
 }
 
 TABLE2_ANSWERS: list[tuple[str, list[str], int]] = [
-    ("t13", ["28 August", "28th August", "28 August"], 3),
+    ("t13", ["28 August", "28th August", "August 28", "August 28th"], 3),
     ("t14", ["People at Work"], 3),
     ("t15", ["careers advice"], 2),
     ("t16", ["Land from Air"], 3),
