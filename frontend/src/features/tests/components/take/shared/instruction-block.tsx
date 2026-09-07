@@ -315,26 +315,30 @@ export function renderFormattedText(
   const paragraphs = assemblePassageParagraphs(splitPassageParagraphs(text))
   if (paragraphs.length === 0) return []
 
-  return paragraphs.map(({ label, body }, i) => {
-    const children = [
-      ...(label
-        ? [
-            createElement(
-              'span',
-              {
-                key: 'label',
-                className: 'mr-2 font-bold text-foreground',
-              },
-              label,
-            ),
-          ]
-        : []),
-      ...parseInlineFormatting(body),
-    ]
-    return createElement(
-      'p',
-      { key: i, className: paragraphClassName },
-      ...children,
-    )
+  // A paragraph label renders as its own bold line above the paragraph, the way
+  // the printed test prints it, so "[A] body" and "A\n\nbody" both come out as
+  //   A
+  //   body…
+  const nodes: ReactNode[] = []
+  paragraphs.forEach(({ label, body }, i) => {
+    if (label) {
+      nodes.push(
+        createElement(
+          'p',
+          { key: `l${i}`, className: 'text-[15px] font-bold text-foreground' },
+          label,
+        ),
+      )
+    }
+    if (body || !label) {
+      nodes.push(
+        createElement(
+          'p',
+          { key: `b${i}`, className: paragraphClassName },
+          ...parseInlineFormatting(body),
+        ),
+      )
+    }
   })
+  return nodes
 }
