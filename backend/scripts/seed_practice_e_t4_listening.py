@@ -70,6 +70,7 @@ SHORT1_STRUCTURE: dict = {
     "title": "",
     "instruction_words": "THREE WORDS",
     "max_words_per_gap": 3,
+    "bullets": False,
     "sections": [
         {
             "heading": "Which documents could Sam use as proof of her name?",
