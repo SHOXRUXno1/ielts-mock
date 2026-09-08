@@ -632,7 +632,7 @@ async def get_result_detail(
                         AttemptMode.SINGLE_PART.value,
                         AttemptMode.SINGLE_SECTION.value,
                     )
-                    else "mock"
+                    else "auto"
                 ),
             )
             if test is not None
