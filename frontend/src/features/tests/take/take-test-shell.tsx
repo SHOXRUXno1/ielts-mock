@@ -24,7 +24,7 @@ import {
   type AttemptDetailRead,
   type AttemptRead,
 } from '@/lib/api/attempts'
-import { startFullMock, startFullMockOnTest } from '@/lib/api/student'
+import { startFullMockOnTest } from '@/lib/api/student'
 import { fetchQuestions } from '@/lib/api/questions'
 import { fetchTest, fetchTestBySlug } from '@/lib/api/tests'
 import {
