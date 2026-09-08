@@ -26,7 +26,14 @@ export function InstructionBlock({ children, className }: Props) {
  * Example: "Write ONE WORD AND/OR A NUMBER for each answer."
  *       →  "Write **ONE WORD AND/OR A NUMBER** for each answer."
  */
-const SINGLE_CAPS_KEYWORDS = new Set(['TRUE', 'FALSE', 'YES', 'NO'])
+const SINGLE_CAPS_KEYWORDS = new Set([
+  'TRUE',
+  'FALSE',
+  'YES',
+  'NO',
+  'ESSENTIAL',
+  'RECOMMENDED',
+])
 
 /** Seeded group.instruction already lists the TFNG key — don't render it again. */
 export function hasTfngKeyLegend(instruction: string): boolean {
