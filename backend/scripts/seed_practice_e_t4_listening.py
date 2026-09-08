@@ -194,17 +194,18 @@ TABLE2_STRUCTURE: dict = {
             {
                 "variant": "plain",
                 "segments": [
+                    text("Step 1:\nPrepare things to take."),
+                ],
+            },
+            {
+                "variant": "plain",
+                "segments": [
                     text(
-                        "Step 1: Gather all documents, e.g. copies of "
-                        "r\u00e9sum\u00e9.\nAlso take some "
+                        "Gather all documents, e.g. copies of "
+                        "r\u00e9sum\u00e9.\nChoose "
                     ),
                     gap("t11"),
-                ],
-            },
-            {
-                "variant": "plain",
-                "segments": [
-                    text("e.g. designs, drawings, written work"),
+                    text(", e.g. designs, drawings, written work."),
                 ],
             },
         ],
@@ -212,18 +213,16 @@ TABLE2_STRUCTURE: dict = {
             {
                 "variant": "plain",
                 "segments": [
-                    text(
-                        "Step 2: Check you have pen and paper.\n"
-                        "Get more information. Ask for "
-                    ),
+                    text("Step 2:\nGet more information."),
+                ],
+            },
+            {
+                "variant": "plain",
+                "segments": [
+                    text("Check you have pen and paper.\nAsk firm for a "),
                     gap("t12"),
-                ],
-            },
-            {
-                "variant": "plain",
-                "segments": [
                     text(
-                        "See profiles at Chamber of Commerce, library"
+                        ".\nSee profiles at Chamber of Commerce, library."
                     ),
                 ],
             },
@@ -232,16 +231,16 @@ TABLE2_STRUCTURE: dict = {
             {
                 "variant": "plain",
                 "segments": [
-                    text("Step 3: Contact "),
-                    gap("t13"),
-                    text(" of this or related firms"),
+                    text("Step 3:\nFocus on you and the job."),
                 ],
             },
             {
                 "variant": "plain",
                 "segments": [
+                    text("Contact "),
+                    gap("t13"),
                     text(
-                        "Focus on you and the job.\n"
+                        " of this or related firms.\n"
                         "Compare yourself with what is required.\n"
                         "Imagine likely questions and your answers.\n"
                         "Decide how to make up for any "
