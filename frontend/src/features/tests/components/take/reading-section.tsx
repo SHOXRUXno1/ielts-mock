@@ -530,7 +530,7 @@ export function ReadingSection({
                   onAnswer={onAnswer}
                   listTitle={group.optionsHeading || group.subtitle || undefined}
                   questionsTitle={group.questionsHeading}
-                  repeatable
+                  repeatable={/more than once/i.test(group.instruction ?? '')}
                   previewMode={previewMode}
                 />
               )}

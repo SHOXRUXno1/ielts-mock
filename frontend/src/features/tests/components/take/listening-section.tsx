@@ -542,7 +542,7 @@ export function ListeningSection({
                   onAnswer={onAnswer}
                   listTitle={group.optionsHeading || group.subtitle || undefined}
                   questionsTitle={group.questionsHeading}
-                  repeatable={false}
+                  repeatable={/more than once/i.test(group.instruction ?? '')}
                   previewMode={previewMode}
                 />
               )}
