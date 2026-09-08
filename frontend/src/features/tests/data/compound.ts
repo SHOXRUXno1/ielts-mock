@@ -7,6 +7,7 @@ export const COMPOUND_TYPES = [
   'summary_completion',
   'flow_chart_completion',
   'diagram_labeling',
+  'sentence_completion',
 ] as const
 
 export type CompoundQuestionType = (typeof COMPOUND_TYPES)[number]
@@ -122,7 +123,8 @@ export function isCompoundType(
     type === 'form_completion' ||
     type === 'summary_completion' ||
     type === 'flow_chart_completion' ||
-    type === 'diagram_labeling'
+    type === 'diagram_labeling' ||
+    type === 'sentence_completion'
   )
 }
 
