@@ -143,7 +143,7 @@ async def _attempt_list_item(
         kind = "practice" if attempt.mode in (
             AttemptMode.SINGLE_PART.value,
             AttemptMode.SINGLE_SECTION.value,
-        ) else "mock"
+        ) else "auto"
         title = await title_for_actor(
             db,
             role=actor.role,
@@ -209,7 +209,7 @@ async def list_results(
         kind = "practice" if attempt.mode in (
             AttemptMode.SINGLE_PART.value,
             AttemptMode.SINGLE_SECTION.value,
-        ) else "mock"
+        ) else "auto"
         display_title = await title_for_actor(
             db,
             role=actor.role,
