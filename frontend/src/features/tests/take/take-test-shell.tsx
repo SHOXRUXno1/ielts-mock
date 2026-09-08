@@ -24,7 +24,7 @@ import {
   type AttemptDetailRead,
   type AttemptRead,
 } from '@/lib/api/attempts'
-import { startFullMock } from '@/lib/api/student'
+import { startFullMock, startFullMockOnTest } from '@/lib/api/student'
 import { fetchQuestions } from '@/lib/api/questions'
 import { fetchTest, fetchTestBySlug } from '@/lib/api/tests'
 import {
@@ -746,7 +746,9 @@ export function TakeTestShell({
 
   const startMutation = useMutation({
     mutationFn: () =>
-      role === 'student' ? startFullMock() : startAttempt(testId),
+      role === 'student'
+        ? startFullMockOnTest(testId)
+        : startAttempt(testId),
     onSuccess: (data) => {
       startedThisVisitRef.current = true
       if (role === 'student' && data.test_id !== testId) {
