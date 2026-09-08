@@ -25,10 +25,9 @@ from app.services.student_mock import (
     published_test_ids,
     remaining_count,
     resume_position_for_attempt,
-    slot_map_for_user,
     start_full_mock_on_test,
     start_next_full_mock,
-    student_mock_label,
+    student_facing_title,
 )
 
 
@@ -169,21 +168,20 @@ async def student_dashboard(
     )
     result = await db.execute(stmt)
     rows = result.all()
-    slots = await slot_map_for_user(db, actor.user_id)
 
     bands = [r.Attempt.overall_band for r in rows if r.Attempt.overall_band is not None]
-    recent = [
-        DashboardAttempt(
+    recent = []
+    for r in rows[:5]:
+        title = await student_facing_title(db, actor.user_id, r.Attempt.test_id)
+        recent.append(DashboardAttempt(
             id=r.Attempt.id,
             test_id=r.Attempt.test_id,
-            test_title=student_mock_label(slots.get(r.Attempt.test_id)),
+            test_title=title,
             overall_band=r.Attempt.overall_band,
             status=r.Attempt.status,
             finished_at=r.Attempt.finished_at,
             created_at=r.Attempt.created_at,
-        )
-        for r in rows[:5]
-    ]
+        ))
 
     # Section band averages across all finished attempts
     l_bands = [r.Attempt.listening_band for r in rows if r.Attempt.listening_band is not None]
@@ -241,7 +239,7 @@ async def student_dashboard(
         in_progress = InProgressAttempt(
             id=att.id,
             test_id=att.test_id,
-            test_title=student_mock_label(slots.get(att.test_id)),
+            test_title=await student_facing_title(db, actor.user_id, att.test_id),
             answered=answered_count,
             total=total_count,
             updated_at=att.updated_at or att.created_at,
@@ -428,12 +426,13 @@ async def student_results(
         .offset(offset)
     )
     result = await db.execute(stmt)
-    slots = await slot_map_for_user(db, actor.user_id)
-    items = [
-        {
+    items = []
+    for r in result.all():
+        title = await student_facing_title(db, actor.user_id, r.Attempt.test_id)
+        items.append({
             "id": str(r.Attempt.id),
             "test_id": str(r.Attempt.test_id),
-            "test_title": student_mock_label(slots.get(r.Attempt.test_id)),
+            "test_title": title,
             "status": r.Attempt.status,
             "overall_band": r.Attempt.overall_band,
             "listening_band": r.Attempt.listening_band,
@@ -443,9 +442,7 @@ async def student_results(
             "started_at": r.Attempt.started_at.isoformat() if r.Attempt.started_at else None,
             "finished_at": r.Attempt.finished_at.isoformat() if r.Attempt.finished_at else None,
             "created_at": r.Attempt.created_at.isoformat(),
-        }
-        for r in result.all()
-    ]
+        })
     return {"items": items, "total": total, "limit": limit, "offset": offset}
 
 
@@ -506,8 +503,7 @@ async def full_mock_status(
     section = None
     part = None
     if live is not None:
-        slots = await slot_map_for_user(db, actor.user_id)
-        title = student_mock_label(slots.get(live.test_id))
+        title = await student_facing_title(db, actor.user_id, live.test_id)
         section, part = await resume_position_for_attempt(db, live.id)
     published = await published_test_ids(db)
     return FullMockStatus(
