@@ -24,6 +24,7 @@ COMPOUND_TYPES: frozenset[str] = frozenset(
         "summary_completion",
         "flow_chart_completion",
         "diagram_labeling",
+        "sentence_completion",
     }
 )
 
@@ -34,6 +35,7 @@ _VARIANT_FOR_TYPE: dict[str, str] = {
     "summary_completion": "summary",
     "flow_chart_completion": "flow",
     "diagram_labeling": "notes",
+    "sentence_completion": "notes",
 }
 
 

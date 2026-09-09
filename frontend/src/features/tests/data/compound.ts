@@ -207,6 +207,7 @@ export function variantFromType(type: QuestionType | string): CompoundVariant {
       return 'table'
     case 'note_completion':
     case 'diagram_labeling':
+    case 'sentence_completion':
       return 'notes'
     case 'form_completion':
       return 'form'
