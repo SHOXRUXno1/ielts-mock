@@ -38,6 +38,14 @@ _VARIANT_FOR_TYPE: dict[str, str] = {
     "sentence_completion": "notes",
 }
 
+# Question types that accept more than one structure variant. diagram_labeling
+# may render either as a plain notes list (legacy) or as a positioned diagram
+# with input fields overlaid on an image. Every other type is strictly 1:1 via
+# _VARIANT_FOR_TYPE.
+_ALLOWED_VARIANTS: dict[str, set[str]] = {
+    "diagram_labeling": {"notes", "diagram"},
+}
+
 
 def is_compound_type(question_type: str | Any) -> bool:
     value = question_type.value if hasattr(question_type, "value") else str(question_type)
@@ -143,6 +151,11 @@ def extract_gap_ids(structure: dict[str, Any] | None) -> list[str]:
                 if isinstance(child, dict):
                     gaps.extend(_gaps_from_segments(child.get("segments")))
 
+    elif variant == "diagram":
+        for marker in structure.get("markers") or []:
+            if isinstance(marker, dict):
+                gaps.extend(_gaps_from_segments(marker.get("segments")))
+
     # Same gap_id may appear twice ("7 ______ and ______") — one question.
     seen: set[str] = set()
     unique: list[str] = []
@@ -166,12 +179,12 @@ def validate_compound_structure(
     if not isinstance(options_shared, dict):
         raise ValueError(f"{qtype} requires options_shared structure JSON")
 
-    expected_variant = _VARIANT_FOR_TYPE[qtype]
+    allowed_variants = _ALLOWED_VARIANTS.get(qtype, {_VARIANT_FOR_TYPE[qtype]})
     variant = options_shared.get("variant")
-    if variant != expected_variant:
+    if variant not in allowed_variants:
+        expected = " or ".join(f"'{v}'" for v in sorted(allowed_variants))
         raise ValueError(
-            f"{qtype} requires options_shared.variant == '{expected_variant}', "
-            f"got {variant!r}"
+            f"{qtype} requires options_shared.variant == {expected}, got {variant!r}"
         )
 
     if "instruction_words" not in options_shared:
@@ -309,6 +322,40 @@ def validate_compound_structure(
                     )
             else:
                 _validate_segments(step.get("segments"), f"flow step {si}")
+
+    elif variant == "diagram":
+        image_url = options_shared.get("image_url")
+        if not isinstance(image_url, str) or not image_url.strip():
+            raise ValueError("diagram requires a non-empty image_url")
+        markers = options_shared.get("markers")
+        if not isinstance(markers, list) or len(markers) == 0:
+            raise ValueError("diagram requires non-empty markers")
+        for mi, marker in enumerate(markers):
+            if not isinstance(marker, dict):
+                raise ValueError(f"diagram marker {mi} must be an object")
+            for coord in ("x", "y"):
+                value = marker.get(coord)
+                if not isinstance(value, (int, float)) or isinstance(value, bool):
+                    raise ValueError(f"diagram marker {mi} requires numeric {coord}")
+                if not 0 <= value <= 100:
+                    raise ValueError(
+                        f"diagram marker {mi} {coord} must be between 0 and 100"
+                    )
+            _validate_segments(marker.get("segments"), f"diagram marker {mi}")
+            anchor = marker.get("anchor")
+            if anchor is not None:
+                if not isinstance(anchor, dict):
+                    raise ValueError(f"diagram marker {mi} anchor must be an object")
+                for coord in ("x", "y"):
+                    value = anchor.get(coord)
+                    if not isinstance(value, (int, float)) or isinstance(value, bool):
+                        raise ValueError(
+                            f"diagram marker {mi} anchor requires numeric {coord}"
+                        )
+                    if not 0 <= value <= 100:
+                        raise ValueError(
+                            f"diagram marker {mi} anchor {coord} must be between 0 and 100"
+                        )
 
     gap_ids = extract_gap_ids(options_shared)
     if not gap_ids:

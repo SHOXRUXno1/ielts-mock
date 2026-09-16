@@ -114,9 +114,10 @@ def _letter_prefix(value: str) -> str:
 def scoring_slots_for_question(question: object) -> int:
     """How many IELTS marks / display numbers one Question row contributes.
 
-    multi_select: prefer content.choose_n (students choose N); fall back to
-    len(correct list). Scalar correct (legacy pair_id rows) → 1.
-    All other types → 1.
+    multi_select: content.mark_slots (all-or-nothing 1-mark variant used by
+    Thomson-style "choose TWO for 1 mark") wins when present; otherwise
+    prefer content.choose_n (students choose N); fall back to len(correct
+    list). Scalar correct (legacy pair_id rows) → 1. All other types → 1.
     """
     qtype = getattr(question, "question_type", None)
     qtype_str = getattr(qtype, "value", qtype)
@@ -126,6 +127,9 @@ def scoring_slots_for_question(question: object) -> int:
     content = getattr(question, "content", None) or {}
     if not isinstance(content, dict):
         content = {}
+    mark_slots = content.get("mark_slots")
+    if isinstance(mark_slots, int) and mark_slots >= 1:
+        return mark_slots
     choose_n = content.get("choose_n")
     if isinstance(choose_n, int) and choose_n >= 1:
         return choose_n
@@ -252,13 +256,20 @@ def check_text_answer(
       variant is longer than *max_words* — e.g. ``115`` / ``one hundred fifteen``).
     - *max_words* only rejects answers that do **not** match any variant.
     """
+    def _canon_dashes(s: str) -> str:
+        # Autocorrect on iOS/Word/Google Docs silently converts a hyphen to an
+        # en-dash or em-dash. Treat all three as identical for scoring.
+        return s.replace("—", "-").replace("–", "-")
+
     student_raw = str(student).strip()
     student_norm = student_raw if case_sensitive else student_raw.lower()
+    student_norm = _canon_dashes(student_norm)
     if isinstance(correct_variants, str):
         correct_variants = [correct_variants]
     for v in correct_variants:
         for form in _expand_optional_parens(str(v)):
             candidate = form if case_sensitive else form.lower()
+            candidate = _canon_dashes(candidate)
             if candidate == student_norm:
                 return True
     if max_words is not None and len(student_raw.split()) > max_words:
@@ -383,7 +394,15 @@ def score_answer(question: Question, answer: Answer) -> tuple[int, int]:
                         used_student.add(si)
                         break
             correct_count = min(hits, total)
-            answer.is_correct = correct_count == total
+            all_correct = correct_count == total
+            # Thomson-style "choose N for 1 mark": mark_slots forces the row to
+            # count as a single slot with all-or-nothing scoring.
+            mark_slots = content.get("mark_slots") if isinstance(content, dict) else None
+            if isinstance(mark_slots, int) and mark_slots >= 1:
+                answer.is_correct = all_correct
+                answer.score = 1.0 if all_correct else 0.0
+                return (mark_slots, mark_slots) if all_correct else (0, mark_slots)
+            answer.is_correct = all_correct
             answer.score = correct_count / total if total else 0.0
             return correct_count, total
 

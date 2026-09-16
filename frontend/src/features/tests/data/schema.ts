@@ -224,6 +224,9 @@ export function scoringSlotsForQuestion(
   },
 ): number {
   if (q.question_type !== 'multi_select') return 1
+  // Thomson-style "choose N for 1 mark": mark_slots forces 1-slot scoring.
+  const markSlots = q.content?.mark_slots
+  if (typeof markSlots === 'number' && markSlots >= 1) return markSlots
   // Prefer students_choose (choose_n) — canonical span; correct[] must match on save.
   const chooseN = q.content?.choose_n
   if (typeof chooseN === 'number' && chooseN >= 1) return chooseN
