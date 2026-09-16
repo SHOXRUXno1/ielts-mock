@@ -8,9 +8,9 @@ Passage 1  Q1-4   matching_information  Unmasking skin paragraphs (A-J)
            Q7-11  matching_endings      sentence completion (A-I)
            Q12-14 true_false_ng
 Passage 2  Q15-19 matching_headings     How Lock Picking Works (i-x)
-           Q20-22 short_answer          cylinder lock diagram (THREE WORDS)
-           Q23-25 short_answer          lock picking notes (THREE WORDS)
-           Q26-27 short_answer          lock types table (THREE WORDS)
+           Q20-22 diagram_labeling      cylinder lock diagram (THREE WORDS)
+           Q23-25 note_completion       lock picking notes (THREE WORDS)
+           Q26-27 table_completion      lock types table (THREE WORDS)
 Passage 3  Q28-31 yes_no_ng             management models
            Q32-37 summary_completion    US model in Britain (word list)
            Q38-39 short_answer          European model notes (THREE WORDS)
@@ -101,7 +101,7 @@ P1_MCQ: list[dict] = [
     },
 ]
 
-# Q7-11: Complete each sentence with the correct ending A-I
+# Q7-11: Complete each sentence with the correct ending A-J
 P1_ENDINGS = [
     "A. because it is both cold and painful.",
     "B. because the outer layer of the skin can mend itself.",
@@ -112,6 +112,7 @@ P1_ENDINGS = [
     "G. because of a small amount of pain.",
     "H. because there is a low temperature and pressure.",
     "I. because it is hurting a lot.",
+    "J. because all humans are capable of experiencing it.",
 ]
 
 P1_ENDING_ITEMS: list[tuple[str, str]] = [
@@ -165,53 +166,98 @@ P2_HEADING_ITEMS: list[tuple[str, str]] = [
     ("Section E", "vi"),
 ]
 
-# Q20-22: Diagram completion — cylinder lock (THREE WORDS)
-P2_DIAGRAM: list[tuple[str, list[str]]] = [
-    (
-        "What is the outer part of the lock which does not move?",
-        ["(the) housing", "housing"],
-    ),
-    (
-        "What is in the middle of the lock, turned by the key?",
-        ["(the) cylinder", "cylinder"],
-    ),
-    (
-        "What are the pairs of metal objects of varying length "
-        "inside the shafts?",
-        ["(metal) pins", "pins"],
-    ),
+# Q20-22: Diagram labeling — cylinder lock (THREE WORDS, positioned on diagram)
+P2_DIAGRAM_STRUCTURE: dict = {
+    "variant": "diagram",
+    "image_url": "/media/images/lock_diagram.png",
+    "instruction_words": "THREE WORDS",
+    "max_words_per_gap": 3,
+    "hide_numbers": False,
+    "markers": [
+        {"x": 19, "y": 9, "segments": [{"type": "gap", "gap_id": "d20"}],
+         "anchor": {"x": 33, "y": 33}},   # → housing (outer L-shape corner)
+        {"x": 61, "y": 68, "segments": [{"type": "gap", "gap_id": "d21"}],
+         "anchor": {"x": 42, "y": 50}},   # → cylinder body (middle)
+        {"x": 56, "y": 8, "segments": [{"type": "gap", "gap_id": "d22"}],
+         "anchor": {"x": 50, "y": 30}},   # → pins (vertical shafts)
+    ],
+}
+
+P2_DIAGRAM_ANSWERS: list[tuple[str, list[str]]] = [
+    ("d20", ["housing", "(the) housing"]),
+    ("d21", ["cylinder", "(the) cylinder"]),
+    ("d22", ["pins", "(metal) pins", "metal pins"]),
 ]
 
 # Q23-25: Notes completion — picking a lock (THREE WORDS)
-P2_PICKING_NOTES: list[tuple[str, list[str]]] = [
-    (
-        "What do you insert and turn to slightly offset the cylinder?",
-        ["(a/the) (tension) wrench", "(the) tension wrench",
-         "tension wrench", "(a) tension wrench", "a tension wrench",
-         "the tension wrench", "(a/the) wrench", "wrench"],
-    ),
-    (
-        "What do you slide in while applying pressure on the cylinder?",
-        ["(a/the) pick", "pick", "a pick", "the pick"],
-    ),
-    (
-        "Where is the upper pin held after it falls into position?",
-        ["(the) ledge", "ledge", "(the) ledge (in shaft)",
-         "the ledge in shaft", "ledge in shaft"],
-    ),
+# Q23-25: Notes completion — "Picking a lock" (THREE WORDS)
+P2_PICKING_STRUCTURE: dict = {
+    "variant": "notes",
+    "title": "Picking a lock",
+    "instruction_words": "THREE WORDS",
+    "max_words_per_gap": 3,
+    "sections": [
+        {
+            "items": [
+                {"segments": [
+                    text("Turn cylinder slightly using "),
+                    gap("n23"),
+                ]},
+                {"segments": [
+                    text("Hold cylinder still and insert "),
+                    gap("n24"),
+                ]},
+                {"segments": [text("Push top pin into shaft.")]},
+                {"segments": [
+                    text("Hold top pin above cylinder, on "),
+                    gap("n25"),
+                ]},
+                {"segments": [text("Lift and hold all other pins in same way.")]},
+                {"segments": [text("Turn cylinder and open lock.")]},
+            ],
+        },
+    ],
+}
+
+P2_PICKING_ANSWERS: list[tuple[str, list[str]]] = [
+    ("n23", ["(a/the) (tension) wrench", "(the) tension wrench",
+             "tension wrench", "(a) tension wrench", "a tension wrench",
+             "the tension wrench", "(a/the) wrench", "wrench"]),
+    ("n24", ["(a/the) pick", "pick", "a pick", "the pick"]),
+    ("n25", ["(the) ledge", "ledge", "(the) ledge (in shaft)",
+             "the ledge in shaft", "ledge in shaft"]),
 ]
 
 # Q26-27: Table completion — lock types (THREE WORDS)
-P2_TABLE_ITEMS: list[tuple[str, list[str]]] = [
-    (
-        "How secure are pin locks?",
-        ["moderate security", "moderate(ly) security",
-         "moderately secure"],
-    ),
-    (
-        "What type of lock is found in most cars?",
-        ["wafer", "(the) wafer (lock)", "wafer lock"],
-    ),
+P2_TABLE_STRUCTURE: dict = {
+    "variant": "table",
+    "title": "",
+    "instruction_words": "THREE WORDS",
+    "max_words_per_gap": 3,
+    "headers": ["Type of lock", "How secure?", "Where used?"],
+    "rows": [
+        [
+            {"variant": "plain", "segments": [text("Pin")]},
+            {"variant": "plain", "segments": [gap("t26")]},
+            {"variant": "plain", "segments": [text("houses, padlocks, etc")]},
+        ],
+        [
+            {"variant": "plain", "segments": [gap("t27")]},
+            {"variant": "plain", "segments": [text("relatively low security")]},
+            {"variant": "plain", "segments": [text("most cars")]},
+        ],
+        [
+            {"variant": "plain", "segments": [text("Tubular")]},
+            {"variant": "plain", "segments": [text("superior protection")]},
+            {"variant": "plain", "segments": [text("vending machines")]},
+        ],
+    ],
+}
+
+P2_TABLE_ANSWERS: list[tuple[str, list[str]]] = [
+    ("t26", ["moderate security", "moderate(ly) security",
+             "moderately secure"]),
+    ("t27", ["wafer", "(the) wafer (lock)", "wafer lock"]),
 ]
 
 
@@ -516,7 +562,7 @@ async def seed(db: AsyncSession) -> None:
     await w.lettered(
         QuestionType.MATCHING_FEATURES,
         "Complete each sentence with the correct ending "
-        "A\u2013I from the box below.\n"
+        "A\u2013J from the box below.\n"
         f"{SCREEN_LETTER_HINT}",
         P1_ENDINGS,
         P1_ENDING_ITEMS,
@@ -557,25 +603,31 @@ async def seed(db: AsyncSession) -> None:
         P2_HEADING_ITEMS,
         options_heading="List of Headings",
     )
-    await w.short_answer(
+    await w.compound(
+        QuestionType.DIAGRAM_LABELING,
         "Complete the diagram below.\n"
         "Choose NO MORE THAN THREE WORDS from the passage "
         "for each answer.",
-        P2_DIAGRAM,
+        P2_DIAGRAM_STRUCTURE,
+        P2_DIAGRAM_ANSWERS,
         max_words=3,
     )
-    await w.short_answer(
+    await w.compound(
+        QuestionType.NOTE_COMPLETION,
         "Complete the notes below.\n"
         "Choose NO MORE THAN THREE WORDS from the passage "
         "for each answer.",
-        P2_PICKING_NOTES,
+        P2_PICKING_STRUCTURE,
+        P2_PICKING_ANSWERS,
         max_words=3,
     )
-    await w.short_answer(
+    await w.compound(
+        QuestionType.TABLE_COMPLETION,
         "Complete the table below.\n"
         "Choose NO MORE THAN THREE WORDS from the passage "
         "for each answer.",
-        P2_TABLE_ITEMS,
+        P2_TABLE_STRUCTURE,
+        P2_TABLE_ANSWERS,
         max_words=3,
     )
     counts.append(w.count)

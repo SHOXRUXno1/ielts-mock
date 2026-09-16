@@ -116,7 +116,8 @@ NOTES1_ANSWERS: list[tuple[str, list[str], int]] = [
 
 PART1_MULTI_5 = {
     "question": (
-        "Which THREE things are included for free with every property?"
+        "Which THREE things are included for free with every property "
+        "for rent from Easylet?"
     ),
     "options": [
         "heating bills",
@@ -145,39 +146,34 @@ MAP1_ITEMS: list[tuple[str, str]] = [
 # multi_select counts choose_n as separate slots, so we use note_completion
 # with letter-pair variants instead (1 slot per gap).
 
-NOTES2_CHOOSE: dict = {
-    "variant": "notes",
-    "title": "Hollylands Museum & Arts Centre",
-    "instruction_words": "TWO LETTERS",
-    "max_words_per_gap": 2,
-    "sections": [
-        {
-            "heading": (
-                "Which TWO activities for school groups need to be "
-                "booked one week in advance?\n"
-                "A drama workshops  B garden sculpture exhibition  "
-                "C painting demonstrations  D tours for the blind  "
-                "E video making"
-            ),
-            "items": [{"segments": [gap("b11")]}],
-        },
-        {
-            "heading": (
-                "Which TWO facilities are closed in winter?\n"
-                "A adventure playground  B artists\u2019 studio  "
-                "C caf\u00e9  D mini cinema  E shop"
-            ),
-            "items": [{"segments": [gap("b12")]}],
-        },
+PART2_MULTI_11 = {
+    "question": (
+        "Which TWO activities for school groups need to be booked one "
+        "week in advance?"
+    ),
+    "options": [
+        "drama workshops",
+        "garden sculpture experience",
+        "painting demonstrations",
+        "tours for the blind",
+        "video making",
     ],
+    "correct": ["A", "C"],
+    "mark_slots": 1,
 }
 
-NOTES2_CHOOSE_ANSWERS: list[tuple[str, list[str], int]] = [
-    ("b11", ["A, C", "C, A", "AC", "CA", "A/C", "C/A",
-             "A and C", "C and A"], 2),
-    ("b12", ["B, D", "D, B", "BD", "DB", "B/D", "D/B",
-             "B and D", "D and B"], 2),
-]
+PART2_MULTI_12 = {
+    "question": "Which TWO facilities are closed in winter?",
+    "options": [
+        "adventure playground",
+        "artists\u2019 studio",
+        "caf\u00e9",
+        "mini zoo",
+        "shop",
+    ],
+    "correct": ["B", "D"],
+    "mark_slots": 1,
+}
 
 TABLE2_STRUCTURE: dict = {
     "variant": "table",
@@ -198,7 +194,7 @@ TABLE2_STRUCTURE: dict = {
         ],
         [
             cell(gap("t16")),
-            cell(text("1st November")),
+            cell(text("11th November")),
             cell(text("competition \u2014 prize: "), gap("t17"), text(" for 2 people")),
         ],
     ],
@@ -213,12 +209,13 @@ TABLE2_ANSWERS: list[tuple[str, list[str], int]] = [
 ]
 
 MAP2_OPTIONS_LIST = [
-    "A. parking",
+    "A. bicycle parking",
     "B. drinks machine",
     "C. first aid room",
     "D. manager\u2019s office",
     "E. telephones",
     "F. ticket office",
+    "G. toilets",
 ]
 
 MAP2_ITEMS: list[tuple[str, str]] = [
@@ -300,50 +297,27 @@ TASK_ITEMS: list[tuple[str, str]] = [
 
 # ── Part 4 ───────────────────────────────────────────────────────────────────
 
-NOTES4_STRUCTURE: dict = {
-    "variant": "notes",
-    "title": "Waste",
-    "instruction_words": "ONE WORD AND/OR A NUMBER",
-    "max_words_per_gap": 1,
-    "sections": [
-        {
-            "heading": "History of waste",
-            "items": [
-                {
-                    "segments": [
-                        text("Stone Age rubbish dump found in "),
-                        gap("n31"),
-                    ]
-                },
-                {
-                    "segments": [
-                        text("In Medieval times, most common waste was "),
-                        gap("n32"),
-                    ]
-                },
-                {
-                    "segments": [
-                        text("Science linked "),
-                        gap("n33"),
-                        text(" with waste"),
-                    ]
-                },
-                {
-                    "segments": [
-                        text("Biggest problem for the environment: "),
-                        gap("n34"),
-                    ]
-                },
-            ],
-        },
-    ],
-}
-
-NOTES4_ANSWERS: list[tuple[str, list[str], int]] = [
-    ("n31", ["Norway"], 1),
-    ("n32", ["organic"], 1),
-    ("n33", ["disease"], 1),
-    ("n34", ["plastic", "plastics"], 1),
+SHORT4_ITEMS: list[dict] = [
+    {
+        "question": "Where was a Stone Age rubbish dump found?",
+        "correct": ["Norway"],
+        "max_words": 1,
+    },
+    {
+        "question": "In Medieval times, what type of waste was most common?",
+        "correct": ["organic"],
+        "max_words": 1,
+    },
+    {
+        "question": "What did science link with waste?",
+        "correct": ["disease"],
+        "max_words": 1,
+    },
+    {
+        "question": "Which invention is the biggest problem for the environment?",
+        "correct": ["plastic", "plastics"],
+        "max_words": 1,
+    },
 ]
 
 NOTES4B_STRUCTURE: dict = {
@@ -472,16 +446,23 @@ class SectionWriter:
                 {"correct": item["correct"]},
             )
 
-    async def multi_select(self, instruction: str, item: dict) -> None:
-        group = await self._group(QuestionType.MULTI_SELECT, instruction)
+    async def multi_select(
+        self, instruction: str, item: dict, *, subtitle: str | None = None
+    ) -> None:
+        group = await self._group(
+            QuestionType.MULTI_SELECT, instruction, subtitle=subtitle
+        )
+        content: dict = {
+            "choose_n": len(item["correct"]),
+            "question": item["question"],
+            "options": item["options"],
+        }
+        if "mark_slots" in item:
+            content["mark_slots"] = item["mark_slots"]
         self._add(
             group,
             QuestionType.MULTI_SELECT,
-            {
-                "choose_n": len(item["correct"]),
-                "question": item["question"],
-                "options": item["options"],
-            },
+            content,
             {"correct": item["correct"]},
         )
 
@@ -506,6 +487,20 @@ class SectionWriter:
                 question_type,
                 {"question": question},
                 {"correct": correct},
+            )
+
+    async def short_answer(self, instruction: str, items: list[dict]) -> None:
+        group = await self._group(QuestionType.SHORT_ANSWER, instruction)
+        for item in items:
+            self._add(
+                group,
+                QuestionType.SHORT_ANSWER,
+                {"prompt": item["question"], "max_words": item["max_words"]},
+                {
+                    "correct": item["correct"],
+                    "max_words": item["max_words"],
+                    "case_sensitive": False,
+                },
             )
 
     async def map_labeling(
@@ -574,11 +569,14 @@ async def seed(db: AsyncSession) -> None:
         f"{await clear_section(db, part.id)} old row(s)"
     )
     w = SectionWriter(db, part)
-    await w.compound(
-        QuestionType.NOTE_COMPLETION,
-        "For each question, choose TWO letters, A\u2013E.",
-        NOTES2_CHOOSE,
-        NOTES2_CHOOSE_ANSWERS,
+    await w.multi_select(
+        "Choose TWO letters, A\u2013E.",
+        PART2_MULTI_11,
+        subtitle="Hollylands Museum & Arts Centre",
+    )
+    await w.multi_select(
+        "Choose TWO letters, A\u2013E.",
+        PART2_MULTI_12,
     )
     await w.compound(
         QuestionType.TABLE_COMPLETION,
@@ -591,7 +589,7 @@ async def seed(db: AsyncSession) -> None:
         QuestionType.MAP_LABELING,
         "Label the plan below.\n"
         "Choose THREE answers from the box and write the correct letter, "
-        "A\u2013F, next to questions 18\u201320.\n"
+        "A\u2013G, next to questions 18\u201320.\n"
         f"{SCREEN_LETTER_HINT}",
         MAP2_OPTIONS_LIST,
         MAP2_ITEMS,
@@ -629,12 +627,10 @@ async def seed(db: AsyncSession) -> None:
         f"{await clear_section(db, part.id)} old row(s)"
     )
     w = SectionWriter(db, part)
-    await w.compound(
-        QuestionType.NOTE_COMPLETION,
+    await w.short_answer(
         "Answer the questions below.\n"
         "Write NO MORE THAN ONE WORD AND/OR A NUMBER for each answer.",
-        NOTES4_STRUCTURE,
-        NOTES4_ANSWERS,
+        SHORT4_ITEMS,
     )
     await w.compound(
         QuestionType.NOTE_COMPLETION,

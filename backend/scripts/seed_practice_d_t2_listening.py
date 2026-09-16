@@ -65,25 +65,25 @@ FORM1_STRUCTURE: dict = {
     "max_words_per_gap": 2,
     "fields": [
         {"label": "Holiday booked in name of", "type": "gap_line",
-         "segments": [gap("n1")]},
+         "segments": [text("First name / Last name: "), gap("n1")]},
         {"label": "Address", "type": "gap_line",
          "segments": [text("Flat 4, "), gap("n2"), text(", Winchester SO2 4ER")]},
         {"label": "Daytime telephone number", "type": "gap_line",
          "segments": [gap("n3")]},
         {"label": "Booking reference", "type": "gap_line",
          "segments": [gap("n4")]},
-        {"label": "Booked through", "type": "gap_line",
-         "segments": [gap("n5"), text(" company")]},
-        {"label": "Insurance", "type": "gap_line",
-         "segments": [gap("n6"), text(" Policy")]},
+        {"label": "Special offer?", "type": "gap_line",
+         "segments": [text("Yes, from "), gap("n5"), text(" company")]},
+        {"label": "Insurance?", "type": "gap_line",
+         "segments": [text("Yes, had "), gap("n6"), text(" Policy")]},
         {"label": "Type of holiday booked", "type": "gap_line",
          "segments": [gap("n7"), text(" Break")]},
         {"label": "Date holiday commenced", "type": "gap_line",
          "segments": [gap("n8")]},
-        {"label": "Details of complaint (1)", "type": "gap_line",
+        {"label": "Details of complaint", "type": "gap_line",
          "segments": [text("no "), gap("n9"), text(" at station")]},
-        {"label": "Details of complaint (2)", "type": "gap_line",
-         "segments": [gap("n10"), text(" was missing")]},
+        {"label": "", "type": "gap_line",
+         "segments": [text("a "), gap("n10"), text(" was missing")]},
     ],
 }
 
@@ -114,12 +114,55 @@ JOB_OPTIONS = [
     "H. website maintenance",
 ]
 
-JOB_ITEMS: list[tuple[str, str]] = [
-    ("Reception Assistant, Park Hotel — note 1", "D"),
-    ("Reception Assistant, Park Hotel — note 2", "A"),
-    ("General Assistant, Avenue Hotel — note 1", "C"),
-    ("General Assistant, Avenue Hotel — note 2", "F"),
-    ("Catering Assistant, Hotel 56", "E"),
+
+def _bullets(*items: list[dict]) -> dict:
+    return {"variant": "bullets", "bullets": [{"segments": segs} for segs in items]}
+
+
+JOBS_TABLE_STRUCTURE: dict = {
+    "variant": "table",
+    "title": "TEMPORARY HOTEL JOBS",
+    "instruction_words": "ONE LETTER",
+    "max_words_per_gap": 1,
+    "options": JOB_OPTIONS,
+    "headers": ["JOB", "EMPLOYER", "NOTES"],
+    "rows": [
+        [
+            {"variant": "plain", "segments": [text("Reception Assistant")]},
+            {"variant": "plain", "segments": [text("Park Hotel")]},
+            _bullets(
+                [gap("j11")],
+                [text("foreign languages")],
+                [gap("j12")],
+            ),
+        ],
+        [
+            {"variant": "plain", "segments": [text("General Assistant")]},
+            {"variant": "plain", "segments": [text("Avenue Hotel")]},
+            _bullets(
+                [text("low pay")],
+                [gap("j13")],
+                [gap("j14")],
+            ),
+        ],
+        [
+            {"variant": "plain", "segments": [text("Catering Assistant")]},
+            {"variant": "plain", "segments": [text("Hotel 56")]},
+            _bullets(
+                [text("free uniform")],
+                [gap("j15")],
+                [text("outside city")],
+            ),
+        ],
+    ],
+}
+
+JOBS_TABLE_ANSWERS: list[tuple[str, list[str], int]] = [
+    ("j11", ["D"], 1),
+    ("j12", ["A"], 1),
+    ("j13", ["C"], 1),
+    ("j14", ["F"], 1),
+    ("j15", ["E"], 1),
 ]
 
 
@@ -226,11 +269,53 @@ TIMETABLE_OPTIONS = [
     "H. Visit an exhibition at the University Library",
 ]
 
-TIMETABLE_ITEMS: list[tuple[str, str]] = [
-    ("Monday afternoon", "H"),
-    ("Tuesday morning", "B"),
-    ("Wednesday morning", "G"),
-    ("Wednesday afternoon", "E"),
+
+TIMETABLE_STRUCTURE: dict = {
+    "variant": "table",
+    "title": "MON – WED: FIELD TRIP TO CAMBRIDGE",
+    "instruction_words": "ONE LETTER",
+    "max_words_per_gap": 1,
+    "options": TIMETABLE_OPTIONS,
+    "headers": ["", "", ""],
+    "rows": [
+        [
+            {"variant": "plain", "segments": [text("Mon 22nd")]},
+            {"variant": "plain", "segments": [text("am")]},
+            {"variant": "plain", "segments": [text("arrive at hotel")]},
+        ],
+        [
+            {"variant": "plain", "segments": [text(" ")]},
+            {"variant": "plain", "segments": [text("pm")]},
+            {"variant": "plain", "segments": [gap("t27")]},
+        ],
+        [
+            {"variant": "plain", "segments": [text("Tues 23rd")]},
+            {"variant": "plain", "segments": [text("am")]},
+            {"variant": "plain", "segments": [gap("t28")]},
+        ],
+        [
+            {"variant": "plain", "segments": [text(" ")]},
+            {"variant": "plain", "segments": [text("pm")]},
+            {"variant": "plain", "segments": [text("free time")]},
+        ],
+        [
+            {"variant": "plain", "segments": [text("Wed 24th")]},
+            {"variant": "plain", "segments": [text("am")]},
+            {"variant": "plain", "segments": [gap("t29")]},
+        ],
+        [
+            {"variant": "plain", "segments": [text(" ")]},
+            {"variant": "plain", "segments": [text("pm")]},
+            {"variant": "plain", "segments": [gap("t30")]},
+        ],
+    ],
+}
+
+TIMETABLE_ANSWERS: list[tuple[str, list[str], int]] = [
+    ("t27", ["H"], 1),
+    ("t28", ["B"], 1),
+    ("t29", ["G"], 1),
+    ("t30", ["E"], 1),
 ]
 
 
@@ -450,15 +535,13 @@ async def seed(db: AsyncSession) -> None:
         f"{await clear_section(db, part.id)} old row(s)"
     )
     w = SectionWriter(db, part)
-    await w.lettered(
-        QuestionType.MATCHING_FEATURES,
+    await w.compound(
+        QuestionType.TABLE_COMPLETION,
         "Complete the table below.\n"
         "Choose your answers from the box and write the correct letter, "
-        "A\u2013H, next to questions 11\u201315.\n"
-        f"{SCREEN_LETTER_HINT}",
-        JOB_OPTIONS,
-        JOB_ITEMS,
-        options_heading="Notes",
+        "A\u2013H, next to questions 11\u201315.",
+        JOBS_TABLE_STRUCTURE,
+        JOBS_TABLE_ANSWERS,
     )
     await w.compound(
         QuestionType.FLOW_CHART_COMPLETION,
@@ -484,15 +567,13 @@ async def seed(db: AsyncSession) -> None:
         SENTENCES3_STRUCTURE,
         SENTENCES3_ANSWERS,
     )
-    await w.lettered(
-        QuestionType.MATCHING_FEATURES,
+    await w.compound(
+        QuestionType.TABLE_COMPLETION,
         "Complete the timetable below.\n"
         "Choose your answers from the box and write the correct letter, "
-        "A\u2013H, next to questions 27\u201330.\n"
-        f"{SCREEN_LETTER_HINT}",
-        TIMETABLE_OPTIONS,
-        TIMETABLE_ITEMS,
-        options_heading="Activity",
+        "A\u2013H, next to questions 27\u201330.",
+        TIMETABLE_STRUCTURE,
+        TIMETABLE_ANSWERS,
     )
     totals.append(w.slots)
     print(f"  {w.slots} scoring slots")
