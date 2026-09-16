@@ -192,7 +192,7 @@ TABLE1_STRUCTURE: dict = {
                         "(currently the "
                     ),
                     gap("t11"),
-                    text(")"),
+                    text(" span)"),
                 ],
             },
         ],
@@ -243,7 +243,7 @@ SPECIES_OPTIONS = [
 ]
 
 SPECIES_ITEMS: list[tuple[str, str]] = [
-    ("Once lived in Europe and Asia.", "A"),
+    ("Once lived in Europe and Asia.", "C"),
     ("Originated in Africa.", "B"),
     (
         "Did not survive long after the arrival of immigrants.",
@@ -289,7 +289,7 @@ P2_SENTENCES: list[dict] = [
             "Neanderthals are connected with cognitive ability and "
             "skeletal ______."
         ),
-        "correct": ["growth"],
+        "correct": ["growth", "shape"],
     },
     {
         "prompt": (
@@ -388,7 +388,76 @@ P3_SUMMARY_OPTIONS = [
     "J. the past",
 ]
 
-P3_SUMMARY_ITEMS: list[tuple[str, str]] = [
+P3_SUMMARY_STRUCTURE: dict = {
+    "variant": "summary",
+    "title": "Measures to protect the oceans",
+    "options": P3_SUMMARY_OPTIONS,
+    "instruction_words": "letter A–J",
+    "max_words_per_gap": 1,
+    "paragraphs": [
+        {
+            "segments": [
+                text(
+                    "Up till the twentieth century the world’s supply of "
+                    "fish was sufficient for its needs. It was "
+                    "unnecessary to introduce "
+                ),
+                gap("s35"),
+                text(
+                    " of any kind, because large areas of the oceans "
+                    "were inaccessible. However, as "
+                ),
+                gap("s36"),
+                text(
+                    " improved, this situation changed, and in the "
+                    "middle of the twentieth century, policies were "
+                    "introduced to regulate "
+                ),
+                gap("s37"),
+                text("."),
+            ]
+        },
+        {
+            "segments": [
+                text(
+                    "These policies have not succeeded. Today, by "
+                    "comparison with "
+                ),
+                gap("s38"),
+                text(", the oceans have very little legal protection."),
+            ]
+        },
+        {
+            "segments": [
+                text(
+                    "Despite the doubts that many officials have about "
+                    "the concept of "
+                ),
+                gap("s39"),
+                text(
+                    ", these should be at the heart of any action "
+                    "taken. The consequences of further "
+                ),
+                gap("s40"),
+                text(
+                    " are very serious, and may even affect our "
+                    "continuing existence."
+                ),
+            ]
+        },
+    ],
+}
+
+P3_SUMMARY_ANSWERS: list[tuple[str, list[str]]] = [
+    ("s35", ["B", "controls"]),
+    ("s36", ["F", "fishing techniques"]),
+    ("s37", ["D", "fish catches"]),
+    ("s38", ["I", "the land"]),
+    ("s39", ["H", "marine reserves"]),
+    ("s40", ["C", "failure"]),
+]
+
+_LEGACY_P3_SUMMARY_ITEMS: list[tuple[str, str]] = [
     (
         "It was unnecessary to introduce 35 ______ of any kind ...",
         "B",
@@ -673,14 +742,14 @@ async def seed(db: AsyncSession) -> None:
         "Choose the correct letter, A, B, C or D.",
         P3_MCQ,
     )
-    await w.lettered(
-        QuestionType.MATCHING_FEATURES,
+    await w.compound(
+        QuestionType.SUMMARY_COMPLETION,
         "Complete the summary using the list of words/phrases, A\u2013J, "
         "below.\n"
         f"Write the correct letter, A\u2013J.\n{SCREEN_LETTER_HINT}",
-        P3_SUMMARY_OPTIONS,
-        P3_SUMMARY_ITEMS,
-        options_heading="Words/phrases",
+        P3_SUMMARY_STRUCTURE,
+        P3_SUMMARY_ANSWERS,
+        max_words=1,
     )
     counts.append(w.count)
     slots.append(w.slots)

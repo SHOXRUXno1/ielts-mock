@@ -74,8 +74,14 @@ NOTES1_STRUCTURE: dict = {
             "items": [
                 {
                     "segments": [
+                        text("Example\nWill email the flight number"),
+                    ]
+                },
+                {
+                    "segments": [
                         text("must find out which "),
                         gap("n1"),
+                        text(" arriving at"),
                     ]
                 },
                 {
@@ -101,12 +107,18 @@ NOTES1_STRUCTURE: dict = {
         },
         {
             "heading": "What to pack",
+            "bullets": False,
             "items": [
                 {"segments": [text("(to wear)")]},
+            ],
+        },
+        {
+            "heading": "",
+            "items": [
                 {"segments": [text("casual clothes")]},
                 {
                     "segments": [
-                        text("one smart dress \u2014 to wear at a/the "),
+                        text("one smart dress \u2014 to wear at a "),
                         gap("n5"),
                     ]
                 },
@@ -122,18 +134,36 @@ NOTES1_STRUCTURE: dict = {
                         gap("n7"),
                     ]
                 },
+            ],
+        },
+        {
+            "heading": "",
+            "bullets": False,
+            "items": [
                 {"segments": [text("(to read)")]},
+            ],
+        },
+        {
+            "heading": "",
+            "items": [
                 {
                     "segments": [
-                        text("try to find book named "),
+                        text("try to find book named \u2018"),
                         gap("n8"),
-                        text(" by Rex Campbell"),
+                        text("\u2019 by Rex Campbell"),
                     ]
                 },
             ],
         },
         {
-            "heading": "Presents",
+            "heading": "",
+            "bullets": False,
+            "items": [
+                {"segments": [text("(for presents)")]},
+            ],
+        },
+        {
+            "heading": "",
             "items": [
                 {
                     "segments": [
@@ -320,9 +350,8 @@ NOTES4_STRUCTURE: dict = {
     "max_words_per_gap": 1,
     "sections": [
         {
-            "heading": "The Greenhouse Project (Himalayan mountain region)",
+            "heading": "The Greenhouse Project (Himalayan mountain region)\nProblem",
             "items": [
-                {"segments": [text("Problem")]},
                 {
                     "segments": [
                         text(
@@ -336,7 +365,7 @@ NOTES4_STRUCTURE: dict = {
                     "segments": [
                         text("Fresh vegetables imported by lorry or by "),
                         gap("n32"),
-                        text(" \u2014 expensive"),
+                        text(", so are expensive"),
                     ]
                 },
                 {
@@ -411,7 +440,7 @@ NOTES4_STRUCTURE: dict = {
                 {"segments": [text("Strong polythene cover")]},
                 {
                     "segments": [
-                        text("Inside, "),
+                        text("Inner "),
                         gap("n39"),
                         text(" are painted black or white"),
                     ]
@@ -530,8 +559,14 @@ class SectionWriter:
                 gap_answer_key(variants, max_words=max_words),
             )
 
-    async def mcq(self, instruction: str, items: list[dict]) -> None:
-        group = await self._group(QuestionType.MCQ, instruction)
+    async def mcq(
+        self,
+        instruction: str,
+        items: list[dict],
+        *,
+        subtitle: str | None = None,
+    ) -> None:
+        group = await self._group(QuestionType.MCQ, instruction, subtitle=subtitle)
         for item in items:
             self._add(
                 group,
@@ -561,10 +596,13 @@ class SectionWriter:
         items: list[tuple[str, str]],
         *,
         options_heading: str | None = None,
+        questions_heading: str | None = None,
     ) -> None:
         shared: dict = {"options": options}
         if options_heading:
             shared["options_heading"] = options_heading
+        if questions_heading:
+            shared["questions_heading"] = questions_heading
         group = await self._group(
             question_type, instruction, options_shared=shared
         )
@@ -610,6 +648,7 @@ async def seed(db: AsyncSession) -> None:
     await w.mcq(
         "Choose the correct letter, A, B or C.",
         PART2_MCQ,
+        subtitle="Camber\u2019s Theme Park",
     )
     await w.lettered(
         QuestionType.MATCHING_FEATURES,
@@ -620,6 +659,7 @@ async def seed(db: AsyncSession) -> None:
         RIDE_OPTIONS,
         RIDE_ITEMS,
         options_heading="Special conditions for visitors",
+        questions_heading="Rides",
     )
     totals.append(w.slots)
     print(f"  {w.slots} scoring slots")
@@ -653,6 +693,7 @@ async def seed(db: AsyncSession) -> None:
         ACTION_OPTIONS,
         ACTION_ITEMS,
         options_heading="Action",
+        questions_heading="Preparation tasks",
     )
     totals.append(w.slots)
     print(f"  {w.slots} scoring slots")

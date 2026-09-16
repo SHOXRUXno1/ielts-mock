@@ -162,7 +162,7 @@ P1_NOTES_STRUCTURE: dict = {
                 },
                 {
                     "segments": [
-                        text("Return of "),
+                        text("Return to "),
                         gap("n7"),
                         text(" clothing"),
                     ]
@@ -333,7 +333,7 @@ P3_MCQ: list[tuple[str, list[str], str]] = [
             "Each language is influenced by the characteristics of other "
             "languages.",
         ],
-        "C",
+        "A",
     ),
     (
         "According to Evans and Levinson, apparent similarities between "
