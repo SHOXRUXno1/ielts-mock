@@ -53,6 +53,7 @@ type RenderGroup = {
   questionsHeading?: string
   optionsHeading?: string
   imageUrl?: string
+  layout?: 'stacked' | 'side-by-side'
 }
 
 // ── Legacy runtime-grouping (fallback when no question_group_id) ──────────────
@@ -218,6 +219,9 @@ function buildRenderGroups(apiGroups: QuestionGroup[], questions: Question[]): R
         (group.options_shared as { image_url?: string } | null)?.image_url ||
         (groupQs[0]?.content?.image_url as string | undefined) ||
         groupQs[0]?.image_url
+      const layoutRaw = (group.options_shared as { layout?: unknown } | null)?.layout
+      const layout: 'stacked' | 'side-by-side' =
+        layoutRaw === 'side-by-side' ? 'side-by-side' : 'stacked'
       result.push({
         type: 'map_labeling',
         questions: groupQs,
@@ -225,6 +229,7 @@ function buildRenderGroups(apiGroups: QuestionGroup[], questions: Question[]): R
         subtitle: group.subtitle,
         options: opts ?? [],
         imageUrl: imgUrl || undefined,
+        layout,
       })
     } else {
       const instruction = group.instruction ||
@@ -569,6 +574,7 @@ export function ListeningSection({
                   answers={answers}
                   onAnswer={onAnswer}
                   previewMode={previewMode}
+                  layout={group.layout}
                 />
               )}
 

@@ -684,7 +684,15 @@ export function QuestionRenderer({
 
   // ── MCQ ──────────────────────────────────────────────────────────────────
   if (qType === 'mcq') {
-    const options = (content.options as string[]) ?? []
+    type ImageOption = { label?: string; image_url: string }
+    type McqOption = string | ImageOption
+    const rawOptions = (content.options as McqOption[]) ?? []
+    const isImageOption = (o: McqOption): o is ImageOption =>
+      typeof o === 'object' && o !== null && typeof (o as ImageOption).image_url === 'string'
+    const options = rawOptions
+    const optionText = (o: McqOption, i: number): string =>
+      typeof o === 'string' ? o : (o.label ?? String.fromCharCode(65 + i))
+    const hasImageOptions = options.some(isImageOption)
     // Support both "question" and legacy "prompt" field names
     const questionNumber = question.computed_number ?? question.order
     const questionText = stripLeadingQuestionNumber(
@@ -699,7 +707,7 @@ export function QuestionRenderer({
     // the full option text — normalise to a letter for comparison/selection.
     const textToLetter = (val: string) => {
       if (/^[A-Z]$/.test(val)) return val
-      const idx = options.indexOf(val)
+      const idx = options.findIndex((o, i) => optionText(o, i) === val)
       return idx >= 0 ? String.fromCharCode(65 + idx) : val
     }
 
@@ -734,6 +742,7 @@ export function QuestionRenderer({
               const letter = String.fromCharCode(65 + i)
               const id = `${question.id}-chk-${i}`
               const checked = selected.includes(letter)
+              const text = optionText(opt, i)
               return (
                 <div
                   key={i}
@@ -752,7 +761,7 @@ export function QuestionRenderer({
                   />
                   <ChoiceLabel htmlFor={id}>
                     <span className={cn('mr-1 text-[13px] font-medium', checked ? 'text-primary' : 'text-muted-foreground')}>{letter}.</span>
-                    {mcqChoiceText(opt, letter) ? ` ${opt}` : ''}
+                    {mcqChoiceText(text, letter) ? ` ${text}` : ''}
                   </ChoiceLabel>
                 </div>
               )
@@ -764,6 +773,58 @@ export function QuestionRenderer({
 
     // Standard single-choice MCQ — value is the letter ("A", "B", …)
     const selectedLetter = textToLetter((answer.answer as string) ?? '')
+
+    // Image-option MCQ — each option is a clickable picture tile.
+    if (hasImageOptions) {
+      return (
+        <div className='space-y-3'>
+          <p className='text-[15px] font-[500] leading-6 text-foreground'>
+            {!hideQuestionNumber && <QuestionNum question={question} />}
+            {questionText}
+          </p>
+          <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+            {options.map((opt, i) => {
+              const letter = String.fromCharCode(65 + i)
+              const url = isImageOption(opt) ? opt.image_url : ''
+              const checked = selectedLetter === letter
+              return (
+                <button
+                  key={i}
+                  type='button'
+                  onClick={() => onAnswer({ answer: letter })}
+                  aria-pressed={checked}
+                  aria-label={`Option ${letter}`}
+                  className={cn(
+                    'flex flex-col items-stretch gap-2 rounded-lg border-2 bg-card p-2 text-left transition-colors',
+                    checked
+                      ? 'border-primary ring-2 ring-primary/30'
+                      : 'border-border hover:border-primary/50 hover:bg-muted',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'text-[13px] font-bold',
+                      checked ? 'text-primary' : 'text-muted-foreground',
+                    )}
+                  >
+                    {letter}
+                  </span>
+                  {url && (
+                    <img
+                      src={mediaUrl(url)}
+                      alt={`Option ${letter}`}
+                      className='block h-auto w-full rounded object-contain'
+                      draggable={false}
+                    />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className='space-y-3'>
         <p className='text-[15px] font-[500] leading-6 text-foreground'>
@@ -779,12 +840,13 @@ export function QuestionRenderer({
           {options.map((opt, i) => {
             const letter = String.fromCharCode(65 + i)
             const id = `${question.id}-${i}`
+            const text = optionText(opt, i)
             return (
               <div key={i} className='flex cursor-pointer items-center gap-2.5'>
                 <RadioGroupItem value={letter} id={id} />
                 <ChoiceLabel htmlFor={id}>
                   <span className='mr-1 font-medium'>{letter}.</span>
-                  {mcqChoiceText(opt, letter) ? ` ${opt}` : ''}
+                  {mcqChoiceText(text, letter) ? ` ${text}` : ''}
                 </ChoiceLabel>
               </div>
             )
@@ -1198,6 +1260,7 @@ export function MapLabelingRenderer({
   onAnswer,
   previewMode = false,
   showImage = true,
+  layout = 'stacked',
 }: {
   questions: Question[]
   options: string[]
@@ -1207,14 +1270,29 @@ export function MapLabelingRenderer({
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
   previewMode?: boolean
   showImage?: boolean
+  /** 'stacked' (default): map on top, questions below. 'side-by-side': questions
+   * on the left, map on the right — matches the printed PDF layout. */
+  layout?: 'stacked' | 'side-by-side'
 }) {
+  const isSideBySide = layout === 'side-by-side' && showImage && imageUrl
+  const containerCls = isSideBySide
+    ? 'flex flex-col md:flex-row md:items-start md:gap-6'
+    : 'space-y-3'
+  const questionsWrapCls = isSideBySide
+    ? 'space-y-1.5 md:order-1 md:flex-1 md:min-w-0'
+    : 'space-y-1.5'
+  const imageWrapCls = isSideBySide
+    ? 'md:order-2 md:flex-1 md:min-w-0'
+    : ''
   return (
-    <div className='space-y-3'>
+    <div className={containerCls}>
       {showImage && imageUrl && (
-        <ExamMapImage src={imageUrl} caption={imageCaption} />
+        <div className={imageWrapCls}>
+          <ExamMapImage src={imageUrl} caption={imageCaption} />
+        </div>
       )}
 
-      <div className='space-y-1.5'>
+      <div className={questionsWrapCls}>
         {questions.map((q) => {
           const location =
             (q.content.location as string) ??
