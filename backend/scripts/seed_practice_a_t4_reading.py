@@ -2,7 +2,7 @@
 
 Passage 1  Q1-6   matching_headings     paragraphs B-G
            Q7     mcq
-           Q8     diagram_labeling      pick the graph that fits the catches
+           Q8     mcq                   pick the graph that fits the catches
            Q9-10  mcq
            Q11-14 yes_no_ng
 Passage 2  Q15-21 matching_features     who said what, by initials
@@ -11,9 +11,9 @@ Passage 3  Q28-32 true_false_ng
            Q33-36 sentence_completion
            Q37-40 short_answer
 
-Q8 prints four line graphs and asks which one matches the passage. An mcq here
-cannot carry an image, so the four graphs are shown as one figure and the letter
-is typed — which is what the paper asks for anyway ("write them in boxes").
+Q8 shows four line graphs as an image-tile MCQ: options carry per-choice
+image_url, and the take renderer paints each graph as a clickable card. The
+answer key still stores just the letter ("B").
 
 Passage text lives in scripts/data/practice_a_t4/ so the prose stays
 proofreadable instead of buried in string literals.
@@ -51,7 +51,10 @@ from seed_practice_a_common import (  # noqa: E402
 
 TEST_NUMBER = 4
 
-GRAPH_IMAGE_URL = "/media/images/practice_a_t4_reading_cod_graphs.png"
+GRAPH_OPTION_IMAGE_URLS = {
+    letter: f"/media/images/practice_a_t4_reading_cod_graph_{letter.lower()}.png"
+    for letter in ("A", "B", "C", "D")
+}
 
 
 def text(value: str) -> dict:
@@ -102,24 +105,17 @@ P1_MCQ_7: list[tuple[str, list[str], str]] = [
     ),
 ]
 
-P1_GRAPH_STRUCTURE: dict = {
-    "variant": "notes",
-    "title": "",
-    "instruction_words": "ONE LETTER",
-    "max_words_per_gap": 2,
-    "image_url": GRAPH_IMAGE_URL,
-    "sections": [
-        {
-            "heading": (
-                "Which graph most accurately describes Canadian cod catches "
-                "from 1950 to 1992?"
-            ),
-            "items": [{"segments": [gap("g8")]}],
-        }
-    ],
-}
-
-P1_GRAPH_ANSWERS: list[tuple[str, list[str]]] = [("g8", ["B", "Graph B"])]
+P1_MCQ_8: list[tuple[str, list[dict], str]] = [
+    (
+        "Which graph most accurately describes Canadian cod catches "
+        "from 1950 to 1992?",
+        [
+            {"label": letter, "image_url": GRAPH_OPTION_IMAGE_URLS[letter]}
+            for letter in ("A", "B", "C", "D")
+        ],
+        "B",
+    ),
+]
 
 P1_MCQ_9_10: list[tuple[str, list[str], str]] = [
     (
@@ -336,6 +332,8 @@ class PassageWriter:
         question_type: QuestionType,
         content: dict,
         answer_key: dict | None,
+        *,
+        image_url: str | None = None,
     ) -> None:
         self.db.add(
             Question(
@@ -346,6 +344,7 @@ class PassageWriter:
                 question_type=question_type,
                 content=content,
                 answer_key=answer_key,
+                image_url=image_url,
             )
         )
         self.order += 1
@@ -379,14 +378,24 @@ class PassageWriter:
                 group, question_type, {"statement": statement}, {"correct": correct}
             )
 
-    async def mcq(self, instruction: str, items: list[tuple[str, list[str], str]]) -> None:
+    async def mcq(
+        self,
+        instruction: str,
+        items: list[tuple[str, list, str]],
+        *,
+        image_url: str | None = None,
+    ) -> None:
         group = await self._group(QuestionType.MCQ, instruction)
         for question, options, correct in items:
+            content: dict = {"question": question, "options": options}
+            if image_url:
+                content["image_url"] = image_url
             self._add(
                 group,
                 QuestionType.MCQ,
-                {"question": question, "options": options},
+                content,
                 {"correct": correct},
+                image_url=image_url,
             )
 
     async def free_text(
@@ -466,14 +475,10 @@ async def seed(db: AsyncSession) -> None:
         "answer sheet.",
         P1_MCQ_7,
     )
-    await w.compound(
-        QuestionType.DIAGRAM_LABELING,
+    await w.mcq(
         "Look at the four graphs below.\n"
-        "Write the letter of the graph you choose (A, B, C or D) in box 8 on "
-        "your answer sheet.",
-        P1_GRAPH_STRUCTURE,
-        P1_GRAPH_ANSWERS,
-        max_words=2,
+        "Choose the graph that best matches the passage.",
+        P1_MCQ_8,
     )
     await w.mcq(
         "Choose the appropriate letters A – D and write them in boxes 9 – 10 on "
