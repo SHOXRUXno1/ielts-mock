@@ -15,6 +15,7 @@ import {
 import type {
   CellSegment,
   CompoundStructure,
+  DiagramStructure,
   FlowStructure,
   FormStructure,
   NoteStructure,
@@ -293,6 +294,7 @@ function renderSegments(
   previewMode?: boolean,
   choiceOptions?: string[],
   inputAppearance: 'box' | 'blank' = 'box',
+  showNumbers = true,
 ) {
   const seenQuestion = new Set<string>()
   const seenNumber = new Set<number>()
@@ -316,7 +318,8 @@ function renderSegments(
     if (!q) return null
 
     const displayN = q.computed_number ?? q.order
-    const showNumber = !seenQuestion.has(q.id) && !seenNumber.has(displayN)
+    const showNumber =
+      showNumbers && !seenQuestion.has(q.id) && !seenNumber.has(displayN)
     seenQuestion.add(q.id)
     seenNumber.add(displayN)
 
@@ -513,19 +516,21 @@ function NoteCompletion({
           {structure.title}
         </p>
       )}
-      {structure.sections.map((section, si) => (
+      {structure.sections.map((section, si) => {
+        const showBullets = section.bullets ?? structure.bullets !== false
+        return (
         <div key={si}>
           {section.heading && (
             <p
               className={cn(
-                'mb-2.5 text-[14px] font-bold text-foreground',
+                'mb-2.5 whitespace-pre-line text-[14px] font-bold text-foreground',
                 si > 0 && 'mt-6',
               )}
             >
               {section.heading}
             </p>
           )}
-          {structure.bullets === false ? (
+          {!showBullets ? (
             <div className='space-y-2'>
               {section.items.map((item, ii) => (
                 <div
@@ -573,7 +578,8 @@ function NoteCompletion({
             </ul>
           )}
         </div>
-      ))}
+        )
+      })}
       </div>
     </div>
   )
@@ -611,19 +617,22 @@ function FormCompletion({
 
   return (
     <div className='mx-auto max-w-xl rounded-lg border border-border bg-card p-6'>
-      <p className='mb-6 text-center text-sm font-medium uppercase tracking-wide text-foreground'>
+      <p className='mb-6 whitespace-pre-line text-center text-sm font-medium uppercase tracking-wide text-foreground'>
         {structure.form_title}
       </p>
       <div className='space-y-4'>
         {structure.fields.map((field, fi) => (
-          <div key={fi} className='flex flex-wrap items-baseline gap-2 text-[14px]'>
-            <span className='min-w-[7rem] font-semibold text-foreground'>
-              {field.label}:
+          <div
+            key={fi}
+            className='grid grid-cols-[auto_1fr] items-baseline gap-x-3 text-[14px]'
+          >
+            <span className='font-semibold text-foreground'>
+              {field.label}{field.label ? ':' : ''}
             </span>
             {field.type === 'static' ? (
               <span className='text-muted-foreground'>{field.value}</span>
             ) : (
-              <span className='inline-flex flex-wrap items-baseline gap-1'>
+              <span>
                 {renderSegments(
                   field.segments,
                   gapToQ,
@@ -709,6 +718,8 @@ function FlowCompletion({
 }) {
   const gapToQ = buildGapMap(questions)
   const maxWords = structure.max_words_per_gap
+  const options = structure.options ?? []
+  const choiceOptions = options.length > 0 ? options : undefined
 
   const renderFlowSegments = (segments: CellSegment[]) =>
     renderSegments(
@@ -719,14 +730,15 @@ function FlowCompletion({
       maxWords,
       readOnly,
       previewMode,
-      undefined,
+      choiceOptions,
       'blank',
     )
 
   return (
-    <div className='mx-auto w-full max-w-xl' data-flow-chart>
+    <div className='mx-auto w-full max-w-xl space-y-5' data-flow-chart>
+      <WordBankList options={options} />
       {structure.title && (
-        <p className='mb-5 text-center text-[13px] font-semibold tracking-wide text-foreground'>
+        <p className='mb-5 text-center text-[19px] font-bold tracking-wide text-foreground'>
           {structure.title}
         </p>
       )}
@@ -767,6 +779,89 @@ function FlowCompletion({
           )
         })}
       </div>
+    </div>
+  )
+}
+
+function DiagramCompletion({
+  structure,
+  questions,
+  answers,
+  onAnswer,
+  readOnly,
+  previewMode,
+}: {
+  structure: DiagramStructure
+  questions: Question[]
+  answers: Answers
+  onAnswer: OnAnswer
+  readOnly?: boolean
+  previewMode?: boolean
+}) {
+  const gapToQ = buildGapMap(questions)
+  const leaders = structure.markers.filter((m) => m.anchor)
+
+  return (
+    <div className='relative mx-auto w-full max-w-2xl'>
+      {structure.image_url && (
+        <img
+          src={mediaUrl(structure.image_url)}
+          alt='Diagram'
+          className='block w-full rounded-lg border border-border'
+          onError={(e) => {
+            ;(e.target as HTMLImageElement).style.display = 'none'
+          }}
+        />
+      )}
+      {leaders.length > 0 && (
+        <svg
+          className='pointer-events-none absolute inset-0 h-full w-full'
+          viewBox='0 0 100 100'
+          preserveAspectRatio='none'
+          aria-hidden
+        >
+          {leaders.map((m, i) => (
+            <g key={i}>
+              <line
+                x1={m.x}
+                y1={m.y}
+                x2={m.anchor!.x}
+                y2={m.anchor!.y}
+                className='stroke-foreground/45'
+                strokeWidth={1}
+                vectorEffect='non-scaling-stroke'
+              />
+              <circle
+                cx={m.anchor!.x}
+                cy={m.anchor!.y}
+                r={1.4}
+                className='fill-foreground/60'
+                vectorEffect='non-scaling-stroke'
+              />
+            </g>
+          ))}
+        </svg>
+      )}
+      {structure.markers.map((m, i) => (
+        <div
+          key={i}
+          className='absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap text-[13px] leading-6'
+          style={{ left: `${m.x}%`, top: `${m.y}%` }}
+        >
+          {renderSegments(
+            m.segments,
+            gapToQ,
+            answers,
+            onAnswer,
+            structure.max_words_per_gap,
+            readOnly,
+            previewMode,
+            undefined,
+            'box',
+            !structure.hide_numbers,
+          )}
+        </div>
+      ))}
     </div>
   )
 }
@@ -846,12 +941,26 @@ export function CompoundCompletionRenderer({
             previewMode={previewMode}
           />
         )
+      case 'diagram':
+        return (
+          <DiagramCompletion
+            structure={structure}
+            questions={questions}
+            answers={answers}
+            onAnswer={onAnswer}
+            readOnly={readOnly}
+            previewMode={previewMode}
+          />
+        )
       default:
         return null
     }
   })()
 
   if (!body) return null
+  // The diagram variant renders its own image (with positioned inputs), so it
+  // must bypass the generic image-above-body wrapper below.
+  if (structure.variant === 'diagram') return body
   if (!structure.image_url) return body
 
   return (
