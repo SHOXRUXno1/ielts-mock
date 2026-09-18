@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Mic } from 'lucide-react'
+import { AudioLines, Lightbulb, MessageSquareText, Mic, Sparkles } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ import { CriteriaGrid, FeedbackList } from '../writing-feedback-panel'
 import { AdminBandOverride } from './admin-band-override'
 import { ResultEmptyState } from './result-empty-state'
 import { SkillReportHeader } from './skill-report-header'
-import { Panel, PanelHeader, PanelTitle } from '@/components/report'
+import { Panel } from '@/components/report'
 
 type SpeakingReportPanelProps = {
   attempt: AttemptDetailRead
@@ -63,40 +63,38 @@ export function SpeakingReportPanel({
             ) : undefined
           }
         />
-        <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]'>
-          <Panel className={ENTER} padding='sm'>
-            <div className='space-y-5'>
-              {Array.isArray(scoreJson?.strengths) && (
-                <FeedbackList
-                  title='Strengths'
-                  items={scoreJson.strengths as string[]}
-                />
-              )}
-              {Array.isArray(scoreJson?.improvements) && (
-                <FeedbackList
-                  title='Areas for Improvement'
-                  items={scoreJson.improvements as string[]}
-                />
-              )}
-              {typeof scoreJson?.transcript === 'string' && scoreJson.transcript && (
-                <div>
-                  <p className='mb-2 text-sm font-medium'>Transcript</p>
-                  <ScrollArea className='h-56 rounded-lg border bg-surface-sunken'>
-                    <p className='whitespace-pre-wrap p-3 text-sm leading-relaxed'>
-                      {scoreJson.transcript}
-                    </p>
-                  </ScrollArea>
+        <Panel className={ENTER} padding='md'>
+          <div className='space-y-8'>
+            {scoreJson && (
+              <section>
+                <ReportHeading icon={AudioLines} title='Assessment by criterion' description='Your speaking performance across the four IELTS criteria.' />
+                <div className='mt-4'><CriteriaGrid data={scoreJson} sectionType='speaking' variant='report' /></div>
+              </section>
+            )}
+            {(Array.isArray(scoreJson?.strengths) || Array.isArray(scoreJson?.improvements)) && (
+              <section className='rounded-2xl bg-muted/45 p-5 sm:p-6'>
+                <ReportHeading icon={Sparkles} title='Overall review' description='The clearest strengths and the next areas to practise.' />
+                <div className='mt-5 grid gap-5 md:grid-cols-2'>
+                  {Array.isArray(scoreJson?.strengths) && <FeedbackList title='What went well' items={scoreJson.strengths as string[]} />}
+                  {Array.isArray(scoreJson?.improvements) && <FeedbackList title='What to improve next' items={scoreJson.improvements as string[]} />}
                 </div>
-              )}
-              {turns.length > 0 && (
-                <div>
-                  <PanelHeader className='mb-2 items-baseline'>
-                    <PanelTitle className='text-sm'>Conversation</PanelTitle>
-                    <p className='text-[11px] tabular-nums text-muted-foreground'>
-                      {turns.length} {turns.length === 1 ? 'turn' : 'turns'}
-                    </p>
-                  </PanelHeader>
-                  <ScrollArea className='h-80 rounded-lg border bg-surface-sunken p-3'>
+              </section>
+            )}
+            {typeof scoreJson?.transcript === 'string' && scoreJson.transcript && (
+              <section>
+                <ReportHeading icon={MessageSquareText} title='Your transcript' description='A written record of your spoken response.' />
+                <ScrollArea className='mt-4 h-64 rounded-xl border bg-surface-sunken'>
+                  <p className='whitespace-pre-wrap p-5 text-sm leading-7'>{scoreJson.transcript}</p>
+                </ScrollArea>
+              </section>
+            )}
+            {turns.length > 0 && (
+              <section>
+                <div className='flex items-end justify-between gap-3'>
+                  <ReportHeading icon={Mic} title='Conversation with the examiner' />
+                  <p className='text-xs tabular-nums text-muted-foreground'>{turns.length} {turns.length === 1 ? 'turn' : 'turns'}</p>
+                </div>
+                <ScrollArea className='mt-4 h-96 rounded-xl border bg-surface-sunken p-4'>
                     <div className='space-y-3'>
                       {turns.map((turn, i) => {
                         const isExaminer = turn.role === 'examiner'
@@ -137,21 +135,12 @@ export function SpeakingReportPanel({
                         )
                       })}
                     </div>
-                  </ScrollArea>
-                </div>
-              )}
-            </div>
-          </Panel>
-          {scoreJson && (
-            <aside className='lg:sticky lg:top-32 lg:self-start'>
-              <CriteriaGrid
-                data={scoreJson}
-                sectionType='speaking'
-                variant='rail'
-              />
-            </aside>
-          )}
-        </div>
+                </ScrollArea>
+              </section>
+            )}
+            {!scoreJson && <section className='rounded-2xl bg-muted/45 p-5'><ReportHeading icon={Lightbulb} title='Your speaking feedback will appear here' /></section>}
+          </div>
+        </Panel>
       </div>
     )
   }
@@ -202,4 +191,8 @@ export function SpeakingReportPanel({
       }
     />
   )
+}
+
+function ReportHeading({ icon: Icon, title, description }: { icon: typeof Mic; title: string; description?: string }) {
+  return <div className='flex gap-3'><div className='mt-0.5 rounded-lg bg-muted p-2'><Icon className='size-4 text-muted-foreground' /></div><div><h3 className='font-manrope text-base font-semibold'>{title}</h3>{description && <p className='mt-0.5 text-sm text-muted-foreground'>{description}</p>}</div></div>
 }
