@@ -716,7 +716,7 @@ export function CriteriaGrid({
             key={key}
             className={cn(
               'rounded-xl ring-1 ring-border',
-              variant === 'rail' ? 'bg-card p-3' : variant === 'report' ? 'border bg-card p-4' : 'border p-3',
+              variant === 'rail' ? 'bg-card p-3' : variant === 'report' ? 'border bg-card p-5' : 'border p-3',
             )}
           >
             <div className='mb-1 flex items-center justify-between gap-1'>
@@ -743,7 +743,13 @@ export function CriteriaGrid({
             <p
               className={cn(
                 'font-semibold tabular-nums',
-                variant === 'rail' ? 'text-lg' : variant === 'report' ? 'text-xl text-skill-writing' : 'text-center text-lg',
+                variant === 'rail'
+                  ? 'text-lg'
+                  : variant === 'report'
+                    ? sectionType === 'writing'
+                      ? 'text-2xl text-skill-writing'
+                      : 'text-2xl text-skill-speaking'
+                    : 'text-center text-lg',
               )}
             >
               {formatBand(criterion.band)}
@@ -751,14 +757,20 @@ export function CriteriaGrid({
             <BandScale
               band={criterion.band}
               label={label}
-              className='mt-2'
+              barClass={sectionType === 'writing' ? 'bg-skill-writing' : 'bg-skill-speaking'}
+              className='mt-3'
             />
             {variant !== 'rail' && variant !== 'report' && (
               <p className='mt-2 line-clamp-3 text-xs text-muted-foreground'>
                 {criterion.feedback}
               </p>
             )}
-            {(longFeedback || variant === 'rail' || variant === 'report') && criterion.feedback && (
+            {variant === 'report' && criterion.feedback && (
+              <p className='mt-4 text-sm leading-6 text-muted-foreground'>
+                {criterion.feedback}
+              </p>
+            )}
+            {(longFeedback || variant === 'rail') && criterion.feedback && (
               <>
                 <CollapsibleTrigger className='mt-1 flex items-center gap-0.5 text-xs text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'>
                   <ChevronDown className='size-3 transition-transform duration-200 [[data-state=open]_&]:rotate-180' />
@@ -785,10 +797,13 @@ export function FeedbackList({
 }) {
   return (
     <div>
-      <p className='mb-1 text-sm font-medium'>{title}</p>
-      <ul className='list-inside list-disc space-y-1 text-sm text-muted-foreground'>
+      <p className='mb-3 text-sm font-semibold'>{title}</p>
+      <ul className='space-y-2.5 text-sm leading-6 text-muted-foreground'>
         {items.map((item, i) => (
-          <li key={i}>{item}</li>
+          <li key={i} className='flex gap-2.5'>
+            <span className='mt-2 size-1.5 shrink-0 rounded-full bg-foreground/40' />
+            <span>{item}</span>
+          </li>
         ))}
       </ul>
     </div>

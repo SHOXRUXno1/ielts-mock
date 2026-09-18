@@ -24,6 +24,7 @@ export function WritingReportPanel({
       <SkillReportHeader
         skill='writing'
         band={band}
+        variant='feature'
         action={
           isAdmin && job ? (
             <AdminBandOverride job={job} onOverride={onOverride} />
