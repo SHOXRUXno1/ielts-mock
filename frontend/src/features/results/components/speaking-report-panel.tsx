@@ -57,6 +57,7 @@ export function SpeakingReportPanel({
         <SkillReportHeader
           skill='speaking'
           band={attempt.speaking_band ?? session?.overall_band}
+          variant='feature'
           action={
             isAdmin && job ? (
               <AdminBandOverride job={job} onOverride={onOverride} />
