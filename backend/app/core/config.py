@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     # ── ElevenLabs (Text-to-Speech) ─────────────────────
     elevenlabs_api_key: str = ""
     elevenlabs_voice_id: str = "onwK4e9ZLuTAKqWW03F9"  # Daniel, British
-    elevenlabs_model_id: str = "eleven_turbo_v2"  # or eleven_flash_v2_5 for lower latency
+    elevenlabs_model_id: str = "eleven_flash_v2_5"  # lower latency; eleven_turbo_v2 for higher fidelity
     elevenlabs_max_concurrent: int = 6
 
     # ── Simli (Video Avatar) ─────────────────────────────
