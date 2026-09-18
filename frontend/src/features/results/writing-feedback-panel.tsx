@@ -4,6 +4,9 @@ import {
   ChevronDown,
   FileText,
   HelpCircle,
+  Lightbulb,
+  MessageSquareText,
+  Sparkles,
   XCircle,
 } from 'lucide-react'
 import type { EvaluationJobRead } from '@/lib/api/attempts'
@@ -451,48 +454,62 @@ function WritingTaskCard({
       : ''
 
   return (
-    <Panel padding='md'>
-      <PanelHeader className='items-center'>
+    <Panel padding='md' className='overflow-hidden'>
+      <PanelHeader className='-mx-5 -mt-5 mb-6 border-b bg-skill-writing-soft px-5 py-5 sm:-mx-6 sm:-mt-6 sm:px-6'>
         <div className='flex flex-wrap items-center gap-2'>
-          <PanelTitle>{label}</PanelTitle>
+          <div>
+            <p className='mb-1 text-xs font-semibold tracking-[0.18em] text-skill-writing uppercase'>Writing feedback</p>
+            <PanelTitle className='text-xl'>{label}</PanelTitle>
+          </div>
           {wordCount != null && (
-            <Badge variant='outline' className='text-xs'>
-              <FileText className='mr-1 size-3' />
-              {wordCount} words
+            <Badge variant='outline' className='border-skill-writing/20 bg-background/70 text-xs'>
+              <FileText className='mr-1 size-3' /> {wordCount} words
             </Badge>
           )}
         </div>
         {overallBand != null && (
-          <div className='text-right'>
-            <p className='text-[11px] tracking-wider text-muted-foreground uppercase'>
-              Task Band
-            </p>
-            <p className='font-manrope text-xl font-semibold tracking-tight tabular-nums'>
-              {formatBand(overallBand)}
-            </p>
+          <div className='rounded-xl bg-background px-4 py-2 text-right shadow-sm ring-1 ring-skill-writing/10'>
+            <p className='text-[10px] font-semibold tracking-wider text-muted-foreground uppercase'>Band score</p>
+            <p className='font-manrope text-2xl font-bold tracking-tight tabular-nums text-skill-writing'>{formatBand(overallBand)}</p>
           </div>
         )}
       </PanelHeader>
-      <PanelBody>
-        <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]'>
-          <div className='space-y-4'>
-            {keyPoints.length > 0 && <KeyPointsAnalysis points={keyPoints} />}
+      <PanelBody className='space-y-8'>
+        <section>
+          <SectionHeading icon={MessageSquareText} title='Assessment by criterion' description='Your score is based on the four IELTS writing criteria.' />
+          <CriteriaGrid data={taskData} sectionType='writing' isTask1={isTask1} sentenceAnalysis={sentenceAnalysis} errors={rawErrors} variant='report' />
+        </section>
 
-            {strengths && strengths.length > 0 && (
-              <FeedbackList title='Strengths' items={strengths} />
-            )}
-            {improvements && improvements.length > 0 && (
-              <FeedbackList title='Areas for Improvement' items={improvements} />
-            )}
+        {(strengths?.length || improvements?.length || overallReview) && (
+          <section className='rounded-2xl bg-muted/45 p-5 sm:p-6'>
+            <SectionHeading icon={Sparkles} title='Overall review' />
+            {overallReview && <p className='mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground'>{overallReview}</p>}
+            <div className='mt-5 grid gap-5 md:grid-cols-2'>
+              {strengths && strengths.length > 0 && <FeedbackList title='What went well' items={strengths} />}
+              {improvements && improvements.length > 0 && <FeedbackList title='What to improve next' items={improvements} />}
+            </div>
+          </section>
+        )}
 
-            {sentenceAnalysis.length > 0 && (
-              <SentenceAnalysisList items={sentenceAnalysis} />
-            )}
+        {keyPoints.length > 0 && (
+          <section>
+            <SectionHeading icon={Lightbulb} title='Key points analysis' />
+            <div className='mt-4'><KeyPointsAnalysis points={keyPoints} /></div>
+          </section>
+        )}
 
-            {essayText && (
-              <div>
-                <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
-                  <p className='text-sm font-medium'>Student's Essay</p>
+        {sentenceAnalysis.length > 0 && (
+          <section>
+            <SectionHeading icon={MessageSquareText} title='Sentence-by-sentence feedback' description='The most important parts of your response, explained in context.' />
+            <div className='mt-4'><SentenceAnalysisList items={sentenceAnalysis} /></div>
+          </section>
+        )}
+
+        {essayText && (
+          <section>
+            <SectionHeading icon={FileText} title="Your submitted response" description='Select an issue type to focus the highlights.' />
+            <div className='mt-4'>
+              <div className='mb-2 flex flex-wrap items-center justify-end gap-2'>
                   {rawErrors.length > 0 && (
                     <div className='flex flex-wrap gap-1.5'>
                       {ERROR_LEGEND.filter((item) =>
@@ -522,23 +539,18 @@ function WritingTaskCard({
                       })}
                     </div>
                   )}
-                </div>
-                <ScrollArea className='h-80 rounded-lg border bg-surface-sunken'>
-                  <div className='p-4'>
-                    <HighlightedEssay
-                      text={essayText}
-                      errors={[...rawErrors]}
-                      highlightType={highlightType}
-                    />
-                  </div>
-                </ScrollArea>
               </div>
-            )}
+              <ScrollArea className='h-80 rounded-xl border bg-surface-sunken'>
+                <div className='p-5'><HighlightedEssay text={essayText} errors={[...rawErrors]} highlightType={highlightType} /></div>
+              </ScrollArea>
+            </div>
+          </section>
+        )}
 
-            {rawErrors.length > 0 && (
-              <div>
-                <p className='mb-2 text-sm font-medium'>Errors & Corrections</p>
-                <div className='space-y-2'>
+        {rawErrors.length > 0 && (
+          <section>
+            <SectionHeading icon={Lightbulb} title='Corrections to learn from' />
+            <div className='mt-4 space-y-2'>
                   {rawErrors
                     .filter(
                       (err) => highlightType == null || err.type === highlightType,
@@ -568,36 +580,23 @@ function WritingTaskCard({
                         </span>
                       </div>
                     ))}
-                </div>
-              </div>
-            )}
+            </div>
+          </section>
+        )}
 
-            {overallReview && (
-              <div>
-                <p className='mb-1 text-sm font-medium'>Overall Review</p>
-                <p className='whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground'>
-                  {overallReview}
-                </p>
-              </div>
-            )}
-
-            {optimized && <OptimizedCompositionCard text={optimized} />}
-          </div>
-
-          <aside className='lg:sticky lg:top-32 lg:self-start'>
-            <CriteriaGrid
-              data={taskData}
-              sectionType='writing'
-              isTask1={isTask1}
-              sentenceAnalysis={sentenceAnalysis}
-              errors={rawErrors}
-              variant='rail'
-            />
-          </aside>
-        </div>
+        {optimized && (
+          <section>
+            <SectionHeading icon={Sparkles} title='A stronger version of your response' description='Use this as a model for organisation, vocabulary and accuracy.' />
+            <div className='mt-4'><OptimizedCompositionCard text={optimized} /></div>
+          </section>
+        )}
       </PanelBody>
     </Panel>
   )
+}
+
+function SectionHeading({ icon: Icon, title, description }: { icon: typeof FileText; title: string; description?: string }) {
+  return <div className='flex gap-3'><div className='mt-0.5 rounded-lg bg-muted p-2'><Icon className='size-4 text-muted-foreground' /></div><div><h3 className='font-manrope text-base font-semibold'>{title}</h3>{description && <p className='mt-0.5 text-sm text-muted-foreground'>{description}</p>}</div></div>
 }
 
 export function WritingResult({
@@ -668,7 +667,7 @@ export function CriteriaGrid({
   isTask1?: boolean
   sentenceAnalysis?: SentenceAnalysisItem[]
   errors?: WritingError[]
-  variant?: 'grid' | 'rail'
+  variant?: 'grid' | 'rail' | 'report'
 }) {
   const writingFirstCriterion = isTask1
     ? WRITING_TASK1_FIRST_CRITERION
@@ -700,6 +699,8 @@ export function CriteriaGrid({
       className={cn(
         variant === 'rail'
           ? 'space-y-2'
+          : variant === 'report'
+            ? 'grid gap-3 md:grid-cols-2'
           : 'grid grid-cols-2 gap-3 sm:grid-cols-4',
       )}
     >
@@ -715,7 +716,7 @@ export function CriteriaGrid({
             key={key}
             className={cn(
               'rounded-xl ring-1 ring-border',
-              variant === 'rail' ? 'bg-card p-3' : 'border p-3',
+              variant === 'rail' ? 'bg-card p-3' : variant === 'report' ? 'border bg-card p-4' : 'border p-3',
             )}
           >
             <div className='mb-1 flex items-center justify-between gap-1'>
@@ -742,7 +743,7 @@ export function CriteriaGrid({
             <p
               className={cn(
                 'font-semibold tabular-nums',
-                variant === 'rail' ? 'text-lg' : 'text-center text-lg',
+                variant === 'rail' ? 'text-lg' : variant === 'report' ? 'text-xl text-skill-writing' : 'text-center text-lg',
               )}
             >
               {formatBand(criterion.band)}
@@ -752,16 +753,16 @@ export function CriteriaGrid({
               label={label}
               className='mt-2'
             />
-            {variant !== 'rail' && (
+            {variant !== 'rail' && variant !== 'report' && (
               <p className='mt-2 line-clamp-3 text-xs text-muted-foreground'>
                 {criterion.feedback}
               </p>
             )}
-            {(longFeedback || variant === 'rail') && criterion.feedback && (
+            {(longFeedback || variant === 'rail' || variant === 'report') && criterion.feedback && (
               <>
                 <CollapsibleTrigger className='mt-1 flex items-center gap-0.5 text-xs text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'>
                   <ChevronDown className='size-3 transition-transform duration-200 [[data-state=open]_&]:rotate-180' />
-                  {variant === 'rail' ? 'Feedback' : 'Show more'}
+                  {variant === 'rail' ? 'Feedback' : variant === 'report' ? 'Read feedback' : 'Show more'}
                 </CollapsibleTrigger>
                 <CollapsibleContent className='mt-1 text-xs leading-relaxed text-muted-foreground'>
                   {criterion.feedback}
