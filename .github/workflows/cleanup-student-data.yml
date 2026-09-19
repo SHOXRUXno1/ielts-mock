@@ -1,0 +1,49 @@
+name: Clean student data
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Use preflight to inspect; apply to delete verified student data"
+        required: true
+        default: preflight
+        type: choice
+        options:
+          - preflight
+          - apply
+      confirmation:
+        description: "Required for apply: DELETE_STUDENT_DATA"
+        required: false
+        type: string
+
+concurrency:
+  group: clean-student-data
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: ${{ inputs.mode }} student cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify destructive confirmation
+        if: ${{ inputs.mode == 'apply' && inputs.confirmation != 'DELETE_STUDENT_DATA' }}
+        run: |
+          echo "Refusing to delete without the exact DELETE_STUDENT_DATA confirmation."
+          exit 1
+
+      - name: Run cleanup on production
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -eu
+            cd /opt/ielts-mock
+            if [ "${{ inputs.mode }}" = "apply" ]; then
+              docker compose -f docker-compose.prod.yml exec -T backend \
+                python scripts/cleanup_students_keep_ulugbek.py --apply
+            else
+              docker compose -f docker-compose.prod.yml exec -T backend \
+                python scripts/cleanup_students_keep_ulugbek.py
+            fi
