@@ -1,14 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Check, CircleDashed, CircleMinus, CircleX } from 'lucide-react'
 import type { AnswerRead } from '@/lib/api/attempts'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import {
   OBJECTIVE_QUESTION_TOTAL,
@@ -34,8 +26,7 @@ import { ResultEmptyState } from './result-empty-state'
 import { SkillReportHeader } from './skill-report-header'
 import { Panel, PanelBody, PanelHeader, PanelTitle, PanelToolbar } from '@/components/report'
 
-/** Partial answers have no bucket of their own; they filter as incorrect. */
-type FilterKey = Exclude<AnswerOutcome, 'partial'>
+type ReviewMode = 'needs_review' | 'all' | 'correct'
 
 type AnswerReviewPanelProps = {
   skill: Extract<SkillKey, 'listening' | 'reading'>
@@ -45,10 +36,10 @@ type AnswerReviewPanelProps = {
   attemptStatus?: string
 }
 
-const FILTERS: { value: FilterKey; label: string }[] = [
+const REVIEW_MODES: { value: ReviewMode; label: string }[] = [
+  { value: 'needs_review', label: 'Needs review' },
+  { value: 'all', label: 'All answers' },
   { value: 'correct', label: 'Correct' },
-  { value: 'incorrect', label: 'Incorrect' },
-  { value: 'skipped', label: 'Skipped' },
 ]
 
 export function AnswerReviewPanel({
@@ -58,7 +49,7 @@ export function AnswerReviewPanel({
   answers,
   attemptStatus,
 }: AnswerReviewPanelProps) {
-  const [filter, setFilter] = useState<FilterKey | null>(null)
+  const [reviewMode, setReviewMode] = useState<ReviewMode>('needs_review')
   const meta = skillMeta(skill)
   const Icon = meta.icon
 
@@ -87,9 +78,12 @@ export function AnswerReviewPanel({
     [answers, skill],
   )
 
-  const visible = rows.filter(
-    (row) => filter == null || matchesOutcomeFilter(answerOutcome(row), filter),
-  )
+  const visible = rows.filter((row) => {
+    const outcome = answerOutcome(row)
+    if (reviewMode === 'all') return true
+    if (reviewMode === 'correct') return outcome === 'correct'
+    return !matchesOutcomeFilter(outcome, 'correct')
+  })
   const groups = useMemo(
     () => groupAnswersByPart(visible, skill),
     [visible, skill],
@@ -198,18 +192,23 @@ export function AnswerReviewPanel({
           <PanelHeader className='mb-5 items-center'>
             <div>
               <p className='text-sm font-semibold'>Answer review</p>
-              <p className='mt-1 text-sm text-muted-foreground'>Filter the list to focus your review.</p>
+              <p className='mt-1 text-sm text-muted-foreground'>Review missed marks first, or audit every response.</p>
             </div>
             <PanelToolbar className='gap-1 rounded-xl bg-muted/60 p-1'>
-              {FILTERS.map(({ value, label }) => {
-                const count = counts[value]
-                const pressed = filter === value
+              {REVIEW_MODES.map(({ value, label }) => {
+                const count =
+                  value === 'needs_review'
+                    ? counts.incorrect + counts.skipped
+                    : value === 'all'
+                      ? counts.correct + counts.incorrect + counts.skipped
+                      : counts.correct
+                const pressed = reviewMode === value
                 return (
                   <button
                     key={value}
                     type='button'
                     aria-pressed={pressed}
-                    onClick={() => setFilter((prev) => (prev === value ? null : value))}
+                    onClick={() => setReviewMode(value)}
                     className={cn(
                       'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
                       'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
@@ -223,67 +222,36 @@ export function AnswerReviewPanel({
               })}
             </PanelToolbar>
           </PanelHeader>
-          <div className='hidden max-h-[32rem] overflow-auto rounded-xl bg-surface-sunken sm:block'>
-            <Table>
-              <TableHeader className='sticky top-0 z-10 bg-card'>
-                <TableRow className='hover:bg-transparent'>
-                  <TableHead className='h-11 w-16 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
-                    Status
-                  </TableHead>
-                  <TableHead className='h-11 w-24 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
-                    Question
-                  </TableHead>
-                  <TableHead className='h-11 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
-                    My Answer
-                  </TableHead>
-                  <TableHead className='h-11 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
-                    Correct Answer
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              {groups.map((group) => (
-                <TableBody key={group.key}>
-                  <TableRow className='bg-muted/40 hover:bg-muted/40'>
-                    <TableCell
-                      colSpan={4}
-                      className='py-1.5 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'
-                    >
-                      {group.label}
-                    </TableCell>
-                  </TableRow>
-                  {group.answers.map((a) => (
-                    <AnswerTableRow
-                      key={a.id}
-                      answer={a}
-                      number={displayNumbers.get(a.id) ?? String(a.question?.order ?? '?')}
-                    />
-                  ))}
-                </TableBody>
-              ))}
-            </Table>
-          </div>
-
-          <div className='space-y-3 sm:hidden'>
-            {groups.map((group) => (
-              <div key={group.key} className='space-y-2'>
-                <p className='text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
-                  {group.label}
-                </p>
-                {group.answers.map((a) => (
-                  <AnswerCard
-                    key={a.id}
-                    answer={a}
-                    number={displayNumbers.get(a.id) ?? String(a.question?.order ?? '?')}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-
-          {visible.length === 0 && (
-            <p className='py-6 text-center text-sm text-muted-foreground'>
-              No answers match this filter.
+          {visible.length === 0 && reviewMode === 'needs_review' ? (
+            <PerfectReview onViewAll={() => setReviewMode('all')} />
+          ) : visible.length === 0 ? (
+            <p className='rounded-2xl border border-dashed py-10 text-center text-sm text-muted-foreground'>
+              No answers in this view.
             </p>
+          ) : (
+            <div className='max-h-[42rem] overflow-auto rounded-2xl border bg-surface-sunken'>
+              {groups.map((group) => (
+                <section key={group.key} aria-label={group.label}>
+                  <div className='sticky top-0 z-10 flex items-center justify-between border-y bg-card/95 px-4 py-2.5 backdrop-blur'>
+                    <p className='text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase'>
+                      {group.label}
+                    </p>
+                    <p className='text-xs tabular-nums text-muted-foreground'>
+                      {group.answers.length} {group.answers.length === 1 ? 'response' : 'responses'}
+                    </p>
+                  </div>
+                  <div className='divide-y divide-border/70'>
+                    {group.answers.map((answer) => (
+                      <AnswerAuditRow
+                        key={answer.id}
+                        answer={answer}
+                        number={displayNumbers.get(answer.id) ?? String(answer.question?.order ?? '?')}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
           )}
         </PanelBody>
       </Panel>
@@ -322,52 +290,28 @@ function ScoreMetric({
   )
 }
 
-function AnswerTableRow({
-  answer,
-  number,
-}: {
-  answer: AnswerRead
-  number: string
-}) {
-  const outcome = answerOutcome(answer)
-  const student = formatStudentAnswer(answer.response)
-  const correct = formatCorrectAnswer(answer.question?.answer_key ?? null)
-  const marks = answerMarks(answer)
-  const optionLetters = usesOptionLetters(answer.question)
-
+function PerfectReview({ onViewAll }: { onViewAll: () => void }) {
   return (
-    <TableRow className={cn('h-11 border-l-[3px]', outcomeRowClass(outcome))}>
-      <TableCell className='py-0'>
-        <OutcomeIcon outcome={outcome} />
-      </TableCell>
-      <TableCell className='py-1 font-medium tabular-nums text-muted-foreground'>
-        {number}
-        <MarksLabel marks={marks} className='block' />
-      </TableCell>
-      <TableCell className='py-0'>
-        {outcome === 'skipped' ? (
-          <span className='text-muted-foreground'>—</span>
-        ) : (
-          <AnswerMark
-            value={student}
-            tone={outcome === 'incorrect' ? 'wrong' : 'plain'}
-            optionLetters={optionLetters}
-            matchAgainst={outcome === 'partial' ? correct : undefined}
-          />
-        )}
-      </TableCell>
-      <TableCell className='py-0'>
-        {correct ? (
-          <AnswerMark value={correct} tone='right' optionLetters={optionLetters} />
-        ) : (
-          <span className='text-muted-foreground'>—</span>
-        )}
-      </TableCell>
-    </TableRow>
+    <div className='rounded-2xl border border-success-foreground/20 bg-success/35 px-5 py-8 text-center sm:px-8'>
+      <div className='mx-auto flex size-11 items-center justify-center rounded-2xl bg-card shadow-sm'>
+        <Check className='size-5 text-success-foreground' />
+      </div>
+      <h3 className='mt-4 font-manrope text-lg font-semibold'>Perfect review</h3>
+      <p className='mx-auto mt-1 max-w-md text-sm leading-6 text-muted-foreground'>
+        All scored answers are correct. Open the full audit whenever you want to review the answer key.
+      </p>
+      <button
+        type='button'
+        onClick={onViewAll}
+        className='mt-5 rounded-xl bg-card px-4 py-2 text-sm font-medium shadow-sm ring-1 ring-success-foreground/15 transition-colors hover:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
+      >
+        View all answers
+      </button>
+    </div>
   )
 }
 
-function AnswerCard({
+function AnswerAuditRow({
   answer,
   number,
 }: {
@@ -381,17 +325,25 @@ function AnswerCard({
   const optionLetters = usesOptionLetters(answer.question)
 
   return (
-    <div className={cn('rounded-xl border border-l-[3px] p-3', outcomeRowClass(outcome))}>
-      <div className='mb-2 flex items-center justify-between gap-2'>
-        <span className='text-xs font-medium tabular-nums text-muted-foreground'>
-          Question {number}
-          <MarksLabel marks={marks} className='ms-2' />
-        </span>
-        <OutcomeIcon outcome={outcome} />
+    <article
+      className={cn(
+        'grid gap-3 border-l-[3px] px-4 py-4 sm:gap-4 lg:grid-cols-[8.75rem_6.5rem_minmax(12rem,1fr)_minmax(14rem,1.15fr)] lg:items-start',
+        outcomeRowClass(outcome),
+      )}
+    >
+      <div className='pt-0.5'>
+        <OutcomePill outcome={outcome} />
       </div>
-      <p className='font-medium text-foreground'>
+      <div className='flex items-start justify-between gap-3 lg:block'>
+        <div>
+          <p className='text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase'>Question</p>
+          <p className='mt-1 font-manrope text-base font-semibold tabular-nums'>{number}</p>
+        </div>
+        <MarksLabel marks={marks} className='mt-1 shrink-0 lg:block' />
+      </div>
+      <AnswerValue label='Your answer' tone={outcome === 'correct' ? 'neutral' : outcome}>
         {outcome === 'skipped' ? (
-          '—'
+          <span className='text-muted-foreground'>No answer</span>
         ) : (
           <AnswerMark
             value={student}
@@ -400,15 +352,39 @@ function AnswerCard({
             matchAgainst={outcome === 'partial' ? correct : undefined}
           />
         )}
-      </p>
-      <p className='mt-1.5 flex items-center gap-2 text-xs text-muted-foreground'>
-        <span>Correct:</span>
+      </AnswerValue>
+      <AnswerValue label='Accepted answer' tone='accepted'>
         {correct ? (
           <AnswerMark value={correct} tone='right' optionLetters={optionLetters} />
         ) : (
-          '—'
+          <span className='text-muted-foreground'>No answer key provided</span>
         )}
-      </p>
+      </AnswerValue>
+    </article>
+  )
+}
+
+function AnswerValue({
+  label,
+  tone,
+  children,
+}: {
+  label: string
+  tone: AnswerOutcome | 'accepted' | 'neutral'
+  children: ReactNode
+}) {
+  const toneClass =
+    tone === 'incorrect'
+      ? 'border-destructive/20 bg-destructive/5'
+      : tone === 'partial' || tone === 'skipped'
+        ? 'border-warning-foreground/20 bg-warning/15'
+        : tone === 'accepted'
+          ? 'border-success-foreground/20 bg-success/35'
+          : 'border-border/70 bg-card'
+  return (
+    <div className={cn('min-w-0 rounded-xl border px-3 py-3', toneClass)}>
+      <p className='text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase'>{label}</p>
+      <div className='mt-2 break-words whitespace-normal text-sm leading-6 text-foreground'>{children}</div>
     </div>
   )
 }
@@ -461,6 +437,29 @@ function OutcomeIcon({ outcome }: { outcome: AnswerOutcome }) {
     <span className='inline-flex items-center'>
       <CircleX className='size-4 text-destructive' />
       <span className='sr-only'>Incorrect</span>
+    </span>
+  )
+}
+
+function OutcomePill({ outcome }: { outcome: AnswerOutcome }) {
+  const label =
+    outcome === 'correct'
+      ? 'Correct'
+      : outcome === 'partial'
+        ? 'Partly correct'
+        : outcome === 'skipped'
+          ? 'Skipped'
+          : 'Incorrect'
+  const toneClass =
+    outcome === 'correct'
+      ? 'border-success-foreground/20 bg-success/35 text-success-foreground'
+      : outcome === 'partial' || outcome === 'skipped'
+        ? 'border-warning-foreground/20 bg-warning/20 text-warning-foreground'
+        : 'border-destructive/20 bg-destructive/10 text-destructive'
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold', toneClass)}>
+      <OutcomeIcon outcome={outcome} />
+      {label}
     </span>
   )
 }
