@@ -32,7 +32,7 @@ import { AnswerMark } from './answer-mark'
 import { OutcomeBar } from './outcome-bar'
 import { ResultEmptyState } from './result-empty-state'
 import { SkillReportHeader } from './skill-report-header'
-import { Panel, PanelBody, PanelHeader, PanelToolbar } from '@/components/report'
+import { Panel, PanelBody, PanelHeader, PanelTitle, PanelToolbar } from '@/components/report'
 
 /** Partial answers have no bucket of their own; they filter as incorrect. */
 type FilterKey = Exclude<AnswerOutcome, 'partial'>
@@ -120,6 +120,7 @@ export function AnswerReviewPanel({
       <SkillReportHeader
         skill={skill}
         band={band}
+        variant='feature'
         extra={
           <p className='mt-1 text-sm tabular-nums text-muted-foreground'>
             {raw != null ? `${raw}/${OBJECTIVE_QUESTION_TOTAL} correct` : '—'}
@@ -127,64 +128,101 @@ export function AnswerReviewPanel({
         }
       />
 
-      <Panel className={ENTER} padding='sm'>
-        <PanelHeader className='items-center'>
-          <OutcomeBar
-            correct={counts.correct}
-            incorrect={counts.incorrect}
-            skipped={counts.skipped}
-            showLegend
-            className='min-w-[12rem] flex-1'
-          />
-          <PanelToolbar className='gap-1'>
-            {FILTERS.map(({ value, label }) => {
-              const count = counts[value]
-              const pressed = filter === value
-              return (
-                <button
-                  key={value}
-                  type='button'
-                  aria-pressed={pressed}
-                  onClick={() => setFilter((prev) => (prev === value ? null : value))}
-                  className={cn(
-                    'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
-                    'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                    pressed
-                      ? 'bg-foreground text-background'
-                      : 'bg-muted/60 text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {label}
-                  <span className='ms-1.5 tabular-nums opacity-80'>{count}</span>
-                </button>
-              )
-            })}
-          </PanelToolbar>
+      <Panel className={ENTER} padding='md'>
+        <PanelHeader>
+          <div>
+            <p className={cn('text-xs font-semibold tracking-[0.16em] uppercase', meta.accent)}>
+              Accuracy overview
+            </p>
+            <PanelTitle className='mt-1 text-xl'>Where you earned your marks</PanelTitle>
+          </div>
+          <p className='max-w-sm text-sm leading-6 text-muted-foreground'>
+            Compare the parts first, then use the answer review to focus your practice.
+          </p>
         </PanelHeader>
 
+        <div className='mt-6 grid gap-5 lg:grid-cols-[minmax(13rem,0.9fr)_minmax(0,1.4fr)]'>
+          <div className={cn('rounded-2xl p-5', meta.surface)}>
+            <p className='text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase'>Correct answers</p>
+            <div className='mt-2 flex items-end gap-2'>
+              <p className={cn('font-manrope text-4xl font-bold tracking-tight tabular-nums', meta.accent)}>
+                {raw ?? counts.correct}
+              </p>
+              <p className='mb-1 text-sm text-muted-foreground'>of {counts.correct + counts.incorrect + counts.skipped}</p>
+            </div>
+            <p className='mt-2 text-sm text-muted-foreground'>
+              {formatAccuracy(counts.correct, counts.correct + counts.incorrect + counts.skipped)} accuracy
+            </p>
+          </div>
+          <div className='rounded-2xl border bg-surface-sunken p-5'>
+            <OutcomeBar correct={counts.correct} incorrect={counts.incorrect} skipped={counts.skipped} showLegend />
+            <div className='mt-5 grid grid-cols-3 gap-2'>
+              <ScoreMetric label='Correct' value={counts.correct} tone='success' />
+              <ScoreMetric label='Incorrect' value={counts.incorrect} tone='destructive' />
+              <ScoreMetric label='Skipped' value={counts.skipped} tone='muted' />
+            </div>
+          </div>
+        </div>
+
         {partAccuracy.length > 0 && (
-          <div className='mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+          <div className='mt-7 border-t pt-6'>
+            <div className='mb-4'>
+              <p className='text-sm font-semibold'>Performance by {skill === 'listening' ? 'part' : 'passage'}</p>
+              <p className='mt-1 text-sm text-muted-foreground'>Find the section where a small improvement can make the biggest difference.</p>
+            </div>
+            <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
             {partAccuracy.map((part) => (
-              <div key={part.key} className='space-y-2'>
+              <div key={part.key} className='rounded-xl border bg-card p-4'>
                 <div className='flex items-baseline justify-between gap-2'>
-                  <p className='text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                  <p className='text-xs font-semibold text-foreground'>
                     {part.label}
                   </p>
-                  <p className='text-[11px] tabular-nums text-muted-foreground'>
-                    {part.correct}/{part.total}
+                  <p className={cn('text-sm font-semibold tabular-nums', meta.accent)}>
+                    {formatAccuracy(part.correct, part.total)}
                   </p>
                 </div>
+                <p className='mt-1 text-xs tabular-nums text-muted-foreground'>{part.correct} of {part.total} correct</p>
                 <OutcomeBar
                   correct={part.correct}
                   incorrect={part.incorrect}
                   skipped={part.skipped}
+                  className='mt-3'
                 />
               </div>
             ))}
+            </div>
           </div>
         )}
 
-        <PanelBody>
+        <PanelBody className='border-t pt-6'>
+          <PanelHeader className='mb-5 items-center'>
+            <div>
+              <p className='text-sm font-semibold'>Answer review</p>
+              <p className='mt-1 text-sm text-muted-foreground'>Filter the list to focus your review.</p>
+            </div>
+            <PanelToolbar className='gap-1 rounded-xl bg-muted/60 p-1'>
+              {FILTERS.map(({ value, label }) => {
+                const count = counts[value]
+                const pressed = filter === value
+                return (
+                  <button
+                    key={value}
+                    type='button'
+                    aria-pressed={pressed}
+                    onClick={() => setFilter((prev) => (prev === value ? null : value))}
+                    className={cn(
+                      'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
+                      'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                      pressed ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    {label}
+                    <span className='ms-1.5 tabular-nums opacity-75'>{count}</span>
+                  </button>
+                )
+              })}
+            </PanelToolbar>
+          </PanelHeader>
           <div className='hidden max-h-[32rem] overflow-auto rounded-xl bg-surface-sunken sm:block'>
             <Table>
               <TableHeader className='sticky top-0 z-10 bg-card'>
@@ -249,6 +287,37 @@ export function AnswerReviewPanel({
           )}
         </PanelBody>
       </Panel>
+    </div>
+  )
+}
+
+function formatAccuracy(correct: number, total: number): string {
+  if (total <= 0) return '—'
+  return `${Math.round((correct / total) * 100)}%`
+}
+
+function ScoreMetric({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: number
+  tone: 'success' | 'destructive' | 'muted'
+}) {
+  const toneClass = {
+    success: 'text-success-foreground',
+    destructive: 'text-destructive',
+    muted: 'text-muted-foreground',
+  }[tone]
+  return (
+    <div className='rounded-xl bg-card px-3 py-2.5'>
+      <p className='text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase'>
+        {label}
+      </p>
+      <p className={cn('mt-1 font-manrope text-xl font-bold tabular-nums', toneClass)}>
+        {value}
+      </p>
     </div>
   )
 }
