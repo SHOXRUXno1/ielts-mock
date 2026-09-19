@@ -83,17 +83,14 @@ function renderReview(answers: AnswerRead[]) {
 }
 
 describe('AnswerReviewPanel', () => {
-  it('shows a success state by default when every answer is correct', async () => {
+  it('shows every answer by default when every answer is correct', async () => {
     const screen = await renderReview(allCorrect)
 
-    await expect.element(screen.getByText('Perfect review')).toBeVisible()
-    await expect.element(screen.getByText(/All scored answers are correct/)).toBeVisible()
-    await screen.getByRole('button', { name: 'View all answers' }).click()
     await expect.element(screen.getByText('June 6th')).toBeVisible()
     await expect.element(screen.getByText('6 June | 6th June | June 6')).toBeVisible()
   })
 
-  it('defaults to missed marks and can open the complete answer audit', async () => {
+  it('shows the complete audit by default and filters it on demand', async () => {
     const screen = await renderReview(mixedAnswers)
 
     await expect.element(screen.getByText('Partly correct')).toBeVisible()
@@ -102,7 +99,7 @@ describe('AnswerReviewPanel', () => {
     await expect.element(screen.getByText('1/2 marks')).toBeVisible()
     await expect.element(screen.getByText('summer | the summer')).toBeVisible()
 
-    await screen.getByRole('button', { name: /All answers/ }).click()
-    await expect.element(screen.getByLabelText('Part 1')).toBeVisible()
+    await screen.getByRole('button', { name: /Incorrect/ }).click()
+    await expect.element(screen.getByText('Part 1')).toBeVisible()
   })
 })

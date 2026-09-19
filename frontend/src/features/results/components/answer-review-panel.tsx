@@ -1,6 +1,14 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { Check, CircleDashed, CircleMinus, CircleX } from 'lucide-react'
 import type { AnswerRead } from '@/lib/api/attempts'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import {
   OBJECTIVE_QUESTION_TOTAL,
@@ -26,7 +34,8 @@ import { ResultEmptyState } from './result-empty-state'
 import { SkillReportHeader } from './skill-report-header'
 import { Panel, PanelBody, PanelHeader, PanelTitle, PanelToolbar } from '@/components/report'
 
-type ReviewMode = 'needs_review' | 'all' | 'correct'
+/** Partial answers remain in the incorrect filter, as they did before. */
+type FilterKey = Exclude<AnswerOutcome, 'partial'>
 
 type AnswerReviewPanelProps = {
   skill: Extract<SkillKey, 'listening' | 'reading'>
@@ -36,10 +45,10 @@ type AnswerReviewPanelProps = {
   attemptStatus?: string
 }
 
-const REVIEW_MODES: { value: ReviewMode; label: string }[] = [
-  { value: 'needs_review', label: 'Needs review' },
-  { value: 'all', label: 'All answers' },
+const FILTERS: { value: FilterKey; label: string }[] = [
   { value: 'correct', label: 'Correct' },
+  { value: 'incorrect', label: 'Incorrect' },
+  { value: 'skipped', label: 'Skipped' },
 ]
 
 export function AnswerReviewPanel({
@@ -49,7 +58,7 @@ export function AnswerReviewPanel({
   answers,
   attemptStatus,
 }: AnswerReviewPanelProps) {
-  const [reviewMode, setReviewMode] = useState<ReviewMode>('needs_review')
+  const [filter, setFilter] = useState<FilterKey | null>(null)
   const meta = skillMeta(skill)
   const Icon = meta.icon
 
@@ -78,12 +87,9 @@ export function AnswerReviewPanel({
     [answers, skill],
   )
 
-  const visible = rows.filter((row) => {
-    const outcome = answerOutcome(row)
-    if (reviewMode === 'all') return true
-    if (reviewMode === 'correct') return outcome === 'correct'
-    return !matchesOutcomeFilter(outcome, 'correct')
-  })
+  const visible = rows.filter(
+    (row) => filter == null || matchesOutcomeFilter(answerOutcome(row), filter),
+  )
   const groups = useMemo(
     () => groupAnswersByPart(visible, skill),
     [visible, skill],
@@ -192,23 +198,17 @@ export function AnswerReviewPanel({
           <PanelHeader className='mb-5 items-center'>
             <div>
               <p className='text-sm font-semibold'>Answer review</p>
-              <p className='mt-1 text-sm text-muted-foreground'>Review missed marks first, or audit every response.</p>
+              <p className='mt-1 text-sm text-muted-foreground'>Every answer is shown below. Use a filter to focus your review.</p>
             </div>
             <PanelToolbar className='gap-1 rounded-xl bg-muted/60 p-1'>
-              {REVIEW_MODES.map(({ value, label }) => {
-                const count =
-                  value === 'needs_review'
-                    ? counts.incorrect + counts.skipped
-                    : value === 'all'
-                      ? counts.correct + counts.incorrect + counts.skipped
-                      : counts.correct
-                const pressed = reviewMode === value
+              {FILTERS.map(({ value, label }) => {
+                const pressed = filter === value
                 return (
                   <button
                     key={value}
                     type='button'
                     aria-pressed={pressed}
-                    onClick={() => setReviewMode(value)}
+                    onClick={() => setFilter((previous) => (previous === value ? null : value))}
                     className={cn(
                       'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
                       'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
@@ -216,42 +216,73 @@ export function AnswerReviewPanel({
                     )}
                   >
                     {label}
-                    <span className='ms-1.5 tabular-nums opacity-75'>{count}</span>
+                    <span className='ms-1.5 tabular-nums opacity-75'>{counts[value]}</span>
                   </button>
                 )
               })}
             </PanelToolbar>
           </PanelHeader>
-          {visible.length === 0 && reviewMode === 'needs_review' ? (
-            <PerfectReview onViewAll={() => setReviewMode('all')} />
-          ) : visible.length === 0 ? (
-            <p className='rounded-2xl border border-dashed py-10 text-center text-sm text-muted-foreground'>
-              No answers in this view.
-            </p>
-          ) : (
-            <div className='max-h-[42rem] overflow-auto rounded-2xl border bg-surface-sunken'>
+          <div className='hidden max-h-[32rem] overflow-auto rounded-xl border bg-surface-sunken sm:block'>
+            <Table>
+              <TableHeader className='sticky top-0 z-10 bg-card'>
+                <TableRow className='hover:bg-transparent'>
+                  <TableHead className='h-11 w-20 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                    Status
+                  </TableHead>
+                  <TableHead className='h-11 w-28 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                    Question
+                  </TableHead>
+                  <TableHead className='h-11 min-w-48 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                    Your answer
+                  </TableHead>
+                  <TableHead className='h-11 min-w-64 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                    Accepted answer
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
               {groups.map((group) => (
-                <section key={group.key} aria-label={group.label}>
-                  <div className='sticky top-0 z-10 flex items-center justify-between border-y bg-card/95 px-4 py-2.5 backdrop-blur'>
-                    <p className='text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase'>
+                <TableBody key={group.key}>
+                  <TableRow className='bg-muted/40 hover:bg-muted/40'>
+                    <TableCell
+                      colSpan={4}
+                      className='py-2 text-[11px] font-medium tracking-wider text-muted-foreground uppercase'
+                    >
                       {group.label}
-                    </p>
-                    <p className='text-xs tabular-nums text-muted-foreground'>
-                      {group.answers.length} {group.answers.length === 1 ? 'response' : 'responses'}
-                    </p>
-                  </div>
-                  <div className='divide-y divide-border/70'>
+                    </TableCell>
+                  </TableRow>
                     {group.answers.map((answer) => (
-                      <AnswerAuditRow
+                      <AnswerTableRow
                         key={answer.id}
                         answer={answer}
                         number={displayNumbers.get(answer.id) ?? String(answer.question?.order ?? '?')}
                       />
                     ))}
-                  </div>
-                </section>
+                </TableBody>
               ))}
-            </div>
+            </Table>
+          </div>
+
+          <div className='space-y-3 sm:hidden'>
+            {groups.map((group) => (
+              <section key={group.key} className='space-y-2' aria-label={group.label}>
+                <p className='text-[11px] font-medium tracking-wider text-muted-foreground uppercase'>
+                  {group.label}
+                </p>
+                {group.answers.map((answer) => (
+                  <AnswerCard
+                    key={answer.id}
+                    answer={answer}
+                    number={displayNumbers.get(answer.id) ?? String(answer.question?.order ?? '?')}
+                  />
+                ))}
+              </section>
+            ))}
+          </div>
+
+          {visible.length === 0 && (
+            <p className='rounded-xl border border-dashed py-8 text-center text-sm text-muted-foreground'>
+              No answers match this filter.
+            </p>
           )}
         </PanelBody>
       </Panel>
@@ -290,28 +321,7 @@ function ScoreMetric({
   )
 }
 
-function PerfectReview({ onViewAll }: { onViewAll: () => void }) {
-  return (
-    <div className='rounded-2xl border border-success-foreground/20 bg-success/35 px-5 py-8 text-center sm:px-8'>
-      <div className='mx-auto flex size-11 items-center justify-center rounded-2xl bg-card shadow-sm'>
-        <Check className='size-5 text-success-foreground' />
-      </div>
-      <h3 className='mt-4 font-manrope text-lg font-semibold'>Perfect review</h3>
-      <p className='mx-auto mt-1 max-w-md text-sm leading-6 text-muted-foreground'>
-        All scored answers are correct. Open the full audit whenever you want to review the answer key.
-      </p>
-      <button
-        type='button'
-        onClick={onViewAll}
-        className='mt-5 rounded-xl bg-card px-4 py-2 text-sm font-medium shadow-sm ring-1 ring-success-foreground/15 transition-colors hover:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
-      >
-        View all answers
-      </button>
-    </div>
-  )
-}
-
-function AnswerAuditRow({
+function AnswerTableRow({
   answer,
   number,
 }: {
@@ -325,25 +335,17 @@ function AnswerAuditRow({
   const optionLetters = usesOptionLetters(answer.question)
 
   return (
-    <article
-      className={cn(
-        'grid gap-3 border-l-[3px] px-4 py-4 sm:gap-4 lg:grid-cols-[8.75rem_6.5rem_minmax(12rem,1fr)_minmax(14rem,1.15fr)] lg:items-start',
-        outcomeRowClass(outcome),
-      )}
-    >
-      <div className='pt-0.5'>
-        <OutcomePill outcome={outcome} />
-      </div>
-      <div className='flex items-start justify-between gap-3 lg:block'>
-        <div>
-          <p className='text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase'>Question</p>
-          <p className='mt-1 font-manrope text-base font-semibold tabular-nums'>{number}</p>
-        </div>
-        <MarksLabel marks={marks} className='mt-1 shrink-0 lg:block' />
-      </div>
-      <AnswerValue label='Your answer' tone={outcome === 'correct' ? 'neutral' : outcome}>
+    <TableRow className={cn('border-l-[3px]', outcomeRowClass(outcome))}>
+      <TableCell className='py-2 align-top'>
+        <OutcomeIcon outcome={outcome} />
+      </TableCell>
+      <TableCell className='py-2 align-top font-medium tabular-nums text-muted-foreground'>
+        {number}
+        <MarksLabel marks={marks} className='mt-0.5 block' />
+      </TableCell>
+      <TableCell className='min-w-48 py-2 align-top whitespace-normal'>
         {outcome === 'skipped' ? (
-          <span className='text-muted-foreground'>No answer</span>
+          <span className='text-muted-foreground'>—</span>
         ) : (
           <AnswerMark
             value={student}
@@ -352,40 +354,68 @@ function AnswerAuditRow({
             matchAgainst={outcome === 'partial' ? correct : undefined}
           />
         )}
-      </AnswerValue>
-      <AnswerValue label='Accepted answer' tone='accepted'>
+      </TableCell>
+      <TableCell className='min-w-64 py-2 align-top whitespace-normal'>
         {correct ? (
           <AnswerMark value={correct} tone='right' optionLetters={optionLetters} />
         ) : (
-          <span className='text-muted-foreground'>No answer key provided</span>
+          <span className='text-muted-foreground'>—</span>
         )}
-      </AnswerValue>
-    </article>
+      </TableCell>
+    </TableRow>
   )
 }
 
-function AnswerValue({
-  label,
-  tone,
-  children,
+function AnswerCard({
+  answer,
+  number,
 }: {
-  label: string
-  tone: AnswerOutcome | 'accepted' | 'neutral'
-  children: ReactNode
+  answer: AnswerRead
+  number: string
 }) {
-  const toneClass =
-    tone === 'incorrect'
-      ? 'border-destructive/20 bg-destructive/5'
-      : tone === 'partial' || tone === 'skipped'
-        ? 'border-warning-foreground/20 bg-warning/15'
-        : tone === 'accepted'
-          ? 'border-success-foreground/20 bg-success/35'
-          : 'border-border/70 bg-card'
+  const outcome = answerOutcome(answer)
+  const student = formatStudentAnswer(answer.response)
+  const correct = formatCorrectAnswer(answer.question?.answer_key ?? null)
+  const marks = answerMarks(answer)
+  const optionLetters = usesOptionLetters(answer.question)
+
   return (
-    <div className={cn('min-w-0 rounded-xl border px-3 py-3', toneClass)}>
-      <p className='text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase'>{label}</p>
-      <div className='mt-2 break-words whitespace-normal text-sm leading-6 text-foreground'>{children}</div>
-    </div>
+    <article className={cn('rounded-xl border border-l-[3px] p-3', outcomeRowClass(outcome))}>
+      <div className='mb-3 flex items-center justify-between gap-3'>
+        <span className='text-xs font-medium tabular-nums text-muted-foreground'>
+          Question {number}
+          <MarksLabel marks={marks} className='ms-2' />
+        </span>
+        <OutcomeIcon outcome={outcome} />
+      </div>
+      <div className='space-y-2.5 text-sm'>
+        <div>
+          <p className='text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase'>Your answer</p>
+          <div className='mt-1 break-words'>
+            {outcome === 'skipped' ? (
+              <span className='text-muted-foreground'>—</span>
+            ) : (
+              <AnswerMark
+                value={student}
+                tone={outcome === 'incorrect' ? 'wrong' : 'plain'}
+                optionLetters={optionLetters}
+                matchAgainst={outcome === 'partial' ? correct : undefined}
+              />
+            )}
+          </div>
+        </div>
+        <div>
+          <p className='text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase'>Accepted answer</p>
+          <div className='mt-1 break-words'>
+            {correct ? (
+              <AnswerMark value={correct} tone='right' optionLetters={optionLetters} />
+            ) : (
+              <span className='text-muted-foreground'>—</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </article>
   )
 }
 
@@ -437,29 +467,6 @@ function OutcomeIcon({ outcome }: { outcome: AnswerOutcome }) {
     <span className='inline-flex items-center'>
       <CircleX className='size-4 text-destructive' />
       <span className='sr-only'>Incorrect</span>
-    </span>
-  )
-}
-
-function OutcomePill({ outcome }: { outcome: AnswerOutcome }) {
-  const label =
-    outcome === 'correct'
-      ? 'Correct'
-      : outcome === 'partial'
-        ? 'Partly correct'
-        : outcome === 'skipped'
-          ? 'Skipped'
-          : 'Incorrect'
-  const toneClass =
-    outcome === 'correct'
-      ? 'border-success-foreground/20 bg-success/35 text-success-foreground'
-      : outcome === 'partial' || outcome === 'skipped'
-        ? 'border-warning-foreground/20 bg-warning/20 text-warning-foreground'
-        : 'border-destructive/20 bg-destructive/10 text-destructive'
-  return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold', toneClass)}>
-      <OutcomeIcon outcome={outcome} />
-      {label}
     </span>
   )
 }
