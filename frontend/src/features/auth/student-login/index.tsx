@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { login } from '@/lib/api/auth'
 import { decodeJwt } from '@/lib/api/admin'
-import { Logo } from '@/assets/logo'
+import imperiaLogo from '@/assets/branding/ielts-imperia-logo.jpg'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -74,8 +74,12 @@ export function StudentLogin() {
     <div className='flex min-h-svh items-center justify-center bg-muted/40 p-4'>
       <div className='w-full max-w-md rounded-2xl bg-background p-10 shadow-xl'>
         <div className='mb-8 flex flex-col items-center gap-3 text-center'>
-          <Logo className='h-10 w-10' />
-          <h1 className='text-3xl font-bold tracking-tight'>IELTS Mock</h1>
+          <img
+            src={imperiaLogo}
+            alt='IELTS Imperia of Khushnud Rustamovich'
+            className='size-24 rounded-2xl border border-border/70 object-cover shadow-sm'
+          />
+          <h1 className='text-3xl font-bold tracking-tight'>IELTS Imperia</h1>
           <p className='text-muted-foreground text-sm'>
             Sign in to continue
           </p>
