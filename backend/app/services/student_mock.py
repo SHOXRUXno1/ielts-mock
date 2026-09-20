@@ -128,10 +128,12 @@ async def in_progress_full_mock(
 ) -> Attempt | None:
     result = await db.execute(
         select(Attempt)
+        .join(Test, Attempt.test_id == Test.id)
         .where(
             Attempt.user_id == user_id,
             Attempt.mode == AttemptMode.FULL_MOCK.value,
             Attempt.status == AttemptStatus.IN_PROGRESS,
+            Test.is_published.is_(True),
         )
         .order_by(Attempt.updated_at.desc())
         .limit(1)
