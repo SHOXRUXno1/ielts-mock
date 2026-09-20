@@ -161,6 +161,20 @@ export function TakeTestShell({
   const testLoading = usingSlug ? slugQuery.isLoading : idQuery.isLoading
   const testId = test ? String(test.id) : (testIdProp ?? '')
 
+  const resumeTestNotFound =
+    role === 'student' &&
+    liveById &&
+    !!resume &&
+    idQuery.isError &&
+    (idQuery.error as { response?: { status?: number } })?.response?.status ===
+      404
+
+  useEffect(() => {
+    if (!resumeTestNotFound) return
+    toast.info('This saved attempt is no longer available. Choose another test.')
+    void navigate({ to: '/student/tests', replace: true })
+  }, [navigate, resumeTestNotFound])
+
   const sortedSections = useMemo(() => {
     if (!test) return [] as Section[]
     const all = [...test.sections].sort((a, b) => a.order - b.order)
