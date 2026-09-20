@@ -530,7 +530,11 @@ function NoteCompletion({
               {section.items.map((item, ii) => (
                 <div
                   key={ii}
-                  className='text-[14px] leading-7 text-foreground'
+                  className={cn(
+                    'text-[14px] leading-7 text-foreground',
+                    item.role === 'subheading' && 'font-bold',
+                    item.role === 'subheading' && ii > 0 && 'mt-4',
+                  )}
                 >
                   {renderSegments(
                     stripIndent(item.segments),
@@ -549,12 +553,18 @@ function NoteCompletion({
             <ul className='space-y-1.5'>
               {section.items.map((item, ii) => {
                 const nested = isNested(item.segments)
+                const subheading = item.role === 'subheading'
                 return (
                   <li
                     key={ii}
                     className={cn(
-                      'list-disc text-[14px] leading-7 text-foreground marker:text-foreground',
-                      nested ? 'ml-11 list-[circle]' : 'ml-5',
+                      'text-[14px] leading-7 text-foreground',
+                      subheading
+                        ? cn('list-none font-bold', ii > 0 && 'mt-4')
+                        : cn(
+                            'list-disc marker:text-foreground',
+                            nested ? 'ml-11 list-[circle]' : 'ml-5',
+                          ),
                     )}
                   >
                     {renderSegments(
