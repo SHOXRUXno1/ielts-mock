@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth-store'
 import type { SpeakingSessionControls } from '@/features/speaking-examiner/speaking-examiner-session'
 import { QuestionNavBar } from '../components/take/question-nav-bar'
@@ -162,7 +163,6 @@ export function TakeTestShell({
   const testId = test ? String(test.id) : (testIdProp ?? '')
 
   const resumeTestNotFound =
-    role === 'student' &&
     liveById &&
     !!resume &&
     idQuery.isError &&
@@ -1044,7 +1044,22 @@ export function TakeTestShell({
       <div className='flex h-screen items-center justify-center bg-white'>
         <Alert variant='destructive' className='max-w-md'>
           <AlertCircle className='size-4' />
-          <AlertDescription>Test not found.</AlertDescription>
+          <AlertDescription className='flex items-center justify-between gap-4'>
+            <span>
+              {resumeTestNotFound
+                ? 'This saved attempt is no longer available.'
+                : 'Test not found.'}
+            </span>
+            {resumeTestNotFound ? (
+              <Button
+                size='sm'
+                variant='outline'
+                onClick={() => void navigate({ to: '/student/tests', replace: true })}
+              >
+                Back to tests
+              </Button>
+            ) : null}
+          </AlertDescription>
         </Alert>
       </div>
     )
