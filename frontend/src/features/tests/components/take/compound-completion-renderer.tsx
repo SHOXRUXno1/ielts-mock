@@ -228,7 +228,7 @@ export function GapInput({
                   'border-border',
                 )}
               >
-                <SelectValue placeholder={String(displayN)} />
+                <SelectValue placeholder='—' />
               </SelectTrigger>
               <SelectContent align='center' className='min-w-14'>
                 {letters.map((letter) => (
