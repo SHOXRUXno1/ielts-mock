@@ -52,9 +52,16 @@ def _section_type_str(section_type: SectionType | str) -> str:
 
 
 def _assert_attempt_access(attempt: Attempt, actor: Actor) -> None:
-    """Students can only access their own attempts."""
+    """Students can only access their own attempts.
+
+    Return 404 for ownership mismatches so the API does not reveal whether
+    another student's attempt exists. Admin access remains unchanged.
+    """
     if actor.role == "student" and attempt.user_id != actor.user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Attempt not found",
+        )
 
 
 def _now() -> datetime:

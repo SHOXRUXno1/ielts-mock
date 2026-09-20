@@ -71,10 +71,6 @@ const queryClient = new QueryClient({
       if (status === 500) {
         toast.error('Internal Server Error!')
       }
-      if (status === 403) {
-        toast.error('Access denied!')
-        void router.navigate({ to: '/403', replace: true })
-      }
     },
   }),
 })
