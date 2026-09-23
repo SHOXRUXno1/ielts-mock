@@ -495,6 +495,72 @@ async def rescore_attempt(
     return await _attempt_list_item(db, attempt)
 
 
+@router.post("/{attempt_id}/re-score-objective", response_model=AttemptListItem)
+async def rescore_objective_attempt(
+    attempt_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+):
+    """Re-score Listening and Reading without creating Writing/Speaking jobs.
+
+    This is the safe incident-recovery path for an already evaluated attempt:
+    objective marks are recalculated, while human/AI assessed sections are left
+    exactly as they were.
+    """
+    _require_admin(actor)
+
+    attempt = await db.get(Attempt, attempt_id)
+    if attempt is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found")
+    if attempt.status == AttemptStatus.IN_PROGRESS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Cannot re-score an in-progress attempt",
+        )
+
+    sections_result = await db.execute(
+        select(Section)
+        .options(selectinload(Section.questions))
+        .where(Section.test_id == attempt.test_id)
+    )
+    sections = sections_result.scalars().all()
+    answers_result = await db.execute(select(Answer).where(Answer.attempt_id == attempt_id))
+    answers_by_question = {
+        answer.question_id: answer for answer in answers_result.scalars().all()
+    }
+
+    totals: dict[str, int] = {"listening": 0, "reading": 0}
+    attempted: dict[str, bool] = {"listening": False, "reading": False}
+    for section in sections:
+        section_type = _section_type_str(section.type)
+        if section_type not in totals:
+            continue
+        section_answers = [
+            answers_by_question[question.id]
+            for question in section.questions
+            if question.id in answers_by_question
+        ]
+        if not section.questions or not section_answers:
+            continue
+        attempted[section_type] = True
+        correct, _total = score_section(section.questions, section_answers)
+        totals[section_type] += correct
+
+    if attempted["listening"]:
+        attempt.listening_raw = totals["listening"]
+        attempt.listening_band = correct_to_listening_band(totals["listening"])
+    if attempted["reading"]:
+        attempt.reading_raw = totals["reading"]
+        attempt.reading_band = correct_to_reading_band(totals["reading"])
+
+    attempt.overall_band = compute_overall_band(attempt)
+    attempt.status = derive_scored_status(attempt)
+
+    await db.commit()
+    await db.refresh(attempt)
+    return await _attempt_list_item(db, attempt)
+
+
 @router.get("/{attempt_id}", response_model=AttemptDetailRead)
 async def get_result_detail(
     attempt_id: uuid.UUID,
