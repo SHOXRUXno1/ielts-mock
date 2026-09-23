@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 from scripts.rescore_objective import (
     _canonicalize_choice_answers,
+    _choice_tokens,
     _score_objective_section,
     _target_sections,
 )
@@ -59,3 +60,10 @@ def test_three_choice_fallback_does_not_depend_on_a_legacy_question_type():
 
     assert _score_objective_section([question], [answer]) == (1, 1)
     assert answer.is_correct is True
+
+
+def test_choice_tokens_reads_nested_legacy_answer_keys():
+    assert _choice_tokens({"accepted": ["FALSE", "Not Given"]}) == {
+        "FALSE",
+        "NOT GIVEN",
+    }

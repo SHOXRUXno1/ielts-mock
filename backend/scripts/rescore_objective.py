@@ -54,6 +54,24 @@ def _choice_token(value: object) -> str | None:
     return token if token in IELTS_THREE_CHOICE_TOKENS else None
 
 
+def _choice_tokens(value: object) -> set[str]:
+    """Read canonical IELTS choices from legacy scalar, list, or JSON key shapes."""
+    direct = _choice_token(value) if isinstance(value, str) else None
+    if direct:
+        return {direct}
+    if isinstance(value, dict):
+        tokens: set[str] = set()
+        for nested in value.values():
+            tokens.update(_choice_tokens(nested))
+        return tokens
+    if isinstance(value, (list, tuple, set)):
+        tokens: set[str] = set()
+        for nested in value:
+            tokens.update(_choice_tokens(nested))
+        return tokens
+    return set()
+
+
 def _canonicalize_choice_answers(section: Section, answers_by_question: dict) -> None:
     """Make legacy three-choice responses portable across scorer versions.
 
@@ -87,13 +105,11 @@ def _score_objective_section(questions: list, answers: list) -> tuple[int, int]:
     for question in questions:
         answer = answers_by_question.get(question.id)
         answer_key = question.answer_key if isinstance(question.answer_key, dict) else {}
-        expected = answer_key.get("correct") or answer_key.get("answer") or ""
+        expected_values = _choice_tokens(answer_key)
         response = answer.response if answer is not None and isinstance(answer.response, dict) else {}
         submitted = response.get("answer", "")
-        is_three_choice = (
-            _choice_token(submitted) is not None
-            and _choice_token(expected) is not None
-        )
+        submitted_token = _choice_token(submitted)
+        is_three_choice = submitted_token is not None and bool(expected_values)
         if not is_three_choice:
             correct, total = score_section(
                 [question], [] if answer is None else [answer]
@@ -105,7 +121,7 @@ def _score_objective_section(questions: list, answers: list) -> tuple[int, int]:
         item_total += 1
         if answer is None:
             continue
-        is_correct = str(submitted).strip().casefold() == str(expected).strip().casefold()
+        is_correct = submitted_token in expected_values
         answer.is_correct = is_correct
         answer.score = 1.0 if is_correct else 0.0
         correct_total += int(is_correct)
