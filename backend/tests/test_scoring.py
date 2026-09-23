@@ -121,6 +121,20 @@ class TestTrueFalseNG:
         assert score_answer(q, a) == (1, 1)
         assert a.is_correct is True
 
+    @pytest.mark.parametrize(
+        "answer_key",
+        [
+            {"correct": ["FALSE"]},
+            {"answer": {"value": "FALSE"}},
+            {"accepted": {"answers": ["FALSE"]}},
+        ],
+    )
+    def test_legacy_nested_keys_are_accepted(self, answer_key: dict):
+        q = make_q(QuestionType.TRUE_FALSE_NG, answer_key)
+        a = make_a(q, {"answer": "False"})
+        assert score_answer(q, a) == (1, 1)
+        assert a.is_correct is True
+
 
 class TestYesNoNG:
     @pytest.mark.parametrize(
