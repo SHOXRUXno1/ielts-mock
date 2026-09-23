@@ -48,7 +48,7 @@ export type TableStructure = CompoundStructureBase & {
 export type NoteItem = {
   segments: CellSegment[]
   /** A semantic label inside a notes block; it is shown without a bullet. */
-  role?: 'subheading'
+  role?: 'subheading' | 'lead'
 }
 
 export type NoteSection = {
@@ -592,16 +592,18 @@ function normalizeTableCell(cell: Record<string, unknown>): TableCell {
 }
 
 function normalizeNoteItem(item: Record<string, unknown>): NoteItem {
+  const role =
+    item.role === 'subheading' || item.role === 'lead' ? item.role : undefined
   if (Array.isArray(item.segments) && item.type !== 'text' && item.type !== 'gap_line') {
     return {
       segments: item.segments as CellSegment[],
-      ...(item.role === 'subheading' ? { role: 'subheading' as const } : {}),
+      ...(role ? { role } : {}),
     }
   }
   if (Array.isArray(item.segments) && !item.type) {
     return {
       segments: item.segments as CellSegment[],
-      ...(item.role === 'subheading' ? { role: 'subheading' as const } : {}),
+      ...(role ? { role } : {}),
     }
   }
   if (item.type === 'text') {
@@ -612,6 +614,7 @@ function normalizeNoteItem(item: Record<string, unknown>): NoteItem {
           value: typeof item.value === 'string' ? item.value : '',
         },
       ],
+      ...(role ? { role } : {}),
     }
   }
   if (item.type === 'gap_line' && typeof item.gap_id === 'string') {
