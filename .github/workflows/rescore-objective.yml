@@ -1,0 +1,49 @@
+name: Re-mark objective attempt
+
+on:
+  workflow_dispatch:
+    inputs:
+      attempt_id:
+        description: Exact attempt UUID to re-mark
+        required: true
+        type: string
+      section:
+        description: Objective section to re-mark
+        required: true
+        default: reading
+        type: choice
+        options:
+          - reading
+          - listening
+          - both
+      apply:
+        description: Write the recalculated marks (otherwise dry run)
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: objective-rescore-production
+  cancel-in-progress: false
+
+jobs:
+  rescore:
+    name: Re-mark objective attempt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-mark the requested attempt on the server
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          ATTEMPT_ID: ${{ inputs.attempt_id }}
+          SECTION: ${{ inputs.section }}
+          APPLY_FLAG: ${{ inputs.apply && '--apply' || '' }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: ATTEMPT_ID,SECTION,APPLY_FLAG
+          script: |
+            set -e
+            cd /opt/ielts-mock
+            docker compose -f docker-compose.prod.yml exec -T backend \
+              python scripts/rescore_objective.py "$ATTEMPT_ID" --section "$SECTION" $APPLY_FLAG
