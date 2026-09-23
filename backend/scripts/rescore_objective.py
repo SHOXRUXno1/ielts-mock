@@ -46,6 +46,14 @@ def _question_type_name(question_type: object) -> str:
     return str(getattr(question_type, "value", question_type))
 
 
+IELTS_THREE_CHOICE_TOKENS = {"TRUE", "FALSE", "YES", "NO", "NOT GIVEN"}
+
+
+def _choice_token(value: object) -> str | None:
+    token = str(value).strip().upper()
+    return token if token in IELTS_THREE_CHOICE_TOKENS else None
+
+
 def _canonicalize_choice_answers(section: Section, answers_by_question: dict) -> None:
     """Make legacy three-choice responses portable across scorer versions.
 
@@ -54,18 +62,13 @@ def _canonicalize_choice_answers(section: Section, answers_by_question: dict) ->
     Assigning a new response dict lets SQLAlchemy persist the canonical answer.
     """
     for question in section.questions:
-        if _question_type_name(question.question_type) not in {
-            "true_false_ng",
-            "yes_no_ng",
-        }:
-            continue
         answer = answers_by_question.get(question.id)
         if answer is None or not isinstance(answer.response, dict):
             continue
         value = answer.response.get("answer")
-        if not isinstance(value, str):
+        canonical = _choice_token(value)
+        if canonical is None:
             continue
-        canonical = value.strip().upper()
         if canonical != value:
             answer.response = {**answer.response, "answer": canonical}
 
@@ -83,8 +86,15 @@ def _score_objective_section(questions: list, answers: list) -> tuple[int, int]:
 
     for question in questions:
         answer = answers_by_question.get(question.id)
-        question_type = _question_type_name(question.question_type)
-        if question_type not in {"true_false_ng", "yes_no_ng"}:
+        answer_key = question.answer_key if isinstance(question.answer_key, dict) else {}
+        expected = answer_key.get("correct") or answer_key.get("answer") or ""
+        response = answer.response if answer is not None and isinstance(answer.response, dict) else {}
+        submitted = response.get("answer", "")
+        is_three_choice = (
+            _choice_token(submitted) is not None
+            and _choice_token(expected) is not None
+        )
+        if not is_three_choice:
             correct, total = score_section(
                 [question], [] if answer is None else [answer]
             )
@@ -95,10 +105,6 @@ def _score_objective_section(questions: list, answers: list) -> tuple[int, int]:
         item_total += 1
         if answer is None:
             continue
-        answer_key = question.answer_key if isinstance(question.answer_key, dict) else {}
-        expected = answer_key.get("correct") or answer_key.get("answer") or ""
-        response = answer.response if isinstance(answer.response, dict) else {}
-        submitted = response.get("answer", "")
         is_correct = str(submitted).strip().casefold() == str(expected).strip().casefold()
         answer.is_correct = is_correct
         answer.score = 1.0 if is_correct else 0.0
