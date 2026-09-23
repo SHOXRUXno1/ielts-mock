@@ -70,6 +70,43 @@ def _canonicalize_choice_answers(section: Section, answers_by_question: dict) ->
             answer.response = {**answer.response, "answer": canonical}
 
 
+def _score_objective_section(questions: list, answers: list) -> tuple[int, int]:
+    """Score a section while repairing legacy IELTS three-choice answers.
+
+    The normal scorer is used for every other question type.  The explicit
+    branch below is intentionally independent of it: recovery must still work
+    when a server is running an older, case-sensitive scorer implementation.
+    """
+    answers_by_question = {answer.question_id: answer for answer in answers}
+    correct_total = 0
+    item_total = 0
+
+    for question in questions:
+        answer = answers_by_question.get(question.id)
+        question_type = _question_type_name(question.question_type)
+        if question_type not in {"true_false_ng", "yes_no_ng"}:
+            correct, total = score_section(
+                [question], [] if answer is None else [answer]
+            )
+            correct_total += correct
+            item_total += total
+            continue
+
+        item_total += 1
+        if answer is None:
+            continue
+        answer_key = question.answer_key if isinstance(question.answer_key, dict) else {}
+        expected = answer_key.get("correct") or answer_key.get("answer") or ""
+        response = answer.response if isinstance(answer.response, dict) else {}
+        submitted = response.get("answer", "")
+        is_correct = str(submitted).strip().casefold() == str(expected).strip().casefold()
+        answer.is_correct = is_correct
+        answer.score = 1.0 if is_correct else 0.0
+        correct_total += int(is_correct)
+
+    return correct_total, item_total
+
+
 async def run(attempt_id: uuid.UUID, target: set[str], apply: bool) -> int:
     async with async_session() as session:
         attempt = await session.get(Attempt, attempt_id)
@@ -119,7 +156,7 @@ async def run(attempt_id: uuid.UUID, target: set[str], apply: bool) -> int:
                 for answer in section_answers
             }
             _canonicalize_choice_answers(section, answers_by_question)
-            correct, total = score_section(section.questions, section_answers)
+            correct, total = _score_objective_section(section.questions, section_answers)
             answer_changed[section_name] = answer_changed[section_name] or any(
                 before[answer.id]
                 != (answer.is_correct, answer.score, dict(answer.response or {}))
