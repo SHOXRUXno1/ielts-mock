@@ -42,6 +42,34 @@ def _target_sections(value: str) -> set[str]:
     return {value}
 
 
+def _question_type_name(question_type: object) -> str:
+    return str(getattr(question_type, "value", question_type))
+
+
+def _canonicalize_choice_answers(section: Section, answers_by_question: dict) -> None:
+    """Make legacy three-choice responses portable across scorer versions.
+
+    Older exam pages stored ``True`` and ``Not Given`` while some deployed
+    scorer versions compare these choices case-sensitively to official keys.
+    Assigning a new response dict lets SQLAlchemy persist the canonical answer.
+    """
+    for question in section.questions:
+        if _question_type_name(question.question_type) not in {
+            "true_false_ng",
+            "yes_no_ng",
+        }:
+            continue
+        answer = answers_by_question.get(question.id)
+        if answer is None or not isinstance(answer.response, dict):
+            continue
+        value = answer.response.get("answer")
+        if not isinstance(value, str):
+            continue
+        canonical = value.strip().upper()
+        if canonical != value:
+            answer.response = {**answer.response, "answer": canonical}
+
+
 async def run(attempt_id: uuid.UUID, target: set[str], apply: bool) -> int:
     async with async_session() as session:
         attempt = await session.get(Attempt, attempt_id)
@@ -69,7 +97,12 @@ async def run(attempt_id: uuid.UUID, target: set[str], apply: bool) -> int:
         ).scalars().all()
         answers_by_question = {answer.question_id: answer for answer in answers}
 
-        changed = False
+        totals: dict[str, list[int]] = {
+            section_name: [0, 0] for section_name in target
+        }
+        attempted: set[str] = set()
+        answer_changed: dict[str, bool] = {section_name: False for section_name in target}
+
         for section in sections:
             section_name = _section_name(section.type)
             section_answers = [
@@ -82,15 +115,23 @@ async def run(attempt_id: uuid.UUID, target: set[str], apply: bool) -> int:
                 continue
 
             before = {
-                answer.id: (answer.is_correct, answer.score)
+                answer.id: (answer.is_correct, answer.score, dict(answer.response or {}))
                 for answer in section_answers
             }
-            new_raw, total = score_section(section.questions, section_answers)
-            answer_changed = any(
-                before[answer.id] != (answer.is_correct, answer.score)
+            _canonicalize_choice_answers(section, answers_by_question)
+            correct, total = score_section(section.questions, section_answers)
+            answer_changed[section_name] = answer_changed[section_name] or any(
+                before[answer.id]
+                != (answer.is_correct, answer.score, dict(answer.response or {}))
                 for answer in section_answers
             )
+            totals[section_name][0] += correct
+            totals[section_name][1] += total
+            attempted.add(section_name)
 
+        changed = False
+        for section_name in sorted(attempted):
+            new_raw, total = totals[section_name]
             if section_name == SectionType.LISTENING.value:
                 old_raw = attempt.listening_raw
                 new_band = correct_to_listening_band(new_raw)
@@ -103,7 +144,7 @@ async def run(attempt_id: uuid.UUID, target: set[str], apply: bool) -> int:
                 f"{section_name}: {old_raw if old_raw is not None else 'unset'} "
                 f"-> {new_raw}/{total}; band -> {new_band}"
             )
-            if not raw_changed and not answer_changed:
+            if not raw_changed and not answer_changed[section_name]:
                 continue
 
             changed = True
