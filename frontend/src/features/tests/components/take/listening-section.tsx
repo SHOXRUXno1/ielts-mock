@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertCircle, Headphones, HelpCircle } from 'lucide-react'
+import { AlertCircle, Headphones, HelpCircle, Loader2 } from 'lucide-react'
 import {
   ResizableHandle,
   ResizablePanel,
@@ -318,6 +318,8 @@ function ListeningGroupHeader({ group }: { group: RenderGroup }) {
 type Props = {
   section: Section
   questions: Question[]
+  /** True once the question request for this section has completed. */
+  questionsLoaded?: boolean
   answers: Record<string, Record<string, unknown>>
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
   /** Index of the active part (0-based), controlled from outside */
@@ -357,6 +359,7 @@ function getPartNumber(q: Question): number {
 export function ListeningSection({
   section,
   questions,
+  questionsLoaded = true,
   answers,
   onAnswer,
   activePart,
@@ -460,7 +463,15 @@ export function ListeningSection({
 
   const questionsContent = (
     <>
-      {visibleQuestions.length === 0 ? (
+      {!questionsLoaded ? (
+        <div
+          role='status'
+          className='flex items-center gap-2 text-sm text-slate-400'
+        >
+          <Loader2 className='size-4 animate-spin' />
+          Loading questions…
+        </div>
+      ) : visibleQuestions.length === 0 ? (
         <p className='text-sm text-slate-400'>
           No questions added to this section yet.
         </p>

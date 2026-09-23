@@ -10,6 +10,7 @@ import { scrollAndFlashQuestion } from './flash-question'
 import { resolveSpeakingExamView } from './speaking-exam-view'
 import { useTakeTest } from './take-test-context'
 import { useTestNavigation } from './use-test-navigation'
+import { hasLoadedQuestions } from './question-load-state'
 
 function scrollToHash(hash: string) {
   const id = hash.startsWith('#') ? hash.slice(1) : hash
@@ -53,6 +54,10 @@ export function SectionContent() {
   if (!activeSection) return null
 
   const questions = ctx.sectionQuestions[activeSection.id] ?? []
+  const questionsLoaded = hasLoadedQuestions(
+    ctx.sectionQuestions,
+    activeSection.id,
+  )
   const answers = ctx.answers[activeSection.id] ?? {}
   const onAnswer = (qId: string, resp: Record<string, unknown>) =>
     ctx.updateAnswer(activeSection.id, qId, resp)
@@ -69,6 +74,7 @@ export function SectionContent() {
         <ListeningSection
           section={activeSection}
           questions={questions}
+          questionsLoaded={questionsLoaded}
           answers={answers}
           onAnswer={onAnswer}
           activePart={nav.activeListeningPart}
@@ -98,6 +104,7 @@ export function SectionContent() {
           section={activeSection}
           passage={activeSection.passage}
           questions={questions}
+          questionsLoaded={questionsLoaded}
           answers={answers}
           onAnswer={onAnswer}
           passageIndex={passageIndex >= 0 ? passageIndex : 0}
