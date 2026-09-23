@@ -224,4 +224,32 @@ describe('groupAnswersByPart', () => {
     const groups = groupAnswersByPart(rows, 'listening')
     expect(groups.map((g) => g.label)).toEqual(['Part 1', 'Part 2'])
   })
+
+  it('numbers reading passages by their position rather than global section order', () => {
+    const rows = [
+      answer({
+        id: 'r12',
+        response: { answer: 'C' },
+        section: { id: 'r12', type: 'reading', order: 12 },
+      }),
+      answer({
+        id: 'r10',
+        response: { answer: 'A' },
+        section: { id: 'r10', type: 'reading', order: 10 },
+      }),
+      answer({
+        id: 'r11',
+        response: { answer: 'B' },
+        section: { id: 'r11', type: 'reading', order: 11 },
+      }),
+    ]
+
+    const groups = groupAnswersByPart(rows, 'reading')
+
+    expect(groups.map((g) => g.label)).toEqual([
+      'Passage 1',
+      'Passage 2',
+      'Passage 3',
+    ])
+  })
 })

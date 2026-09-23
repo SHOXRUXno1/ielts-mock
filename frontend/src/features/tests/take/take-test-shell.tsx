@@ -45,7 +45,6 @@ import { QuestionNavBar } from '../components/take/question-nav-bar'
 import { durationByType } from '../data/duration-rules'
 import {
   countScoringSlots,
-  scoringSlotsForQuestion,
   type Question,
   type Section,
   type SectionType,
@@ -70,6 +69,7 @@ import {
 } from './collect-answers'
 import { buildPagehideFlushInit } from './pagehide-flush'
 import { mergeAnswersServerWins } from './merge-answers'
+import { countAnsweredSlots } from './answer-progress'
 import { isBenignSectionConflict } from './section-conflict'
 import {
   parseSectionExpired,
@@ -1293,30 +1293,10 @@ function ActiveChrome({
   ])
 
   const getAnsweredCount = (section: Section) => {
-    const secAnswers = answers[section.id] ?? {}
-    const qsMap = new Map(
-      (sectionQuestions[section.id] ?? []).map((q) => [q.id, q]),
+    return countAnsweredSlots(
+      answers[section.id] ?? {},
+      sectionQuestions[section.id] ?? [],
     )
-    let count = 0
-    for (const [qId, resp] of Object.entries(secAnswers)) {
-      const vals = Object.values(resp)
-      const hasAnswer = vals.some((v) => {
-        if (v === '' || v === null || v === undefined) return false
-        if (Array.isArray(v)) return (v as unknown[]).length > 0
-        if (typeof v === 'object' && v !== null) return Object.keys(v).length > 0
-        return true
-      })
-      if (!hasAnswer) continue
-      const q = qsMap.get(qId)
-      // multi_select: count selected options, not the full choose_n span
-      if (q?.question_type === 'multi_select' && Array.isArray(resp.selected)) {
-        const slots = scoringSlotsForQuestion(q)
-        count += Math.min((resp.selected as unknown[]).length, slots)
-      } else {
-        count += 1
-      }
-    }
-    return count
   }
 
   // Header counter: current skill only (not cumulative L+R+W).

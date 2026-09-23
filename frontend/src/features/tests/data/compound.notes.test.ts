@@ -2,6 +2,27 @@ import { describe, expect, it } from 'vitest'
 import { asCompoundStructure, extractGapIds } from './compound'
 
 describe('asCompoundStructure notes bullets', () => {
+  it('preserves an unbulleted lead line in an otherwise bulleted notes block', () => {
+    const result = asCompoundStructure({
+      variant: 'notes',
+      sections: [
+        {
+          items: [
+            {
+              role: 'lead',
+              segments: [{ type: 'text', value: 'Introductory context' }],
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(result?.variant).toBe('notes')
+    if (result?.variant === 'notes') {
+      expect(result.sections[0]?.items[0]?.role).toBe('lead')
+    }
+  })
+
   it('preserves bullets: false', () => {
     const result = asCompoundStructure({
       variant: 'notes',

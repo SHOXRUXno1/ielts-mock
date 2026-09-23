@@ -554,6 +554,7 @@ function NoteCompletion({
               {section.items.map((item, ii) => {
                 const nested = isNested(item.segments)
                 const subheading = item.role === 'subheading'
+                const lead = item.role === 'lead'
                 return (
                   <li
                     key={ii}
@@ -561,6 +562,8 @@ function NoteCompletion({
                       'text-[14px] leading-7 text-foreground',
                       subheading
                         ? cn('list-none font-bold', ii > 0 && 'mt-4')
+                        : lead
+                          ? 'list-none'
                         : cn(
                             'list-disc marker:text-foreground',
                             nested ? 'ml-11 list-[circle]' : 'ml-5',
