@@ -41,3 +41,21 @@ def test_legacy_three_choice_answer_is_scored_case_insensitively():
     assert _score_objective_section([question], [answer]) == (1, 1)
     assert answer.is_correct is True
     assert answer.score == 1.0
+
+
+def test_three_choice_fallback_does_not_depend_on_a_legacy_question_type():
+    question_id = uuid.uuid4()
+    question = SimpleNamespace(
+        id=question_id,
+        question_type="legacy_unknown_type",
+        answer_key={"answer": "FALSE"},
+    )
+    answer = SimpleNamespace(
+        question_id=question_id,
+        response={"answer": "False"},
+        is_correct=None,
+        score=None,
+    )
+
+    assert _score_objective_section([question], [answer]) == (1, 1)
+    assert answer.is_correct is True
