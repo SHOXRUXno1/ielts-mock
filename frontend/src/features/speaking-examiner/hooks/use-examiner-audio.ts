@@ -9,7 +9,16 @@ import { iceServersKey } from '../lib/simli-pcm'
 import type { Phase } from '../types/phase'
 
 const PLAYING_SAFETY_TIMEOUT_MS = 120_000
-const SIMLI_LOAD_TIMEOUT_MS = 10_000
+// The Livekit transport we use since PR #17 takes longer to bring up than
+// the previous P2P path: WebSocket signal + LiveKit room join + WebRTC
+// negotiation + first video frame typically land at 6-12s on this stack.
+// The old 10s ceiling clipped that on any slower cold start, and our
+// watchdog fell back to audio-only + remount the SimliClient, which then
+// asked for a fresh /simli-token and started the whole cycle again — the
+// three tokens-in-eight-seconds pattern from prod logs. 20 s gives an
+// honest run a chance to finish while still bailing out when Simli is
+// actually down.
+const SIMLI_LOAD_TIMEOUT_MS = 20_000
 
 type UseExaminerAudioOptions = {
   phaseRef: MutableRefObject<Phase>
