@@ -1059,6 +1059,18 @@ class Transcription:
     reason: str | None = None
     latency_ms: int = 0
     audio_bytes: int = 0
+    # Provider-reported quality signals. All optional, all set only when the
+    # provider actually returns them: Chirp v2 gives per-result confidence,
+    # Groq's verbose_json gives per-segment no_speech_prob / avg_logprob /
+    # compression_ratio. The room-tone probe (comment above _SILENCE_
+    # HALLUCINATIONS) showed no_speech_prob alone is not enough to refuse an
+    # answer, so nothing here gates the pipeline — this is telemetry the
+    # session history keeps so a bad-microphone case can be diagnosed against
+    # numbers instead of impressions.
+    confidence: float | None = None
+    no_speech_prob: float | None = None
+    avg_logprob: float | None = None
+    compression_ratio: float | None = None
 
 
 async def transcribe_audio_bytes(
@@ -1109,33 +1121,41 @@ async def transcribe_audio_bytes_detailed(
     reason: str | None = None
     started = time.perf_counter()
 
-    def done(text: str, provider: str) -> Transcription:
+    def done(text: str, provider: str, metrics: dict | None = None) -> Transcription:
+        m = metrics or {}
         record = Transcription(
             text=text,
             provider=provider,
             reason=reason,
             latency_ms=int((time.perf_counter() - started) * 1000),
             audio_bytes=len(audio_bytes),
+            confidence=m.get("confidence"),
+            no_speech_prob=m.get("no_speech_prob"),
+            avg_logprob=m.get("avg_logprob"),
+            compression_ratio=m.get("compression_ratio"),
         )
         logger.info(
-            "STT provider=%s reason=%s latency_ms=%d audio_bytes=%d chars=%d empty=%s",
+            "STT provider=%s reason=%s latency_ms=%d audio_bytes=%d chars=%d "
+            "empty=%s conf=%s no_speech=%s logprob=%s compress=%s",
             record.provider,
             record.reason or "-",
             record.latency_ms,
             record.audio_bytes,
             len(record.text),
             not record.text.strip(),
+            _fmt(record.confidence),
+            _fmt(record.no_speech_prob),
+            _fmt(record.avg_logprob),
+            _fmt(record.compression_ratio),
         )
         return record
 
     if can_use_google:
         try:
-            return done(
-                await _transcribe_with_google(
-                    audio_bytes, duration_seconds=duration_seconds
-                ),
-                "google",
+            text, metrics = await _transcribe_with_google(
+                audio_bytes, duration_seconds=duration_seconds
             )
+            return done(text, "google", metrics)
         except httpx.HTTPStatusError as exc:
             google_error = exc
             status = exc.response.status_code
@@ -1172,9 +1192,10 @@ async def transcribe_audio_bytes_detailed(
             logger.info("Groq STT budget spent — routing this turn to Gemini")
         else:
             try:
-                return done(
-                    await _transcribe_with_groq(audio_bytes, content_type), "groq"
+                text, metrics = await _transcribe_with_groq(
+                    audio_bytes, content_type
                 )
+                return done(text, "groq", metrics)
             except httpx.HTTPStatusError as exc:
                 groq_error = exc
                 status = exc.response.status_code
@@ -1191,6 +1212,8 @@ async def transcribe_audio_bytes_detailed(
     if can_use_gemini:
         if groq_error is not None or google_error is not None:
             logger.warning("Transcribing via Gemini STT fallback")
+        # Gemini STT does not expose per-segment confidence in the current
+        # inline_data API, so its Transcription carries no quality metrics.
         return done(
             await _transcribe_with_gemini(audio_bytes, content_type), "gemini"
         )
@@ -1206,16 +1229,44 @@ async def _transcribe_with_google(
     audio_bytes: bytes,
     *,
     duration_seconds: float | None = None,
-) -> str:
-    return _normalize_stt_text(
-        await google_stt.recognize(audio_bytes, duration_seconds=duration_seconds)
+) -> tuple[str, dict]:
+    """Chirp Recognize + confidence telemetry.
+
+    Returns ``(normalized_text, metrics)`` where metrics may contain
+    ``confidence`` — an average across chunks in [0, 1] when Chirp reported
+    it, ``None`` otherwise. Kept separate from the text so the caller can
+    still discard silence hallucinations without losing the number that
+    tells them why a turn came back short.
+    """
+    text, confidence = await google_stt.recognize_detailed(
+        audio_bytes, duration_seconds=duration_seconds
     )
+    metrics: dict = {}
+    if confidence is not None:
+        metrics["confidence"] = confidence
+    return _normalize_stt_text(text), metrics
 
 
 async def _transcribe_with_groq(
     audio_bytes: bytes,
     content_type: str | None,
-) -> str:
+) -> tuple[str, dict]:
+    """Groq Whisper with verbose_json — surfaces per-segment quality signals.
+
+    Returns ``(normalized_text, metrics)`` with three per-turn aggregates
+    when Groq gives us segments:
+      - ``no_speech_prob`` — worst (max) across segments
+      - ``avg_logprob``    — average across segments
+      - ``compression_ratio`` — worst (max) across segments
+
+    The room-tone probe already documented (see the header of _SILENCE_
+    HALLUCINATIONS) shows these numbers do not reliably tell speech from
+    room tone by themselves — a repeating "you." can score no_speech_prob
+    0.089 like clean voice. The point of writing them into every turn is
+    the reverse: with a real candidate's microphone under our eye we can
+    finally see whether *this* microphone shifts the distribution, and
+    tune limits from data rather than guess.
+    """
     filename, mime = _groq_upload_file(content_type)
     client = get_http_client()
     max_attempts = 3
@@ -1229,8 +1280,17 @@ async def _transcribe_with_groq(
                 files={"file": (filename, audio_bytes, mime)},
                 data={
                     "model": "whisper-large-v3",
-                    "response_format": "json",
+                    # verbose_json adds a "segments" array whose per-chunk
+                    # numbers we aggregate below. It costs Groq nothing extra
+                    # over "json" and stays valid JSON, so no client-side
+                    # branching for the transcript field itself.
+                    "response_format": "verbose_json",
                     "language": "en",
+                    # temperature=0 disables Whisper's fallback loop that
+                    # retries with growing randomness on a "bad" transcript.
+                    # A shaky microphone can trigger that loop repeatedly,
+                    # and each retry is another chance to invent words.
+                    "temperature": "0",
                 },
                 timeout=120.0,
             )
@@ -1261,13 +1321,56 @@ async def _transcribe_with_groq(
                 last_exc = exc
                 raise
             data = resp.json()
+            metrics = _groq_segment_metrics(data.get("segments") or [])
             logger.info(
-                "Whisper (lenient) transcript length: %d chars",
+                "Whisper (lenient) transcript length: %d chars "
+                "no_speech_prob=%s avg_logprob=%s compression=%s",
                 len(data.get("text", "")),
+                _fmt(metrics.get("no_speech_prob")),
+                _fmt(metrics.get("avg_logprob")),
+                _fmt(metrics.get("compression_ratio")),
             )
-            return _normalize_stt_text(data.get("text", ""))
+            return _normalize_stt_text(data.get("text", "")), metrics
 
     raise last_exc or RuntimeError("Groq transcription failed")
+
+
+def _groq_segment_metrics(segments: list) -> dict:
+    """Aggregate Whisper per-segment quality fields into a per-turn dict.
+
+    Empty ``segments`` (Groq occasionally omits it) → empty dict.
+    """
+    no_speech: list[float] = []
+    logprob: list[float] = []
+    compress: list[float] = []
+    for seg in segments:
+        if not isinstance(seg, dict):
+            continue
+        nsp = seg.get("no_speech_prob")
+        if isinstance(nsp, (int, float)):
+            no_speech.append(float(nsp))
+        alp = seg.get("avg_logprob")
+        if isinstance(alp, (int, float)):
+            logprob.append(float(alp))
+        cr = seg.get("compression_ratio")
+        if isinstance(cr, (int, float)):
+            compress.append(float(cr))
+    metrics: dict = {}
+    if no_speech:
+        # Worst (max) across segments — room tone often sits in one segment
+        # at the tail of an otherwise-speech clip.
+        metrics["no_speech_prob"] = max(no_speech)
+    if logprob:
+        metrics["avg_logprob"] = sum(logprob) / len(logprob)
+    if compress:
+        # Repeated text raises the ratio; take the worst segment because a
+        # single "you. you. you." run at the end is the whole telltale.
+        metrics["compression_ratio"] = max(compress)
+    return metrics
+
+
+def _fmt(value: float | None) -> str:
+    return f"{value:.3f}" if isinstance(value, (int, float)) else "-"
 
 
 async def _transcribe_with_gemini(

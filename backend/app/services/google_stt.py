@@ -117,17 +117,37 @@ def project_id() -> str:
 
 def transcript_from_response(payload: dict[str, Any]) -> str:
     """Join every result's top alternative. Empty payload is silence."""
+    text, _ = transcript_and_confidence(payload)
+    return text
+
+
+def transcript_and_confidence(
+    payload: dict[str, Any],
+) -> tuple[str, float | None]:
+    """Join transcripts across results and average the alternatives' confidence.
+
+    Chirp v2 attaches ``confidence`` to each alternative — a float in [0, 1]
+    where higher is more certain. It is optional per model, so results without
+    it are simply skipped in the average; when no result carries a confidence
+    the returned value is ``None`` rather than a misleading zero.
+    """
     parts: list[str] = []
+    confidences: list[float] = []
     for result in payload.get("results") or []:
         if not isinstance(result, dict):
             continue
         alternatives = result.get("alternatives") or []
         if not alternatives or not isinstance(alternatives[0], dict):
             continue
-        text = alternatives[0].get("transcript")
+        top = alternatives[0]
+        text = top.get("transcript")
         if isinstance(text, str) and text.strip():
             parts.append(text.strip())
-    return " ".join(parts)
+        raw_conf = top.get("confidence")
+        if isinstance(raw_conf, (int, float)):
+            confidences.append(float(raw_conf))
+    avg_conf = sum(confidences) / len(confidences) if confidences else None
+    return " ".join(parts), avg_conf
 
 
 def _b64url(raw: bytes) -> str:
@@ -218,7 +238,19 @@ async def recognize(
     *,
     duration_seconds: float | None = None,
 ) -> str:
-    """Transcribe with Chirp. Clips over ~60s are split, then recognized in parallel.
+    """Transcribe with Chirp. Text-only wrapper around ``recognize_detailed``."""
+    text, _confidence = await recognize_detailed(
+        audio_bytes, duration_seconds=duration_seconds
+    )
+    return text
+
+
+async def recognize_detailed(
+    audio_bytes: bytes,
+    *,
+    duration_seconds: float | None = None,
+) -> tuple[str, float | None]:
+    """Transcribe with Chirp; return ``(text, average_confidence)``.
 
     Google will not raise the sync Recognize ceiling — 60 seconds is a hard
     product limit. Batch needs a GCS bucket; streaming is gRPC and wants
@@ -229,39 +261,67 @@ async def recognize(
     tag, and sending that whole take to Recognize hangs until the client
     gives up. A known long take is split first; an unknown one is probed
     and cut, never offered whole.
+
+    Confidence is averaged across every chunk that reported one; ``None``
+    means no chunk did (some Chirp models omit the field entirely).
     """
     if duration_seconds is not None and duration_seconds <= _SYNC_LIMIT_S:
-        return await recognize_once(audio_bytes)
+        return await recognize_once_detailed(audio_bytes)
 
     if ffmpeg_available():
         chunks = await split_for_sync_recognize(
             audio_bytes, duration_hint=duration_seconds
         )
         if len(chunks) > 1:
-            return await _recognize_chunks(chunks)
+            return await _recognize_chunks_detailed(chunks)
 
     try:
-        return await recognize_once(audio_bytes)
+        return await recognize_once_detailed(audio_bytes)
     except httpx.HTTPStatusError as exc:
         if is_duration_limit_error(exc) and ffmpeg_available():
             chunks = await split_for_sync_recognize(
                 audio_bytes, force=True, duration_hint=duration_seconds
             )
             if len(chunks) > 1:
-                return await _recognize_chunks(chunks)
+                return await _recognize_chunks_detailed(chunks)
         raise
 
 
 async def _recognize_chunks(chunks: list[bytes]) -> str:
-    logger.info("Google STT recognizing %d chunks in parallel", len(chunks))
-    parts = await asyncio.gather(*[recognize_once(chunk) for chunk in chunks])
-    text = _join_chunk_transcripts(list(parts))
-    logger.info("Google STT joined %d chunks → %d chars", len(chunks), len(text))
+    text, _ = await _recognize_chunks_detailed(chunks)
     return text
+
+
+async def _recognize_chunks_detailed(
+    chunks: list[bytes],
+) -> tuple[str, float | None]:
+    logger.info("Google STT recognizing %d chunks in parallel", len(chunks))
+    per_chunk = await asyncio.gather(
+        *[recognize_once_detailed(chunk) for chunk in chunks]
+    )
+    parts = [t for t, _ in per_chunk]
+    confidences = [c for _, c in per_chunk if c is not None]
+    text = _join_chunk_transcripts(list(parts))
+    avg_conf = sum(confidences) / len(confidences) if confidences else None
+    logger.info(
+        "Google STT joined %d chunks → %d chars conf=%s",
+        len(chunks),
+        len(text),
+        f"{avg_conf:.2f}" if avg_conf is not None else "-",
+    )
+    return text, avg_conf
 
 
 async def recognize_once(audio_bytes: bytes) -> str:
     """One synchronous Chirp Recognize. Audio longer than ~60s is rejected."""
+    text, _ = await recognize_once_detailed(audio_bytes)
+    return text
+
+
+async def recognize_once_detailed(
+    audio_bytes: bytes,
+) -> tuple[str, float | None]:
+    """One synchronous Chirp Recognize. Returns ``(text, confidence)``."""
     project = project_id()
     if not project:
         raise RuntimeError("Google STT project_id is missing")
@@ -299,9 +359,14 @@ async def recognize_once(audio_bytes: bytes) -> str:
             resp.text[:500],
         )
     resp.raise_for_status()
-    transcript = transcript_from_response(resp.json())
-    logger.info("Google STT (%s) transcript length: %d chars", model, len(transcript))
-    return transcript
+    transcript, confidence = transcript_and_confidence(resp.json())
+    logger.info(
+        "Google STT (%s) transcript length: %d chars conf=%s",
+        model,
+        len(transcript),
+        f"{confidence:.2f}" if confidence is not None else "-",
+    )
+    return transcript, confidence
 
 
 async def split_for_sync_recognize(

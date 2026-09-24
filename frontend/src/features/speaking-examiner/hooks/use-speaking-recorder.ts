@@ -5,6 +5,7 @@ import {
   type RecordingLimit,
   type SpeakingTurnKind,
 } from '../constants/recording-limits'
+import { SPEAKING_AUDIO_CONSTRAINTS } from '../lib/mic-constraints'
 import type { Phase } from '../types/phase'
 
 type UseSpeakingRecorderOptions = {
@@ -104,7 +105,7 @@ export function useSpeakingRecorder({
     // use to MediaRecorder; drop it and ask for the device again.
     releaseMic()
     const request = navigator.mediaDevices
-      .getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
+      .getUserMedia(SPEAKING_AUDIO_CONSTRAINTS)
       .then((stream) => {
         streamRef.current = stream
         setRecordingStream(stream)

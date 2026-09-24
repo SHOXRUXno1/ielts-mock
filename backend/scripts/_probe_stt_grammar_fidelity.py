@@ -156,9 +156,10 @@ CALL_TIMEOUT_S = 45
 
 async def transcribe(engine: str, audio: bytes) -> str:
     if engine == "groq":
-        return await asyncio.wait_for(
+        text, _metrics = await asyncio.wait_for(
             llm._transcribe_with_groq(audio, "audio/mpeg"), CALL_TIMEOUT_S
         )
+        return text
     original = settings.gemini_stt_model
     settings.gemini_stt_model = engine
     try:

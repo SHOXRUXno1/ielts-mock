@@ -90,10 +90,19 @@ _CUE_TOPIC_RE = re.compile(
 PART2_CUE_INTRO = "Here is your topic card."
 PART2_BEGIN_SPEAKING = "Your preparation time is over. Please begin speaking."
 
-INTRO_GREETING = (
+INTRO_GREETING_BASE = (
+    "Good morning. My name is James."
+)
+INTRO_PART1_FRAME = (
+    "Now, in this first part, I'd like to ask you "
+    "some questions about yourself."
+)
+# Legacy constant kept for backward-compatible history stripping.
+_LEGACY_INTRO_GREETING = (
     "Good morning. My name is James. Can you tell me your full name, please?"
 )
-INTRO_NICKNAME_Q = "Thank you. And what should I call you?"
+INTRO_GREETING = INTRO_GREETING_BASE
+INTRO_NICKNAME_Q = ""
 INTRO_FRAME = (
     "Alright, {nickname}. Now, in this first part, I'd like to ask you "
     "some questions about yourself."
@@ -315,13 +324,7 @@ def _is_intro_turn(turn: dict) -> bool:
 
 
 def _is_intro_state(session: "SpeakingSession | None") -> bool:
-    """True during the name exchange, where nothing the candidate says is marked.
-
-    Asking someone to repeat their name is fair; refusing to begin the exam until
-    a microphone yields one is not. Neither intro answer is scored, and the
-    engine already has a frame for an unknown name, so an unrecognised reply here
-    carries the test forward instead of stranding the candidate on question one.
-    """
+    """True for legacy sessions still in the old name-exchange states."""
     if session is None:
         return False
     return session.current_state in (
@@ -342,12 +345,25 @@ def _history_turn(
     if stt is not None:
         # Stored per turn rather than per session because the split happens
         # mid-exam: the budget can run out between one answer and the next.
-        turn["stt"] = {
+        # Optional quality signals (confidence for Chirp; no_speech_prob /
+        # avg_logprob / compression_ratio for Groq verbose_json) are written
+        # only when the provider actually returned them, so old rows with
+        # just the four core fields keep parsing.
+        entry: dict = {
             "provider": stt.provider,
             "reason": stt.reason,
             "latency_ms": stt.latency_ms,
             "audio_bytes": stt.audio_bytes,
         }
+        if stt.confidence is not None:
+            entry["confidence"] = stt.confidence
+        if stt.no_speech_prob is not None:
+            entry["no_speech_prob"] = stt.no_speech_prob
+        if stt.avg_logprob is not None:
+            entry["avg_logprob"] = stt.avg_logprob
+        if stt.compression_ratio is not None:
+            entry["compression_ratio"] = stt.compression_ratio
+        turn["stt"] = entry
     return turn
 
 
@@ -371,6 +387,12 @@ def _format_intro_to_part1(nickname: str, first_question: str = "") -> str:
     frame = _intro_frame(nickname)
     q = (first_question or "").strip()
     return f"{frame} {q}".strip() if q else frame
+
+
+def _build_start_greeting(first_question: str) -> str:
+    """Build the opening greeting that includes the first Part 1 question."""
+    q = (first_question or "").strip()
+    return f"{INTRO_GREETING_BASE} {INTRO_PART1_FRAME} {q}".strip()
 
 
 def _reaction(index: int) -> str:
@@ -401,7 +423,7 @@ def strip_intro(history: list[dict]) -> list[dict]:
     """
     if any(t.get("phase") == "intro" for t in history):
         return [t for t in history if t.get("phase") != "intro"]
-    if history and (history[0].get("text") or "").strip() == INTRO_GREETING:
+    if history and (history[0].get("text") or "").strip() == _LEGACY_INTRO_GREETING:
         return history[4:]
     return history
 
@@ -786,9 +808,9 @@ async def intro_greeting_phrase(_actor: Actor = Depends(get_current_actor)):
     first turn of /start hits a cache entry and plays without a synth delay.
     Never creates or advances any session; safe to call any number of times.
     """
-    audio_b64, tts_error, _cache_hit = await _tts_base64(INTRO_GREETING)
+    audio_b64, tts_error, _cache_hit = await _tts_base64(INTRO_GREETING_BASE)
     return PhraseResponse(
-        text=INTRO_GREETING,
+        text=INTRO_GREETING_BASE,
         audio_base64=audio_b64,
         tts_error=tts_error,
     )
@@ -799,17 +821,19 @@ async def _create_start_session(
     *,
     attempt_id: uuid.UUID | None = None,
     test_id: uuid.UUID | None = None,
+    greeting_text: str = "",
 ) -> SpeakingSession:
     async with async_session() as db:
         started_at = datetime.now(timezone.utc)
+        text = greeting_text or INTRO_GREETING_BASE
         session = SpeakingSession(
             admin_email=admin_email,
             started_at=started_at,
             status="in_progress",
-            current_state=SpeakingState.INTRO_GREETING.value,
+            current_state=SpeakingState.PART_1_ACTIVE.value,
             state_entered_at=started_at,
-            current_question_index=0,
-            history_json=[_history_turn("examiner", INTRO_GREETING, "intro")],
+            current_question_index=1,
+            history_json=[_history_turn("examiner", text, "intro")],
             attempt_id=attempt_id,
             test_id=test_id,
         )
@@ -890,21 +914,12 @@ async def _advance_turn(
         part = 3
         is_end = True
         cand_phase = None
-    elif state == SpeakingState.INTRO_GREETING.value:
-        text = INTRO_NICKNAME_Q
-        transition_state(session, SpeakingState.INTRO_NICKNAME)
-        exam_phase = "intro"
-        cand_phase = "intro"
-        part = 1
-        question_number = 1
-        questions_total = len(part1_questions)
-    elif state == SpeakingState.INTRO_NICKNAME.value:
-        nickname = _extract_nickname(candidate_text)
-        session.candidate_nickname = nickname or None
+    elif state in (SpeakingState.INTRO_GREETING.value, SpeakingState.INTRO_NICKNAME.value):
+        # Legacy sessions still in old intro states — skip to Part 1.
         first_q = part1_questions[0]
-        text = _format_intro_to_part1(nickname, first_q)
+        text = f"{INTRO_PART1_FRAME} {first_q}"
         transition_state(session, SpeakingState.PART_1_ACTIVE)
-        session.current_question_index = 1  # Q1 already asked
+        session.current_question_index = 1
         exam_phase = "part1"
         cand_phase = "intro"
         part = 1
@@ -1162,13 +1177,18 @@ async def start_session(
         await _enter_speaking_progress(db, attempt)
         await db.flush()
 
+    plan = await load_speaking_plan(test_id, db)
+    part1_questions = plan.part1 or list(DEFAULT_PART1)
+    greeting_text = _build_start_greeting(part1_questions[0])
+
     t1 = time.perf_counter()
-    tts_task = asyncio.create_task(_tts_base64(INTRO_GREETING))
+    tts_task = asyncio.create_task(_tts_base64(greeting_text))
     session_task = asyncio.create_task(
         _create_start_session(
             _actor.sub,
             attempt_id=attempt_id,
             test_id=test_id,
+            greeting_text=greeting_text,
         )
     )
     audio_b64, tts_error, cache_hit = await tts_task
@@ -1181,7 +1201,7 @@ async def start_session(
         "cache_hit=%s attempt_id=%s test_id=%s state=%s",
         tts_ms,
         total_ms,
-        len(INTRO_GREETING),
+        len(greeting_text),
         session.id,
         cache_hit,
         attempt_id,
@@ -1190,7 +1210,7 @@ async def start_session(
     )
 
     return _examiner_turn_payload(
-        INTRO_GREETING,
+        greeting_text,
         1,
         False,
         None,
@@ -1202,6 +1222,7 @@ async def start_session(
             tts_ms=tts_ms,
             tts_cache_hit=cache_hit,
         ),
+        questions_total=len(part1_questions),
     )
 
 

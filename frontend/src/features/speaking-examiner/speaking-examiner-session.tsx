@@ -818,7 +818,7 @@ export function SpeakingExaminerSession({
       questionNumber={questionNumber}
       showPartIndicator={isActiveSession && phase !== 'prep' && !showLoading}
       transcriptHistory={history}
-      showLiveTranscript={isActiveSession && phase !== 'prep' && !showLoading}
+      showLiveTranscript={false}
     />
   )
 

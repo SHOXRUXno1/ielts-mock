@@ -110,7 +110,7 @@ class TestGroqTranscribeRetry:
         mock_get_client.return_value = mock_client
 
         with patch("app.services.llm.asyncio.sleep", new=AsyncMock()):
-            text = await _transcribe_with_groq(b"x" * 1024, None)
+            text, _metrics = await _transcribe_with_groq(b"x" * 1024, None)
 
         assert text == "hello there"
         assert mock_client.post.await_count == 2

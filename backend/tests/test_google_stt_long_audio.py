@@ -43,11 +43,12 @@ class TestRecognizeSplitsLongAudio:
 
         async def fake_once(audio_bytes):
             calls.append(len(audio_bytes))
-            return "first half" if audio_bytes.startswith(b"a") else "second half"
+            text = "first half" if audio_bytes.startswith(b"a") else "second half"
+            return text, None
 
         monkeypatch.setattr(google_stt, "ffmpeg_available", lambda: True)
         monkeypatch.setattr(google_stt, "split_for_sync_recognize", fake_split)
-        monkeypatch.setattr(google_stt, "recognize_once", fake_once)
+        monkeypatch.setattr(google_stt, "recognize_once_detailed", fake_once)
 
         text = await google_stt.recognize(b"x" * 4096)
 
@@ -60,11 +61,11 @@ class TestRecognizeSplitsLongAudio:
             return [audio_bytes]
 
         async def fake_once(audio_bytes):
-            return "one take"
+            return "one take", None
 
         monkeypatch.setattr(google_stt, "ffmpeg_available", lambda: True)
         monkeypatch.setattr(google_stt, "split_for_sync_recognize", fake_split)
-        monkeypatch.setattr(google_stt, "recognize_once", fake_once)
+        monkeypatch.setattr(google_stt, "recognize_once_detailed", fake_once)
 
         assert await google_stt.recognize(b"x" * 4096) == "one take"
 
@@ -78,11 +79,11 @@ class TestRecognizeSplitsLongAudio:
         async def fake_once(audio_bytes):
             if audio_bytes.startswith(b"x"):
                 raise _http_error("Audio can be of a maximum of 60 seconds.")
-            return "chunk"
+            return "chunk", None
 
         monkeypatch.setattr(google_stt, "ffmpeg_available", lambda: True)
         monkeypatch.setattr(google_stt, "split_for_sync_recognize", fake_split)
-        monkeypatch.setattr(google_stt, "recognize_once", fake_once)
+        monkeypatch.setattr(google_stt, "recognize_once_detailed", fake_once)
 
         text = await google_stt.recognize(b"x" * 4096)
         assert text == "chunk chunk"
@@ -93,7 +94,7 @@ class TestRecognizeSplitsLongAudio:
             raise _http_error("Invalid audio encoding")
 
         monkeypatch.setattr(google_stt, "ffmpeg_available", lambda: False)
-        monkeypatch.setattr(google_stt, "recognize_once", fake_once)
+        monkeypatch.setattr(google_stt, "recognize_once_detailed", fake_once)
 
         with pytest.raises(httpx.HTTPStatusError):
             await google_stt.recognize(b"x" * 4096)
@@ -109,11 +110,11 @@ class TestRecognizeSplitsLongAudio:
             return [b"a" * 2048, b"b" * 2048]
 
         async def fake_once(audio_bytes):
-            return "chunk"
+            return "chunk", None
 
         monkeypatch.setattr(google_stt, "ffmpeg_available", lambda: True)
         monkeypatch.setattr(google_stt, "split_for_sync_recognize", fake_split)
-        monkeypatch.setattr(google_stt, "recognize_once", fake_once)
+        monkeypatch.setattr(google_stt, "recognize_once_detailed", fake_once)
 
         text = await google_stt.recognize(b"x" * 4096, duration_seconds=120)
 
@@ -129,10 +130,10 @@ class TestRecognizeSplitsLongAudio:
             return [b"nope"]
 
         async def fake_once(audio_bytes):
-            return "short"
+            return "short", None
 
         monkeypatch.setattr(google_stt, "split_for_sync_recognize", fake_split)
-        monkeypatch.setattr(google_stt, "recognize_once", fake_once)
+        monkeypatch.setattr(google_stt, "recognize_once_detailed", fake_once)
 
         text = await google_stt.recognize(b"x" * 4096, duration_seconds=20)
 
