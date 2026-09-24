@@ -242,6 +242,38 @@ describe('useExaminerAudio', () => {
     })
   })
 
+  describe('playPhraseDirect', () => {
+    it('bypasses Simli entirely and does not touch pendingAudioB64', async () => {
+      // What this guards: the Part 2 "begin speaking" phrase used to run
+      // through the Simli path after 65s of prep, and half the time the
+      // WebRTC session had been idle-closed by the network. That reconnect
+      // swallowed the sound. This method plays the cached MP3 through a
+      // plain <audio> element so the ear hears it either way; the Simli
+      // pipeline is left untouched (pendingAudioB64 must not be written).
+      const phaseRef = { current: 'playing' as Phase }
+      const onAudioComplete = vi.fn()
+      const { result, act } = await renderHook(() =>
+        useExaminerAudio({ phaseRef, onAudioComplete }),
+      )
+
+      await act(() => {
+        result.current.setSimliEnabled(true)
+        result.current.handleSimliReady(true)
+      })
+
+      await act(async () => {
+        await result.current.playPhraseDirect('AQID')
+      })
+
+      // pendingAudioB64 is the queue Simli reads from; playing directly
+      // must not push anything into it, or Simli would try to reproduce
+      // the phrase a second time when it next reconnects.
+      expect(result.current.pendingAudioB64).toBeNull()
+      expect(onAudioComplete).toHaveBeenCalledOnce()
+      expect(synthesizeExaminerTurn).not.toHaveBeenCalled()
+    })
+  })
+
   it('ignores onReady(false) while phase is loading', async () => {
     const phaseRef = { current: 'loading' as Phase }
     const { result, act } = await renderHook(() =>

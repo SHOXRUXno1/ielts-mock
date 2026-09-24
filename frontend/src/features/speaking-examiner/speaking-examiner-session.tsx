@@ -212,6 +212,7 @@ export function SpeakingExaminerSession({
     handleSimliDone,
     playExaminerAudio,
     playExaminerPhrase,
+    playPhraseDirect,
     playSystemPhrase,
     resetAudioState,
     cancelBrowserSpeech,
@@ -464,13 +465,26 @@ export function SpeakingExaminerSession({
       const phrase = cached ?? (await getPart2BeginPhrase())
       part2PhraseRef.current = phrase
       if (!isSessionActive(sessionId)) return
-      await playExaminerPhrase(phrase.text, phrase.audio_base64, phrase.tts_error)
+      if (phrase.audio_base64?.trim()) {
+        // The cached MP3 is short (~2s) and playing it through Simli after
+        // 65s of prep triggers an idle-close reconnect that swallows the
+        // sound. See the docstring on playPhraseDirect.
+        await playPhraseDirect(phrase.audio_base64)
+      } else {
+        await playExaminerPhrase(phrase.text, phrase.audio_base64, phrase.tts_error)
+      }
     } catch {
       if (!isSessionActive(sessionId)) return
       await playSystemPhrase(PART2_BEGIN_SPEAKING)
     }
     if (!isSessionActive(sessionId)) return
-  }, [onPrepTimerDone, playExaminerPhrase, playSystemPhrase, isSessionActive])
+  }, [
+    onPrepTimerDone,
+    playExaminerPhrase,
+    playPhraseDirect,
+    playSystemPhrase,
+    isSessionActive,
+  ])
 
   useEffect(() => {
     if (phase !== 'prep') {

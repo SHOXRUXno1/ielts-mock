@@ -386,6 +386,26 @@ export function useExaminerAudio({
     [cancelBrowserSpeech, speakWithWebSpeech],
   )
 
+  /** Play a cached phrase through a plain <audio> element, bypassing Simli.
+   *
+   * After the Part 2 preparation timer runs, the Simli WebRTC session has
+   * been idle for ~65 seconds and is often idle-closed by the network. Sending
+   * "begin speaking" through Simli then triggers a reconnect mid-audio: the
+   * old peer is torn down while the sound is queued, and the candidate hears
+   * either a truncated cue or nothing at all. Playing this one short cached
+   * MP3 directly reaches the ear on every attempt and leaves the Simli slot
+   * to reconnect on its own beat for the next real examiner turn.
+   */
+  const playPhraseDirect = useCallback(
+    async (audioBase64: string) => {
+      cancelBrowserSpeech()
+      setPendingAudioB64(null)
+      await playBase64Audio(audioBase64)
+      onAudioCompleteRef.current()
+    },
+    [cancelBrowserSpeech, playBase64Audio],
+  )
+
   const resetAudioState = useCallback(() => {
     cancelBrowserSpeech()
     setPendingAudioB64(null)
@@ -415,6 +435,7 @@ export function useExaminerAudio({
     handleSimliDone,
     playExaminerAudio,
     playExaminerPhrase,
+    playPhraseDirect,
     playSystemPhrase,
     resetAudioState,
     cancelBrowserSpeech,
