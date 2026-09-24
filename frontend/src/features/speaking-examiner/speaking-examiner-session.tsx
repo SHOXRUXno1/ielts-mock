@@ -817,6 +817,17 @@ export function SpeakingExaminerSession({
       currentPart={currentPart}
       questionNumber={questionNumber}
       showPartIndicator={isActiveSession && phase !== 'prep' && !showLoading}
+      transcriptHistory={history}
+      showLiveTranscript={
+        // Admins running the standalone examiner route see the live transcript
+        // as an operational aid. Students in the embedded take-test flow never
+        // see it — reading the words back at them turned this into a hint at
+        // what to say and made low-band answers look higher than they were.
+        mode === 'standalone' &&
+        isActiveSession &&
+        phase !== 'prep' &&
+        !showLoading
+      }
     />
   )
 
