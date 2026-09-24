@@ -93,13 +93,8 @@ TABLE1_STRUCTURE: dict = {
                     {"segments": [text("open plan")]},
                 ],
             },
-            {
-                "variant": "bullets",
-                "bullets": [
-                    {"segments": [text("distance from "), gap("t3")]},
-                ],
-            },
-            cell(text("")),
+            cell(text("distance from "), gap("t3")),
+            cell(text("www."), gap("t4"), text(".com")),
         ],
         [
             cell(text("Kingfisher")),
@@ -108,6 +103,7 @@ TABLE1_STRUCTURE: dict = {
                 "bullets": [
                     {"segments": [text("rural")]},
                     {"segments": [text("next to the "), gap("t5")]},
+                    {"segments": [text("nice views")]},
                 ],
             },
             {
@@ -115,15 +111,12 @@ TABLE1_STRUCTURE: dict = {
                 "bullets": [
                     {"segments": [text("house")]},
                     {"segments": [text("three bedrooms")]},
-                    {"segments": [text("has "), gap("t4")]},
+                    {"segments": [gap("t6"), text(" room")]},
+                    {"segments": [text("living room")]},
+                    {"segments": [text("kitchen")]},
                 ],
             },
-            {
-                "variant": "bullets",
-                "bullets": [
-                    {"segments": [text("no "), gap("t6"), text(" room")]},
-                ],
-            },
+            cell(text("expensive?")),
             cell(
                 text("Phone the owner\n(01752 669218)")
             ),
@@ -418,6 +411,9 @@ NOTES4_STRUCTURE: dict = {
                             "was not available, skins were "
                         ),
                         gap("n34"),
+                        text(
+                            ". (removed hair \u2192 more flexible)"
+                        ),
                     ]
                 },
                 {"segments": [text("Stretched tight on a frame")]},
@@ -431,6 +427,7 @@ NOTES4_STRUCTURE: dict = {
                     "segments": [
                         text("Vellum was "),
                         gap("n36"),
+                        text(" \u2013 for correct colour"),
                     ]
                 },
             ],
@@ -451,9 +448,10 @@ NOTES4_STRUCTURE: dict = {
                     "segments": [
                         text(
                             "Now \u2014 using genetic data from \u2018known "
-                            "manuscripts\u2019 to create a "
+                            "manuscripts\u2019 to create a \u2018"
                         ),
                         gap("n38"),
+                        text("\u2019"),
                     ]
                 },
             ],

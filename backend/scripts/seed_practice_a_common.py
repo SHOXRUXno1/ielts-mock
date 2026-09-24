@@ -14,9 +14,10 @@ from __future__ import annotations
 import uuid
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.answer import Answer
 from app.models.question import Question
 from app.models.question_group import QuestionGroup
 from app.models.section import Section, SectionType
@@ -91,6 +92,9 @@ async def clear_section(db: AsyncSession, section_id: uuid.UUID) -> int:
                 select(Question).where(Question.question_group_id == group.id)
             )
         ).scalars().all()
+        q_ids = [q.id for q in questions]
+        if q_ids:
+            await db.execute(delete(Answer).where(Answer.question_id.in_(q_ids)))
         for question in questions:
             await db.delete(question)
             removed += 1
@@ -100,6 +104,9 @@ async def clear_section(db: AsyncSession, section_id: uuid.UUID) -> int:
     strays = (
         await db.execute(select(Question).where(Question.section_id == section_id))
     ).scalars().all()
+    stray_ids = [q.id for q in strays]
+    if stray_ids:
+        await db.execute(delete(Answer).where(Answer.question_id.in_(stray_ids)))
     for question in strays:
         await db.delete(question)
         removed += 1

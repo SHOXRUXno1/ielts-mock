@@ -40,6 +40,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth-store'
+import { loginSearchFromLocation } from '@/lib/sign-out'
 import type { SpeakingSessionControls } from '@/features/speaking-examiner/speaking-examiner-session'
 import { QuestionNavBar } from '../components/take/question-nav-bar'
 import { durationByType } from '../data/duration-rules'
@@ -88,6 +89,7 @@ import { useTestNavigation } from './use-test-navigation'
 import { exitExamFullscreen } from './exam-fullscreen'
 import { FullscreenGuardOverlay } from './fullscreen-guard-overlay'
 import { useFullscreenGuard } from './use-fullscreen-guard'
+import { testLoadError } from './test-load-error'
 
 function isAttemptDone(err: unknown): boolean {
   const detail = (err as { response?: { data?: { detail?: string } } })
@@ -132,6 +134,7 @@ export function TakeTestShell({
   const isPractice = mode === 'practice'
   const isPracticePart = isPractice && practiceScope === 'part'
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const currentHref = useRouterState({ select: (s) => s.location.href })
   const routeSearch = useRouterState({
     select: (s) => s.location.search as {
       resume?: string
@@ -1030,6 +1033,28 @@ export function TakeTestShell({
     : null
 
   const testError = usingSlug ? slugQuery.isError : idQuery.isError
+  const queryError = usingSlug ? slugQuery.error : idQuery.error
+  const loadError = testLoadError(queryError, !!resume)
+
+  const retryTestLoad = () => {
+    if (usingSlug) {
+      void slugQuery.refetch()
+      return
+    }
+    void idQuery.refetch()
+  }
+
+  const goToTests = () => {
+    void navigate({ to: '/student/tests', replace: true })
+  }
+
+  const goToLogin = () => {
+    void navigate({
+      to: '/login',
+      replace: true,
+      search: loginSearchFromLocation(currentHref),
+    })
+  }
 
   if (testLoading || resolvingAttempt) {
     return (
@@ -1041,22 +1066,28 @@ export function TakeTestShell({
 
   if (testError || !test || !ctxValue) {
     return (
-      <div className='flex h-screen items-center justify-center bg-white'>
+      <div className='flex h-screen items-center justify-center bg-white px-4'>
         <Alert variant='destructive' className='max-w-md'>
           <AlertCircle className='size-4' />
           <AlertDescription className='flex items-center justify-between gap-4'>
-            <span>
-              {resumeTestNotFound
-                ? 'This saved attempt is no longer available.'
-                : 'Test not found.'}
-            </span>
-            {resumeTestNotFound ? (
+            <span>{loadError.message}</span>
+            {loadError.action === 'login' ? (
+              <Button size='sm' variant='outline' onClick={goToLogin}>
+                Sign in
+              </Button>
+            ) : null}
+            {loadError.action === 'tests' ? (
               <Button
                 size='sm'
                 variant='outline'
-                onClick={() => void navigate({ to: '/student/tests', replace: true })}
+                onClick={goToTests}
               >
                 Back to tests
+              </Button>
+            ) : null}
+            {loadError.action === 'retry' ? (
+              <Button size='sm' variant='outline' onClick={retryTestLoad}>
+                Try again
               </Button>
             ) : null}
           </AlertDescription>

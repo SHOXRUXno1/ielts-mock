@@ -1,4 +1,5 @@
 import type { CompoundStructure, CompoundVariant } from '../../data/compound'
+import { DiagramStructureEditor } from './diagram-structure-editor'
 import { FlowStructureEditor } from './flow-structure-editor'
 import { FormStructureEditor } from './form-structure-editor'
 import { NotesStructureEditor } from './notes-structure-editor'
@@ -63,6 +64,15 @@ export function CompoundStructureEditor({
   if (variant === 'flow' && structure.variant === 'flow') {
     return (
       <FlowStructureEditor
+        structure={structure}
+        onChange={onChange}
+        gapEdit={gapEdit}
+      />
+    )
+  }
+  if (variant === 'diagram' && structure.variant === 'diagram') {
+    return (
+      <DiagramStructureEditor
         structure={structure}
         onChange={onChange}
         gapEdit={gapEdit}

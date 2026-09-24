@@ -69,6 +69,39 @@ const structure: FlowStructure = {
   ],
 }
 
+const wordBankStructure: FlowStructure = {
+  variant: 'flow',
+  title: 'Making a steam pit',
+  instruction_words: 'letter A–G',
+  max_words_per_gap: 1,
+  options: [
+    'A. air',
+    'B. ash',
+    'C. earth',
+    'D. grass',
+    'E. sticks',
+    'F. stones',
+    'G. water',
+  ],
+  steps: [
+    { segments: [{ type: 'text', value: 'Dig a pit.' }] },
+    {
+      segments: [
+        { type: 'text', value: 'Arrange a row of ' },
+        { type: 'gap', gap_id: 'f11' },
+        { type: 'text', value: ' over the pit.' },
+      ],
+    },
+    {
+      segments: [
+        { type: 'text', value: 'Place ' },
+        { type: 'gap', gap_id: 'f12' },
+        { type: 'text', value: ' on top.' },
+      ],
+    },
+  ],
+}
+
 describe('flow-chart completion', () => {
   it('renders a titled flowchart with inline blanks and a two-column fork', async () => {
     const screen = await render(
@@ -95,5 +128,24 @@ describe('flow-chart completion', () => {
       el.textContent?.includes('Revise before'),
     )
     expect(forkRow).toBeTruthy()
+  })
+
+  it('renders a word bank + letter selects when options are provided', async () => {
+    const screen = await render(
+      <CompoundCompletionRenderer
+        structure={wordBankStructure}
+        questions={[gap('f11', 11), gap('f12', 12)]}
+        answers={{}}
+        onAnswer={() => {}}
+      />,
+    )
+
+    const root = screen.container.querySelector('[data-flow-chart]') as HTMLElement
+    expect(root).toBeTruthy()
+    for (const label of ['A. air', 'B. ash', 'C. earth', 'D. grass', 'E. sticks', 'F. stones', 'G. water']) {
+      await expect.element(screen.getByText(label)).toBeVisible()
+    }
+    expect(root.querySelectorAll('input')).toHaveLength(0)
+    expect(root.querySelectorAll('[role="combobox"]')).toHaveLength(2)
   })
 })

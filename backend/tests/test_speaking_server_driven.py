@@ -10,12 +10,10 @@ import pytest
 from app.api.speaking_examiner import (
     FORCED_END_TEXT,
     INTRO_GREETING,
-    INTRO_NICKNAME_Q,
     MAX_EXAMINER_TURNS,
     PART3_TRANSITION,
     REACTIONS,
     _advance_turn,
-    _format_intro_to_part1,
     _reaction,
 )
 from app.models.speaking_session import SpeakingState
@@ -106,12 +104,12 @@ def _plan_authored() -> SpeakingPlan:
     )
 
 
-def _session(state: str = SpeakingState.INTRO_GREETING.value) -> MagicMock:
+def _session(state: str = SpeakingState.PART_1_ACTIVE.value) -> MagicMock:
     session = MagicMock()
     session.id = uuid4()
     session.current_state = state
     session.candidate_nickname = None
-    session.current_question_index = 0
+    session.current_question_index = 1
     session.state_entered_at = datetime.now(timezone.utc)
     session.started_at = session.state_entered_at
     session.created_at = session.state_entered_at
@@ -197,6 +195,7 @@ class TestAuthoredFullFlow:
     @pytest.mark.asyncio
     async def test_authored_4_cue_3_no_gemini(self):
         plan = _plan_authored()
+        # Session starts in PART_1_ACTIVE with Q1 already asked in greeting
         session = _session()
         db = _db()
         cue_text = format_cue_card(plan.cue_card)
@@ -215,26 +214,7 @@ class TestAuthoredFullFlow:
                 new=AsyncMock(),
             ) as mock_turn,
         ):
-            # INTRO greeting → nickname question
-            r = await _advance_turn(
-                session, "My name is Alibek Sattarov", plan, db, include_tts=False
-            )
-            assert r["text"] == INTRO_NICKNAME_Q
-            assert session.current_state == SpeakingState.INTRO_NICKNAME.value
-
-            # Nickname → frame + Part 1 Q1
-            r = await _advance_turn(session, "Alibek", plan, db, include_tts=False)
-            expected_q1 = _format_intro_to_part1("Alibek", plan.part1[0])
-            assert r["text"] == expected_q1
-            assert plan.part1[0] in r["text"]
-            assert "Do you work or are you a student?" not in r["text"]
-            assert r["part"] == 1
-            assert r["question_number"] == 1
-            assert r["questions_total"] == 4
-            assert session.current_state == SpeakingState.PART_1_ACTIVE.value
-            assert session.current_question_index == 1
-
-            # Part 1 Q2–Q4
+            # Part 1 Q2–Q4 (Q1 was in the greeting)
             for i, question in enumerate(plan.part1[1:], start=2):
                 r = await _advance_turn(
                     session, f"Answer {i}", plan, db, include_tts=False
@@ -328,17 +308,13 @@ class TestFallbackPool:
                 new=AsyncMock(return_value="Why do people travel? [PART:3]"),
             ) as mock_p3,
         ):
-            await _advance_turn(session, "Full name", plan, db, include_tts=False)
-            r = await _advance_turn(session, "Alex", plan, db, include_tts=False)
-            assert DEFAULT_PART1[0] in r["text"]
-            assert r["questions_total"] == 5
-
-            # Ask remaining 4 Part 1 questions
+            # Q1 was in the greeting; Part 1 Q2–Q5
             for i in range(1, 5):
                 r = await _advance_turn(
                     session, f"A{i}", plan, db, include_tts=False
                 )
                 assert DEFAULT_PART1[i] in r["text"]
+                assert r["questions_total"] == 5
 
             # Cue via Gemini
             r = await _advance_turn(session, "last p1", plan, db, include_tts=False)

@@ -3,7 +3,7 @@
 Part 1  Q1-5   form_completion       new patient form at Oakham Surgery
         Q6-10  mcq
 Part 2  Q11-16 note_completion       joining and using the library
-        Q17-20 diagram_labeling      library floor plan, typed labels
+        Q17-20 table_completion       library floor plan as a table
 Part 3  Q21-24 short_answer          tutorial on essay progress
         Q25-27 sentence_completion
         Q28-30 note_completion       the tutor's notes on Melanie
@@ -67,35 +67,35 @@ def cell(*segments: dict) -> dict:
 # carry no question; they are dropped so the form does not render empty labels.
 FORM_STRUCTURE: dict = {
     "variant": "form",
-    "form_title": "OAKHAM SURGERY — New patient form",
+    "form_title": "Oakham Surgery\nNew Patient Form",
     "instruction_words": "THREE WORDS AND/OR A NUMBER",
     "max_words_per_gap": 3,
     "fields": [
-        {"label": "New patient's road", "type": "static", "value": "Dawson Road (example)"},
+        {"label": "NEW PATIENT'S ROAD", "type": "static", "value": "Dawson Road (example)"},
         {
-            "label": "Full name",
+            "label": "FULL NAME",
             "type": "gap_line",
             "segments": [text("Mike "), gap("g1")],
         },
-        {"label": "Wife's first name", "type": "static", "value": "Janet"},
+        {"label": "WIFE'S FIRST NAME", "type": "static", "value": "Janet"},
         {
-            "label": "Childrens' first names",
+            "label": "CHILDRENS' FIRST NAMES",
             "type": "gap_line",
-            "segments": [text("1st "), gap("g2")],
+            "segments": [text("1st "), gap("g2"), text("\n2nd\n3rd\n4th")],
         },
         {
-            "label": "Address",
+            "label": "ADDRESS",
             "type": "gap_line",
-            "segments": [text("52 Dawson Road, "), gap("g3"), text(", Melbourne")],
+            "segments": [text("52 Dawson Road\n"), gap("g3"), text("\nMelbourne")],
         },
-        {"label": "Health card number", "type": "gap_line", "segments": [gap("g4")]},
+        {"label": "HEALTH CARD NUMBER", "type": "gap_line", "segments": [gap("g4")]},
         {
-            "label": "Wife's health card number",
+            "label": "WIFE'S HEALTH CARD NUMBER",
             "type": "static",
             "value": "will give later",
         },
         {
-            "label": "Preferred doctor selected",
+            "label": "PREFERRED DOCTOR SELECTED",
             "type": "gap_line",
             "segments": [gap("g5")],
         },
@@ -218,20 +218,37 @@ NOTES_ANSWERS: list[tuple[str, list[str], int]] = [
     ("n16", ["1 week", "one week"], 2),
 ]
 
-# The paper has candidates write into boxes drawn on the plan. Inputs cannot be
-# placed on an image here, so the plan is shown with its printed numbers and the
-# four answers are typed below it — still recall, not multiple choice.
+# The PDF shows a simple table: floor labels on the left, room contents on the
+# right — some cells have gaps that students fill in.  table_completion renders
+# this cleanly as a bordered grid with inline inputs.
 PLAN_STRUCTURE: dict = {
-    "variant": "notes",
+    "variant": "table",
     "title": "Library plan",
     "instruction_words": "THREE WORDS",
     "max_words_per_gap": 3,
-    "image_url": MAP_IMAGE_URL.format(test=TEST_NUMBER),
-    "sections": [
-        {
-            "heading": "Write the label for each numbered space on the plan above.",
-            "items": [{"segments": [gap(f"p{n}")]} for n in (17, 18, 19, 20)],
-        }
+    "headers": ["Floor", "Rooms"],
+    "rows": [
+        [
+            cell(text("Ground Floor")),
+            cell(
+                text("reception; "),
+                gap("p17"),
+                text("\nbathrooms; "),
+                gap("p18"),
+            ),
+        ],
+        [
+            cell(text("First Floor")),
+            cell(gap("p19"), text(" section")),
+        ],
+        [
+            cell(text("Second Floor")),
+            cell(text("Science Section")),
+        ],
+        [
+            cell(gap("p20")),
+            cell(text("Stack System")),
+        ],
     ],
 }
 
@@ -596,7 +613,7 @@ async def seed(db: AsyncSession) -> None:
         NOTES_ANSWERS,
     )
     await w.compound(
-        QuestionType.DIAGRAM_LABELING,
+        QuestionType.TABLE_COMPLETION,
         "Label the library plan below.\n"
         "Write NO MORE THAN THREE WORDS for each answer.",
         PLAN_STRUCTURE,

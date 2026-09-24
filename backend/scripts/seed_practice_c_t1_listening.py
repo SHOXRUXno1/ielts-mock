@@ -10,7 +10,7 @@ Part 2  Q11-16 flow_chart_completion Making a steam pit (letters A-G)
         Q19-20 multi_select         wild fungi advice (TWO of A-E)
 Part 3  Q21-25 mcq                  research project on attitudes
         Q26-30 matching_features    research techniques → difficulties A-G
-Part 4  Q31-40 sentence_completion  Saving the juniper plant
+Part 4  Q31-40 sentence_completion  Saving the juniper plant (with sub-headings)
 
 Idempotent: each part is cleared before it is written.
 
@@ -299,67 +299,129 @@ DIFFICULTY_ITEMS: list[tuple[str, str]] = [
 
 # ── Part 4 ───────────────────────────────────────────────────────────────────
 
-PART4_SENTENCES: list[dict] = [
-    {
-        "prompt": (
-            "Juniper was one of the first plants to colonise Britain after "
-            "the last ______."
-        ),
-        "correct": ["ice age"],
-    },
-    {
-        "prompt": (
-            "Its smoke is virtually ______, so juniper wood was used as fuel "
-            "in illegal activities."
-        ),
-        "correct": ["invisible"],
-    },
-    {
-        "prompt": (
-            "Oils from the plant were used to prevent ______ spreading."
-        ),
-        "correct": ["infection", "infections"],
-    },
-    {
-        "prompt": (
-            "Nowadays, its berries are widely used to ______ food and drink."
-        ),
-        "correct": ["flavour", "flavor"],
-    },
-    {
-        "prompt": (
-            "Juniper plants also support several species of insects and ______."
-        ),
-        "correct": ["fungus", "fungi"],
-    },
-    {
-        "prompt": (
-            "In current juniper populations, ratios of the ______ are poor."
-        ),
-        "correct": ["sexes"],
-    },
-    {
-        "prompt": (
-            "Many of the bushes in each group are of the same age so ______ "
-            "of whole populations is rapid."
-        ),
-        "correct": ["extinction"],
-    },
-    {
-        "prompt": (
-            "Plantlife is trialling novel techniques across ______ areas of "
-            "England."
-        ),
-        "correct": ["lowland"],
-    },
-    {
-        "prompt": "One measure is to introduce ______ for seedlings.",
-        "correct": ["shelter", "shelters"],
-    },
-    {
-        "prompt": "A further step is to plant ______ from healthy bushes.",
-        "correct": ["cuttings"],
-    },
+NOTES4_STRUCTURE: dict = {
+    "variant": "notes",
+    "title": "Saving the juniper plant",
+    "instruction_words": "NO MORE THAN TWO WORDS",
+    "max_words_per_gap": 2,
+    "bullets": False,
+    "sections": [
+        {
+            "heading": "Background",
+            "items": [
+                {
+                    "segments": [
+                        text(
+                            "Juniper was one of the first plants to colonise "
+                            "Britain after the last "
+                        ),
+                        gap("s31"),
+                        text("."),
+                    ]
+                },
+                {
+                    "segments": [
+                        text("Its smoke is virtually "),
+                        gap("s32"),
+                        text(
+                            ", so juniper wood was used as fuel in illegal "
+                            "activities."
+                        ),
+                    ]
+                },
+                {
+                    "segments": [
+                        text("Oils from the plant were used to prevent "),
+                        gap("s33"),
+                        text(" spreading."),
+                    ]
+                },
+                {
+                    "segments": [
+                        text("Nowadays, its berries are widely used to "),
+                        gap("s34"),
+                        text(" food and drink."),
+                    ]
+                },
+            ],
+        },
+        {
+            "heading": "Ecology",
+            "items": [
+                {
+                    "segments": [
+                        text(
+                            "Juniper plants also support several species of "
+                            "insects and "
+                        ),
+                        gap("s35"),
+                        text("."),
+                    ]
+                },
+            ],
+        },
+        {
+            "heading": "Problems",
+            "items": [
+                {
+                    "segments": [
+                        text("In current juniper populations, ratios of the "),
+                        gap("s36"),
+                        text(" are poor."),
+                    ]
+                },
+                {
+                    "segments": [
+                        text(
+                            "Many of the bushes in each group are of the same "
+                            "age so "
+                        ),
+                        gap("s37"),
+                        text(" of whole populations is rapid."),
+                    ]
+                },
+            ],
+        },
+        {
+            "heading": "Solutions",
+            "items": [
+                {
+                    "segments": [
+                        text("Plantlife is trialling novel techniques across "),
+                        gap("s38"),
+                        text(" areas of England."),
+                    ]
+                },
+                {
+                    "segments": [
+                        text("One measure is to introduce "),
+                        gap("s39"),
+                        text(" for seedlings."),
+                    ]
+                },
+                {
+                    "segments": [
+                        text("A further step is to plant "),
+                        gap("s40"),
+                        text(" from healthy bushes."),
+                    ]
+                },
+            ],
+        },
+    ],
+}
+
+NOTES4_ANSWERS: list[tuple[str, list[str], int]] = [
+    ("s31", ["ice age"], 2),
+    ("s32", ["invisible"], 2),
+    ("s33", ["infection", "infections"], 2),
+    ("s34", ["flavour", "flavor"], 2),
+    ("s35", ["fungus", "fungi"], 2),
+    ("s36", ["sexes"], 2),
+    ("s37", ["extinction"], 2),
+    ("s38", ["lowland"], 2),
+    ("s39", ["shelter", "shelters"], 2),
+    ("s40", ["cuttings"], 2),
 ]
 
 
@@ -549,11 +611,12 @@ async def seed(db: AsyncSession) -> None:
     part = await get_section(db, test.id, SectionType.LISTENING, 4)
     print(f"\nPart 4 ({part.id})  removed {await clear_section(db, part.id)} old row(s)")
     w = SectionWriter(db, part)
-    await w.sentences(
+    await w.compound(
+        QuestionType.SENTENCE_COMPLETION,
         "Complete the sentences below.\n"
         "Write NO MORE THAN TWO WORDS for each answer.",
-        PART4_SENTENCES,
-        max_words=2,
+        NOTES4_STRUCTURE,
+        NOTES4_ANSWERS,
     )
     totals.append(w.slots)
     print(f"  {w.slots} scoring slots")

@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
+import { SPEAKING_AUDIO_CONSTRAINTS } from '../lib/mic-constraints'
 
 export type MicCheckStatus = 'idle' | 'checking' | 'ok' | 'denied'
 
@@ -14,9 +15,9 @@ export function useMicCheck() {
     async (options?: CheckMicrophoneOptions): Promise<boolean> => {
       setMicStatus('checking')
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true },
-        })
+        const stream = await navigator.mediaDevices.getUserMedia(
+          SPEAKING_AUDIO_CONSTRAINTS,
+        )
         stream.getTracks().forEach((t) => t.stop())
         setMicStatus('ok')
         if (!options?.silent) {

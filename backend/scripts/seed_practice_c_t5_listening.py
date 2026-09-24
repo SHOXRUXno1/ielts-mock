@@ -70,15 +70,21 @@ NOTES1_STRUCTURE: dict = {
     "title": "Advice on plumbers and decorators",
     "instruction_words": "ONE WORD",
     "max_words_per_gap": 1,
+    "bullets": False,
     "sections": [
         {
             "heading": "",
             "items": [
-                {"segments": [text("Make sure the company is: local")]},
+                {
+                    "segments": [
+                        text("Example\nMake sure the company is: local"),
+                    ]
+                },
                 {
                     "segments": [
                         text("Don't call a plumber during the "),
                         gap("g1"),
+                        text("."),
                     ]
                 },
                 {
@@ -113,17 +119,18 @@ TABLE1_STRUCTURE: dict = {
                     {"segments": [text("Pleasant and friendly")]},
                     {
                         "segments": [
-                            text("Always gives "),
+                            text("Give "),
                             gap("t3"),
                             text(" information"),
                         ]
                     },
+                    {"segments": [text("Good quality work")]},
                 ],
             },
             {
                 "variant": "bullets",
                 "bullets": [
-                    {"segments": [text("Tends to be "), gap("t4")]},
+                    {"segments": [text("Always "), gap("t4")]},
                 ],
             },
         ],
@@ -135,7 +142,7 @@ TABLE1_STRUCTURE: dict = {
                     {
                         "segments": [
                             gap("t5"),
-                            text(" than other plumbers"),
+                            text(" than other companies"),
                         ]
                     },
                     {"segments": [text("Reliable")]},
@@ -340,6 +347,7 @@ NOTES4_STRUCTURE: dict = {
     "title": "The Tawny Owl",
     "instruction_words": "ONE WORD ONLY",
     "max_words_per_gap": 1,
+    "bullets": False,
     "sections": [
         {
             "heading": "",
@@ -371,6 +379,7 @@ NOTES4_STRUCTURE: dict = {
         },
         {
             "heading": "Adaptations",
+            "bullets": True,
             "items": [
                 {
                     "segments": [
@@ -542,8 +551,14 @@ class SectionWriter:
                 gap_answer_key(variants, max_words=max_words),
             )
 
-    async def mcq(self, instruction: str, items: list[dict]) -> None:
-        group = await self._group(QuestionType.MCQ, instruction)
+    async def mcq(
+        self,
+        instruction: str,
+        items: list[dict],
+        *,
+        subtitle: str | None = None,
+    ) -> None:
+        group = await self._group(QuestionType.MCQ, instruction, subtitle=subtitle)
         for item in items:
             self._add(
                 group,
@@ -652,6 +667,7 @@ async def seed(db: AsyncSession) -> None:
     await w.mcq(
         "Choose the correct letter, A, B or C.",
         PART2_MCQ,
+        subtitle="Museum work placement",
     )
     await w.map_labeling(
         "Label the plan below.\n"

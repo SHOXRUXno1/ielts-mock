@@ -9,6 +9,7 @@ import {
 } from '@/lib/api/question-groups'
 import { mediaUrl, uploadImage } from '@/lib/api/attempts'
 import { deleteQuestion, updateQuestion } from '@/lib/api/questions'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   asCompoundStructure,
   autoCompoundInstruction,
+  defaultDiagramStructure,
   defaultStructureForType,
   extractGapIds,
   instructionWordsFromMax,
@@ -38,6 +40,7 @@ import {
   WORD_LIMIT_OPTIONS,
   type CompoundGroupDraft,
   type CompoundStructure,
+  type DiagramMarker,
 } from '../data/compound'
 import {
   QUESTION_TYPE_LABELS,
@@ -642,6 +645,48 @@ export function QuestionGroupEditor({
     )
   }
 
+  // diagram_labeling can render as a plain list (notes) or a positioned diagram.
+  // Switching layouts preserves the gaps (and their answer keys) by carrying
+  // each line's segments across, so no gap questions are lost.
+  const setDiagramLayout = (layout: 'notes' | 'diagram') => {
+    if (structure.variant === layout) return
+    const base = {
+      instruction_words: structure.instruction_words,
+      max_words_per_gap: structure.max_words_per_gap,
+    }
+    if (layout === 'diagram') {
+      const lines =
+        structure.variant === 'notes'
+          ? structure.sections.flatMap((s) => s.items.map((it) => it.segments))
+          : []
+      const markers: DiagramMarker[] = lines.map((segments, i) => ({
+        x: 50,
+        y: Math.min(90, 10 + i * 12),
+        segments,
+      }))
+      handleStructureChange({
+        ...defaultDiagramStructure(base),
+        ...(structure.image_url ? { image_url: structure.image_url } : {}),
+        markers,
+      })
+    } else {
+      const items =
+        structure.variant === 'diagram'
+          ? structure.markers.map((m) => ({ segments: m.segments }))
+          : []
+      handleStructureChange({
+        ...base,
+        variant: 'notes',
+        title: '',
+        bullets: true,
+        ...(structure.image_url ? { image_url: structure.image_url } : {}),
+        sections: [
+          { heading: '', items: items.length ? items : [{ segments: [] }] },
+        ],
+      })
+    }
+  }
+
   const handleWordLimit = (n: number) => {
     const synced = withSyncedInstructionWords({
       ...structure,
@@ -726,6 +771,27 @@ export function QuestionGroupEditor({
 
     setMapImageUrl(url ?? '')
     await updateQuestionGroup(group.id, { options_shared: nextShared })
+    onRefresh()
+  }
+
+  /**
+   * Merges onto the last saved structure, not the live one, so unsaved edits
+   * elsewhere in the editor are neither written to the server nor lost here.
+   */
+  const persistCompoundImage = async (url: string | null) => {
+    const withImage = (base: CompoundStructure) => {
+      const next = { ...base } as CompoundStructure & { image_url?: string }
+      if (url) next.image_url = url
+      else delete next.image_url
+      return next as CompoundStructure
+    }
+
+    const nextSaved = withImage(savedSnapshot.structure)
+    setStructure((prev) => withImage(prev))
+    await updateQuestionGroup(group.id, {
+      options_shared: nextSaved as unknown as Record<string, unknown>,
+    })
+    setSavedSnapshot((prev) => ({ ...prev, structure: nextSaved }))
     onRefresh()
   }
 
@@ -1349,10 +1415,7 @@ export function QuestionGroupEditor({
                 variant='ghost'
                 size='icon'
                 className='absolute -right-2 -top-2 size-6 rounded-full bg-card shadow'
-                onClick={() => {
-                  const { image_url: _omit, ...rest } = structure
-                  setStructure(rest as CompoundStructure)
-                }}
+                onClick={() => void persistCompoundImage(null)}
                 disabled={uploadingMapImage}
               >
                 <X className='size-3.5' />
@@ -1377,7 +1440,7 @@ export function QuestionGroupEditor({
                   setUploadingMapImage(true)
                   try {
                     const url = await uploadImage(file)
-                    setStructure({ ...structure, image_url: url })
+                    await persistCompoundImage(url)
                     toast.success('Diagram image uploaded')
                   } catch {
                     toast.error('Failed to upload image')
@@ -1390,15 +1453,52 @@ export function QuestionGroupEditor({
             </label>
           )}
           <p className='text-[11px] text-muted-foreground'>
-            Appears above the card. Press the top Save button to persist.
+            Appears above the card. Saved as soon as you upload it.
           </p>
+        </div>
+      )}
+
+      {/* diagram_labeling layout toggle: plain list vs positioned diagram */}
+      {compound && questionType === 'diagram_labeling' && (
+        <div className='flex items-center gap-2'>
+          <Label className='text-xs text-muted-foreground'>Layout</Label>
+          <div className='inline-flex overflow-hidden rounded-md border border-border'>
+            <button
+              type='button'
+              className={cn(
+                'px-3 py-1 text-xs',
+                structure.variant !== 'diagram'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-muted-foreground',
+              )}
+              onClick={() => setDiagramLayout('notes')}
+            >
+              List
+            </button>
+            <button
+              type='button'
+              className={cn(
+                'px-3 py-1 text-xs',
+                structure.variant === 'diagram'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-muted-foreground',
+              )}
+              onClick={() => setDiagramLayout('diagram')}
+            >
+              Positioned diagram
+            </button>
+          </div>
         </div>
       )}
 
       {/* Compound structure */}
       {compound && (
         <CompoundStructureEditor
-          variant={variantFromType(questionType)}
+          variant={
+            questionType === 'diagram_labeling'
+              ? structure.variant
+              : variantFromType(questionType)
+          }
           structure={structure}
           onChange={handleStructureChange}
           gapEdit={{

@@ -40,7 +40,9 @@ def data_dir(test_number: int) -> Path:
 
 
 AUDIO_URL = "/media/audio/practice_d_t{test}_listening_p{part}.mp3"
-MAP_IMAGE_URL = "/media/images/practice_d_t{test}_listening_map.png"
+# ?v= busts the Cloudflare edge cache, which holds /media for 7 days: replacing
+# a file in place is invisible to users until the version changes.
+MAP_IMAGE_URL = "/media/images/practice_d_t{test}_listening_map.png?v=2"
 CHART_IMAGE_URL = "/media/images/practice_d_t{test}_writing_task1.png"
 SNOWGUN_IMAGE_URL = "/media/images/practice_d_t{test}_reading_snowgun.png"
 

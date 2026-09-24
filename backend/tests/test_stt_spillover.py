@@ -39,7 +39,7 @@ def _record_calls(monkeypatch, *, groq_result, gemini_text="from gemini"):
         calls["groq"] += 1
         if isinstance(groq_result, Exception):
             raise groq_result
-        return groq_result
+        return groq_result, {}
 
     async def fake_gemini(audio_bytes, content_type):
         calls["gemini"] += 1

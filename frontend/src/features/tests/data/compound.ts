@@ -12,7 +12,13 @@ export const COMPOUND_TYPES = [
 
 export type CompoundQuestionType = (typeof COMPOUND_TYPES)[number]
 
-export type CompoundVariant = 'table' | 'notes' | 'form' | 'summary' | 'flow'
+export type CompoundVariant =
+  | 'table'
+  | 'notes'
+  | 'form'
+  | 'summary'
+  | 'flow'
+  | 'diagram'
 
 export type CompoundStructureBase = {
   instruction_words: string
@@ -53,6 +59,8 @@ export type NoteItem = {
 
 export type NoteSection = {
   heading?: string
+  /** Per-section override of NoteStructure.bullets. Undefined = inherit. */
+  bullets?: boolean
   items: NoteItem[]
 }
 
@@ -98,7 +106,34 @@ export type FlowStep = {
 export type FlowStructure = CompoundStructureBase & {
   variant: 'flow'
   title?: string
+  /** Optional word bank shown above the flow chart (lettered A, B, C…) */
+  options?: string[]
   steps: FlowStep[]
+}
+
+/**
+ * A positioned callout on a diagram. Reuses the shared segment model, so a
+ * marker is just a note-item line placed at (x, y) as a percentage of the
+ * image, optionally connected by a leader line to an `anchor` point.
+ */
+export type DiagramMarker = {
+  x: number
+  y: number
+  segments: CellSegment[]
+  anchor?: { x: number; y: number }
+}
+
+export type DiagramStructure = CompoundStructureBase & {
+  variant: 'diagram'
+  /** Required for the diagram variant — the base image inputs are placed on. */
+  image_url: string
+  markers: DiagramMarker[]
+  /**
+   * When true, suppress the question-number chip on each input. Use when the
+   * numbers/labels are already printed on the image (e.g. a scanned book
+   * diagram) and the markers only supply the typeable blanks.
+   */
+  hide_numbers?: boolean
 }
 
 export type CompoundStructure =
@@ -107,6 +142,7 @@ export type CompoundStructure =
   | FormStructure
   | SummaryStructure
   | FlowStructure
+  | DiagramStructure
 
 export function compoundHasWordBank(
   structure: CompoundStructure | undefined,
@@ -297,6 +333,27 @@ export function defaultStructureForType(
         title: '',
         steps: [{ segments: [{ type: 'gap', gap_id: 'g1' }] }],
       }
+    case 'diagram':
+      return defaultDiagramStructure(base)
+  }
+}
+
+/**
+ * Empty positioned-diagram structure for the admin "positioned diagram" layout.
+ * Starts with no image and no markers — the author uploads an image and clicks
+ * to place callouts. Preserves instruction_words / max_words_per_gap when
+ * switching an existing group from the notes layout.
+ */
+export function defaultDiagramStructure(base?: {
+  instruction_words: string
+  max_words_per_gap: number
+}): DiagramStructure {
+  return {
+    instruction_words: base?.instruction_words ?? 'ONE WORD AND/OR A NUMBER',
+    max_words_per_gap: base?.max_words_per_gap ?? 2,
+    variant: 'diagram',
+    image_url: '',
+    markers: [],
   }
 }
 
@@ -339,6 +396,10 @@ export function extractGapIds(structure: CompoundStructure | null | undefined): 
         gaps.push(...gapsFromSegments(leaf.segments))
       }
     }
+  } else if (structure.variant === 'diagram') {
+    for (const marker of structure.markers) {
+      gaps.push(...gapsFromSegments(marker.segments))
+    }
   }
 
   const seen = new Set<string>()
@@ -368,8 +429,9 @@ export function parseSegments(
   allocId: () => string = () => 'g1',
 ): CellSegment[] {
   const segments: CellSegment[] = []
-  // Match {gap}, {gapN}, [GAPN], [gN]
-  const re = /\{gap(\d*)\}|\[(?:GAP|g)(\d+)\]/gi
+  // Match {gap}, {gapN}, {gap<letter(s)N>} (e.g. {gapd6}, {gapt3}), and
+  // legacy [GAPN] / [gN].
+  const re = /\{gap([a-z]*\d*)\}|\[(?:GAP|g)(\d+)\]/gi
   let last = 0
   let match: RegExpExecArray | null
   while ((match = re.exec(text)) !== null) {
@@ -380,7 +442,10 @@ export function parseSegments(
       ? match[1]
       : match[2]
     if (numbered) {
-      segments.push({ type: 'gap', gap_id: `g${numbered}` })
+      // Pure digits like "1" → prefix with default letter "g". Mixed alphanum
+      // like "d6" or "t3" is already a full gap_id.
+      const gapId = /^\d+$/.test(numbered) ? `g${numbered}` : numbered
+      segments.push({ type: 'gap', gap_id: gapId })
     } else {
       // bare {gap}
       segments.push({ type: 'gap', gap_id: allocId() })
@@ -738,6 +803,7 @@ function normalizeStructure(raw: Record<string, unknown>): CompoundStructure | n
       const itemsRaw = Array.isArray(s.items) ? (s.items as unknown[]) : []
       return {
         heading: typeof s.heading === 'string' ? s.heading : '',
+        ...(typeof s.bullets === 'boolean' ? { bullets: s.bullets } : {}),
         items: itemsRaw.map((it) =>
           normalizeNoteItem(
             it && typeof it === 'object' ? (it as Record<string, unknown>) : {},
@@ -814,11 +880,43 @@ function normalizeStructure(raw: Record<string, unknown>): CompoundStructure | n
       }
       return normalizeNoteItem(step) as FlowStep
     })
+    const options = parseWordBankOptions(raw)
     return {
       variant: 'flow',
       ...base,
       title: typeof raw.title === 'string' ? raw.title : '',
+      ...(options ? { options } : {}),
       steps,
+    }
+  }
+
+  if (variant === 'diagram') {
+    const markersRaw = Array.isArray(raw.markers) ? (raw.markers as unknown[]) : []
+    const markers: DiagramMarker[] = markersRaw.map((m) => {
+      const marker =
+        m && typeof m === 'object' ? (m as Record<string, unknown>) : {}
+      const { segments } = normalizeNoteItem(marker)
+      const anchorRaw =
+        marker.anchor && typeof marker.anchor === 'object'
+          ? (marker.anchor as Record<string, unknown>)
+          : null
+      return {
+        x: typeof marker.x === 'number' ? marker.x : 0,
+        y: typeof marker.y === 'number' ? marker.y : 0,
+        segments,
+        ...(anchorRaw &&
+        typeof anchorRaw.x === 'number' &&
+        typeof anchorRaw.y === 'number'
+          ? { anchor: { x: anchorRaw.x, y: anchorRaw.y } }
+          : {}),
+      }
+    })
+    return {
+      variant: 'diagram',
+      ...base,
+      image_url: image_url ?? '',
+      markers,
+      ...(raw.hide_numbers === true ? { hide_numbers: true } : {}),
     }
   }
 
@@ -839,7 +937,8 @@ export function asCompoundStructure(
     variant !== 'notes' &&
     variant !== 'form' &&
     variant !== 'summary' &&
-    variant !== 'flow'
+    variant !== 'flow' &&
+    variant !== 'diagram'
   ) {
     return null
   }

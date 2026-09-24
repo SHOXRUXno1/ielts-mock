@@ -70,7 +70,7 @@ CLASSIFICATION1_OPTIONS = [
 ]
 
 CLASSIFICATION1_ITEMS: list[tuple[str, str]] = [
-    ("At least \u00a350 in cash", "B"),
+    ("At least \u00a350 in cash", "A"),
     ("Warm clothing", "A"),
     ("Personal computer", "C"),
     ("Food from home", "C"),
@@ -333,42 +333,21 @@ SENTENCES4_ANSWERS: list[tuple[str, list[str], int]] = [
 ]
 
 # Q34-37: Diagram labeling — Firework Mortar (THREE WORDS)
+# Positioned diagram: input fields sit on the scanned book diagram (which
+# already carries the numbers, labels and leader lines), so markers only supply
+# the typeable blanks and hide_numbers suppresses duplicate chips. x/y are
+# percentages of the image, tuned to the dotted answer blanks.
 DIAGRAM4_STRUCTURE: dict = {
-    "variant": "notes",
-    "title": "Firework Mortar",
+    "variant": "diagram",
+    "image_url": "/media/images/firework_mortar_diagram2.png",
     "instruction_words": "THREE WORDS",
     "max_words_per_gap": 3,
-    "sections": [
-        {
-            "heading": "",
-            "items": [
-                {
-                    "segments": [
-                        text("34 (sphere at top of mortar): "),
-                        gap("d34"),
-                    ]
-                },
-                {
-                    "segments": [
-                        text("35 width of mortar: "),
-                        gap("d35"),
-                    ]
-                },
-                {
-                    "segments": [
-                        text("36 length of mortar: "),
-                        gap("d36"),
-                    ]
-                },
-                {
-                    "segments": [
-                        text("37 (charge at bottom): "),
-                        gap("d37"),
-                        text(" charge"),
-                    ]
-                },
-            ],
-        },
+    "hide_numbers": True,
+    "markers": [
+        {"x": 23, "y": 68, "segments": [gap("d34")]},
+        {"x": 78, "y": 94, "segments": [gap("d35")]},
+        {"x": 17, "y": 35, "segments": [gap("d36")]},
+        {"x": 23, "y": 74, "segments": [gap("d37")]},
     ],
 }
 
@@ -640,7 +619,7 @@ async def seed(db: AsyncSession) -> None:
         SENTENCES4_ANSWERS,
     )
     await w.compound(
-        QuestionType.NOTE_COMPLETION,
+        QuestionType.DIAGRAM_LABELING,
         "Label the diagram.\n"
         "Write NO MORE THAN THREE WORDS for each answer.",
         DIAGRAM4_STRUCTURE,
