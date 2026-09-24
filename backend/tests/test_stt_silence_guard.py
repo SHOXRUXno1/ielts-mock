@@ -7,9 +7,12 @@ against the real Groq API (see scripts/_probe_stt_silence.py) before the guard
 was written.
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
-from app.services.llm import _normalize_stt_text
+from app.services import google_stt, llm
+from app.services.llm import _normalize_stt_text, transcribe_audio_bytes_detailed
 
 
 class TestSilenceIsNotAnAnswer:
@@ -66,3 +69,100 @@ class TestTranscriptsAreNotRewritten:
             "The second reason is that it is not about everyone."
         )
         assert _normalize_stt_text(text) == text
+
+
+class TestNoSpeechProbGuard:
+    """The Whisper-only guard on the aggregate no_speech_prob is what stops
+    a phrase Whisper accepted as speech from being stored as the candidate's
+    answer when its own probability of "no speech" is high. Numbers here
+    come from the synthetic bad-audio probe on this stack — see the docstring
+    of ``_WHISPER_NO_SPEECH_GUARD`` in llm.py.
+    """
+
+    AUDIO = b"x" * 4096
+
+    @pytest.fixture(autouse=True)
+    def _isolate_stt_state(self, monkeypatch):
+        # Force Whisper as the ear so the guard is exercised on its metrics.
+        monkeypatch.setattr(google_stt, "is_configured", lambda: False)
+        monkeypatch.setattr(llm.settings, "stt_google_only", False)
+        monkeypatch.setattr(llm.settings, "groq_api_key", "gsk_test")
+        monkeypatch.setattr(llm.settings, "gemini_api_keys", "")
+        monkeypatch.setattr(llm, "_groq_stt_blocked", False)
+        from app.core import rate_limiter
+
+        rate_limiter._groq_stt_bucket = None
+        yield
+        rate_limiter._groq_stt_bucket = None
+
+    @pytest.mark.asyncio
+    async def test_high_no_speech_prob_empties_the_transcript(self, monkeypatch):
+        """A model that says both "words" AND "probably silent" is disbelieved."""
+        fake = AsyncMock(
+            return_value=(
+                "In my opinion, environmental protection matters.",
+                {
+                    "no_speech_prob": 0.42,  # cheap-mic room tone territory
+                    "avg_logprob": -0.30,
+                    "compression_ratio": 0.9,
+                },
+            )
+        )
+        monkeypatch.setattr(llm, "_transcribe_with_groq", fake)
+
+        result = await transcribe_audio_bytes_detailed(self.AUDIO)
+
+        assert result.text == ""
+        assert result.provider == "groq"
+        # The metric that gated the guard is preserved on the record so
+        # /admin/usage snapshots can still see why the turn came back empty.
+        assert result.no_speech_prob == pytest.approx(0.42)
+
+    @pytest.mark.asyncio
+    async def test_low_no_speech_prob_lets_a_real_answer_through(self, monkeypatch):
+        fake = AsyncMock(
+            return_value=(
+                "Yes, I did.",
+                {
+                    "no_speech_prob": 0.004,  # clean-speech floor
+                    "avg_logprob": -0.05,
+                    "compression_ratio": 1.2,
+                },
+            )
+        )
+        monkeypatch.setattr(llm, "_transcribe_with_groq", fake)
+
+        result = await transcribe_audio_bytes_detailed(self.AUDIO)
+
+        assert result.text == "Yes, I did."
+        assert result.no_speech_prob == pytest.approx(0.004)
+
+    @pytest.mark.asyncio
+    async def test_no_metric_means_no_guard(self, monkeypatch):
+        """Chirp does not report no_speech_prob; a Chirp turn must not be
+        empty-ed by a guard that has nothing to weigh."""
+        fake = AsyncMock(return_value=("Yes, I did.", {}))
+        monkeypatch.setattr(llm, "_transcribe_with_groq", fake)
+
+        result = await transcribe_audio_bytes_detailed(self.AUDIO)
+
+        assert result.text == "Yes, I did."
+        assert result.no_speech_prob is None
+
+    @pytest.mark.asyncio
+    async def test_threshold_is_inclusive_at_the_boundary(self, monkeypatch):
+        """The declared threshold is the edge; a signal at exactly the floor
+        of "no speech" territory is not treated as speech."""
+        from app.services.llm import _WHISPER_NO_SPEECH_GUARD
+
+        fake = AsyncMock(
+            return_value=(
+                "Some answer here.",
+                {"no_speech_prob": _WHISPER_NO_SPEECH_GUARD},
+            )
+        )
+        monkeypatch.setattr(llm, "_transcribe_with_groq", fake)
+
+        result = await transcribe_audio_bytes_detailed(self.AUDIO)
+
+        assert result.text == ""

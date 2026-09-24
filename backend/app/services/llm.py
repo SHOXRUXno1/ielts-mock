@@ -81,6 +81,20 @@ _SILENCE_HALLUCINATIONS = frozenset(
 
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
 
+# Whisper's no_speech_prob at which we stop trusting the transcript.
+#
+# The synthetic bad-audio probe measured on this stack (scripts/
+# whisper_forced_probe.py) put clean speech at 0.001-0.005 and cheap-mic
+# room tone at 0.330 — a ~66-330x gap. 0.15 sits well below the room-tone
+# ceiling (so it catches real silence hallucinations) and far above the
+# speech floor (so nervous quiet answers still pass). It is a per-turn
+# aggregate: the worst segment of a real answer might briefly touch this
+# number and still be worth keeping, but any clip whose worst segment is
+# in "no speech" territory has already lost the honest reading.
+#
+# Chirp and Gemini do not report this field, so their turns are unaffected.
+_WHISPER_NO_SPEECH_GUARD = 0.15
+
 
 def reset_groq_stt_circuit() -> None:
     global _groq_stt_blocked
@@ -1123,6 +1137,32 @@ async def transcribe_audio_bytes_detailed(
 
     def done(text: str, provider: str, metrics: dict | None = None) -> Transcription:
         m = metrics or {}
+        no_speech = m.get("no_speech_prob")
+        # Whisper's own probability that the clip contains no speech. The
+        # synthetic bad-audio probe (scripts/whisper_forced_probe.py) showed a
+        # ~66-330x gap here between real speech (0.001-0.005) and cheap-mic
+        # room tone (0.330). A threshold well below that ceiling but far above
+        # the speech floor filters silence hallucinations the stock-phrase
+        # list would only catch after Whisper had already put words in the
+        # candidate's mouth. Only fires when Whisper actually reported the
+        # signal — Chirp and Gemini omit it, so those turns are unaffected.
+        if (
+            text
+            and isinstance(no_speech, (int, float))
+            and no_speech >= _WHISPER_NO_SPEECH_GUARD
+        ):
+            logger.info(
+                "Discarding low-confidence STT: no_speech_prob=%.3f "
+                "avg_logprob=%s compression=%s provider=%s text=%r",
+                float(no_speech),
+                _fmt(m.get("avg_logprob")),
+                _fmt(m.get("compression_ratio")),
+                provider,
+                text[:80],
+            )
+            usage_meter.record_stt_discarded(text)
+            text = ""
+
         record = Transcription(
             text=text,
             provider=provider,
@@ -1130,7 +1170,7 @@ async def transcribe_audio_bytes_detailed(
             latency_ms=int((time.perf_counter() - started) * 1000),
             audio_bytes=len(audio_bytes),
             confidence=m.get("confidence"),
-            no_speech_prob=m.get("no_speech_prob"),
+            no_speech_prob=no_speech,
             avg_logprob=m.get("avg_logprob"),
             compression_ratio=m.get("compression_ratio"),
         )
