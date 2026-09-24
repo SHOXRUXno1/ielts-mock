@@ -174,12 +174,6 @@ export function UserCameraPreview({
       >
         You
       </span>
-      {isRecording && (
-        <span className='absolute right-1.5 top-1.5 flex items-center gap-1 rounded bg-red-600/90 px-1.5 py-0.5 text-[10px] font-medium text-white'>
-          <span className='size-1.5 animate-pulse rounded-full bg-white' />
-          REC
-        </span>
-      )}
     </div>
   )
 }
