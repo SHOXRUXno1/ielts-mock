@@ -3,12 +3,10 @@ import { Maximize2, Minimize2, Volume2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFullscreen } from '../hooks/use-fullscreen'
 import type { Phase } from '../types/phase'
-import { transcriptHistorySignature } from '../lib/transcript-history'
 import {
   ExaminerLoadingOverlay,
   type ExaminerLoadingStage,
 } from './examiner-loading-screen'
-import { LiveTranscriptPanel } from './live-transcript-panel'
 import { PartIndicator } from './part-indicator'
 import { SimliAvatar } from './simli-avatar'
 import { UserCameraPreview } from './user-camera-preview'
@@ -43,8 +41,6 @@ type VideoStageProps = {
   currentPart?: number
   questionNumber?: number
   showPartIndicator?: boolean
-  transcriptHistory?: { role: 'examiner' | 'candidate'; text: string }[]
-  showLiveTranscript?: boolean
 }
 
 export function VideoStageInner({
@@ -74,8 +70,6 @@ export function VideoStageInner({
   currentPart = 1,
   questionNumber = 1,
   showPartIndicator = false,
-  transcriptHistory = [],
-  showLiveTranscript = false,
 }: VideoStageProps) {
   const { ref: frameRef, isFullscreen, toggle: toggleFullscreen } = useFullscreen()
 
@@ -184,13 +178,6 @@ export function VideoStageInner({
           </div>
         )}
 
-        {showLiveTranscript && transcriptHistory.length > 0 && (
-          <LiveTranscriptPanel
-            history={transcriptHistory}
-            className={hasControls ? 'bottom-28 sm:bottom-24' : 'bottom-3'}
-          />
-        )}
-
         {centerOverlay && (
           <div className='absolute inset-0 z-[25] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
             {centerOverlay}
@@ -236,7 +223,6 @@ function videoStagePropsEqual(prev: VideoStageProps, next: VideoStageProps): boo
     'currentPart',
     'questionNumber',
     'showPartIndicator',
-    'showLiveTranscript',
     'controlsOverlay',
     'centerOverlay',
     'onSimliDone',
@@ -250,10 +236,7 @@ function videoStagePropsEqual(prev: VideoStageProps, next: VideoStageProps): boo
     if (prev[key] !== next[key]) return false
   }
 
-  return (
-    transcriptHistorySignature(prev.transcriptHistory ?? []) ===
-    transcriptHistorySignature(next.transcriptHistory ?? [])
-  )
+  return true
 }
 
 export const VideoStage = memo(VideoStageInner, videoStagePropsEqual)

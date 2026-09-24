@@ -277,10 +277,41 @@ def check_text_answer(
     return False
 
 
+def _get_correct_scalars(answer_key: dict) -> list[str]:
+    """Read scalar answers from canonical and legacy JSON key shapes.
+
+    Imports and older authoring tools have stored one choice as a string,
+    one-element list, or nested ``answer/value`` object.  Treat these as the
+    same answer while avoiding unrelated metadata in the JSON.
+    """
+    def collect(value: object) -> list[str]:
+        if isinstance(value, str):
+            return [value]
+        if isinstance(value, (list, tuple, set)):
+            result: list[str] = []
+            for item in value:
+                result.extend(collect(item))
+            return result
+        if isinstance(value, dict):
+            result: list[str] = []
+            for key in ("correct", "answer", "value", "text", "label", "accepted", "answers"):
+                if key in value:
+                    result.extend(collect(value[key]))
+            return result
+        return []
+
+    for key in ("correct", "answer", "accepted", "answers"):
+        if key in answer_key:
+            values = collect(answer_key[key])
+            if values:
+                return values
+    return []
+
+
 def _get_correct_scalar(answer_key: dict) -> str:
-    """Read correct answer from either canonical 'correct' or legacy 'answer' key."""
-    v = answer_key.get("correct") or answer_key.get("answer") or ""
-    return str(v)
+    """Read the first correct answer from canonical or legacy key shapes."""
+    values = _get_correct_scalars(answer_key)
+    return values[0] if values else ""
 
 
 def _matching_pairs(question: Question) -> dict[str, str]:
@@ -331,8 +362,11 @@ def score_answer(question: Question, answer: Answer) -> tuple[int, int]:
         return 0, 0
 
     if qtype in ("mcq", "true_false_ng", "yes_no_ng"):
-        correct = _get_correct_scalar(question.answer_key)
-        is_correct = _normalize(str(student_value)) == _normalize(correct)
+        correct_values = _get_correct_scalars(question.answer_key)
+        is_correct = any(
+            _normalize(str(student_value)) == _normalize(correct)
+            for correct in correct_values
+        )
         answer.is_correct = is_correct
         answer.score = 1.0 if is_correct else 0.0
         return (1, 1) if is_correct else (0, 1)

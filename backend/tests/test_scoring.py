@@ -106,6 +106,51 @@ class TestTrueFalseNG:
         a = make_a(q, {"answer": "True"})
         assert check_answer(q, a) is False
 
+    @pytest.mark.parametrize(
+        ("student", "correct"),
+        [
+            ("True", "TRUE"),
+            ("False", "FALSE"),
+            ("Not Given", "NOT GIVEN"),
+        ],
+    )
+    def test_title_cased_answers_are_accepted(self, student: str, correct: str):
+        """Older clients submit title case while official keys are uppercase."""
+        q = make_q(QuestionType.TRUE_FALSE_NG, {"correct": correct})
+        a = make_a(q, {"answer": student})
+        assert score_answer(q, a) == (1, 1)
+        assert a.is_correct is True
+
+    @pytest.mark.parametrize(
+        "answer_key",
+        [
+            {"correct": ["FALSE"]},
+            {"answer": {"value": "FALSE"}},
+            {"accepted": {"answers": ["FALSE"]}},
+        ],
+    )
+    def test_legacy_nested_keys_are_accepted(self, answer_key: dict):
+        q = make_q(QuestionType.TRUE_FALSE_NG, answer_key)
+        a = make_a(q, {"answer": "False"})
+        assert score_answer(q, a) == (1, 1)
+        assert a.is_correct is True
+
+
+class TestYesNoNG:
+    @pytest.mark.parametrize(
+        ("student", "correct"),
+        [
+            ("Yes", "YES"),
+            ("No", "NO"),
+            ("Not Given", "NOT GIVEN"),
+        ],
+    )
+    def test_title_cased_answers_are_accepted(self, student: str, correct: str):
+        q = make_q(QuestionType.YES_NO_NG, {"correct": correct})
+        a = make_a(q, {"answer": student})
+        assert score_answer(q, a) == (1, 1)
+        assert a.is_correct is True
+
 
 # ── Gap fill ───────────────────────────────────────────────────────────────────
 

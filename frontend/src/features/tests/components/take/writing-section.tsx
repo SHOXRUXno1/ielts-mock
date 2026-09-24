@@ -253,7 +253,7 @@ function TaskEditor({
         <img
           src={mediaUrl(imageUrl)}
           alt='Task 1 chart'
-          className='mt-5 max-w-full rounded-lg'
+          className='mx-auto mt-5 block max-h-[60vh] max-w-full rounded-lg object-contain'
         />
       )}
 

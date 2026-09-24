@@ -295,11 +295,14 @@ export function groupAnswersByPart(
 
   const groups = Array.from(bySection.entries()).map(([key, rows]) => {
     const order = rows[0]?.section?.order ?? 999
-    const label =
-      skill === 'listening' ? `Part ${order}` : `Passage ${order}`
-    return { key, label, order, answers: rows }
+    return { key, order, answers: rows }
   })
 
-  groups.sort((a, b) => a.order - b.order)
-  return groups.map(({ key, label, answers: rows }) => ({ key, label, answers: rows }))
+  return groups
+    .sort((a, b) => a.order - b.order)
+    .map(({ key, answers: rows }, index) => ({
+      key,
+      label: skill === 'listening' ? `Part ${index + 1}` : `Passage ${index + 1}`,
+      answers: rows,
+    }))
 }

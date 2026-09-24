@@ -13,6 +13,11 @@ import { mediaUrl } from '@/lib/api/attempts'
 import { cn } from '@/lib/utils'
 import { highlightCaps } from './shared/instruction-block'
 import { matchingOptionParts, type Question } from '../../data/schema'
+import {
+  canonicalIeltsChoice,
+  TRUE_FALSE_NG_CHOICES,
+  YES_NO_NG_CHOICES,
+} from './ielts-choice'
 
 type Props = {
   question: Question
@@ -858,7 +863,6 @@ export function QuestionRenderer({
 
   // ── True / False / Not Given ─────────────────────────────────────────────
   if (qType === 'true_false_ng') {
-    const opts = ['True', 'False', 'Not Given']
     return (
       <div className='space-y-2'>
         <p className='text-[15px] font-[500] leading-7 text-foreground'>
@@ -866,20 +870,20 @@ export function QuestionRenderer({
           {content.statement as string}
         </p>
         <RadioGroup
-          value={(answer.answer as string) ?? ''}
+          value={canonicalIeltsChoice(answer.answer)}
           onValueChange={(v) => onAnswer({ answer: v })}
           className='space-y-1.5 pl-6'
         >
-          {opts.map((opt) => {
-            const id = `${question.id}-${opt}`
+          {TRUE_FALSE_NG_CHOICES.map((choice) => {
+            const id = `${question.id}-${choice.value}`
             return (
-              <div key={opt} className='flex items-center gap-2.5'>
-                <RadioGroupItem value={opt} id={id} />
+              <div key={choice.value} className='flex items-center gap-2.5'>
+                <RadioGroupItem value={choice.value} id={id} />
                 <ChoiceLabel
                   htmlFor={id}
                   className='font-bold uppercase'
                 >
-                  {opt}
+                  {choice.label}
                 </ChoiceLabel>
               </div>
             )
@@ -891,7 +895,6 @@ export function QuestionRenderer({
 
   // ── Yes / No / Not Given ─────────────────────────────────────────────────
   if (qType === 'yes_no_ng') {
-    const opts = ['Yes', 'No', 'Not Given']
     return (
       <div className='space-y-2'>
         <p className='text-[15px] font-[500] leading-7 text-foreground'>
@@ -899,20 +902,20 @@ export function QuestionRenderer({
           {content.statement as string}
         </p>
         <RadioGroup
-          value={(answer.answer as string) ?? ''}
+          value={canonicalIeltsChoice(answer.answer)}
           onValueChange={(v) => onAnswer({ answer: v })}
           className='space-y-1.5 pl-6'
         >
-          {opts.map((opt) => {
-            const id = `${question.id}-${opt}`
+          {YES_NO_NG_CHOICES.map((choice) => {
+            const id = `${question.id}-${choice.value}`
             return (
-              <div key={opt} className='flex items-center gap-2.5'>
-                <RadioGroupItem value={opt} id={id} />
+              <div key={choice.value} className='flex items-center gap-2.5'>
+                <RadioGroupItem value={choice.value} id={id} />
                 <ChoiceLabel
                   htmlFor={id}
                   className='font-bold uppercase'
                 >
-                  {opt}
+                  {choice.label}
                 </ChoiceLabel>
               </div>
             )

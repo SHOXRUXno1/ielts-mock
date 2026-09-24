@@ -1,0 +1,35 @@
+name: Fix Practice Set 24 Dodo Intro
+
+# A deliberately manual, idempotent production data correction. The default
+# mode only verifies the one expected target; applying it requires an explicit
+# selection in the Actions UI.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Check the exact target first, then apply once verified.
+        required: true
+        type: choice
+        options:
+          - check
+          - apply
+
+concurrency:
+  group: fix-practice-set24-dodo
+  cancel-in-progress: false
+
+jobs:
+  fix-dodo-intro:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify or correct the Dodo introductory line
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/ielts-mock
+            docker compose -f docker-compose.prod.yml exec -T backend \
+              python scripts/fix_practice_set24_dodo_intro.py ${{ inputs.mode == 'apply' && '--apply' || '' }}

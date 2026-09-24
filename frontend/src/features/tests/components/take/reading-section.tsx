@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, HelpCircle } from 'lucide-react'
+import { BookOpen, HelpCircle, Loader2 } from 'lucide-react'
 import {
   ResizableHandle,
   ResizablePanel,
@@ -45,6 +45,8 @@ type Props = {
   section?: Section
   passage?: string | null
   questions: Question[]
+  /** True once the question request for this section has completed. */
+  questionsLoaded?: boolean
   answers: Record<string, Record<string, unknown>>
   onAnswer: (questionId: string, response: Record<string, unknown>) => void
   passageIndex?: number
@@ -335,6 +337,7 @@ export function ReadingSection({
   section,
   passage,
   questions,
+  questionsLoaded = true,
   answers,
   onAnswer,
   passageIndex = 0,
@@ -453,7 +456,15 @@ export function ReadingSection({
   // Shared questions content
   const questionsContent = (
     <>
-      {sortedQuestions.length === 0 ? (
+      {!questionsLoaded ? (
+        <div
+          role='status'
+          className='flex items-center gap-2 text-sm text-slate-400'
+        >
+          <Loader2 className='size-4 animate-spin' />
+          Loading questions…
+        </div>
+      ) : sortedQuestions.length === 0 ? (
         <p className='text-sm text-slate-400'>
           No questions added to this section yet.
         </p>

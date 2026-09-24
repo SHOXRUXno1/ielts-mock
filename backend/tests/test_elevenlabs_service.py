@@ -42,7 +42,7 @@ class TestTextToSpeech:
         ):
             mock_settings.elevenlabs_api_key = "key"
             mock_settings.elevenlabs_voice_id = "voice123456"
-            mock_settings.elevenlabs_model_id = "eleven_turbo_v2"
+            mock_settings.elevenlabs_model_id = "eleven_flash_v2_5"
             result = await text_to_speech("Hello")
 
         assert result == TTSResult(audio=b"mp3-bytes")
@@ -68,7 +68,7 @@ class TestTextToSpeech:
         ):
             mock_settings.elevenlabs_api_key = "key"
             mock_settings.elevenlabs_voice_id = "bad-voice"
-            mock_settings.elevenlabs_model_id = "eleven_turbo_v2"
+            mock_settings.elevenlabs_model_id = "eleven_flash_v2_5"
             result = await text_to_speech("Hello")
 
         assert result.ok is False
@@ -96,7 +96,7 @@ class TestValidateVoiceConfig:
         ):
             mock_settings.elevenlabs_api_key = "key"
             mock_settings.elevenlabs_voice_id = "voice123456"
-            mock_settings.elevenlabs_model_id = "eleven_turbo_v2"
+            mock_settings.elevenlabs_model_id = "eleven_flash_v2_5"
             ok, detail = await validate_voice_config()
 
         assert ok is True
