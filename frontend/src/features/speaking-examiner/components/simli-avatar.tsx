@@ -333,13 +333,22 @@ function SimliAvatarInner({
         simliLog(`[Simli] Connecting (attempt ${attempt}/${MAX_CONNECT_ATTEMPTS})…`)
 
         try {
+          // Livekit is Simli's reliable transport — their own docs describe
+          // the P2P mode we used before as "opt-in for slightly lower latency"
+          // and less resilient to firewalls. On this stack a bare WebSocket
+          // probe from prod (backend/scripts/_probe_stt_silence.py-style) to
+          // the P2P endpoint dropped after ~25s without a close frame, which
+          // is exactly the pause we saw between examiner turns. Livekit
+          // manages its own transport and never needs the STUN list, so we
+          // pass null for iceServers whether or not the token endpoint
+          // returned any.
           client = new SimliClient(
             sessionToken,
             video,
             audio,
-            iceServersRef.current ?? null,
+            null,
             undefined,
-            'p2p'
+            'livekit'
           )
           simliRef.current = client
 
