@@ -1,6 +1,9 @@
 name: Check prod cache headers
 
 on:
+  push:
+    paths:
+      - .github/workflows/check-headers.yml
   workflow_dispatch:
 
 jobs:
