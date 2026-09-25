@@ -38,7 +38,10 @@ type VoiceGateState = {
   audioContext: AudioContext
   source: MediaStreamAudioSourceNode
   analyser: AnalyserNode
-  buffer: Float32Array
+  // Backed by an explicit ArrayBuffer so the type matches AnalyserNode's
+  // getFloatTimeDomainData signature under TS 5.7+ (a bare `new Float32Array(n)`
+  // widens to Float32Array<ArrayBufferLike> which the DOM lib rejects).
+  buffer: Float32Array<ArrayBuffer>
   rafId: number | null
   lastSampleAt: number
   startedAt: number
@@ -151,7 +154,7 @@ export function useSpeakingRecorder({
         audioContext: ctx,
         source,
         analyser,
-        buffer: new Float32Array(analyser.fftSize),
+        buffer: new Float32Array(new ArrayBuffer(analyser.fftSize * 4)),
         rafId: null,
         lastSampleAt: now,
         startedAt: now,
