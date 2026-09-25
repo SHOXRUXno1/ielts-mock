@@ -214,6 +214,8 @@ export function SpeakingExaminerSession({
     playExaminerPhrase,
     playPhraseDirect,
     playSystemPhrase,
+    waitForSimliReady,
+    usesSimliPlayback,
     resetAudioState,
     cancelBrowserSpeech,
     SIMLI_LOAD_TIMEOUT_MS,
@@ -483,10 +485,28 @@ export function SpeakingExaminerSession({
       part2PhraseRef.current = phrase
       if (!isSessionActive(sessionId)) return
       if (phrase.audio_base64?.trim()) {
-        // The cached MP3 is short (~2s) and playing it through Simli after
-        // 65s of prep triggers an idle-close reconnect that swallows the
-        // sound. See the docstring on playPhraseDirect.
-        await playPhraseDirect(phrase.audio_base64)
+        // Route the phrase through Simli so the mouth moves with the voice.
+        // The keepalive tick in simli-avatar.tsx now runs across all silences
+        // (including this 65s prep), so the peer should still be up. If the
+        // peer is not ready within a short window — network hiccup, Simli-side
+        // outage — fall through to playPhraseDirect so the cue is still heard.
+        const simliOk =
+          !usesSimliPlayback() || (await waitForSimliReady(500))
+        if (simliOk) {
+          await playExaminerPhrase(
+            phrase.text,
+            phrase.audio_base64,
+            phrase.tts_error,
+          )
+        } else {
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console -- dev-only Simli diagnostics
+            console.warn(
+              '[Examiner] Simli not ready at prep-end — playing phrase direct',
+            )
+          }
+          await playPhraseDirect(phrase.audio_base64)
+        }
       } else {
         await playExaminerPhrase(phrase.text, phrase.audio_base64, phrase.tts_error)
       }
@@ -500,6 +520,8 @@ export function SpeakingExaminerSession({
     playExaminerPhrase,
     playPhraseDirect,
     playSystemPhrase,
+    waitForSimliReady,
+    usesSimliPlayback,
     isSessionActive,
   ])
 
