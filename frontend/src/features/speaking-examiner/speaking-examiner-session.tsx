@@ -301,7 +301,11 @@ export function SpeakingExaminerSession({
   }, [reconnectSimli])
 
   const processRecording = useCallback(
-    async (blob: Blob, durationSeconds = 0) => {
+    async (
+      blob: Blob,
+      durationSeconds = 0,
+      voiceResult: { voiceDetected: boolean } = { voiceDetected: true },
+    ) => {
       const sessionId = sessionIdRef.current
       const signal = abortControllerRef.current?.signal
 
@@ -311,6 +315,18 @@ export function SpeakingExaminerSession({
 
       onRecordingStopped()
       try {
+        // Client-side voice-activity gate. Whisper hallucinates plausible text
+        // on silence, so a recording the microphone never picked speech from
+        // never reaches STT. The examiner asks the candidate to try again.
+        if (!voiceResult.voiceDetected) {
+          toast.info("We didn't hear you — please try again")
+          onTranscriptFailed()
+          void playSystemPhrase(
+            "Sorry, I didn't catch that. Could you say that again, please?",
+          )
+          return
+        }
+
         if (blob.size < 1024) {
           toast.error('Recording too short — please speak for at least a few seconds')
           onTranscriptFailed()
@@ -401,6 +417,7 @@ export function SpeakingExaminerSession({
       onTranscriptFailed,
       scheduleScoringAfterSpeech,
       playExaminerTurn,
+      playSystemPhrase,
       isSessionActive,
       playPartTransition,
     ],
