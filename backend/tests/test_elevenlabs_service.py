@@ -5,7 +5,54 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from app.services.elevenlabs_service import TTSResult, text_to_speech, validate_voice_config
+from app.services.elevenlabs_service import (
+    TTSResult,
+    _tts_payload,
+    _voice_url,
+    text_to_speech,
+    validate_voice_config,
+)
+
+
+def _configure_settings(mock_settings) -> None:
+    """Fill mock settings with the full TTS config surface so f-string /
+    dict formatting inside the service don't leak MagicMock reprs."""
+    mock_settings.elevenlabs_api_key = "key"
+    mock_settings.elevenlabs_voice_id = "voice123456"
+    mock_settings.elevenlabs_model_id = "eleven_turbo_v2_5"
+    mock_settings.elevenlabs_stability = 0.5
+    mock_settings.elevenlabs_similarity_boost = 0.75
+    mock_settings.elevenlabs_style = 0.3
+    mock_settings.elevenlabs_use_speaker_boost = True
+    mock_settings.elevenlabs_speed = 0.9
+    mock_settings.elevenlabs_output_format = "mp3_44100_192"
+
+
+class TestTTSPayload:
+    def test_payload_carries_all_tuned_voice_settings(self):
+        with patch("app.services.elevenlabs_service.settings") as mock_settings:
+            _configure_settings(mock_settings)
+            payload = _tts_payload("Hello there.")
+
+        assert payload["model_id"] == "eleven_turbo_v2_5"
+        assert payload["text"] == "Hello there."
+        assert payload["voice_settings"] == {
+            "stability": 0.5,
+            "similarity_boost": 0.75,
+            "style": 0.3,
+            "use_speaker_boost": True,
+            "speed": 0.9,
+        }
+
+    def test_voice_url_pins_output_format_and_streaming_latency(self):
+        with patch("app.services.elevenlabs_service.settings") as mock_settings:
+            _configure_settings(mock_settings)
+            url = _voice_url()
+
+        assert "text-to-speech/voice123456" in url
+        assert "output_format=mp3_44100_192" in url
+        # We fetch the whole blob, so ask for the highest-quality synth.
+        assert "optimize_streaming_latency=0" in url
 
 
 class TestTextToSpeech:
@@ -40,9 +87,7 @@ class TestTextToSpeech:
             ),
             patch("app.services.elevenlabs_service.asyncio.sleep", new=AsyncMock()),
         ):
-            mock_settings.elevenlabs_api_key = "key"
-            mock_settings.elevenlabs_voice_id = "voice123456"
-            mock_settings.elevenlabs_model_id = "eleven_flash_v2_5"
+            _configure_settings(mock_settings)
             result = await text_to_speech("Hello")
 
         assert result == TTSResult(audio=b"mp3-bytes")
@@ -66,9 +111,8 @@ class TestTextToSpeech:
                 return_value=mock_client,
             ),
         ):
-            mock_settings.elevenlabs_api_key = "key"
+            _configure_settings(mock_settings)
             mock_settings.elevenlabs_voice_id = "bad-voice"
-            mock_settings.elevenlabs_model_id = "eleven_flash_v2_5"
             result = await text_to_speech("Hello")
 
         assert result.ok is False
@@ -94,9 +138,7 @@ class TestValidateVoiceConfig:
                 return_value=mock_client,
             ),
         ):
-            mock_settings.elevenlabs_api_key = "key"
-            mock_settings.elevenlabs_voice_id = "voice123456"
-            mock_settings.elevenlabs_model_id = "eleven_flash_v2_5"
+            _configure_settings(mock_settings)
             ok, detail = await validate_voice_config()
 
         assert ok is True

@@ -29,7 +29,15 @@ class TTSResult:
 
 
 def _voice_url() -> str:
-    return f"https://api.elevenlabs.io/v1/text-to-speech/{settings.elevenlabs_voice_id}"
+    # optimize_streaming_latency=0 asks ElevenLabs for the highest-quality
+    # synth. We fetch a whole blob (never stream), so the trade-off the other
+    # values make — faster first-byte at the cost of fidelity — buys nothing.
+    return (
+        f"https://api.elevenlabs.io/v1/text-to-speech/"
+        f"{settings.elevenlabs_voice_id}"
+        f"?output_format={settings.elevenlabs_output_format}"
+        f"&optimize_streaming_latency=0"
+    )
 
 
 def _tts_payload(text: str) -> dict:
@@ -37,9 +45,11 @@ def _tts_payload(text: str) -> dict:
         "model_id": settings.elevenlabs_model_id,
         "text": text,
         "voice_settings": {
-            "stability": 0.75,
-            "similarity_boost": 0.85,
-            "speed": 0.9,
+            "stability": settings.elevenlabs_stability,
+            "similarity_boost": settings.elevenlabs_similarity_boost,
+            "style": settings.elevenlabs_style,
+            "use_speaker_boost": settings.elevenlabs_use_speaker_boost,
+            "speed": settings.elevenlabs_speed,
         },
     }
 
