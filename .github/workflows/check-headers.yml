@@ -18,7 +18,7 @@ jobs:
         run: |
           echo "=== HEAD https://mock.shox-software.uz/speaking-examiner ==="
           curl -sI https://mock.shox-software.uz/speaking-examiner | head -30
-      - name: curl HEAD a hashed asset (should be immutable)
+      - name: curl HEAD a hashed asset (should be immutable) and log its hash
         run: |
           echo "=== GET https://mock.shox-software.uz/ ==="
           asset=$(curl -s https://mock.shox-software.uz/ | grep -oE 'assets/[^"]+\.js' | head -1)
@@ -27,3 +27,13 @@ jobs:
             echo "=== HEAD /$asset ==="
             curl -sI "https://mock.shox-software.uz/$asset" | head -20
           fi
+      - name: probe backend /health
+        run: |
+          echo "=== GET https://mock.shox-software.uz/health ==="
+          curl -sv https://mock.shox-software.uz/health 2>&1 | tail -20
+      - name: verify frontend index also mentions our latest chunk hash
+        run: |
+          echo "=== speaking-examiner chunk name in HTML ==="
+          curl -s https://mock.shox-software.uz/speaking-examiner \
+            | grep -oE 'speaking-examiner-session-[A-Za-z0-9_-]+\.js' \
+            | head -1
