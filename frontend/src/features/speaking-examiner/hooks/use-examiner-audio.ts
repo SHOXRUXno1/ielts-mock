@@ -8,7 +8,13 @@ import { isLiveSpeakingPhase } from '../lib/is-live-phase'
 import { iceServersKey } from '../lib/simli-pcm'
 import type { Phase } from '../types/phase'
 
-const PLAYING_SAFETY_TIMEOUT_MS = 120_000
+// Absolute ceiling for how long a single examiner turn can hold `phase =
+// 'playing'`. Simli's own end-timer + silent event usually resolve turns in
+// under 15 s; this exists so a genuinely stuck turn can't lock the UI. 45 s
+// leaves plenty of room for legitimate long lines (the intro greeting +
+// first Part 1 question runs ~15 s) while capping the freeze users see when
+// Simli's silent event never arrives.
+const PLAYING_SAFETY_TIMEOUT_MS = 45_000
 // The Livekit transport we use since PR #17 takes longer to bring up than
 // the previous P2P path: WebSocket signal + LiveKit room join + WebRTC
 // negotiation + first video frame typically land at 6-12s on this stack.
@@ -245,12 +251,13 @@ export function useExaminerAudio({
   useEffect(() => {
     if (!pendingAudioB64) return
 
+    // Fire whenever phase is still 'playing' — dropped the Simli-enabled
+    // gate on purpose. If we ever get into a state where Simli emitted
+    // no silent event AND the Lottie fallback path didn't wire onended,
+    // this is the only thing that unsticks the pill. False positives are
+    // preferable to a permanent "Examiner speaking..." freeze.
     const timer = window.setTimeout(() => {
-      if (
-        phaseRef.current === 'playing' &&
-        simliEnabledRef.current &&
-        !simliFallbackRef.current
-      ) {
+      if (phaseRef.current === 'playing') {
         handleSimliDone()
       }
     }, PLAYING_SAFETY_TIMEOUT_MS)
