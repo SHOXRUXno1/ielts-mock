@@ -11,6 +11,7 @@ import { Mic, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   getPart2BeginPhrase,
+  getRepeatPhrase,
   getSpeakingApiErrorDetail,
   isSpeakingAbortError,
   NO_SPEECH_TRANSCRIPT,
@@ -121,6 +122,7 @@ export function SpeakingExaminerSession({
   const startRecordingRef = useRef<() => Promise<boolean>>(async () => false)
   const prepCompleteRef = useRef(false)
   const part2PhraseRef = useRef<PhraseResponse | null>(null)
+  const repeatPhraseRef = useRef<PhraseResponse | null>(null)
   const isStartingRef = useRef(false)
   const prevPartRef = useRef(1)
   const sessionIdRef = useRef(0)
@@ -320,12 +322,45 @@ export function SpeakingExaminerSession({
         // Client-side voice-activity gate. Whisper hallucinates plausible text
         // on silence, so a recording the microphone never picked speech from
         // never reaches STT. The examiner asks the candidate to try again.
+        //
+        // Route the "sorry, could you say that again" phrase through the
+        // normal examiner audio pipeline (cached ElevenLabs MP3 → Simli) so
+        // the candidate hears the SAME voice with lip sync — playSystemPhrase
+        // used to fall back to the OS Web Speech engine, which produced a
+        // jarringly different voice and a still avatar.
         if (!voiceResult.voiceDetected) {
           toast.info("We didn't hear you — please try again")
           onTranscriptFailed()
-          void playSystemPhrase(
-            "Sorry, I didn't catch that. Could you say that again, please?",
-          )
+          const cached = repeatPhraseRef.current
+          if (cached?.audio_base64?.trim()) {
+            void playExaminerPhrase(
+              cached.text,
+              cached.audio_base64,
+              cached.tts_error,
+            )
+          } else {
+            // Pre-warm failed or the phrase hasn't loaded yet — fetch inline
+            // and fall back to Web Speech only if the network path is broken.
+            void (async () => {
+              try {
+                const phrase = await getRepeatPhrase()
+                repeatPhraseRef.current = phrase
+                if (phrase.audio_base64?.trim()) {
+                  await playExaminerPhrase(
+                    phrase.text,
+                    phrase.audio_base64,
+                    phrase.tts_error,
+                  )
+                  return
+                }
+              } catch {
+                // fall through
+              }
+              await playSystemPhrase(
+                "Sorry, I didn't catch that. Could you say that again, please?",
+              )
+            })()
+          }
           return
         }
 
@@ -419,6 +454,7 @@ export function SpeakingExaminerSession({
       onTranscriptFailed,
       scheduleScoringAfterSpeech,
       playExaminerTurn,
+      playExaminerPhrase,
       playSystemPhrase,
       isSessionActive,
       playPartTransition,
@@ -537,6 +573,28 @@ export function SpeakingExaminerSession({
       })
       .catch(() => {
         part2PhraseRef.current = null
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [phase])
+
+  // Pre-warm the "sorry, could you say that again" phrase once the session is
+  // live. Cheap fire-and-forget — if it fails the voice gate will fetch it on
+  // demand instead. Cleared when the session ends so a new session refetches.
+  useEffect(() => {
+    if (phase === 'idle' || phase === 'loading' || phase === 'done') {
+      repeatPhraseRef.current = null
+      return
+    }
+    if (repeatPhraseRef.current) return
+    let cancelled = false
+    getRepeatPhrase()
+      .then((phrase) => {
+        if (!cancelled) repeatPhraseRef.current = phrase
+      })
+      .catch(() => {
+        // Voice gate falls back to inline fetch + Web Speech.
       })
     return () => {
       cancelled = true
