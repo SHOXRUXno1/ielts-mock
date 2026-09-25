@@ -89,6 +89,10 @@ _CUE_TOPIC_RE = re.compile(
 
 PART2_CUE_INTRO = "Here is your topic card."
 PART2_BEGIN_SPEAKING = "Your preparation time is over. Please begin speaking."
+# Played by the client-side voice gate when it rejects a silent recording.
+# Same voice pipeline as every other examiner turn (ElevenLabs → Simli) so
+# the candidate never hears a mismatched OS-TTS voice.
+REPEAT_PHRASE = "Sorry, I didn't catch that. Could you say that again, please?"
 
 INTRO_GREETING_BASE = (
     "Good morning. My name is James."
@@ -795,6 +799,23 @@ async def part2_begin_phrase(_actor: Actor = Depends(get_current_actor)):
     audio_b64, tts_error, _cache_hit = await _tts_base64(PART2_BEGIN_SPEAKING)
     return PhraseResponse(
         text=PART2_BEGIN_SPEAKING,
+        audio_base64=audio_b64,
+        tts_error=tts_error,
+    )
+
+
+@router.get("/repeat-phrase", response_model=PhraseResponse)
+async def repeat_phrase(_actor: Actor = Depends(get_current_actor)):
+    """Cached TTS for the client-side voice-gate rejection.
+
+    Played when the recorder detects a silent take before it hits STT. The
+    audio goes through the normal examiner pipeline (ElevenLabs → Simli) so
+    the candidate hears James Harrison's voice with matching lip sync,
+    instead of the browser's default Web Speech engine.
+    """
+    audio_b64, tts_error, _cache_hit = await _tts_base64(REPEAT_PHRASE)
+    return PhraseResponse(
+        text=REPEAT_PHRASE,
         audio_base64=audio_b64,
         tts_error=tts_error,
     )
