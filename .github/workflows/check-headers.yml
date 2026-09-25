@@ -1,0 +1,26 @@
+name: Check prod cache headers
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: curl HEAD /
+        run: |
+          echo "=== HEAD https://mock.shox-software.uz/ ==="
+          curl -sI https://mock.shox-software.uz/ | head -30
+      - name: curl HEAD /speaking-examiner
+        run: |
+          echo "=== HEAD https://mock.shox-software.uz/speaking-examiner ==="
+          curl -sI https://mock.shox-software.uz/speaking-examiner | head -30
+      - name: curl HEAD a hashed asset (should be immutable)
+        run: |
+          echo "=== GET https://mock.shox-software.uz/ ==="
+          asset=$(curl -s https://mock.shox-software.uz/ | grep -oE 'assets/[^"]+\.js' | head -1)
+          echo "Sample asset: $asset"
+          if [ -n "$asset" ]; then
+            echo "=== HEAD /$asset ==="
+            curl -sI "https://mock.shox-software.uz/$asset" | head -20
+          fi
