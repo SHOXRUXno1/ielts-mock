@@ -53,6 +53,38 @@ class TestSilenceIsNotAnAnswer:
     def test_real_speech_survives(self, transcript):
         assert _normalize_stt_text(transcript) == transcript.strip().strip('"').strip()
 
+    @pytest.mark.parametrize(
+        "transcript",
+        [
+            # Padded stock outros — the frozenset misses these but the regex
+            # catches them.
+            "Thank you so much for watching this video.",
+            "Thanks so much for watching!",
+            "Please subscribe to the channel.",
+            "Please like and subscribe.",
+            "Like and subscribe, thanks!",
+            "See you in the next video.",
+            "See you next time.",
+            "Thanks for listening!",
+        ],
+    )
+    def test_padded_youtube_outros_are_dropped(self, transcript):
+        assert _normalize_stt_text(transcript) == ""
+
+    @pytest.mark.parametrize(
+        "transcript",
+        [
+            # Long real answers that happen to contain a matching phrase
+            # (the >8-word guardrail keeps them).
+            "In our village people often watch videos and thank the presenter "
+            "for watching, which I always find funny",
+            "I would tell my friend to like and subscribe to my favourite "
+            "channel because it teaches useful vocabulary every week",
+        ],
+    )
+    def test_long_answers_containing_outro_phrases_survive(self, transcript):
+        assert _normalize_stt_text(transcript) == transcript.strip()
+
 
 class TestTranscriptsAreNotRewritten:
     """The guard only ever discards; it must not edit what a candidate said."""

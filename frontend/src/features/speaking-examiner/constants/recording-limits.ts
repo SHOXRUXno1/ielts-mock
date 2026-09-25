@@ -58,6 +58,29 @@ export const RECORDING_LIMITS: Record<SpeakingTurnKind, RecordingLimit> = {
 /** Countdown stays hidden until this much time is left. */
 export const COUNTDOWN_VISIBLE_SECONDS = 10
 
+/**
+ * Client-side voice-activity gate — rejects near-silent recordings before they
+ * reach STT. Whisper hallucinates plausible-sounding text on silence and room
+ * tone (its training set ends every video with "Thank you for watching",
+ * "Please subscribe", etc.), so keeping empty audio out of the pipeline
+ * eliminates most made-up answers at the source.
+ *
+ * A recording is treated as silence — and the candidate is asked to speak
+ * again — when ANY of:
+ *   - total duration is shorter than MIN_DURATION_MS
+ *   - peak RMS never exceeded RMS_THRESHOLD_DBFS
+ *   - cumulative time above the threshold is less than MIN_ACTIVE_MS
+ *
+ * Thresholds are calibrated for a laptop mic in a quiet-to-moderate room. A
+ * quiet speaker with visible mic levels (top 2-3 bars) sits comfortably above
+ * the floor; hands-off silence with background hum reads roughly -55 dBFS.
+ */
+export const VOICE_GATE = {
+  RMS_THRESHOLD_DBFS: -50,
+  MIN_ACTIVE_MS: 300,
+  MIN_DURATION_MS: 800,
+} as const
+
 export function resolveTurnKind(
   currentPart: number,
   isPart2LongTurn: boolean,
