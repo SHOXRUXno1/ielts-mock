@@ -955,7 +955,13 @@ async def _advance_turn(
                 PREP_MIN_SECONDS,
             )
         rq = rounding_question(session)
-        text = f"Thank you. {rq}"
+        # The Part 2 rounding follow-up used to always open "Thank you." — the
+        # other two examiner-question sites already rotate through REACTIONS,
+        # so the monotony stood out. Reuse the same cycle, indexed by how many
+        # examiner turns the candidate has already heard so the reaction is
+        # deterministic and doesn't repeat the last one they got.
+        examiner_turns = sum(1 for t in history if t.get("role") == "examiner")
+        text = f"{_reaction(examiner_turns)} {rq}"
         transition_state(session, SpeakingState.PART_2_ROUNDING)
         exam_phase = "part2"
         cand_phase = "part2"
