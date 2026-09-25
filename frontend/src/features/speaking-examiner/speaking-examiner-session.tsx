@@ -185,6 +185,11 @@ export function SpeakingExaminerSession({
     if (ctx.afterBeginSpeaking) {
       const ok = await startRecordingRef.current()
       if (!ok) {
+        // Explicit setPhase so the status pill stops lying if the recorder
+        // couldn't start (mic race, getUserMedia hiccup). Without this the
+        // phase would sit at 'playing' — "Examiner speaking..." — even
+        // though the examiner just finished and it's the candidate's turn.
+        setPhase('ready')
         toast.info('Tap the button when you are ready to speak')
       }
       return
@@ -195,7 +200,7 @@ export function SpeakingExaminerSession({
     }
 
     onExaminerAudioDone(ctx)
-  }, [onExaminerAudioDone, phaseRef])
+  }, [onExaminerAudioDone, phaseRef, setPhase])
 
   const {
     simliToken,

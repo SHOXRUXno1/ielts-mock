@@ -497,13 +497,15 @@ function SimliAvatarInner({
     const tick = () => {
       const client = simliRef.current
       if (!client) return
-      // Skip only while a real turn is mid-send: chunks are being handed over
-      // and dropping silence on top of them confuses Simli's buffer. Between
-      // turns (audioSentRef=true, sendCompleteRef=true) the peer is idle and
-      // needs the tick — without it, ~15-30 s of quiet (Part 2's 65 s prep
-      // is the pathological case) is enough for the network to close the
-      // peer, and the next audio we hand over gets swallowed in a reconnect.
-      if (audioSentRef.current && !sendCompleteRef.current) return
+      // Skip while a real turn is still being sent OR still being played back
+      // by Simli. `speakingDoneRef` flips true only after Simli's silent event
+      // (or the safety-net end timer) fires — that's the honest moment the
+      // peer is idle again. Gating on `sendCompleteRef` instead was too
+      // eager: it fires the moment the last PCM chunk is *pushed*, not when
+      // Simli finishes *playing* it, so silent PCM would land on top of the
+      // real audio and Simli's silent event would either delay or never
+      // fire — leaving the phase pill stuck on "Speaking..." forever.
+      if (audioSentRef.current && !speakingDoneRef.current) return
       try {
         client.sendAudioData(silentPcmChunk())
       } catch {
