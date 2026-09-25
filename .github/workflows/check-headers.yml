@@ -37,3 +37,7 @@ jobs:
           curl -s https://mock.shox-software.uz/speaking-examiner \
             | grep -oE 'speaking-examiner-session-[A-Za-z0-9_-]+\.js' \
             | head -1
+      - name: probe new /repeat-phrase endpoint (expect 401 = route exists)
+        run: |
+          echo "=== GET https://mock.shox-software.uz/admin/speaking-examiner/repeat-phrase ==="
+          curl -sI https://mock.shox-software.uz/admin/speaking-examiner/repeat-phrase | head -10
