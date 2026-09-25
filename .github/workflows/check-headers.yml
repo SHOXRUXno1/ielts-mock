@@ -10,45 +10,32 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: curl HEAD /
-        run: |
-          echo "=== HEAD https://mock.shox-software.uz/ ==="
-          curl -sI https://mock.shox-software.uz/ | head -30
-      - name: curl HEAD /speaking-examiner
-        run: |
-          echo "=== HEAD https://mock.shox-software.uz/speaking-examiner ==="
-          curl -sI https://mock.shox-software.uz/speaking-examiner | head -30
-      - name: curl HEAD a hashed asset and log its hash
-        run: |
-          echo "=== HEAD /assets/index-*.js ==="
-          asset=$(curl -s https://mock.shox-software.uz/ | grep -oE 'assets/[^"]+\.js' | head -1)
-          echo "Sample asset: $asset"
-          if [ -n "$asset" ]; then
-            curl -sI "https://mock.shox-software.uz/$asset" | head -10
-          fi
       - name: probe backend /health
         run: |
           echo "=== GET /health ==="
           curl -s https://mock.shox-software.uz/health
           echo ""
-      - name: identify the current speaking-examiner-session chunk hash
+      - name: find the speaking-examiner chunk in the index bundle
         run: |
-          echo "=== speaking-examiner chunk on prod ==="
-          chunk=$(curl -s https://mock.shox-software.uz/speaking-examiner \
-            | grep -oE 'speaking-examiner-session-[A-Za-z0-9_-]+\.js' \
-            | head -1)
-          echo "Chunk file: $chunk"
+          asset=$(curl -s https://mock.shox-software.uz/ | grep -oE 'assets/index-[^"]+\.js' | head -1)
+          echo "Index asset: $asset"
+          index_body=$(curl -s "https://mock.shox-software.uz/$asset")
+          echo "Index bundle bytes: $(echo -n "$index_body" | wc -c)"
+          echo ""
+          echo "=== looking for lazy chunk name inside index bundle ==="
+          # Vite's dynamic import puts filenames as string literals like
+          # "speaking-examiner-session-XXXX.js" in the index chunk
+          chunk=$(echo "$index_body" | grep -oE 'speaking-examiner-session-[A-Za-z0-9_-]+\.js' | head -1)
+          echo "Speaking chunk file: $chunk"
           if [ -n "$chunk" ]; then
+            body=$(curl -s "https://mock.shox-software.uz/assets/$chunk")
+            bytes=$(echo -n "$body" | wc -c)
+            echo "Chunk size: $bytes bytes"
             echo ""
-            echo "=== searching that chunk for both keepalive gates ==="
-            body=$(curl -s "https://mock.shox-software.uz/$chunk")
-            echo "Contains PR #27 gate (sendCompleteRef check): "
-            echo "$body" | grep -o 'sendCompleteRef[^,;]*' | head -3
+            echo "sendCompleteRef mentions: $(echo "$body" | grep -c 'sendCompleteRef')"
+            echo "speakingDoneRef mentions: $(echo "$body" | grep -c 'speakingDoneRef')"
+            echo "repeat-phrase mentions:   $(echo "$body" | grep -c 'repeat-phrase')"
             echo ""
-            echo "Contains PR #26 gate (speakingDoneRef check): "
-            echo "$body" | grep -o 'speakingDoneRef[^,;]*' | head -3
-            echo ""
-            echo "Total speakingDoneRef mentions:  $(echo "$body" | grep -c 'speakingDoneRef')"
-            echo "Total sendCompleteRef mentions: $(echo "$body" | grep -c 'sendCompleteRef')"
-            echo "Total repeat-phrase mentions:   $(echo "$body" | grep -c 'repeat-phrase')"
+            echo "=== PR #27 marker (audioSentRef.current && !sendCompleteRef) ==="
+            echo "$body" | grep -oE '[a-z]+Ref\.current&&![a-z]+Ref\.current' | sort | uniq -c
           fi
