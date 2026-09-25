@@ -18,26 +18,37 @@ jobs:
         run: |
           echo "=== HEAD https://mock.shox-software.uz/speaking-examiner ==="
           curl -sI https://mock.shox-software.uz/speaking-examiner | head -30
-      - name: curl HEAD a hashed asset (should be immutable) and log its hash
+      - name: curl HEAD a hashed asset and log its hash
         run: |
-          echo "=== GET https://mock.shox-software.uz/ ==="
+          echo "=== HEAD /assets/index-*.js ==="
           asset=$(curl -s https://mock.shox-software.uz/ | grep -oE 'assets/[^"]+\.js' | head -1)
           echo "Sample asset: $asset"
           if [ -n "$asset" ]; then
-            echo "=== HEAD /$asset ==="
-            curl -sI "https://mock.shox-software.uz/$asset" | head -20
+            curl -sI "https://mock.shox-software.uz/$asset" | head -10
           fi
       - name: probe backend /health
         run: |
-          echo "=== GET https://mock.shox-software.uz/health ==="
-          curl -sv https://mock.shox-software.uz/health 2>&1 | tail -20
-      - name: verify frontend index also mentions our latest chunk hash
+          echo "=== GET /health ==="
+          curl -s https://mock.shox-software.uz/health
+          echo ""
+      - name: identify the current speaking-examiner-session chunk hash
         run: |
-          echo "=== speaking-examiner chunk name in HTML ==="
-          curl -s https://mock.shox-software.uz/speaking-examiner \
+          echo "=== speaking-examiner chunk on prod ==="
+          chunk=$(curl -s https://mock.shox-software.uz/speaking-examiner \
             | grep -oE 'speaking-examiner-session-[A-Za-z0-9_-]+\.js' \
-            | head -1
-      - name: probe new /repeat-phrase endpoint (expect 401 = route exists)
-        run: |
-          echo "=== GET https://mock.shox-software.uz/admin/speaking-examiner/repeat-phrase ==="
-          curl -sI https://mock.shox-software.uz/admin/speaking-examiner/repeat-phrase | head -10
+            | head -1)
+          echo "Chunk file: $chunk"
+          if [ -n "$chunk" ]; then
+            echo ""
+            echo "=== searching that chunk for both keepalive gates ==="
+            body=$(curl -s "https://mock.shox-software.uz/$chunk")
+            echo "Contains PR #27 gate (sendCompleteRef check): "
+            echo "$body" | grep -o 'sendCompleteRef[^,;]*' | head -3
+            echo ""
+            echo "Contains PR #26 gate (speakingDoneRef check): "
+            echo "$body" | grep -o 'speakingDoneRef[^,;]*' | head -3
+            echo ""
+            echo "Total speakingDoneRef mentions:  $(echo "$body" | grep -c 'speakingDoneRef')"
+            echo "Total sendCompleteRef mentions: $(echo "$body" | grep -c 'sendCompleteRef')"
+            echo "Total repeat-phrase mentions:   $(echo "$body" | grep -c 'repeat-phrase')"
+          fi
