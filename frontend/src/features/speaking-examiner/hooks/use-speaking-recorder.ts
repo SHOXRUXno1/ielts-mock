@@ -2,51 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import {
   limitForTurn,
-  VOICE_GATE,
   type RecordingLimit,
   type SpeakingTurnKind,
 } from '../constants/recording-limits'
 import { SPEAKING_AUDIO_CONSTRAINTS } from '../lib/mic-constraints'
 import type { Phase } from '../types/phase'
 
-/**
- * Summary of the microphone signal during the recording. `voiceDetected` is
- * the client-side "did we hear anything?" verdict — see VOICE_GATE.
- */
-export type RecordingResult = {
-  voiceDetected: boolean
-  peakRms: number
-  activeMs: number
-  durationMs: number
-}
-
 type UseSpeakingRecorderOptions = {
   turnKind: SpeakingTurnKind
-  onRecordingComplete: (
-    blob: Blob,
-    durationSeconds: number,
-    result: RecordingResult,
-  ) => void
+  onRecordingComplete: (blob: Blob, durationSeconds: number) => void
   setPhase: (phase: Phase) => void
   onRecordStart?: () => void
   onRecordEnd?: () => void
-}
-
-const RMS_THRESHOLD = Math.pow(10, VOICE_GATE.RMS_THRESHOLD_DBFS / 20)
-
-type VoiceGateState = {
-  audioContext: AudioContext
-  source: MediaStreamAudioSourceNode
-  analyser: AnalyserNode
-  // Backed by an explicit ArrayBuffer so the type matches AnalyserNode's
-  // getFloatTimeDomainData signature under TS 5.7+ (a bare `new Float32Array(n)`
-  // widens to Float32Array<ArrayBufferLike> which the DOM lib rejects).
-  buffer: Float32Array<ArrayBuffer>
-  rafId: number | null
-  lastSampleAt: number
-  startedAt: number
-  peakRms: number
-  activeMs: number
 }
 
 export function useSpeakingRecorder({
@@ -71,7 +38,6 @@ export function useSpeakingRecorder({
   const stopRecordingRef = useRef<() => void>(() => {})
   const onRecordEndRef = useRef(onRecordEnd)
   const startingRef = useRef(false)
-  const voiceGateRef = useRef<VoiceGateState | null>(null)
 
   useEffect(() => {
     turnKindRef.current = turnKind
@@ -99,97 +65,6 @@ export function useSpeakingRecorder({
       clearInterval(timerRef.current)
       timerRef.current = null
     }
-  }, [])
-
-  /**
-   * Sample RMS from the analyser at rAF rate and accumulate time above the
-   * threshold. Runs while the recorder is running; stops itself once
-   * `voiceGateRef.current` clears.
-   */
-  const tickVoiceGate = useCallback(() => {
-    const gate = voiceGateRef.current
-    if (!gate) return
-    gate.analyser.getFloatTimeDomainData(gate.buffer)
-    let sumSq = 0
-    for (let i = 0; i < gate.buffer.length; i += 1) {
-      const v = gate.buffer[i]
-      sumSq += v * v
-    }
-    const rms = Math.sqrt(sumSq / gate.buffer.length)
-    if (rms > gate.peakRms) gate.peakRms = rms
-    const now = performance.now()
-    const deltaMs = Math.min(64, now - gate.lastSampleAt)
-    gate.lastSampleAt = now
-    if (rms >= RMS_THRESHOLD) gate.activeMs += deltaMs
-    gate.rafId = requestAnimationFrame(tickVoiceGate)
-  }, [])
-
-  const startVoiceGate = useCallback(
-    (stream: MediaStream) => {
-      if (voiceGateRef.current) return
-      const AudioCtx =
-        window.AudioContext ??
-        (window as unknown as { webkitAudioContext?: typeof AudioContext })
-          .webkitAudioContext
-      if (!AudioCtx) return
-      let ctx: AudioContext
-      try {
-        ctx = new AudioCtx()
-      } catch {
-        return
-      }
-      let source: MediaStreamAudioSourceNode
-      try {
-        source = ctx.createMediaStreamSource(stream)
-      } catch {
-        void ctx.close()
-        return
-      }
-      const analyser = ctx.createAnalyser()
-      analyser.fftSize = 1024
-      analyser.smoothingTimeConstant = 0
-      source.connect(analyser)
-      const now = performance.now()
-      voiceGateRef.current = {
-        audioContext: ctx,
-        source,
-        analyser,
-        buffer: new Float32Array(new ArrayBuffer(analyser.fftSize * 4)),
-        rafId: null,
-        lastSampleAt: now,
-        startedAt: now,
-        peakRms: 0,
-        activeMs: 0,
-      }
-      voiceGateRef.current.rafId = requestAnimationFrame(tickVoiceGate)
-    },
-    [tickVoiceGate],
-  )
-
-  const stopVoiceGate = useCallback((): RecordingResult => {
-    const gate = voiceGateRef.current
-    if (!gate) {
-      // Analyser could not be created (unlikely — but we degrade to a
-      // permissive verdict so recording still works).
-      return { voiceDetected: true, peakRms: 0, activeMs: 0, durationMs: 0 }
-    }
-    if (gate.rafId !== null) cancelAnimationFrame(gate.rafId)
-    const durationMs = performance.now() - gate.startedAt
-    const { peakRms, activeMs } = gate
-    try {
-      gate.source.disconnect()
-    } catch {
-      // ignore
-    }
-    void gate.audioContext.close()
-    voiceGateRef.current = null
-
-    const voiceDetected =
-      durationMs >= VOICE_GATE.MIN_DURATION_MS &&
-      peakRms >= RMS_THRESHOLD &&
-      activeMs >= VOICE_GATE.MIN_ACTIVE_MS
-
-    return { voiceDetected, peakRms, activeMs, durationMs }
   }, [])
 
   /** Hand the microphone back to the browser. Only at the end of the session. */
@@ -270,8 +145,6 @@ export function useSpeakingRecorder({
       // ignore if unsupported
     }
 
-    const voiceResult = stopVoiceGate()
-
     recorder.onstop = () => {
       const mimeType = recorder.mimeType || 'audio/webm'
       const blob = new Blob(chunksRef.current, { type: mimeType })
@@ -279,10 +152,10 @@ export function useSpeakingRecorder({
       // The microphone stays open for the next answer; see acquireStream.
       elapsedSecondsRef.current = 0
       setRecordingTime(0)
-      onRecordingComplete(blob, durationSeconds, voiceResult)
+      onRecordingComplete(blob, durationSeconds)
     }
     recorder.stop()
-  }, [clearTimer, onRecordingComplete, stopVoiceGate])
+  }, [clearTimer, onRecordingComplete])
 
   useEffect(() => {
     stopRecordingRef.current = stopRecording
@@ -308,7 +181,6 @@ export function useSpeakingRecorder({
       mediaRecorderRef.current = recorder
       elapsedSecondsRef.current = 0
       setRecordingTime(0)
-      startVoiceGate(stream)
       onRecordStart?.()
 
       // Read the limit once at start: the turn cannot change mid-recording,
@@ -337,11 +209,10 @@ export function useSpeakingRecorder({
     } finally {
       startingRef.current = false
     }
-  }, [setPhase, onRecordStart, acquireStream, startVoiceGate])
+  }, [setPhase, onRecordStart, acquireStream])
 
   const abortRecording = useCallback(() => {
     clearTimer()
-    stopVoiceGate()
 
     const recorder = mediaRecorderRef.current
     if (recorder) {
@@ -359,7 +230,7 @@ export function useSpeakingRecorder({
     chunksRef.current = []
     releaseMic()
     setRecordingTime(0)
-  }, [releaseMic, clearTimer, stopVoiceGate])
+  }, [releaseMic, clearTimer])
 
   return {
     recordingTime,
