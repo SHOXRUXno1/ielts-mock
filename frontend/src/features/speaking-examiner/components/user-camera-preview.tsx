@@ -88,7 +88,7 @@ export function __testAcquireSharedPreviewStream() {
 
 export function UserCameraPreview({
   enabled,
-  isRecording = false,
+  isRecording: _isRecording = false,
   variant = 'pip',
   className,
 }: UserCameraPreviewProps) {
@@ -148,8 +148,7 @@ export function UserCameraPreview({
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-lg border-2 bg-black shadow-lg',
-        isRecording ? 'border-red-500' : 'border-background',
+        'relative overflow-hidden rounded-lg border-2 border-background bg-black shadow-lg',
         isPip && 'absolute bottom-3 right-3 z-20',
         variant === 'standalone' && 'h-full w-full',
         className,
