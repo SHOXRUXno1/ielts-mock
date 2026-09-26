@@ -42,27 +42,130 @@
       font-size: 8pt;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #71717a;
+      color: #1e293b;
+      font-weight: 700;
       margin-bottom: 4px;
     }
 
     .hero {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       gap: 24px;
       padding-bottom: 16px;
-      border-bottom: 1px solid #e4e4e7;
+      border-bottom: 1.5px solid #cbd5e1;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+    }
+    .brand-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid #e4e4e7;
+    }
+    .brand-text .center-name {
+      font-size: 10pt;
+      color: #52525b;
+      margin-top: 4px;
     }
 
-    .band-block { text-align: right; min-width: 120px; }
-    .band-value {
-      font-size: 42pt;
-      line-height: 1;
+    /* Overall band — circle badge with descriptor below. */
+    .band-block {
+      text-align: center;
+      min-width: 140px;
+    }
+    .band-circle {
+      display: block;
+      font-size: 48pt;
       font-weight: 700;
       letter-spacing: -0.04em;
+      line-height: 1;
+      color: #18181b;
     }
-    .band-meta { margin-top: 6px; font-size: 9pt; color: #52525b; }
+    .band-caption {
+      font-size: 8pt;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #71717a;
+      margin-top: 8px;
+      font-weight: 600;
+    }
+    .band-descriptor {
+      margin-top: 2px;
+      font-size: 10pt;
+      font-weight: 600;
+      color: #18181b;
+    }
+    .band-cefr {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 2px 8px;
+      background: #f1f5f9;
+      color: #1e293b;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    /* Skill cards: 4 side-by-side blocks with a band bar under each score. */
+    .skills-grid {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .skill-card {
+      flex: 1;
+      padding: 12px 12px 14px;
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+    .skill-name {
+      font-size: 8.5pt;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #71717a;
+      font-weight: 700;
+    }
+    .skill-band {
+      font-size: 22pt;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-top: 6px;
+      color: #18181b;
+    }
+    .skill-band.muted-band { color: #a1a1aa; }
+    .skill-bar {
+      position: relative;
+      height: 6px;
+      margin-top: 10px;
+      border-radius: 999px;
+      background: #e4e4e7;
+      overflow: hidden;
+    }
+    .skill-bar > span {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      background: #1e293b;
+      border-radius: 999px;
+    }
+    .skill-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 8pt;
+      color: #52525b;
+    }
+    .skill-meta .raw { font-variant-numeric: tabular-nums; }
 
     .meta {
       display: flex;
@@ -161,18 +264,23 @@
 </head>
 <body>
   <header class="hero">
-    <div>
-      <p class="kicker">IELTS Mock · Score report</p>
-      <h1>{{ test_title }}</h1>
-      <p class="muted" style="margin-top:6px;">{{ student_name }}</p>
+    <div class="brand">
+      <img src="ielts-imperia-logo.jpg" alt="IELTS Imperia" class="brand-logo" />
+      <div class="brand-text">
+        <p class="kicker">IELTS Imperia · Score report</p>
+        <h1>{{ test_title }}</h1>
+        <p class="muted" style="margin-top:6px;">{{ student_name }}</p>
+      </div>
     </div>
     <div class="band-block">
-      <div class="band-value">{{ overall.band_label }}</div>
-      <div class="band-meta">
-        Overall
-        {% if overall.descriptor %} · {{ overall.descriptor }}{% endif %}
-        {% if overall.cefr %} · {{ overall.cefr }}{% endif %}
-      </div>
+      <div class="band-circle">{{ overall.band_label }}</div>
+      <div class="band-caption">Overall band</div>
+      {% if overall.descriptor %}
+      <div class="band-descriptor">{{ overall.descriptor }}</div>
+      {% endif %}
+      {% if overall.cefr %}
+      <div class="band-cefr">CEFR {{ overall.cefr }}</div>
+      {% endif %}
     </div>
   </header>
 
@@ -196,30 +304,27 @@
   </div>
 
   <h2>Skills</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Skill</th>
-        <th class="center">Band</th>
-        <th class="center">CEFR</th>
-        <th>Level</th>
-        <th class="center">Raw</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for skill in skills %}
-      <tr>
-        <td>{{ skill.label }}</td>
-        <td class="num center">{{ skill.band_label }}</td>
-        <td class="center">{{ skill.cefr or "—" }}</td>
-        <td>{{ skill.descriptor or "Not attempted" }}</td>
-        <td class="num center">
-          {% if skill.raw is not none %}{{ skill.raw }}/40{% else %}—{% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="skills-grid">
+    {% for skill in skills %}
+    {% set band_num = (skill.band or 0) | float %}
+    {% set pct = (band_num / 9 * 100) if band_num > 0 else 0 %}
+    <div class="skill-card">
+      <div class="skill-name">{{ skill.label }}</div>
+      <div class="skill-band{% if not band_num %} muted-band{% endif %}">
+        {{ skill.band_label }}
+      </div>
+      <div class="skill-bar">
+        <span style="width: {{ pct }}%;"></span>
+      </div>
+      <div class="skill-meta">
+        <span>{{ skill.cefr or "—" }}{% if skill.descriptor %} · {{ skill.descriptor }}{% endif %}</span>
+        <span class="raw">
+          {%- if skill.raw is not none %}{{ skill.raw }}/40{% else %}—{% endif -%}
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 
   <section class="section">
     <h2>Listening</h2>
