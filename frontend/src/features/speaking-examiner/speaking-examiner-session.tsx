@@ -11,7 +11,6 @@ import { Mic, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   getPart2BeginPhrase,
-  getRepeatPhrase,
   getSpeakingApiErrorDetail,
   isSpeakingAbortError,
   NO_SPEECH_TRANSCRIPT,
@@ -122,7 +121,6 @@ export function SpeakingExaminerSession({
   const startRecordingRef = useRef<() => Promise<boolean>>(async () => false)
   const prepCompleteRef = useRef(false)
   const part2PhraseRef = useRef<PhraseResponse | null>(null)
-  const repeatPhraseRef = useRef<PhraseResponse | null>(null)
   const isStartingRef = useRef(false)
   const prevPartRef = useRef(1)
   const sessionIdRef = useRef(0)
@@ -185,11 +183,6 @@ export function SpeakingExaminerSession({
     if (ctx.afterBeginSpeaking) {
       const ok = await startRecordingRef.current()
       if (!ok) {
-        // Explicit setPhase so the status pill stops lying if the recorder
-        // couldn't start (mic race, getUserMedia hiccup). Without this the
-        // phase would sit at 'playing' — "Examiner speaking..." — even
-        // though the examiner just finished and it's the candidate's turn.
-        setPhase('ready')
         toast.info('Tap the button when you are ready to speak')
       }
       return
@@ -200,7 +193,7 @@ export function SpeakingExaminerSession({
     }
 
     onExaminerAudioDone(ctx)
-  }, [onExaminerAudioDone, phaseRef, setPhase])
+  }, [onExaminerAudioDone, phaseRef])
 
   const {
     simliToken,
@@ -219,10 +212,7 @@ export function SpeakingExaminerSession({
     handleSimliDone,
     playExaminerAudio,
     playExaminerPhrase,
-    playPhraseDirect,
     playSystemPhrase,
-    waitForSimliReady,
-    usesSimliPlayback,
     resetAudioState,
     cancelBrowserSpeech,
     SIMLI_LOAD_TIMEOUT_MS,
@@ -310,11 +300,7 @@ export function SpeakingExaminerSession({
   }, [reconnectSimli])
 
   const processRecording = useCallback(
-    async (
-      blob: Blob,
-      durationSeconds = 0,
-      voiceResult: { voiceDetected: boolean } = { voiceDetected: true },
-    ) => {
+    async (blob: Blob, durationSeconds = 0) => {
       const sessionId = sessionIdRef.current
       const signal = abortControllerRef.current?.signal
 
@@ -324,51 +310,6 @@ export function SpeakingExaminerSession({
 
       onRecordingStopped()
       try {
-        // Client-side voice-activity gate. Whisper hallucinates plausible text
-        // on silence, so a recording the microphone never picked speech from
-        // never reaches STT. The examiner asks the candidate to try again.
-        //
-        // Route the "sorry, could you say that again" phrase through the
-        // normal examiner audio pipeline (cached ElevenLabs MP3 → Simli) so
-        // the candidate hears the SAME voice with lip sync — playSystemPhrase
-        // used to fall back to the OS Web Speech engine, which produced a
-        // jarringly different voice and a still avatar.
-        if (!voiceResult.voiceDetected) {
-          toast.info("We didn't hear you — please try again")
-          onTranscriptFailed()
-          const cached = repeatPhraseRef.current
-          if (cached?.audio_base64?.trim()) {
-            void playExaminerPhrase(
-              cached.text,
-              cached.audio_base64,
-              cached.tts_error,
-            )
-          } else {
-            // Pre-warm failed or the phrase hasn't loaded yet — fetch inline
-            // and fall back to Web Speech only if the network path is broken.
-            void (async () => {
-              try {
-                const phrase = await getRepeatPhrase()
-                repeatPhraseRef.current = phrase
-                if (phrase.audio_base64?.trim()) {
-                  await playExaminerPhrase(
-                    phrase.text,
-                    phrase.audio_base64,
-                    phrase.tts_error,
-                  )
-                  return
-                }
-              } catch {
-                // fall through
-              }
-              await playSystemPhrase(
-                "Sorry, I didn't catch that. Could you say that again, please?",
-              )
-            })()
-          }
-          return
-        }
-
         if (blob.size < 1024) {
           toast.error('Recording too short — please speak for at least a few seconds')
           onTranscriptFailed()
@@ -459,8 +400,6 @@ export function SpeakingExaminerSession({
       onTranscriptFailed,
       scheduleScoringAfterSpeech,
       playExaminerTurn,
-      playExaminerPhrase,
-      playSystemPhrase,
       isSessionActive,
       playPartTransition,
     ],
@@ -525,46 +464,13 @@ export function SpeakingExaminerSession({
       const phrase = cached ?? (await getPart2BeginPhrase())
       part2PhraseRef.current = phrase
       if (!isSessionActive(sessionId)) return
-      if (phrase.audio_base64?.trim()) {
-        // Route the phrase through Simli so the mouth moves with the voice.
-        // The keepalive tick in simli-avatar.tsx now runs across all silences
-        // (including this 65s prep), so the peer should still be up. If the
-        // peer is not ready within a short window — network hiccup, Simli-side
-        // outage — fall through to playPhraseDirect so the cue is still heard.
-        const simliOk =
-          !usesSimliPlayback() || (await waitForSimliReady(500))
-        if (simliOk) {
-          await playExaminerPhrase(
-            phrase.text,
-            phrase.audio_base64,
-            phrase.tts_error,
-          )
-        } else {
-          if (import.meta.env.DEV) {
-            // eslint-disable-next-line no-console -- dev-only Simli diagnostics
-            console.warn(
-              '[Examiner] Simli not ready at prep-end — playing phrase direct',
-            )
-          }
-          await playPhraseDirect(phrase.audio_base64)
-        }
-      } else {
-        await playExaminerPhrase(phrase.text, phrase.audio_base64, phrase.tts_error)
-      }
+      await playExaminerPhrase(phrase.text, phrase.audio_base64, phrase.tts_error)
     } catch {
       if (!isSessionActive(sessionId)) return
       await playSystemPhrase(PART2_BEGIN_SPEAKING)
     }
     if (!isSessionActive(sessionId)) return
-  }, [
-    onPrepTimerDone,
-    playExaminerPhrase,
-    playPhraseDirect,
-    playSystemPhrase,
-    waitForSimliReady,
-    usesSimliPlayback,
-    isSessionActive,
-  ])
+  }, [onPrepTimerDone, playExaminerPhrase, playSystemPhrase, isSessionActive])
 
   useEffect(() => {
     if (phase !== 'prep') {
@@ -578,28 +484,6 @@ export function SpeakingExaminerSession({
       })
       .catch(() => {
         part2PhraseRef.current = null
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [phase])
-
-  // Pre-warm the "sorry, could you say that again" phrase once the session is
-  // live. Cheap fire-and-forget — if it fails the voice gate will fetch it on
-  // demand instead. Cleared when the session ends so a new session refetches.
-  useEffect(() => {
-    if (phase === 'idle' || phase === 'loading' || phase === 'done') {
-      repeatPhraseRef.current = null
-      return
-    }
-    if (repeatPhraseRef.current) return
-    let cancelled = false
-    getRepeatPhrase()
-      .then((phrase) => {
-        if (!cancelled) repeatPhraseRef.current = phrase
-      })
-      .catch(() => {
-        // Voice gate falls back to inline fetch + Web Speech.
       })
     return () => {
       cancelled = true

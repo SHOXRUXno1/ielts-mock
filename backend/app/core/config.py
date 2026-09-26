@@ -71,23 +71,8 @@ class Settings(BaseSettings):
     # ── ElevenLabs (Text-to-Speech) ─────────────────────
     elevenlabs_api_key: str = ""
     elevenlabs_voice_id: str = "onwK4e9ZLuTAKqWW03F9"  # Daniel, British
-    # turbo_v2_5 keeps the latency low but sounds noticeably fuller than flash;
-    # multilingual_v2 is the top-quality option but adds 500-800 ms per synth.
-    elevenlabs_model_id: str = "eleven_turbo_v2_5"
+    elevenlabs_model_id: str = "eleven_flash_v2_5"  # lower latency; eleven_turbo_v2 for higher fidelity
     elevenlabs_max_concurrent: int = 6
-
-    # ── ElevenLabs voice_settings ───────────────────────
-    # Values are calibrated for the Daniel-British voice. Lower stability +
-    # style > 0 gives natural prosody; use_speaker_boost sharpens articulation
-    # for candidates listening on laptop speakers.
-    elevenlabs_stability: float = 0.5
-    elevenlabs_similarity_boost: float = 0.75
-    elevenlabs_style: float = 0.3
-    elevenlabs_use_speaker_boost: bool = True
-    elevenlabs_speed: float = 0.9
-    # 192 kbps VBR is a cleaner listening experience than the API's 128 kbps
-    # default and only ~50% larger — trivial next to STT/LLM round-trips.
-    elevenlabs_output_format: str = "mp3_44100_192"
 
     # ── Simli (Video Avatar) ─────────────────────────────
     simli_api_key: str = ""

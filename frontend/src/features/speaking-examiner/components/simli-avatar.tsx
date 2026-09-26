@@ -333,22 +333,13 @@ function SimliAvatarInner({
         simliLog(`[Simli] Connecting (attempt ${attempt}/${MAX_CONNECT_ATTEMPTS})…`)
 
         try {
-          // Livekit is Simli's reliable transport — their own docs describe
-          // the P2P mode we used before as "opt-in for slightly lower latency"
-          // and less resilient to firewalls. On this stack a bare WebSocket
-          // probe from prod (backend/scripts/_probe_stt_silence.py-style) to
-          // the P2P endpoint dropped after ~25s without a close frame, which
-          // is exactly the pause we saw between examiner turns. Livekit
-          // manages its own transport and never needs the STUN list, so we
-          // pass null for iceServers whether or not the token endpoint
-          // returned any.
           client = new SimliClient(
             sessionToken,
             video,
             audio,
-            null,
+            iceServersRef.current ?? null,
             undefined,
-            'livekit'
+            'p2p'
           )
           simliRef.current = client
 
@@ -496,20 +487,7 @@ function SimliAvatarInner({
     if (!ready || useLottieFallback) return
     const tick = () => {
       const client = simliRef.current
-      if (!client) return
-      // Skip only while chunks are actively being handed over. Firing silent
-      // PCM on top of an in-flight send corrupts Simli's buffer.
-      //
-      // Historic note: an earlier attempt gated on `speakingDoneRef` instead,
-      // hoping to also skip during Simli's playback. That looked cleaner but
-      // broke normal turns — Simli seems to rely on a continuous silent-PCM
-      // stream to detect end-of-turn transitions, and when the stream cut
-      // out during playback its `silent` event stopped firing, leaving the
-      // phase pill stuck on "Speaking..." until the safety timer expired.
-      // Sending silent PCM during playback is harmless (Simli buffers and
-      // plays it after the real audio ends, and `silenceEndsTurn` correctly
-      // treats that as the honest end of turn).
-      if (audioSentRef.current && !sendCompleteRef.current) return
+      if (!client || audioSentRef.current) return
       try {
         client.sendAudioData(silentPcmChunk())
       } catch {

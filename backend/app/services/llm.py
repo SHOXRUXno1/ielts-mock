@@ -95,35 +95,6 @@ _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
 # Chirp and Gemini do not report this field, so their turns are unaffected.
 _WHISPER_NO_SPEECH_GUARD = 0.15
 
-# Whisper hallucinations come in family resemblances, not identical strings.
-# The frozenset above catches the bare stock phrases; these regexes catch the
-# padded variants ("Thank you so much for watching this video", "Please
-# subscribe to the channel") that share the same origin — the ends of YouTube
-# transcripts in the training set.
-#
-# Each pattern is deliberately narrow. A broad rule like ``\bsubscribe\b``
-# alone kills real answers ("I subscribe to two newspapers"), so we only match
-# when the surrounding words are the clip-outro DNA. The caller applies these
-# only when the transcript is short (≤ 8 words); long answers that happen to
-# contain a matching phrase are real answers, not hallucinations.
-_HALLUCINATION_PATTERNS: tuple[re.Pattern[str], ...] = (
-    re.compile(r"\bthanks?\s+(you\s+)?(so\s+much\s+|very\s+much\s+)?for\s+watch"),
-    re.compile(r"\bplease\s+subscribe\b"),
-    re.compile(r"\blike\s+(and\s+)?subscribe\b"),
-    re.compile(r"\bsubscribe\s+to\s+(the\s+|my\s+|our\s+)?channel\b"),
-    re.compile(r"\bsee\s+you\s+(in\s+the\s+)?next\s+(video|time|episode)\b"),
-    re.compile(r"\bthanks?\s+for\s+listening\b"),
-)
-
-# Short + low-confidence is the hallucination signature for Chirp: when the
-# model has nothing to transcribe but is forced to emit something, it hands
-# back a single-clause guess with a low score. Full-answer transcripts almost
-# always land above 0.5 confidence, so the gate only fires when the answer
-# was going to be too short to score anyway.
-_LOW_CONFIDENCE_THRESHOLD = 0.5
-_LOW_CONFIDENCE_MAX_WORDS = 4
-_REGEX_MAX_WORDS = 8
-
 
 def reset_groq_stt_circuit() -> None:
     global _groq_stt_blocked
@@ -148,10 +119,6 @@ def _is_silence_hallucination(text: str) -> bool:
     Sentences are de-duplicated first: fed a quiet microphone the model often
     repeats one filler, and "Thank you. Thank you." is no more an answer than a
     single "Thank you." is.
-
-    Two checks: an exact-set membership pass (fast path, catches the bare stock
-    phrases) and a regex pass over short transcripts (catches padded variants
-    like "thank you so much for watching this video").
     """
     bare = _strip_for_match(text)
     if not bare:
@@ -162,17 +129,7 @@ def _is_silence_hallucination(text: str) -> bool:
         for s in _SENTENCE_SPLIT_RE.split(text.strip())
         if _strip_for_match(s)
     }
-    if unique and unique <= _SILENCE_HALLUCINATIONS:
-        return True
-    # Regex pass — only on short transcripts. A real 40-word answer that
-    # happens to mention "thank you for watching" (a candidate discussing
-    # streaming habits, say) is not a hallucination.
-    word_count = len(bare.split())
-    if word_count <= _REGEX_MAX_WORDS:
-        for pattern in _HALLUCINATION_PATTERNS:
-            if pattern.search(bare):
-                return True
-    return False
+    return bool(unique) and unique <= _SILENCE_HALLUCINATIONS
 
 
 def _normalize_stt_text(text: str) -> str:
@@ -1320,11 +1277,6 @@ async def _transcribe_with_google(
     it, ``None`` otherwise. Kept separate from the text so the caller can
     still discard silence hallucinations without losing the number that
     tells them why a turn came back short.
-
-    When the transcript is short (≤ 4 words) and confidence is low (< 0.5)
-    the text is dropped as a hallucination — this is Chirp's way of telling
-    us it filled in the blanks. The metrics dict is preserved so /admin/usage
-    snapshots can still see the number that gated the drop.
     """
     text, confidence = await google_stt.recognize_detailed(
         audio_bytes, duration_seconds=duration_seconds
@@ -1332,22 +1284,6 @@ async def _transcribe_with_google(
     metrics: dict = {}
     if confidence is not None:
         metrics["confidence"] = confidence
-
-    word_count = len(text.strip().split())
-    if (
-        confidence is not None
-        and 0 < word_count <= _LOW_CONFIDENCE_MAX_WORDS
-        and confidence < _LOW_CONFIDENCE_THRESHOLD
-    ):
-        logger.info(
-            "Discarding low-confidence STT (%.2f, %d words): %r",
-            confidence,
-            word_count,
-            text[:80],
-        )
-        usage_meter.record_stt_discarded(text)
-        return "", metrics
-
     return _normalize_stt_text(text), metrics
 
 
@@ -1619,7 +1555,7 @@ When given a specific question to ask, ask it EXACTLY as provided.
 Do not rephrase or invent alternatives.
 
 When asked to give a reaction, provide a brief natural response only:
-'Thank you', 'I see', 'Alright', 'OK', 'That's interesting'. Nothing more.
+'Thank you', 'I see', 'Alright', 'OK'. Nothing more.
 
 When the server explicitly asks you to generate a cue card or a Part 3
 question, generate it. Otherwise never invent content.

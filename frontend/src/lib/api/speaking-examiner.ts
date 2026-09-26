@@ -119,15 +119,6 @@ export async function getPart2BeginPhrase(): Promise<PhraseResponse> {
   return data
 }
 
-/** Cached "Sorry, could you say that again?" phrase for the voice gate. */
-export async function getRepeatPhrase(): Promise<PhraseResponse> {
-  const { data } = await api.get<PhraseResponse>(
-    '/admin/speaking-examiner/repeat-phrase',
-    speakingRequestConfig(),
-  )
-  return data
-}
-
 /** Warm the examiner intro-greeting TTS from the readiness gate. */
 export async function getIntroGreetingPhrase(
   signal?: AbortSignal,
