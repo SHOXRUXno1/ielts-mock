@@ -86,7 +86,7 @@ export function QuestionNavBar() {
       aria-label='Question navigator'
       className='shrink-0 border-t border-slate-200/80 bg-gradient-to-b from-white to-slate-50'
     >
-      <div className='overflow-x-auto px-3 py-2.5 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300'>
+      <div className='overflow-x-auto px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300'>
         <div className='mx-auto flex w-max items-center gap-4'>
           {groups.map((group) => {
             const isActive = group.partIndex === currentPart
@@ -99,7 +99,7 @@ export function QuestionNavBar() {
                   type='button'
                   onClick={() => void nav.goToPart(group.partIndex)}
                   className={cn(
-                    'shrink-0 rounded-md px-2 py-1 text-[13px] font-medium tracking-wide whitespace-nowrap',
+                    'flex min-h-11 shrink-0 items-center rounded-md px-2 py-1 text-[13px] font-medium tracking-wide whitespace-nowrap lg:min-h-0',
                     isActive
                       ? 'text-slate-800'
                       : 'text-slate-500 hover:text-slate-700',
@@ -133,7 +133,7 @@ export function QuestionNavBar() {
                             }
                             title={`Q${displayNumber}${isFlagged ? ' (flagged)' : ''}${answered ? ' (answered)' : ''}`}
                             className={cn(
-                              'flex h-8 min-w-8 items-center justify-center border-r px-1.5 text-[12px] font-semibold tabular-nums last:border-r-0',
+                              'flex h-11 min-w-11 items-center justify-center border-r px-1.5 text-[13px] font-semibold tabular-nums last:border-r-0 lg:h-8 lg:min-w-8 lg:text-[12px]',
                               isActive ? 'border-blue-100' : 'border-slate-100',
                               isFlagged
                                 ? 'bg-amber-50 text-amber-800 hover:bg-amber-100'

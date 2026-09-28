@@ -631,7 +631,7 @@ export function ListeningSection({
             type='button'
             onClick={() => setMobileTab('audio')}
             className={cn(
-              'flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[13px] font-medium transition-colors',
+              'flex flex-1 items-center justify-center gap-1.5 min-h-11 text-[13px] font-medium transition-colors',
               mobileTab === 'audio'
                 ? 'border-b-2 border-blue-600 text-blue-600'
                 : 'text-slate-500 hover:text-slate-700',
@@ -644,7 +644,7 @@ export function ListeningSection({
             type='button'
             onClick={() => setMobileTab('questions')}
             className={cn(
-              'flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[13px] font-medium transition-colors',
+              'flex flex-1 items-center justify-center gap-1.5 min-h-11 text-[13px] font-medium transition-colors',
               mobileTab === 'questions'
                 ? 'border-b-2 border-blue-600 text-blue-600'
                 : 'text-slate-500 hover:text-slate-700',
@@ -710,4 +710,3 @@ export function ListeningSection({
     </ResizablePanelGroup>
   )
 }
-
