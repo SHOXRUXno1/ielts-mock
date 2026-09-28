@@ -53,12 +53,12 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
   return (
     <div
       className={cn(
-        'group/player rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm ring-1 ring-slate-900/[0.02]',
+        'group/player rounded-xl border border-slate-200/70 bg-white p-3 shadow-sm ring-1 ring-slate-900/[0.02]',
         'sm:p-5',
       )}
       aria-label={`Part ${partNumber} audio`}
     >
-      <div className='mb-3 flex items-center justify-between'>
+      <div className='mb-2 flex items-center justify-between sm:mb-3'>
         <div className='flex items-center gap-2'>
           <div className='flex size-7 items-center justify-center rounded-md bg-blue-50 text-blue-600'>
             <Headphones className='size-3.5' />
@@ -92,7 +92,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
 
       <div
         className={cn(
-          'flex items-center gap-3 sm:gap-4',
+          'flex items-center gap-2.5 sm:gap-4',
           isOtherPlaying && 'opacity-60',
         )}
       >
@@ -103,7 +103,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
           title={title}
           aria-label={title}
           className={cn(
-            'group/btn flex size-11 shrink-0 items-center justify-center rounded-full transition-all',
+            'group/btn flex size-10 shrink-0 items-center justify-center rounded-full transition-all sm:size-11',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
             isCompleted || !canToggle
               ? 'cursor-not-allowed bg-slate-100 text-slate-400'

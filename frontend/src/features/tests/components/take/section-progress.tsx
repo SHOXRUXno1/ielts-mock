@@ -75,10 +75,10 @@ export function SectionProgress({
   return (
     <div
       className={cn(
-        'flex items-center gap-0 bg-white',
+        'flex items-center bg-white',
         inline
-          ? 'justify-start'
-          : 'justify-center border-b border-slate-200 px-4 py-2 sm:px-6 sm:py-2.5',
+          ? 'gap-0 justify-start'
+          : 'gap-1 snap-x snap-mandatory overflow-x-auto justify-start border-b border-slate-200 px-4 py-2 [&::-webkit-scrollbar]:hidden [scrollbar-width:none] sm:px-6 sm:py-2.5 lg:gap-0 lg:justify-center lg:overflow-x-visible',
         className,
       )}
     >
@@ -133,11 +133,11 @@ export function SectionProgress({
         )
 
         return (
-          <div key={type} className='flex items-center'>
+          <div key={type} className='flex shrink-0 snap-center items-center'>
             {i > 0 && !inline && (
               <div
                 className={cn(
-                  'mx-2 h-px w-6 sm:mx-3 sm:w-8',
+                  'mx-2 hidden h-px w-6 lg:block sm:mx-3 sm:w-8',
                   visual === 'sealed' || progress?.state === 'sealed'
                     ? 'bg-emerald-400'
                     : 'bg-slate-200',
