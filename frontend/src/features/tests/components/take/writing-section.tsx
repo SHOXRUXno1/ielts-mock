@@ -1,21 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Eraser, Info, Loader2, Sparkles } from 'lucide-react'
+import { ChevronDown, Eraser, Info, Loader2, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '@/components/ui/resizable'
-import { useIsDesktop } from '@/hooks/use-mobile'
 import { mediaUrl } from '@/lib/api/attempts'
 import {
   requestWritingFeedback,
   type WritingFeedbackResult,
 } from '@/lib/api/feedback'
 import { cn } from '@/lib/utils'
+import { useIsDesktop } from '@/hooks/use-mobile'
+import { Button } from '@/components/ui/button'
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable'
 import type { Question } from '../../data/schema'
-import { getDefaultInstruction, getDefaultQuestion } from '../../data/writing-presets'
+import {
+  getDefaultInstruction,
+  getDefaultQuestion,
+} from '../../data/writing-presets'
 import { WritingFeedbackView } from './writing-feedback-view'
 
 // ── Types & helpers ──────────────────────────────────────────────────────────
@@ -76,11 +80,11 @@ function TaskEditor({
     question.min_words ??
     (question.content.min_words as number | undefined) ??
     (isTask1 ? 150 : 250)
-  const taskStatement =
-    (question.content.task_statement as string) ?? ''
+  const taskStatement = (question.content.task_statement as string) ?? ''
   const taskDescription =
     (question.content.task_description as string) ??
-    (question.content.prompt as string) ?? ''
+    (question.content.prompt as string) ??
+    ''
   const taskQuestion =
     (question.content.task_question as string) ??
     (!isTask1 ? (getDefaultQuestion(question.essay_type) ?? '') : '')
@@ -96,8 +100,7 @@ function TaskEditor({
       .join('\n\n')
   // image_url from DB column takes priority; fallback to content JSON
   const imageUrl =
-    question.image_url ??
-    (question.content.image_url as string | undefined)
+    question.image_url ?? (question.content.image_url as string | undefined)
   // Only Task 1 ever shows an image (Task 2 is always essay, no charts)
   const hasImage = isTask1 && !!imageUrl
 
@@ -214,37 +217,28 @@ function TaskEditor({
     },
   })
 
-  const wordCountColor =
-    wordCount === 0
-      ? 'text-slate-400'
-      : wordCount < minWords
-        ? 'text-amber-500'
-        : 'text-emerald-500'
-
   // ── Left pane ──────────────────────────────────────────────────────────────
   const leftPane = (
-    <div className='h-full overflow-y-auto px-10 py-8'>
-      <h2 className='text-lg font-medium text-slate-900'>
-        Task {taskNumber}
-      </h2>
-      <p className='mt-1 text-[13px] text-slate-400'>
+    <div className='min-h-full px-6 py-6 lg:px-8'>
+      <h2 className='text-lg font-medium text-foreground'>Task {taskNumber}</h2>
+      <p className='mt-2 text-sm text-muted-foreground'>
         You should spend about {isTask1 ? '20' : '40'} minutes on this task.
       </p>
 
-      <div className='mt-6 rounded-lg border-l-[3px] border-blue-500 bg-slate-50 p-6'>
-        <div className='text-[15px] leading-[1.9] text-slate-800'>
+      <div className='mt-6 rounded-md border border-border bg-muted/30 p-4 sm:p-6'>
+        <div className='text-base leading-relaxed text-foreground'>
           {promptBody.split('\n').map((line, i) =>
             line.trim() ? (
               <p key={i} className={i > 0 ? 'mt-3' : undefined}>
                 {line}
               </p>
-            ) : null,
+            ) : null
           )}
         </div>
       </div>
 
       {taskInstruction && (
-        <p className='mt-3 text-sm italic leading-relaxed text-slate-500'>
+        <p className='mt-4 text-sm leading-relaxed text-muted-foreground italic'>
           {taskInstruction}
         </p>
       )}
@@ -253,12 +247,12 @@ function TaskEditor({
         <img
           src={mediaUrl(imageUrl)}
           alt='Task 1 chart'
-          className='mx-auto mt-5 block max-h-[60vh] max-w-full rounded-lg object-contain'
+          className='mx-auto mt-6 block max-h-[60vh] max-w-full rounded-md border border-border bg-background object-contain p-2'
         />
       )}
 
-      <div className='mt-6 flex items-center gap-1.5 text-[13px] text-slate-400'>
-        <Info className='size-3.5 shrink-0' />
+      <div className='mt-6 flex items-center gap-2 text-sm text-muted-foreground'>
+        <Info aria-hidden='true' className='size-4 shrink-0' />
         <span>Write at least {minWords} words</span>
       </div>
     </div>
@@ -266,13 +260,15 @@ function TaskEditor({
 
   // ── Right pane ─────────────────────────────────────────────────────────────
   const rightPane = (
-    <div className='flex h-full min-h-0 flex-col overflow-y-auto border-t border-slate-200 lg:border-t-0'>
+    <div className='flex min-h-full flex-col border-t border-border lg:border-t-0'>
       {/* Autosave + clear row */}
-      <div className='flex shrink-0 items-center justify-between px-5 py-3'>
+      <div className='flex shrink-0 items-center justify-between gap-4 px-4 py-3'>
         {lastSavedAt ? (
           <span
-            className='text-xs transition-colors duration-500'
-            style={{ color: savedRecently ? '#22c55e' : '#9ca3af' }}
+            className={cn(
+              'text-sm transition-colors duration-200 ease-out',
+              savedRecently ? 'text-foreground' : 'text-muted-foreground'
+            )}
           >
             Saved · {formatSavedTime(lastSavedAt)}
           </span>
@@ -282,18 +278,18 @@ function TaskEditor({
 
         {showClearConfirm ? (
           <div className='flex items-center gap-2 text-xs'>
-            <span className='text-slate-500'>Clear all?</span>
+            <span className='text-muted-foreground'>Clear all?</span>
             <button
               type='button'
               onClick={handleClear}
-              className='font-medium text-red-600 hover:underline'
+              className='rounded-md px-2 py-1 font-medium text-foreground transition-colors duration-200 ease-out hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
             >
               Yes
             </button>
             <button
               type='button'
               onClick={() => setShowClearConfirm(false)}
-              className='text-slate-400 hover:underline'
+              className='rounded-md px-2 py-1 text-muted-foreground transition-colors duration-200 ease-out hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
             >
               No
             </button>
@@ -302,10 +298,11 @@ function TaskEditor({
           <button
             type='button'
             title='Clear answer'
+            aria-label='Clear answer'
             onClick={() => setShowClearConfirm(true)}
-            className='rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600'
+            className='inline-flex size-10 items-center justify-center rounded-md text-muted-foreground transition-colors duration-200 ease-out hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:bg-muted/70'
           >
-            <Eraser className='size-4' />
+            <Eraser aria-hidden='true' className='size-4' />
           </button>
         )}
       </div>
@@ -323,52 +320,61 @@ function TaskEditor({
         data-gramm='false'
         data-gramm_editor='false'
         data-enable-grammarly='false'
-        className='mx-5 h-[min(42vh,360px)] min-h-[200px] shrink-0 resize-y rounded-lg border-[0.5px] border-slate-200 bg-white px-5 py-5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-[3px] focus:ring-blue-500/10'
-        style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}
+        className='mx-4 min-h-48 flex-1 resize-y rounded-md border border-input bg-background px-4 py-4 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none'
       />
 
       {/* Word count + Get Feedback */}
-      <div className='flex shrink-0 items-center justify-between px-5 py-4'>
-        <span className={cn('text-[13px] font-medium tabular-nums', wordCountColor)}>
+      <div className='flex shrink-0 items-center justify-between gap-4 px-4 py-4'>
+        <span className='text-sm font-medium text-muted-foreground tabular-nums'>
           {wordCount} / {minWords}+ words
         </span>
         {showInstantFeedback && (
-          <button
+          <Button
             type='button'
+            size='sm'
+            variant='outline'
             disabled={feedbackMutation.isPending || wordCount < 10}
             onClick={() => feedbackMutation.mutate()}
-            className='flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500'
+            className='shadow-none'
           >
             {feedbackMutation.isPending ? (
-              <Loader2 className='size-4 animate-spin' />
+              <Loader2 aria-hidden='true' className='size-4 animate-spin' />
             ) : (
-              <Sparkles className='size-4' />
+              <Sparkles aria-hidden='true' className='size-4' />
             )}
             Get Feedback
-          </button>
+          </Button>
         )}
       </div>
 
       {showInstantFeedback && (
-        <div className='mx-5 mb-5 shrink-0 overflow-hidden rounded-lg border border-blue-200'>
+        <div className='mx-4 mb-4 shrink-0 overflow-hidden rounded-md border border-border'>
           <button
             type='button'
             onClick={() => setFeedbackOpen((v) => !v)}
-            className='flex w-full items-center justify-between bg-blue-50 px-4 py-3 text-left text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100'
+            aria-expanded={feedbackOpen}
+            className='flex w-full items-center justify-between bg-muted/30 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors duration-200 ease-out hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset'
           >
             <div className='flex items-center gap-2'>
-              <Sparkles className='size-4' />
+              <Sparkles
+                aria-hidden='true'
+                className='size-4 text-muted-foreground'
+              />
               <span>AI Feedback</span>
             </div>
             <div className='flex items-center gap-2'>
               {feedback && (
-                <span className='rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700'>
+                <span className='rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground'>
                   Band {feedback.overall_band.toFixed(1)}
                 </span>
               )}
-              <span className='text-xs text-blue-400'>
-                {feedbackOpen ? '▲' : '▼'}
-              </span>
+              <ChevronDown
+                aria-hidden='true'
+                className={cn(
+                  'size-4 text-muted-foreground transition-transform duration-200 ease-out',
+                  feedbackOpen && 'rotate-180'
+                )}
+              />
             </div>
           </button>
           {feedbackOpen && (
@@ -380,9 +386,12 @@ function TaskEditor({
                   taskNumber={taskNumber === 2 ? 2 : 1}
                 />
               ) : (
-                <div className='flex items-center gap-2 rounded-lg bg-slate-50 p-4'>
-                  <Sparkles className='size-4 shrink-0 text-slate-400' />
-                  <p className='text-[13px] text-slate-400'>
+                <div className='flex items-center gap-3 rounded-md bg-muted/30 p-4'>
+                  <Sparkles
+                    aria-hidden='true'
+                    className='size-4 shrink-0 text-muted-foreground'
+                  />
+                  <p className='text-sm text-muted-foreground'>
                     Submit your essay to receive AI feedback
                   </p>
                 </div>
@@ -397,7 +406,7 @@ function TaskEditor({
   if (!isDesktop) {
     return (
       <div className='flex h-full min-h-0 flex-col'>
-        <div className='min-h-0 flex-1 overflow-y-auto'>{leftPane}</div>
+        <div className='min-h-0 basis-2/5 overflow-y-auto'>{leftPane}</div>
         <div className='min-h-0 flex-1 overflow-y-auto'>{rightPane}</div>
       </div>
     )
@@ -406,11 +415,15 @@ function TaskEditor({
   return (
     <ResizablePanelGroup orientation='horizontal' className='h-full min-h-0'>
       <ResizablePanel defaultSize='50%' minSize='25%'>
-        <div className='h-full min-h-0 overflow-y-auto overflow-x-hidden'>{leftPane}</div>
+        <div className='h-full min-h-0 overflow-x-hidden overflow-y-auto'>
+          {leftPane}
+        </div>
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize='50%' minSize='25%'>
-        <div className='h-full min-h-0 overflow-y-auto overflow-x-hidden'>{rightPane}</div>
+        <div className='h-full min-h-0 overflow-x-hidden overflow-y-auto'>
+          {rightPane}
+        </div>
       </ResizablePanel>
     </ResizablePanelGroup>
   )
@@ -429,14 +442,14 @@ export function WritingSection({
 }: Props) {
   const sortedQuestions = useMemo(
     () => [...questions].sort((a, b) => a.order - b.order),
-    [questions],
+    [questions]
   )
 
   // Full mock / whole-section practice: 2 tasks. Single-part practice: 1 task.
   if (sortedQuestions.length === 0 || sortedQuestions.length > 2) {
     return (
       <div className='flex h-full items-center justify-center'>
-        <p className='text-sm text-slate-500'>
+        <p className='text-sm text-muted-foreground'>
           Writing section misconfigured
         </p>
       </div>
@@ -446,11 +459,11 @@ export function WritingSection({
   // Practice may pass only Task 2 while URL still says part=2 → clamp to 0.
   const safeTaskIdx = Math.min(
     Math.max(0, activeTaskIdx),
-    sortedQuestions.length - 1,
+    sortedQuestions.length - 1
   )
 
   return (
-    <div className='flex h-full min-h-0 flex-col bg-white'>
+    <div className='flex h-full min-h-0 flex-col bg-background text-foreground'>
       <div className='min-h-0 flex-1'>
         {sortedQuestions.map((q, i) => {
           if (i !== safeTaskIdx) return null

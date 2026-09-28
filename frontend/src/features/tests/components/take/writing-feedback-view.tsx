@@ -1,13 +1,13 @@
 import { Fragment, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react'
+import type { WritingError, WritingFeedbackResult } from '@/lib/api/feedback'
+import { cn } from '@/lib/utils'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { cn } from '@/lib/utils'
-import type { WritingError, WritingFeedbackResult } from '@/lib/api/feedback'
 
 // ── Error highlight colors ──────────────────────────────────────────────────
 
@@ -19,33 +19,15 @@ const ERROR_TYPES = [
   'punctuation',
 ] as const
 
-const ERROR_COLORS: Record<WritingError['type'], string> = {
-  grammar:
-    'bg-red-100 text-red-800 underline decoration-red-400 decoration-wavy',
-  lexical:
-    'bg-amber-100 text-amber-800 underline decoration-amber-400 decoration-wavy',
-  spelling:
-    'bg-orange-100 text-orange-800 underline decoration-orange-500 decoration-wavy',
-  cohesion:
-    'bg-blue-100 text-blue-800 underline decoration-blue-400 decoration-wavy',
-  punctuation:
-    'bg-violet-100 text-violet-800 underline decoration-violet-400 decoration-wavy',
-}
-
-const ERROR_BADGE: Record<WritingError['type'], string> = {
-  grammar: 'bg-red-100 text-red-700 border-red-200',
-  lexical: 'bg-amber-100 text-amber-700 border-amber-200',
-  spelling: 'bg-orange-100 text-orange-700 border-orange-200',
-  cohesion: 'bg-blue-100 text-blue-700 border-blue-200',
-  punctuation: 'bg-violet-100 text-violet-700 border-violet-200',
-}
+const ERROR_HIGHLIGHT =
+  'bg-muted/70 text-foreground underline decoration-muted-foreground decoration-wavy'
 
 const KNOWN_ERROR_TYPES = new Set<string>(ERROR_TYPES)
 
 /** Keep only highlightable, non-junk errors (max 12). */
 export function sanitizeWritingErrors(
   errors: WritingError[],
-  essayText: string,
+  essayText: string
 ): WritingError[] {
   const seen = new Set<string>()
   const out: WritingError[] = []
@@ -121,7 +103,7 @@ function HighlightedEssay({
 
   if (!errors.length) {
     return (
-      <p className='whitespace-pre-wrap text-sm leading-7 text-slate-800'>
+      <p className='text-sm leading-relaxed whitespace-pre-wrap text-foreground'>
         {text}
       </p>
     )
@@ -165,12 +147,11 @@ function HighlightedEssay({
     pool = pool.filter((e) => e.errorIdx !== best!.errorIdx)
   }
 
-  const activeError =
-    activeIdx != null ? (errors[activeIdx] ?? null) : null
+  const activeError = activeIdx != null ? (errors[activeIdx] ?? null) : null
 
   return (
     <div className='space-y-3'>
-      <p className='overflow-x-hidden whitespace-pre-wrap text-sm leading-7 text-slate-800'>
+      <p className='overflow-x-hidden text-sm leading-relaxed whitespace-pre-wrap text-foreground'>
         {segments.map((seg, i) => {
           if (seg.kind === 'text') {
             return <Fragment key={i}>{seg.content}</Fragment>
@@ -183,21 +164,21 @@ function HighlightedEssay({
               tabIndex={0}
               onClick={() =>
                 setActiveIdx((prev) =>
-                  prev === seg.errorIdx ? null : seg.errorIdx,
+                  prev === seg.errorIdx ? null : seg.errorIdx
                 )
               }
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault()
                   setActiveIdx((prev) =>
-                    prev === seg.errorIdx ? null : seg.errorIdx,
+                    prev === seg.errorIdx ? null : seg.errorIdx
                   )
                 }
               }}
               className={cn(
-                'cursor-pointer rounded px-0.5 outline-none ring-offset-1 focus-visible:ring-2 focus-visible:ring-blue-400',
-                ERROR_COLORS[seg.error.type] ?? '',
-                isActive && 'ring-2 ring-blue-500',
+                'cursor-pointer rounded-sm px-0.5 ring-offset-1 outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                ERROR_HIGHLIGHT,
+                isActive && 'ring-2 ring-ring'
               )}
             >
               {seg.content}
@@ -207,25 +188,25 @@ function HighlightedEssay({
       </p>
 
       {activeError && (
-        <div className='rounded-md border border-slate-200 bg-white p-3 text-xs shadow-sm'>
-          <p className='mb-1 font-semibold capitalize text-slate-800'>
+        <div className='rounded-md border border-border bg-card p-3 text-xs'>
+          <p className='mb-1 font-semibold text-foreground capitalize'>
             {activeError.type}
           </p>
-          <p className='text-slate-600'>
-            <span className='text-slate-400 line-through'>
-              {activeError.quote}
-            </span>
-            <span className='mx-1.5 text-slate-400'>→</span>
-            <span className='font-medium text-emerald-700'>
+          <p className='text-muted-foreground'>
+            <span className='line-through'>{activeError.quote}</span>
+            <span className='mx-1.5'>→</span>
+            <span className='font-medium text-foreground'>
               {activeError.correction}
             </span>
           </p>
           {activeError.explanation && (
-            <p className='mt-1.5 text-slate-500'>{activeError.explanation}</p>
+            <p className='mt-1.5 text-muted-foreground'>
+              {activeError.explanation}
+            </p>
           )}
           <button
             type='button'
-            className='mt-2 text-blue-600 hover:underline'
+            className='mt-2 rounded-sm text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
             onClick={() => setActiveIdx(null)}
           >
             Dismiss
@@ -249,7 +230,7 @@ function CriteriaGrid({
   const criteria = getWritingCriteria(taskNumber)
 
   return (
-    <div className='grid grid-cols-2 gap-3'>
+    <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
       {criteria.map(([key, label, descriptor]) => {
         const criterion = data[key as keyof WritingFeedbackResult] as
           | { band: number; feedback: string }
@@ -258,34 +239,50 @@ function CriteriaGrid({
         if (!criterion) return null
         const isExp = expanded === key
         return (
-          <div key={key} className='rounded-lg border border-slate-200 bg-slate-50 p-3'>
+          <div
+            key={key}
+            className='rounded-md border border-border bg-muted/30 p-3'
+          >
             <div className='mb-1 flex items-center justify-between gap-1'>
-              <p className='text-xs font-medium text-slate-500'>{label}</p>
+              <p className='text-xs font-medium text-muted-foreground'>
+                {label}
+              </p>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <HelpCircle className='size-3 shrink-0 text-slate-400 hover:text-slate-600' />
+                  <HelpCircle className='size-4 shrink-0 text-muted-foreground hover:text-foreground' />
                 </TooltipTrigger>
                 <TooltipContent className='max-w-xs text-xs'>
                   {descriptor}
                 </TooltipContent>
               </Tooltip>
             </div>
-            <p className='text-center text-xl font-bold text-slate-800'>
+            <p className='text-center text-xl font-semibold text-foreground tabular-nums'>
               {criterion.band.toFixed(1)}
             </p>
-            <p className={cn('mt-1 text-xs text-slate-500', !isExp && 'line-clamp-3')}>
+            <p
+              className={cn(
+                'mt-1 text-xs text-muted-foreground',
+                !isExp && 'line-clamp-3'
+              )}
+            >
               {criterion.feedback}
             </p>
             {criterion.feedback.length > 120 && (
               <button
                 type='button'
                 onClick={() => setExpanded(isExp ? null : key)}
-                className='mt-1 flex items-center gap-0.5 text-xs text-blue-600 hover:underline'
+                className='mt-1 flex items-center gap-1 rounded-sm text-xs text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
               >
                 {isExp ? (
-                  <><ChevronUp className='size-3' />Show less</>
+                  <>
+                    <ChevronUp className='size-3' />
+                    Show less
+                  </>
                 ) : (
-                  <><ChevronDown className='size-3' />Show more</>
+                  <>
+                    <ChevronDown className='size-3' />
+                    Show more
+                  </>
                 )}
               </button>
             )}
@@ -309,27 +306,27 @@ export function WritingFeedbackView({
 }) {
   const errors = useMemo(
     () => sanitizeWritingErrors(feedback.errors ?? [], essayText),
-    [feedback.errors, essayText],
+    [feedback.errors, essayText]
   )
 
   return (
     <TooltipProvider>
       <div className='space-y-4 overflow-x-hidden'>
         {/* Overall band */}
-        <div className='flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4'>
+        <div className='flex items-center gap-3 rounded-md border border-border bg-card p-4'>
           <div className='text-center'>
-            <p className='text-xs text-slate-400'>Band Score</p>
-            <p className='text-4xl font-bold text-slate-900'>
+            <p className='text-xs text-muted-foreground'>Band Score</p>
+            <p className='text-4xl font-semibold text-foreground tabular-nums'>
               {feedback.overall_band.toFixed(1)}
             </p>
           </div>
           <div className='min-w-0 flex-1'>
             {feedback.strengths.length > 0 && (
               <>
-                <p className='mb-1 text-xs font-semibold uppercase text-slate-500'>
+                <p className='mb-1 text-xs font-semibold text-muted-foreground uppercase'>
                   Strengths
                 </p>
-                <ul className='list-inside list-disc space-y-0.5 text-xs text-slate-600'>
+                <ul className='list-inside list-disc space-y-1 text-xs text-muted-foreground'>
                   {feedback.strengths.map((s, i) => (
                     <li key={i}>{s}</li>
                   ))}
@@ -342,10 +339,10 @@ export function WritingFeedbackView({
         {/* Improvements */}
         {feedback.improvements.length > 0 && (
           <div>
-            <p className='mb-1 text-xs font-semibold uppercase text-slate-500'>
+            <p className='mb-1 text-xs font-semibold text-muted-foreground uppercase'>
               Areas for Improvement
             </p>
-            <ul className='list-inside list-disc space-y-1 text-xs text-slate-600'>
+            <ul className='list-inside list-disc space-y-1 text-xs text-muted-foreground'>
               {feedback.improvements.map((s, i) => (
                 <li key={i}>{s}</li>
               ))}
@@ -359,13 +356,13 @@ export function WritingFeedbackView({
         {/* Highlighted essay */}
         {essayText && (
           <div>
-            <p className='mb-2 text-xs font-semibold uppercase text-slate-500'>
+            <p className='mb-2 text-xs font-semibold text-muted-foreground uppercase'>
               Your Essay (annotated)
             </p>
-            <p className='mb-2 text-[11px] text-slate-400'>
+            <p className='mb-2 text-xs text-muted-foreground'>
               Click a highlighted phrase to see the correction.
             </p>
-            <div className='max-h-64 overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4'>
+            <div className='max-h-64 overflow-x-hidden overflow-y-auto rounded-md border border-border bg-muted/30 p-4'>
               <HighlightedEssay text={essayText} errors={errors} />
             </div>
           </div>
@@ -374,32 +371,27 @@ export function WritingFeedbackView({
         {/* Error list — vertical cards for narrow column */}
         {errors.length > 0 && (
           <div>
-            <p className='mb-2 text-xs font-semibold uppercase text-slate-500'>
+            <p className='mb-2 text-xs font-semibold text-muted-foreground uppercase'>
               Errors & Corrections
             </p>
             <div className='space-y-2'>
               {errors.map((err, i) => (
                 <div
                   key={i}
-                  className='space-y-1.5 rounded-lg border border-slate-200 bg-white p-3 text-xs'
+                  className='space-y-1.5 rounded-md border border-border bg-card p-3 text-xs'
                 >
-                  <span
-                    className={cn(
-                      'inline-block rounded border px-1.5 py-0.5 font-medium capitalize',
-                      ERROR_BADGE[err.type] ?? '',
-                    )}
-                  >
+                  <span className='inline-block rounded-md border border-border bg-muted px-2 py-0.5 font-medium text-muted-foreground capitalize'>
                     {err.type}
                   </span>
-                  <p className='break-words text-slate-700'>
-                    <span className='text-slate-400 line-through'>{err.quote}</span>
-                    <span className='mx-1.5 text-slate-400'>→</span>
-                    <span className='font-medium text-emerald-700'>
-                      {err.correction}
+                  <p className='break-words text-foreground'>
+                    <span className='text-muted-foreground line-through'>
+                      {err.quote}
                     </span>
+                    <span className='mx-1.5 text-muted-foreground'>→</span>
+                    <span className='font-medium'>{err.correction}</span>
                   </p>
                   {err.explanation && (
-                    <p className='text-slate-400'>{err.explanation}</p>
+                    <p className='text-muted-foreground'>{err.explanation}</p>
                   )}
                 </div>
               ))}
