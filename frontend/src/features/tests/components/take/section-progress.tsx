@@ -108,7 +108,7 @@ export function SectionProgress({
               'flex items-center gap-1.5 rounded-full font-medium transition-colors',
               inline
                 ? 'px-2.5 py-1 text-[12px]'
-                : 'px-3 py-1.5 text-[13px]',
+                : 'min-h-11 px-3 py-1.5 text-[13px]',
               visual === 'sealed' && 'cursor-not-allowed text-emerald-600',
               visual === 'active' && 'cursor-default text-blue-600',
               visual === 'available' &&
