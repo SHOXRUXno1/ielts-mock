@@ -6,7 +6,6 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
 import { useIsDesktop } from '@/hooks/use-mobile'
-import { cn } from '@/lib/utils'
 import {
   adaptInstructionForScreen,
   hasTfngKeyLegend,
@@ -15,6 +14,7 @@ import {
   InstructionBlock,
   renderFormattedText,
 } from './shared/instruction-block'
+import { PillTabs } from './shared/pill-tabs'
 import { QuestionRangeTitle } from './shared/question-range-title'
 import { PassageHighlighter } from './shared/passage-highlighter'
 import {
@@ -592,33 +592,15 @@ export function ReadingSection({
   if (!isDesktop) {
     return (
       <div className='flex h-full flex-col'>
-        <div className='flex border-b border-slate-200'>
-          <button
-            type='button'
-            onClick={() => setMobileTab('passage')}
-            className={cn(
-              'flex flex-1 items-center justify-center gap-1.5 min-h-11 text-[13px] font-medium transition-colors',
-              mobileTab === 'passage'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-slate-500 hover:text-slate-700',
-            )}
-          >
-            <BookOpen className='size-3.5' />
-            Passage
-          </button>
-          <button
-            type='button'
-            onClick={() => setMobileTab('questions')}
-            className={cn(
-              'flex flex-1 items-center justify-center gap-1.5 min-h-11 text-[13px] font-medium transition-colors',
-              mobileTab === 'questions'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-slate-500 hover:text-slate-700',
-            )}
-          >
-            <HelpCircle className='size-3.5' />
-            Questions
-          </button>
+        <div className='flex justify-center border-b border-slate-200 px-4 py-2'>
+          <PillTabs
+            items={[
+              { label: 'Passage', icon: <BookOpen className='size-3.5' /> },
+              { label: 'Questions', icon: <HelpCircle className='size-3.5' /> },
+            ]}
+            active={mobileTab === 'passage' ? 0 : 1}
+            onChange={(i) => setMobileTab(i === 0 ? 'passage' : 'questions')}
+          />
         </div>
         {mobileTab === 'passage' && (
           <div className='min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6'>
