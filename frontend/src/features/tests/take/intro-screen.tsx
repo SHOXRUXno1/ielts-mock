@@ -59,7 +59,7 @@ export function IntroScreen({
 
   return (
     <main className='flex min-h-svh flex-col items-center justify-center px-6 py-12 sm:py-16'>
-      <div className='flex w-full max-w-xl flex-col gap-8'>
+      <div className='flex w-full max-w-xl flex-col gap-8 rounded-xl border border-border bg-card p-6 sm:p-8'>
         <header className='text-center'>
           <p className='text-xs font-medium tracking-wider text-muted-foreground uppercase'>
             {kicker}
