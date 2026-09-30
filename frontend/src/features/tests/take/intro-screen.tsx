@@ -54,13 +54,15 @@ export function IntroScreen({
     test.section_settings?.filter((s) => presentTypes.includes(s.section_type))
   )
   const estimated = presentTypes.some((t) => durations[t] == null)
+  const kicker =
+    presentTypes.length === TYPE_ORDER.length ? 'Full mock test' : 'Practice test'
 
   return (
-    <main className='flex min-h-screen flex-col items-center justify-center px-6 py-12'>
-      <div className='flex w-full max-w-2xl flex-col gap-8'>
+    <main className='flex min-h-svh flex-col items-center justify-center px-6 py-12 sm:py-16'>
+      <div className='flex w-full max-w-xl flex-col gap-8'>
         <header className='text-center'>
-          <p className='text-xs font-medium tracking-wide text-muted-foreground uppercase'>
-            Full mock test
+          <p className='text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+            {kicker}
           </p>
           <h1 className='mt-2 text-2xl font-semibold tracking-tight text-foreground'>
             {test.title}
@@ -108,7 +110,7 @@ export function IntroScreen({
 
                     <div className='min-w-0 flex-1'>
                       <div className='flex flex-wrap items-baseline gap-x-2 gap-y-1'>
-                        <span className='text-xs font-medium text-muted-foreground'>
+                        <span className='text-xs font-medium text-muted-foreground tabular-nums'>
                           Part {i + 1}
                         </span>
                         <span className='text-base font-medium text-foreground'>
@@ -120,11 +122,11 @@ export function IntroScreen({
                           </span>
                         )}
                       </div>
-                      <p className='mt-1 text-sm text-muted-foreground'>
-                        {isSpeaking
-                          ? 'Live conversation · AI-paced'
-                          : 'Exam timer starts when you enter'}
-                      </p>
+                      {isSpeaking && (
+                        <p className='mt-1 text-sm text-muted-foreground'>
+                          Live conversation · AI-paced
+                        </p>
+                      )}
                     </div>
 
                     <span className='shrink-0 text-sm font-semibold text-foreground tabular-nums'>
@@ -169,7 +171,7 @@ export function IntroScreen({
             <Button
               size='lg'
               variant='outline'
-              className='h-12 px-6 font-medium shadow-none'
+              className='h-10 w-full px-5 font-medium shadow-none sm:w-auto'
               onClick={onCancel}
               disabled={isStarting}
             >
@@ -178,7 +180,7 @@ export function IntroScreen({
             </Button>
             <Button
               size='lg'
-              className='h-12 px-6 font-medium shadow-none'
+              className='h-10 w-full px-5 font-medium shadow-none sm:w-auto'
               onClick={() => {
                 if (EXAM_FULLSCREEN_ENFORCED) enterExamFullscreen()
                 onStart()
