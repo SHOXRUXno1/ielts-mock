@@ -442,7 +442,10 @@ export function ReadingSection({
           )}
           {!section?.passage_subtitle && displayTitle && <div className='mb-6' />}
           <div className='space-y-5 text-left sm:text-justify'>
-            {renderFormattedText(body || effectivePassage)}
+            {renderFormattedText(
+              body || effectivePassage,
+              'text-[15px] leading-normal text-muted-foreground tracking-[-0.01em]',
+            )}
           </div>
         </article>
       ) : (
