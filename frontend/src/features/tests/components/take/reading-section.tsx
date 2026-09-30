@@ -418,30 +418,30 @@ export function ReadingSection({
   // Shared passage content
   const passageContent = (
     <>
-      <h2 className='text-lg font-medium text-slate-900'>
+      <h2 className='text-xl font-bold uppercase tracking-wide text-foreground sm:text-2xl'>
         Passage {passageNum}
       </h2>
 
-      <p className='mt-1 text-[13px] text-slate-400'>
+      <p className='mt-1.5 text-sm text-muted-foreground'>
         You should spend about 20 minutes on Questions {minQ}
         {minQ !== maxQ ? `–${maxQ}` : ''}, which are based on Reading Passage{' '}
         {passageNum}.
       </p>
 
       {effectivePassage ? (
-        <article className='mt-6'>
+        <article className='mt-8'>
           {displayTitle && (
-            <h3 className='mb-3 text-center text-[22px] font-bold leading-snug tracking-tight text-foreground'>
+            <h3 className='mb-3 text-center text-2xl font-bold leading-snug tracking-tight text-foreground sm:text-[26px]'>
               {displayTitle}
             </h3>
           )}
           {section?.passage_subtitle && (
-            <p className='mb-6 text-center text-sm font-semibold italic text-foreground'>
+            <p className='mb-6 text-center text-base italic text-foreground/80'>
               {section.passage_subtitle}
             </p>
           )}
-          {!section?.passage_subtitle && displayTitle && <div className='mb-5' />}
-          <div className='space-y-5 text-justify'>
+          {!section?.passage_subtitle && displayTitle && <div className='mb-6' />}
+          <div className='space-y-5 text-left sm:text-justify'>
             {renderFormattedText(body || effectivePassage)}
           </div>
         </article>
