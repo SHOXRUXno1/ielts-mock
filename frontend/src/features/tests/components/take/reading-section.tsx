@@ -418,11 +418,11 @@ export function ReadingSection({
   // Shared passage content
   const passageContent = (
     <>
-      <h2 className='text-2xl font-bold uppercase text-[#0a0a0a]'>
+      <h2 className='text-2xl leading-8 font-bold text-neutral-950 uppercase dark:text-neutral-50'>
         Passage {passageNum}
       </h2>
 
-      <p className='mt-1 text-sm text-[#737373]'>
+      <p className='mt-1 text-sm leading-5 text-neutral-500 dark:text-neutral-400'>
         You should spend about 20 minutes on Questions {minQ}
         {minQ !== maxQ ? `–${maxQ}` : ''}, which are based on Reading Passage{' '}
         {passageNum}.
@@ -431,20 +431,19 @@ export function ReadingSection({
       {effectivePassage ? (
         <article className='mt-6'>
           {displayTitle && (
-            <h3 className='mb-3 text-center text-2xl font-bold leading-snug text-[#0a0a0a]'>
+            <h3 className='mb-4 text-center text-2xl leading-8 font-bold text-neutral-950 dark:text-neutral-50'>
               {displayTitle}
             </h3>
           )}
           {section?.passage_subtitle && (
-            <p className='mb-6 text-center text-base font-bold italic text-[#0a0a0a]'>
+            <p className='mb-4 text-center text-base font-bold text-neutral-950 italic dark:text-neutral-50'>
               {section.passage_subtitle}
             </p>
           )}
-          {!section?.passage_subtitle && displayTitle && <div className='mb-5' />}
-          <div className='space-y-5 text-left sm:text-justify'>
+          <div className='space-y-4 text-left'>
             {renderFormattedText(
               body || effectivePassage,
-              'text-[14px] leading-[20px] text-[#737373]',
+              'text-base leading-[1.625] text-neutral-950 dark:text-neutral-50'
             )}
           </div>
         </article>
@@ -606,7 +605,7 @@ export function ReadingSection({
           />
         </div>
         {mobileTab === 'passage' && (
-          <div className='min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6'>
+          <div className='min-h-0 flex-1 overflow-y-auto bg-background px-2 py-4'>
             {section?.id ? (
               <PassageHighlighter attemptId={attemptId} sectionId={section.id}>
                 {passageContent}
@@ -641,7 +640,7 @@ export function ReadingSection({
   return (
     <ResizablePanelGroup orientation='horizontal' className='h-full'>
       <ResizablePanel defaultSize='50%' minSize='25%'>
-        <div className='h-full overflow-y-auto overflow-x-hidden bg-white px-5 py-6 xl:px-10 xl:py-8'>
+        <div className='h-full overflow-x-hidden overflow-y-auto bg-background px-2 py-4'>
           {section?.id ? (
             <PassageHighlighter attemptId={attemptId} sectionId={section.id}>
               {passageContent}
