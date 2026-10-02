@@ -215,10 +215,10 @@ function PreviewGroup({
               q.computed_number ?? q.order,
             )
             return (
-              <div key={q.id} className={isSingleChoice ? 'space-y-2' : 'space-y-1'}>
-                <p className={isSingleChoice ? 'text-[13px] leading-5 text-foreground' : 'text-[12px] text-foreground'}>
+              <div key={q.id} className={isSingleChoice ? 'my-4' : 'space-y-1'}>
+                <p className={isSingleChoice ? 'my-2 text-base leading-6 text-foreground' : 'text-[12px] text-foreground'}>
                   {isSingleChoice ? (
-                    <span className='mr-2 font-semibold tabular-nums'>
+                    <span className='mr-2 inline-flex h-[1.5em] min-w-[1.5em] items-center justify-center font-bold tabular-nums'>
                       {q.computed_number ?? q.order}
                     </span>
                   ) : (
@@ -235,12 +235,12 @@ function PreviewGroup({
                     <ExamMapImage src={q.image_url} />
                   </div>
                 )}
-                <ul className={isSingleChoice ? 'space-y-2 pl-3' : 'space-y-0.5 pl-3'}>
+                <ul className={isSingleChoice ? 'grid gap-3' : 'space-y-0.5 pl-3'}>
                   {opts.map((opt, i) => (
                     <li
                       key={i}
                       className={isSingleChoice
-                        ? 'flex items-start gap-2 text-[12px] leading-5 text-foreground'
+                        ? 'my-1 ml-4 flex items-center gap-2 text-sm leading-none font-medium text-foreground'
                         : 'flex items-start gap-1.5 text-[11px] text-muted-foreground'}
                     >
                       <span
@@ -248,14 +248,14 @@ function PreviewGroup({
                         className={questionType === 'multi_select'
                           ? 'mt-0.5 size-3 shrink-0 rounded border border-border'
                           : isSingleChoice
-                            ? 'mt-1 size-3.5 shrink-0 rounded-full border border-muted-foreground/60'
+                            ? 'size-4 shrink-0 rounded-full border border-input shadow-xs'
                             : 'mt-0.5 size-3 shrink-0 rounded-full border border-border'}
                       />
-                      <span>
-                        <span className={isSingleChoice ? 'mr-1 font-medium' : 'font-semibold'}>
+                      <span className={isSingleChoice ? 'flex items-center gap-2' : undefined}>
+                        <span className={isSingleChoice ? '' : 'font-semibold'}>
                           {String.fromCharCode(65 + i)}.
-                        </span>{' '}
-                        {opt}
+                        </span>
+                        {isSingleChoice ? <span>{opt}</span> : <> {opt}</>}
                       </span>
                     </li>
                   ))}
