@@ -580,7 +580,6 @@ export function ReadingSection({
                         }
                         previewMode={previewMode}
                         hideQuestionNumber={group.questions.length === 1}
-                        readingMcqStyle={q.question_type === 'mcq'}
                       />
                     </div>
                   ))}

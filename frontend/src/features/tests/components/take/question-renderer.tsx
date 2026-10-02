@@ -29,8 +29,6 @@ type Props = {
   previewMode?: boolean
   /** Group already shows "Question N" — do not repeat N before the stem. */
   hideQuestionNumber?: boolean
-  /** Match JumpInto's single-choice MCQ layout in Reading only. */
-  readingMcqStyle?: boolean
 }
 
 function formatAnswerKey(answerKey: Record<string, unknown> | null): string {
@@ -68,23 +66,13 @@ function mcqChoiceText(opt: string, letter: string): string | null {
   return opt
 }
 
-function QuestionNum({
-  question,
-  readingMcqStyle = false,
-}: {
-  question: Question
-  readingMcqStyle?: boolean
-}) {
+function QuestionNum({ question }: { question: Question }) {
   const n = question.computed_number ?? question.order
   return (
     <span
       data-q-chip
       data-q-n={n}
-      className={cn(
-        readingMcqStyle
-          ? 'mr-2 inline-flex h-[1.5em] min-w-[1.5em] items-center justify-center font-bold tabular-nums'
-          : 'mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold',
-      )}
+      className='mr-1.5 inline-flex min-w-5 justify-center text-[15px] font-bold'
     >
       {n}
     </span>
@@ -677,7 +665,6 @@ export function QuestionRenderer({
   onToggleFlag: _onToggleFlag,
   previewMode: _previewMode = false,
   hideQuestionNumber = false,
-  readingMcqStyle = false,
 }: Props) {
   const qType = question.question_type
   const content = question.content
@@ -844,48 +831,27 @@ export function QuestionRenderer({
     }
 
     return (
-      <div className={readingMcqStyle ? 'space-y-2' : 'space-y-3'}>
-        <p className={cn(
-          'text-foreground',
-          readingMcqStyle
-            ? 'text-base font-normal leading-6'
-            : 'text-[15px] font-[500] leading-6',
-        )}>
-          {(readingMcqStyle || !hideQuestionNumber) && (
-            <QuestionNum question={question} readingMcqStyle={readingMcqStyle} />
-          )}
+      <div className='space-y-3'>
+        <p className='text-[15px] font-[500] leading-6 text-foreground'>
+          {!hideQuestionNumber && <QuestionNum question={question} />}
           {questionText}
         </p>
         {imageSrc && <ExamMapImage src={imageSrc} />}
         <RadioGroup
           value={selectedLetter}
           onValueChange={(v) => onAnswer({ answer: v })}
-          className={readingMcqStyle ? 'grid gap-3' : 'space-y-1.5 pl-6'}
+          className='space-y-1.5 pl-6'
         >
           {options.map((opt, i) => {
             const letter = String.fromCharCode(65 + i)
             const id = `${question.id}-${i}`
             const text = optionText(opt, i)
             return (
-              <div
-                key={i}
-                className={readingMcqStyle
-                  ? 'my-1 ml-4 flex cursor-pointer items-center gap-2'
-                  : 'flex cursor-pointer items-center gap-2.5'}
-              >
+              <div key={i} className='flex cursor-pointer items-center gap-2.5'>
                 <RadioGroupItem value={letter} id={id} />
-                <ChoiceLabel
-                  htmlFor={id}
-                  className={readingMcqStyle
-                    ? 'flex items-center gap-2 text-sm font-medium leading-none'
-                    : undefined}
-                >
-                  <span className={readingMcqStyle ? undefined : 'mr-1 font-medium'}>
-                    {letter}.
-                  </span>
-                  {mcqChoiceText(text, letter) && (
-                    readingMcqStyle ? <span>{text}</span> : ` ${text}`
-                  )}
+                <ChoiceLabel htmlFor={id}>
+                  <span className='mr-1 font-medium'>{letter}.</span>
+                  {mcqChoiceText(text, letter) ? ` ${text}` : ''}
                 </ChoiceLabel>
               </div>
             )
