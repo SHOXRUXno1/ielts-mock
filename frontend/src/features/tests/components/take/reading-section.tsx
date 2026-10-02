@@ -654,7 +654,7 @@ export function ReadingSection({
       <ResizablePanel defaultSize='50%' minSize='25%'>
         <div
           data-exam-scroll-pane
-          className='h-full overflow-y-auto overflow-x-clip bg-white px-5 py-6 pb-24 xl:px-8 xl:py-8'
+          className='h-full overflow-y-auto overflow-x-clip bg-white pl-0 pr-5 py-6 pb-24 xl:pl-0 xl:pr-8 xl:py-8'
         >
           {section?.id ? (
             <PassageHighlighter
