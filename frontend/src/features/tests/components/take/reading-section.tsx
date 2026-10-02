@@ -444,7 +444,7 @@ export function ReadingSection({
           <div className='space-y-5 text-left sm:text-justify'>
             {renderFormattedText(
               body || effectivePassage,
-              'text-[14px] leading-[20px] text-[#737373]',
+              'text-base leading-7 text-[#0a0a0a]',
             )}
           </div>
         </article>
