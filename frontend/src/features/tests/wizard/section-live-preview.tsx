@@ -207,6 +207,7 @@ function PreviewGroup({
         <div className='mt-2 space-y-3'>
           {questions.map((q) => {
             const opts = (q.content.options as string[]) ?? []
+            const isSingleChoice = questionType === 'mcq'
             const questionText = stripLeadingQuestionNumber(
               (q.content.question as string) ||
                 (q.content.prompt as string) ||
@@ -214,10 +215,16 @@ function PreviewGroup({
               q.computed_number ?? q.order,
             )
             return (
-              <div key={q.id} className='space-y-1'>
-                <p className='text-[12px] text-foreground'>
-                  {questions.length > 1 && (
-                    <span className='font-semibold'>{qLabel(q)}. </span>
+              <div key={q.id} className={isSingleChoice ? 'my-4' : 'space-y-1'}>
+                <p className={isSingleChoice ? 'my-2 text-base leading-6 text-foreground' : 'text-[12px] text-foreground'}>
+                  {isSingleChoice ? (
+                    <span className='mr-2 inline-flex h-[1.5em] min-w-[1.5em] items-center justify-center font-bold tabular-nums'>
+                      {q.computed_number ?? q.order}
+                    </span>
+                  ) : (
+                    questions.length > 1 && (
+                      <span className='font-semibold'>{qLabel(q)}. </span>
+                    )
                   )}
                   {questionText || (
                     <span className='italic text-muted-foreground'>No question text</span>
@@ -228,24 +235,27 @@ function PreviewGroup({
                     <ExamMapImage src={q.image_url} />
                   </div>
                 )}
-                <ul className='space-y-0.5 pl-3'>
+                <ul className={isSingleChoice ? 'grid gap-3' : 'space-y-0.5 pl-3'}>
                   {opts.map((opt, i) => (
                     <li
                       key={i}
-                      className='flex items-start gap-1.5 text-[11px] text-muted-foreground'
+                      className={isSingleChoice
+                        ? 'my-1 ml-4 flex items-center gap-2 text-sm leading-none font-medium text-foreground'
+                        : 'flex items-start gap-1.5 text-[11px] text-muted-foreground'}
                     >
                       <span
-                        className={
-                          questionType === 'multi_select'
-                            ? 'mt-0.5 size-3 shrink-0 rounded border border-border'
-                            : 'mt-0.5 size-3 shrink-0 rounded-full border border-border'
-                        }
+                        aria-hidden='true'
+                        className={questionType === 'multi_select'
+                          ? 'mt-0.5 size-3 shrink-0 rounded border border-border'
+                          : isSingleChoice
+                            ? 'size-4 shrink-0 rounded-full border border-input shadow-xs'
+                            : 'mt-0.5 size-3 shrink-0 rounded-full border border-border'}
                       />
-                      <span>
-                        <span className='font-semibold'>
+                      <span className={isSingleChoice ? 'flex items-center gap-2' : undefined}>
+                        <span className={isSingleChoice ? '' : 'font-semibold'}>
                           {String.fromCharCode(65 + i)}.
-                        </span>{' '}
-                        {opt}
+                        </span>
+                        {isSingleChoice ? <span>{opt}</span> : <> {opt}</>}
                       </span>
                     </li>
                   ))}
