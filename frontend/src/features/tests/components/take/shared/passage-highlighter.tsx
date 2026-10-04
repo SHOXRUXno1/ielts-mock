@@ -4,6 +4,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type ClipboardEvent as ReactClipboardEvent,
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
@@ -203,6 +204,8 @@ type Props = {
   storageKeySuffix?: string
   children: ReactNode
   className?: string
+  /** Disable copying for protected passage content while preserving selection. */
+  allowCopy?: boolean
 }
 
 export function PassageHighlighter({
@@ -211,6 +214,7 @@ export function PassageHighlighter({
   storageKeySuffix,
   children,
   className,
+  allowCopy = true,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
@@ -268,6 +272,13 @@ export function PassageHighlighter({
   const closeToolbar = useCallback(() => {
     setToolbar(null)
   }, [])
+
+  const handleCopy = useCallback(
+    (event: ReactClipboardEvent<HTMLDivElement>) => {
+      if (!allowCopy) event.preventDefault()
+    },
+    [allowCopy],
+  )
 
   const handlePointerUp = useCallback(() => {
     const root = containerRef.current
@@ -449,7 +460,14 @@ export function PassageHighlighter({
 
   return (
     <>
-      <div ref={containerRef} className={cn('passage-highlighter select-text', className)} onMouseUp={handlePointerUp} onTouchEnd={handlePointerUp} onClick={handleClick}>
+      <div
+        ref={containerRef}
+        className={cn('passage-highlighter select-text', className)}
+        onMouseUp={handlePointerUp}
+        onTouchEnd={handlePointerUp}
+        onClick={handleClick}
+        onCopy={handleCopy}
+      >
         {children}
       </div>
 
@@ -477,15 +495,17 @@ export function PassageHighlighter({
               />
             ))}
             <span className='mx-0.5 h-4 w-px bg-border' />
-            <button
-              type='button'
-              title='Copy'
-              aria-label='Copy text'
-              className='flex size-6 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground'
-              onClick={() => void copySelection()}
-            >
-              <Copy className='size-3.5' />
-            </button>
+            {allowCopy && (
+              <button
+                type='button'
+                title='Copy'
+                aria-label='Copy text'
+                className='flex size-6 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground'
+                onClick={() => void copySelection()}
+              >
+                <Copy className='size-3.5' />
+              </button>
+            )}
             {highlights.length > 0 && (
               <button
                 type='button'

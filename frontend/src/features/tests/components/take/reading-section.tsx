@@ -608,7 +608,11 @@ export function ReadingSection({
         {mobileTab === 'passage' && (
           <div className='min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6'>
             {section?.id ? (
-              <PassageHighlighter attemptId={attemptId} sectionId={section.id}>
+              <PassageHighlighter
+                attemptId={attemptId}
+                sectionId={section.id}
+                allowCopy={previewMode}
+              >
                 {passageContent}
               </PassageHighlighter>
             ) : (
@@ -643,7 +647,11 @@ export function ReadingSection({
       <ResizablePanel defaultSize='50%' minSize='25%'>
         <div className='h-full overflow-y-auto overflow-x-hidden bg-white px-5 py-6 xl:px-10 xl:py-8'>
           {section?.id ? (
-            <PassageHighlighter attemptId={attemptId} sectionId={section.id}>
+            <PassageHighlighter
+              attemptId={attemptId}
+              sectionId={section.id}
+              allowCopy={previewMode}
+            >
               {passageContent}
             </PassageHighlighter>
           ) : (
