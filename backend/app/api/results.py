@@ -330,6 +330,15 @@ async def delete_attempt(
     attempt = await db.get(Attempt, attempt_id)
     if attempt is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found")
+    active_statuses = {
+        AttemptStatus.IN_PROGRESS,
+        AttemptStatus.SPEAKING_IN_PROGRESS,
+    }
+    if AttemptStatus(attempt.status) in active_statuses:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete an attempt that is still in progress",
+        )
     await db.delete(attempt)
     await db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
