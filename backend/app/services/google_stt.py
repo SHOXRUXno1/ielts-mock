@@ -13,6 +13,7 @@ import asyncio
 import base64
 import json
 import logging
+import re
 import shutil
 import tempfile
 import time
@@ -115,6 +116,25 @@ def project_id() -> str:
     return str(creds.get("project_id") or "")
 
 
+_MAX_PHRASE_REPEATS = 3
+
+
+def collapse_repetitions(text: str) -> str:
+    """Collapse STT hallucination loops like 'especially I, especially I, ...'
+
+    Detects any phrase of 1-8 words repeated more than _MAX_PHRASE_REPEATS
+    times consecutively and keeps only _MAX_PHRASE_REPEATS occurrences.
+    """
+    if not text or len(text) < 40:
+        return text
+    result = re.sub(
+        r"((?:\S+[\s,]*){1,8}?)\1{3,}",
+        lambda m: m.group(1) * _MAX_PHRASE_REPEATS,
+        text,
+    )
+    return result.strip()
+
+
 def transcript_from_response(payload: dict[str, Any]) -> str:
     """Join every result's top alternative. Empty payload is silence."""
     text, _ = transcript_and_confidence(payload)
@@ -147,7 +167,7 @@ def transcript_and_confidence(
         if isinstance(raw_conf, (int, float)):
             confidences.append(float(raw_conf))
     avg_conf = sum(confidences) / len(confidences) if confidences else None
-    return " ".join(parts), avg_conf
+    return collapse_repetitions(" ".join(parts)), avg_conf
 
 
 def _b64url(raw: bytes) -> str:
@@ -230,7 +250,8 @@ def is_duration_limit_error(exc: BaseException) -> bool:
 
 
 def _join_chunk_transcripts(parts: list[str]) -> str:
-    return " ".join(part.strip() for part in parts if part and part.strip())
+    joined = " ".join(part.strip() for part in parts if part and part.strip())
+    return collapse_repetitions(joined)
 
 
 async def recognize(
