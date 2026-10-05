@@ -16,10 +16,7 @@ import {
 } from '../data/duration-rules'
 import type { Section, SectionType, TestDetail } from '../data/schema'
 import { SECTION_LABELS, TYPE_ORDER } from './constants'
-import {
-  enterExamFullscreen,
-  EXAM_FULLSCREEN_ENFORCED,
-} from './exam-fullscreen'
+import { enterExamFullscreen } from './exam-fullscreen'
 
 const SECTION_ICONS: Record<SectionType, LucideIcon> = {
   listening: Headphones,
@@ -175,7 +172,7 @@ export function IntroScreen({
               size='lg'
               className='h-10 w-full px-5 font-medium shadow-none sm:w-auto'
               onClick={() => {
-                if (EXAM_FULLSCREEN_ENFORCED) enterExamFullscreen()
+                enterExamFullscreen()
                 onStart()
               }}
               disabled={isStarting || presentTypes.length === 0}

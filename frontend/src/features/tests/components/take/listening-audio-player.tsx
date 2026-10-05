@@ -53,7 +53,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
   return (
     <div
       className={cn(
-        'group/player rounded-xl border border-slate-200/70 bg-white p-3 shadow-sm ring-1 ring-slate-900/[0.02]',
+        'group/player rounded-xl border border-border bg-background p-3 shadow-sm ring-1 ring-foreground/[0.02]',
         'sm:p-5',
       )}
       aria-label={`Part ${partNumber} audio`}
@@ -64,10 +64,10 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
             <Headphones className='size-3.5' />
           </div>
           <div className='flex flex-col'>
-            <span className='text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500'>
+            <span className='text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
               Part {partNumber}
             </span>
-            <span className='text-[13px] font-medium text-slate-900'>
+            <span className='text-[13px] font-medium text-foreground'>
               Listening audio
             </span>
           </div>
@@ -106,7 +106,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
             'group/btn flex size-10 shrink-0 items-center justify-center rounded-full transition-all sm:size-11',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
             isCompleted || !canToggle
-              ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+              ? 'cursor-not-allowed bg-muted text-muted-foreground'
               : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700 hover:shadow-md active:scale-95',
           )}
         >
@@ -119,7 +119,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
 
         <div className='flex flex-1 flex-col gap-2'>
           <div
-            className='relative h-1.5 w-full overflow-hidden rounded-full bg-slate-200/80'
+            className='relative h-1.5 w-full overflow-hidden rounded-full bg-muted'
             role='progressbar'
             aria-valuemin={0}
             aria-valuemax={100}
@@ -128,15 +128,15 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-300 ease-out',
-                isCompleted ? 'bg-slate-400' : 'bg-blue-600',
+                isCompleted ? 'bg-muted-foreground' : 'bg-blue-600',
               )}
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          <div className='flex justify-between text-xs font-medium tabular-nums text-slate-600'>
+          <div className='flex justify-between text-xs font-medium tabular-nums text-muted-foreground'>
             <span>{isViewedPlaying ? formatTime(displayTime) : '--:--'}</span>
-            <span className='text-slate-500'>
+            <span className='text-muted-foreground'>
               {isViewedPlaying && displayDuration > 0
                 ? formatTime(displayDuration)
                 : '--:--'}
@@ -145,7 +145,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
         </div>
 
         <div className='flex items-center gap-2'>
-          <Volume2 className='size-4 shrink-0 text-slate-500' />
+          <Volume2 className='size-4 shrink-0 text-muted-foreground' />
           <input
             type='range'
             min={0}
@@ -178,8 +178,8 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
       )}
 
       {!isCompleted && isOtherPlaying && audio.playingPartNumber != null && (
-        <p className='mt-3 flex items-start gap-2 text-xs text-slate-600'>
-          <Info className='mt-0.5 size-3.5 shrink-0 text-slate-400' />
+        <p className='mt-3 flex items-start gap-2 text-xs text-muted-foreground'>
+          <Info className='mt-0.5 size-3.5 shrink-0 text-muted-foreground/70' />
           <span>{otherPartPlayingCopy(audio.playingPartNumber, partNumber)}</span>
         </p>
       )}
@@ -188,8 +188,8 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
         !isViewedPlaying &&
         !isOtherPlaying &&
         !audio.blocked && (
-          <p className='mt-3 flex items-start gap-2 text-xs text-slate-500'>
-            <Info className='mt-0.5 size-3.5 shrink-0 text-slate-400' />
+          <p className='mt-3 flex items-start gap-2 text-xs text-muted-foreground'>
+            <Info className='mt-0.5 size-3.5 shrink-0 text-muted-foreground/70' />
             <span>Audio for this part will start automatically.</span>
           </p>
         )}

@@ -1058,15 +1058,15 @@ export function TakeTestShell({
 
   if (testLoading || resolvingAttempt) {
     return (
-      <div className='flex h-screen items-center justify-center bg-white'>
-        <Loader2 className='size-8 animate-spin text-slate-400' />
+      <div className='flex h-screen items-center justify-center bg-background'>
+        <Loader2 className='size-8 animate-spin text-muted-foreground' />
       </div>
     )
   }
 
   if (testError || !test || !ctxValue) {
     return (
-      <div className='flex h-screen items-center justify-center bg-white px-4'>
+      <div className='flex h-screen items-center justify-center bg-background px-4'>
         <Alert variant='destructive' className='max-w-md'>
           <AlertCircle className='size-4' />
           <AlertDescription className='flex items-center justify-between gap-4'>
@@ -1122,8 +1122,8 @@ export function TakeTestShell({
 
   if (isIntroRoute) {
     return attemptId ? (
-      <div className='flex h-screen items-center justify-center bg-white'>
-        <Loader2 className='size-8 animate-spin text-slate-400' />
+      <div className='flex h-screen items-center justify-center bg-background'>
+        <Loader2 className='size-8 animate-spin text-muted-foreground' />
       </div>
     ) : (
       <IntroScreen
@@ -1405,9 +1405,9 @@ function ActiveChrome({
 
       {isFlushing && (
         <div className='fixed inset-0 z-[100] flex items-center justify-center bg-black/40'>
-          <div className='flex items-center gap-3 rounded-xl bg-white px-8 py-5 shadow-lg'>
+          <div className='flex items-center gap-3 rounded-xl bg-background px-8 py-5 shadow-lg'>
             <Loader2 className='size-5 animate-spin text-blue-600' />
-            <span className='text-sm font-medium text-slate-700'>
+            <span className='text-sm font-medium text-foreground'>
               {isFinishingSection
                 ? 'Finishing section…'
                 : 'Saving your answers…'}
@@ -1491,13 +1491,13 @@ function ActiveChrome({
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className='space-y-1 pt-1 text-center text-sm text-muted-foreground'>
-                <p className='font-medium text-slate-700'>
+                <p className='font-medium text-foreground'>
                   {guard.pendingSwitch
                     ? `This will close ${SECTION_LABELS[guard.pendingSwitch.from]} and you cannot return to it.`
                     : 'This section will be sealed.'}
                 </p>
                 {switchToDuration != null && (
-                  <p className='flex items-center justify-center gap-1.5 pt-1 text-slate-500'>
+                  <p className='flex items-center justify-center gap-1.5 pt-1 text-muted-foreground'>
                     <Clock className='size-3.5' />
                     {guard.pendingSwitch
                       ? SECTION_LABELS[guard.pendingSwitch.to]
@@ -1507,7 +1507,7 @@ function ActiveChrome({
                 )}
                 {guard.pendingSwitch?.to === 'speaking' &&
                   switchToDuration == null && (
-                    <p className='pt-1 text-slate-500'>
+                    <p className='pt-1 text-muted-foreground'>
                       Speaking time: AI-paced (untimed)
                     </p>
                   )}

@@ -64,22 +64,22 @@ export function SpeakingSection({
           <Mic className='size-9 text-violet-600' />
         </div>
         <div className='max-w-md text-center'>
-          <h2 className='text-2xl font-bold text-slate-900'>Speaking Section</h2>
-          <p className='mt-2 text-slate-500'>
+          <h2 className='text-2xl font-bold text-foreground'>Speaking Section</h2>
+          <p className='mt-2 text-muted-foreground'>
             The Speaking section will be available when the student takes the test.
             It is conducted live with an AI examiner.
           </p>
         </div>
         {prompts.length > 0 && (
           <div className='w-full max-w-lg space-y-2'>
-            <h3 className='text-sm font-semibold uppercase tracking-wide text-slate-500'>
+            <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
               Sample prompts
             </h3>
             <ul className='space-y-1.5'>
               {prompts.map((p, i) => (
                 <li
                   key={i}
-                  className='rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700'
+                  className='rounded-lg border border-border bg-muted px-4 py-2.5 text-sm text-foreground'
                 >
                   {p}
                 </li>
@@ -98,8 +98,8 @@ export function SpeakingSection({
           <CheckCircle2 className='size-8 text-emerald-600' />
         </div>
         <div className='max-w-md text-center'>
-          <h2 className='text-xl font-bold text-slate-900'>Speaking Complete</h2>
-          <p className='mt-1 text-sm text-slate-500'>
+          <h2 className='text-xl font-bold text-foreground'>Speaking Complete</h2>
+          <p className='mt-1 text-sm text-muted-foreground'>
             Your speaking score has been saved. Continue reviewing other sections or submit your
             test.
           </p>

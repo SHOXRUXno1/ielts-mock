@@ -121,7 +121,7 @@ function HighlightedEssay({
 
   if (!errors.length) {
     return (
-      <p className='whitespace-pre-wrap text-sm leading-7 text-slate-800'>
+      <p className='whitespace-pre-wrap text-sm leading-7 text-foreground'>
         {text}
       </p>
     )
@@ -170,7 +170,7 @@ function HighlightedEssay({
 
   return (
     <div className='space-y-3'>
-      <p className='overflow-x-hidden whitespace-pre-wrap text-sm leading-7 text-slate-800'>
+      <p className='overflow-x-hidden whitespace-pre-wrap text-sm leading-7 text-foreground'>
         {segments.map((seg, i) => {
           if (seg.kind === 'text') {
             return <Fragment key={i}>{seg.content}</Fragment>
@@ -207,21 +207,21 @@ function HighlightedEssay({
       </p>
 
       {activeError && (
-        <div className='rounded-md border border-slate-200 bg-white p-3 text-xs shadow-sm'>
-          <p className='mb-1 font-semibold capitalize text-slate-800'>
+        <div className='rounded-md border border-border bg-background p-3 text-xs shadow-sm'>
+          <p className='mb-1 font-semibold capitalize text-foreground'>
             {activeError.type}
           </p>
-          <p className='text-slate-600'>
-            <span className='text-slate-400 line-through'>
+          <p className='text-muted-foreground'>
+            <span className='text-muted-foreground line-through'>
               {activeError.quote}
             </span>
-            <span className='mx-1.5 text-slate-400'>→</span>
+            <span className='mx-1.5 text-muted-foreground'>→</span>
             <span className='font-medium text-emerald-700'>
               {activeError.correction}
             </span>
           </p>
           {activeError.explanation && (
-            <p className='mt-1.5 text-slate-500'>{activeError.explanation}</p>
+            <p className='mt-1.5 text-muted-foreground'>{activeError.explanation}</p>
           )}
           <button
             type='button'
@@ -258,22 +258,22 @@ function CriteriaGrid({
         if (!criterion) return null
         const isExp = expanded === key
         return (
-          <div key={key} className='rounded-lg border border-slate-200 bg-slate-50 p-3'>
+          <div key={key} className='rounded-lg border border-border bg-muted p-3'>
             <div className='mb-1 flex items-center justify-between gap-1'>
-              <p className='text-xs font-medium text-slate-500'>{label}</p>
+              <p className='text-xs font-medium text-muted-foreground'>{label}</p>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <HelpCircle className='size-3 shrink-0 text-slate-400 hover:text-slate-600' />
+                  <HelpCircle className='size-3 shrink-0 text-muted-foreground hover:text-foreground' />
                 </TooltipTrigger>
                 <TooltipContent className='max-w-xs text-xs'>
                   {descriptor}
                 </TooltipContent>
               </Tooltip>
             </div>
-            <p className='text-center text-xl font-bold text-slate-800'>
+            <p className='text-center text-xl font-bold text-foreground'>
               {criterion.band.toFixed(1)}
             </p>
-            <p className={cn('mt-1 text-xs text-slate-500', !isExp && 'line-clamp-3')}>
+            <p className={cn('mt-1 text-xs text-muted-foreground', !isExp && 'line-clamp-3')}>
               {criterion.feedback}
             </p>
             {criterion.feedback.length > 120 && (
@@ -316,20 +316,20 @@ export function WritingFeedbackView({
     <TooltipProvider>
       <div className='space-y-4 overflow-x-hidden'>
         {/* Overall band */}
-        <div className='flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4'>
+        <div className='flex items-center gap-3 rounded-lg border border-border bg-background p-4'>
           <div className='text-center'>
-            <p className='text-xs text-slate-400'>Band Score</p>
-            <p className='text-4xl font-bold text-slate-900'>
+            <p className='text-xs text-muted-foreground'>Band Score</p>
+            <p className='text-4xl font-bold text-foreground'>
               {feedback.overall_band.toFixed(1)}
             </p>
           </div>
           <div className='min-w-0 flex-1'>
             {feedback.strengths.length > 0 && (
               <>
-                <p className='mb-1 text-xs font-semibold uppercase text-slate-500'>
+                <p className='mb-1 text-xs font-semibold uppercase text-muted-foreground'>
                   Strengths
                 </p>
-                <ul className='list-inside list-disc space-y-0.5 text-xs text-slate-600'>
+                <ul className='list-inside list-disc space-y-0.5 text-xs text-muted-foreground'>
                   {feedback.strengths.map((s, i) => (
                     <li key={i}>{s}</li>
                   ))}
@@ -342,10 +342,10 @@ export function WritingFeedbackView({
         {/* Improvements */}
         {feedback.improvements.length > 0 && (
           <div>
-            <p className='mb-1 text-xs font-semibold uppercase text-slate-500'>
+            <p className='mb-1 text-xs font-semibold uppercase text-muted-foreground'>
               Areas for Improvement
             </p>
-            <ul className='list-inside list-disc space-y-1 text-xs text-slate-600'>
+            <ul className='list-inside list-disc space-y-1 text-xs text-muted-foreground'>
               {feedback.improvements.map((s, i) => (
                 <li key={i}>{s}</li>
               ))}
@@ -359,13 +359,13 @@ export function WritingFeedbackView({
         {/* Highlighted essay */}
         {essayText && (
           <div>
-            <p className='mb-2 text-xs font-semibold uppercase text-slate-500'>
+            <p className='mb-2 text-xs font-semibold uppercase text-muted-foreground'>
               Your Essay (annotated)
             </p>
-            <p className='mb-2 text-[11px] text-slate-400'>
+            <p className='mb-2 text-[11px] text-muted-foreground'>
               Click a highlighted phrase to see the correction.
             </p>
-            <div className='max-h-64 overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4'>
+            <div className='max-h-64 overflow-x-hidden overflow-y-auto rounded-lg border border-border bg-muted p-4'>
               <HighlightedEssay text={essayText} errors={errors} />
             </div>
           </div>
@@ -374,14 +374,14 @@ export function WritingFeedbackView({
         {/* Error list — vertical cards for narrow column */}
         {errors.length > 0 && (
           <div>
-            <p className='mb-2 text-xs font-semibold uppercase text-slate-500'>
+            <p className='mb-2 text-xs font-semibold uppercase text-muted-foreground'>
               Errors & Corrections
             </p>
             <div className='space-y-2'>
               {errors.map((err, i) => (
                 <div
                   key={i}
-                  className='space-y-1.5 rounded-lg border border-slate-200 bg-white p-3 text-xs'
+                  className='space-y-1.5 rounded-lg border border-border bg-background p-3 text-xs'
                 >
                   <span
                     className={cn(
@@ -391,15 +391,15 @@ export function WritingFeedbackView({
                   >
                     {err.type}
                   </span>
-                  <p className='break-words text-slate-700'>
-                    <span className='text-slate-400 line-through'>{err.quote}</span>
-                    <span className='mx-1.5 text-slate-400'>→</span>
+                  <p className='break-words text-foreground'>
+                    <span className='text-muted-foreground line-through'>{err.quote}</span>
+                    <span className='mx-1.5 text-muted-foreground'>→</span>
                     <span className='font-medium text-emerald-700'>
                       {err.correction}
                     </span>
                   </p>
                   {err.explanation && (
-                    <p className='text-slate-400'>{err.explanation}</p>
+                    <p className='text-muted-foreground'>{err.explanation}</p>
                   )}
                 </div>
               ))}

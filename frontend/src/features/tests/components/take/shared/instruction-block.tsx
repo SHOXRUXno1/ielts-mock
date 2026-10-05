@@ -10,7 +10,7 @@ export function InstructionBlock({ children, className }: Props) {
   return (
     <div
       className={cn(
-        'rounded-lg border-l-[3px] border-blue-500 bg-slate-50 p-4 text-sm leading-[1.7] text-slate-700',
+        'rounded-lg border-l-[3px] border-blue-500 bg-muted p-4 text-sm leading-[1.7] text-foreground',
         className,
       )}
     >
@@ -317,7 +317,7 @@ export function adaptInstructionForScreen(
  */
 export function renderFormattedText(
   text: string,
-  paragraphClassName = 'text-[15px] leading-[1.9] text-slate-700 tracking-[-0.01em]',
+  paragraphClassName = 'text-[15px] leading-[1.9] text-foreground tracking-[-0.01em]',
 ): ReactNode[] {
   const paragraphs = assemblePassageParagraphs(splitPassageParagraphs(text))
   if (paragraphs.length === 0) return []

@@ -65,14 +65,14 @@ export function ExamHeader({
 
   return (
     <>
-      <header className='grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-b border-slate-200 bg-white px-3 sm:px-5'>
+      <header className='grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-b border-border bg-background px-3 sm:px-5'>
         <div className='flex min-w-0 items-center gap-3'>
-          <span className='min-w-0 max-w-[22ch] truncate text-sm font-medium text-slate-900 lg:max-w-[28ch] xl:max-w-none'>
+          <span className='min-w-0 max-w-[22ch] truncate text-sm font-medium text-foreground lg:max-w-[28ch] xl:max-w-none'>
             {title}
           </span>
           {!isPractice && (
             <>
-              <div className='hidden h-5 w-px shrink-0 bg-slate-200 lg:block' />
+              <div className='hidden h-5 w-px shrink-0 bg-border lg:block' />
               <SectionProgress
                 variant='inline'
                 className='hidden min-w-0 lg:flex'
@@ -88,7 +88,7 @@ export function ExamHeader({
 
         <div className='flex items-center gap-2 sm:gap-3'>
           {showAiPaced && (
-            <span className='rounded-md bg-slate-100 px-2 py-0.5 text-[12px] font-medium text-slate-600'>
+            <span className='rounded-md bg-muted px-2 py-0.5 text-[12px] font-medium text-muted-foreground'>
               AI-paced
             </span>
           )}
@@ -100,7 +100,7 @@ export function ExamHeader({
                   ? 'animate-pulse font-semibold text-red-600'
                   : remainingSec <= 300
                     ? 'font-medium text-amber-600'
-                    : 'font-medium text-slate-800',
+                    : 'font-medium text-foreground',
               )}
             >
               <Clock className='size-3.5 stroke-[1.75]' aria-hidden />
@@ -110,8 +110,8 @@ export function ExamHeader({
         </div>
 
         <div className='flex items-center justify-end gap-2 sm:gap-3'>
-          <span className='hidden tabular-nums text-[13px] text-slate-500 sm:inline'>
-            <span className='font-medium text-slate-700'>
+          <span className='hidden tabular-nums text-[13px] text-muted-foreground sm:inline'>
+            <span className='font-medium text-foreground'>
               {totalAnswered}/{totalQuestions}
             </span>{' '}
             answered
@@ -121,7 +121,7 @@ export function ExamHeader({
               type='button'
               onClick={onFinishSection}
               disabled={finishDisabled}
-              className='hidden h-9 items-center rounded-lg border border-slate-200 bg-white px-3 text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 sm:inline-flex'
+              className='hidden h-9 items-center rounded-lg border border-border bg-background px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60 sm:inline-flex'
             >
               Finish section
             </button>

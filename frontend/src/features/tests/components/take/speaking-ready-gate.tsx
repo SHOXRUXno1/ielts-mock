@@ -88,11 +88,11 @@ export function SpeakingReadyGate() {
         </CardHeader>
         <CardContent className='space-y-4'>
           <div
-            className='flex items-center gap-2 text-sm text-slate-600'
+            className='flex items-center gap-2 text-sm text-muted-foreground'
             aria-live='polite'
           >
             {prewarm === 'pending' ? (
-              <Loader2 className='size-4 animate-spin text-slate-400' />
+              <Loader2 className='size-4 animate-spin text-muted-foreground' />
             ) : prewarm === 'ok' ? (
               <CheckCircle2 className='size-4 text-emerald-600' />
             ) : (
