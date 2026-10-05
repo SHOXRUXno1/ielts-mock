@@ -1240,7 +1240,7 @@ export function ExamMapImage({
           {caption}
         </figcaption>
       )}
-      <div className='overflow-hidden rounded-md border border-border bg-white p-1.5'>
+      <div className='overflow-hidden rounded-md border border-border bg-background p-1.5'>
         <img
           src={mediaUrl(src)}
           alt={caption || 'Map'}

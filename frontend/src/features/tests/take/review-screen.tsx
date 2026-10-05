@@ -152,13 +152,13 @@ export function ReviewScreen() {
   }
 
   return (
-    <div className='flex h-svh flex-col bg-white'>
-      <header className='flex h-14 shrink-0 items-center justify-between border-b border-slate-200 px-4 sm:px-6'>
+    <div className='flex h-svh flex-col bg-background'>
+      <header className='flex h-14 shrink-0 items-center justify-between border-b border-border px-4 sm:px-6'>
         <div>
-          <h1 className='text-sm font-semibold text-slate-900'>
+          <h1 className='text-sm font-semibold text-foreground'>
             {test.title} — Review
           </h1>
-          <p className='text-xs text-slate-500'>All sections completed</p>
+          <p className='text-xs text-muted-foreground'>All sections completed</p>
         </div>
       </header>
 
@@ -172,12 +172,12 @@ export function ReviewScreen() {
                 open={open}
                 onOpenChange={() => toggle(sec.type)}
               >
-                <section className='rounded-xl border border-slate-200 bg-slate-50/60'>
+                <section className='rounded-xl border border-border bg-muted/60'>
                   <div className='flex items-start justify-between gap-3 px-4 py-3'>
                     <div className='min-w-0 space-y-1'>
                       <div className='flex items-center gap-2'>
                         <CheckCircle2 className='size-4 shrink-0 text-emerald-500' />
-                        <h2 className='text-sm font-semibold text-slate-800'>
+                        <h2 className='text-sm font-semibold text-foreground'>
                           {SECTION_LABELS[sec.type]}
                         </h2>
                         {sec.flaggedCount > 0 && (
@@ -187,7 +187,7 @@ export function ReviewScreen() {
                           </span>
                         )}
                       </div>
-                      <p className='inline-flex items-center gap-1 text-xs text-slate-500'>
+                      <p className='inline-flex items-center gap-1 text-xs text-muted-foreground'>
                         <Clock className='size-3.5' />
                         {sec.summary}
                       </p>
@@ -196,7 +196,7 @@ export function ReviewScreen() {
                       <CollapsibleTrigger asChild>
                         <button
                           type='button'
-                          className='inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100'
+                          className='inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted'
                         >
                           Expand to review answers
                           <ChevronDown
@@ -210,9 +210,9 @@ export function ReviewScreen() {
                     )}
                   </div>
                   <CollapsibleContent>
-                    <ul className='divide-y divide-slate-100 border-t border-slate-200 bg-white'>
+                    <ul className='divide-y divide-border border-t border-border bg-background'>
                       {sec.items.length === 0 ? (
-                        <li className='px-4 py-3 text-sm text-slate-400'>
+                        <li className='px-4 py-3 text-sm text-muted-foreground'>
                           No answers recorded
                         </li>
                       ) : (
@@ -223,10 +223,10 @@ export function ReviewScreen() {
                               item.flagged ? 'bg-amber-50/60' : ''
                             }`}
                           >
-                            <span className='w-10 shrink-0 font-medium text-slate-500'>
+                            <span className='w-10 shrink-0 font-medium text-muted-foreground'>
                               {item.label}
                             </span>
-                            <span className='min-w-0 flex-1 whitespace-pre-wrap break-words text-slate-800'>
+                            <span className='min-w-0 flex-1 whitespace-pre-wrap break-words text-foreground'>
                               {item.text}
                             </span>
                             {item.flagged && (
@@ -242,11 +242,11 @@ export function ReviewScreen() {
             )
           })}
 
-          <div className='rounded-xl border border-slate-200 bg-white px-4 py-5'>
-            <h3 className='text-sm font-semibold text-slate-900'>
+          <div className='rounded-xl border border-border bg-background px-4 py-5'>
+            <h3 className='text-sm font-semibold text-foreground'>
               Ready to submit?
             </h3>
-            <p className='mt-1 text-sm text-slate-600'>
+            <p className='mt-1 text-sm text-muted-foreground'>
               Once submitted, your test will be graded.
             </p>
             <Button

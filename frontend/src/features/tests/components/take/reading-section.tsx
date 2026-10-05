@@ -266,7 +266,7 @@ function GroupHeader({ group }: { group: RuntimeGroup }) {
         group.type !== 'matching_information' &&
         group.type !== 'matching_features' &&
         group.type !== 'map_labeling' && (
-        <p className='mt-4 mb-5 text-center text-base font-bold text-slate-900'>
+        <p className='mt-4 mb-5 text-center text-base font-bold text-foreground'>
           {subtitle}
         </p>
       )}
@@ -311,7 +311,7 @@ function GroupHeader({ group }: { group: RuntimeGroup }) {
           {group.options.map((opt, i) => (
             <span
               key={i}
-              className='rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[12px] text-slate-700'
+              className='rounded border border-border bg-muted px-2 py-0.5 text-[12px] text-muted-foreground'
             >
               {opt}
             </span>
@@ -449,7 +449,7 @@ export function ReadingSection({
           </div>
         </article>
       ) : (
-        <p className='mt-6 text-sm italic text-slate-400'>
+        <p className='mt-6 text-sm italic text-muted-foreground'>
           No passage text has been added for this section.
         </p>
       )}
@@ -462,13 +462,13 @@ export function ReadingSection({
       {!questionsLoaded ? (
         <div
           role='status'
-          className='flex items-center gap-2 text-sm text-slate-400'
+          className='flex items-center gap-2 text-sm text-muted-foreground'
         >
           <Loader2 className='size-4 animate-spin' />
           Loading questions…
         </div>
       ) : sortedQuestions.length === 0 ? (
-        <p className='text-sm text-slate-400'>
+        <p className='text-sm text-muted-foreground'>
           No questions added to this section yet.
         </p>
       ) : (
@@ -595,7 +595,7 @@ export function ReadingSection({
   if (!isDesktop) {
     return (
       <div className='flex h-full flex-col'>
-        <div className='flex justify-center border-b border-slate-200 px-4 py-2'>
+        <div className='flex justify-center border-b border-border px-4 py-2'>
           <PillTabs
             items={[
               { label: 'Passage', icon: <BookOpen className='size-3.5' /> },
@@ -606,7 +606,7 @@ export function ReadingSection({
           />
         </div>
         {mobileTab === 'passage' && (
-          <div className='min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6'>
+          <div className='min-h-0 flex-1 overflow-y-auto bg-background px-5 py-6'>
             {section?.id ? (
               <PassageHighlighter
                 attemptId={attemptId}
@@ -623,7 +623,7 @@ export function ReadingSection({
         {mobileTab === 'questions' && (
           <div
             data-exam-scroll-pane
-            className='min-h-0 flex-1 overflow-y-auto overflow-x-clip bg-white px-5 py-6 pb-24'
+            className='min-h-0 flex-1 overflow-y-auto overflow-x-clip bg-background px-5 py-6 pb-24'
           >
             {section?.id ? (
               <PassageHighlighter
@@ -645,7 +645,7 @@ export function ReadingSection({
   return (
     <ResizablePanelGroup orientation='horizontal' className='h-full'>
       <ResizablePanel defaultSize='50%' minSize='25%'>
-        <div className='h-full overflow-y-auto overflow-x-hidden bg-white px-5 py-6 xl:px-10 xl:py-8'>
+        <div className='h-full overflow-y-auto overflow-x-hidden bg-background px-5 py-6 xl:px-10 xl:py-8'>
           {section?.id ? (
             <PassageHighlighter
               attemptId={attemptId}
@@ -663,7 +663,7 @@ export function ReadingSection({
       <ResizablePanel defaultSize='50%' minSize='25%'>
         <div
           data-exam-scroll-pane
-          className='h-full overflow-y-auto overflow-x-clip bg-white px-5 py-6 pb-24 xl:pl-2 xl:pr-8 xl:py-8'
+          className='h-full overflow-y-auto overflow-x-clip bg-background px-5 py-6 pb-24 xl:pl-2 xl:pr-8 xl:py-8'
         >
           {section?.id ? (
             <PassageHighlighter

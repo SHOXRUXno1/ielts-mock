@@ -84,9 +84,9 @@ export function QuestionNavBar() {
   return (
     <nav
       aria-label='Question navigator'
-      className='shrink-0 border-t border-slate-200/80 bg-gradient-to-b from-white to-slate-50'
+      className='shrink-0 border-t border-border bg-gradient-to-b from-background to-muted/50'
     >
-      <div className='overflow-x-auto px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300'>
+      <div className='overflow-x-auto px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30'>
         <div className='mx-auto flex w-max items-center gap-4'>
           {groups.map((group) => {
             const isActive = group.partIndex === currentPart
@@ -101,8 +101,8 @@ export function QuestionNavBar() {
                   className={cn(
                     'flex min-h-11 shrink-0 items-center rounded-md px-2 py-1 text-[13px] font-medium tracking-wide whitespace-nowrap lg:min-h-0',
                     isActive
-                      ? 'text-slate-800'
-                      : 'text-slate-500 hover:text-slate-700',
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
                   {group.label}
@@ -110,8 +110,8 @@ export function QuestionNavBar() {
                 {!isWriting && (
                   <div
                     className={cn(
-                      'flex overflow-hidden rounded-lg border bg-white shadow-sm',
-                      isActive ? 'border-blue-200' : 'border-slate-200',
+                      'flex overflow-hidden rounded-lg border bg-background shadow-sm',
+                      isActive ? 'border-blue-200 dark:border-blue-800' : 'border-border',
                     )}
                   >
                     {group.entries.map(
@@ -134,12 +134,12 @@ export function QuestionNavBar() {
                             title={`Q${displayNumber}${isFlagged ? ' (flagged)' : ''}${answered ? ' (answered)' : ''}`}
                             className={cn(
                               'flex h-11 min-w-11 items-center justify-center border-r px-1.5 text-[13px] font-semibold tabular-nums last:border-r-0 lg:h-8 lg:min-w-8 lg:text-[12px]',
-                              isActive ? 'border-blue-100' : 'border-slate-100',
+                              isActive ? 'border-blue-100 dark:border-blue-900' : 'border-border',
                               isFlagged
                                 ? 'bg-amber-50 text-amber-800 hover:bg-amber-100'
                                 : answered
                                   ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                  : 'bg-white text-slate-700 hover:bg-slate-50',
+                                  : 'bg-background text-foreground hover:bg-muted',
                               isFocused &&
                                 'bg-blue-600 text-white shadow-[inset_0_0_0_2px_rgba(255,255,255,0.35)]',
                             )}

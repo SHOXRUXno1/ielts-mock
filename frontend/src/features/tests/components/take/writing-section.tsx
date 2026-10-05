@@ -216,7 +216,7 @@ function TaskEditor({
 
   const wordCountColor =
     wordCount === 0
-      ? 'text-slate-400'
+      ? 'text-muted-foreground'
       : wordCount < minWords
         ? 'text-amber-500'
         : 'text-emerald-500'
@@ -224,15 +224,15 @@ function TaskEditor({
   // ── Left pane ──────────────────────────────────────────────────────────────
   const leftPane = (
     <div className='h-full overflow-y-auto px-10 py-8'>
-      <h2 className='text-lg font-medium text-slate-900'>
+      <h2 className='text-lg font-medium text-foreground'>
         Task {taskNumber}
       </h2>
-      <p className='mt-1 text-[13px] text-slate-400'>
+      <p className='mt-1 text-[13px] text-muted-foreground'>
         You should spend about {isTask1 ? '20' : '40'} minutes on this task.
       </p>
 
-      <div className='mt-6 rounded-lg border-l-[3px] border-blue-500 bg-slate-50 p-6'>
-        <div className='text-[15px] leading-[1.9] text-slate-800'>
+      <div className='mt-6 rounded-lg border-l-[3px] border-blue-500 bg-muted p-6'>
+        <div className='text-[15px] leading-[1.9] text-foreground'>
           {promptBody.split('\n').map((line, i) =>
             line.trim() ? (
               <p key={i} className={i > 0 ? 'mt-3' : undefined}>
@@ -244,7 +244,7 @@ function TaskEditor({
       </div>
 
       {taskInstruction && (
-        <p className='mt-3 text-sm italic leading-relaxed text-slate-500'>
+        <p className='mt-3 text-sm italic leading-relaxed text-muted-foreground'>
           {taskInstruction}
         </p>
       )}
@@ -257,7 +257,7 @@ function TaskEditor({
         />
       )}
 
-      <div className='mt-6 flex items-center gap-1.5 text-[13px] text-slate-400'>
+      <div className='mt-6 flex items-center gap-1.5 text-[13px] text-muted-foreground'>
         <Info className='size-3.5 shrink-0' />
         <span>Write at least {minWords} words</span>
       </div>
@@ -266,7 +266,7 @@ function TaskEditor({
 
   // ── Right pane ─────────────────────────────────────────────────────────────
   const rightPane = (
-    <div className='flex h-full min-h-0 flex-col overflow-y-auto border-t border-slate-200 lg:border-t-0'>
+    <div className='flex h-full min-h-0 flex-col overflow-y-auto border-t border-border lg:border-t-0'>
       {/* Autosave + clear row */}
       <div className='flex shrink-0 items-center justify-between px-5 py-3'>
         {lastSavedAt ? (
@@ -282,7 +282,7 @@ function TaskEditor({
 
         {showClearConfirm ? (
           <div className='flex items-center gap-2 text-xs'>
-            <span className='text-slate-500'>Clear all?</span>
+            <span className='text-muted-foreground'>Clear all?</span>
             <button
               type='button'
               onClick={handleClear}
@@ -293,7 +293,7 @@ function TaskEditor({
             <button
               type='button'
               onClick={() => setShowClearConfirm(false)}
-              className='text-slate-400 hover:underline'
+              className='text-muted-foreground hover:underline'
             >
               No
             </button>
@@ -303,7 +303,7 @@ function TaskEditor({
             type='button'
             title='Clear answer'
             onClick={() => setShowClearConfirm(true)}
-            className='rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600'
+            className='rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
           >
             <Eraser className='size-4' />
           </button>
@@ -323,7 +323,7 @@ function TaskEditor({
         data-gramm='false'
         data-gramm_editor='false'
         data-enable-grammarly='false'
-        className='mx-5 h-[min(42vh,360px)] min-h-[200px] shrink-0 resize-y rounded-lg border-[0.5px] border-slate-200 bg-white px-5 py-5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-[3px] focus:ring-blue-500/10'
+        className='mx-5 h-[min(42vh,360px)] min-h-[200px] shrink-0 resize-y rounded-lg border-[0.5px] border-border bg-background px-5 py-5 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-[3px] focus:ring-blue-500/10'
         style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}
       />
 
@@ -337,7 +337,7 @@ function TaskEditor({
             type='button'
             disabled={feedbackMutation.isPending || wordCount < 10}
             onClick={() => feedbackMutation.mutate()}
-            className='flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500'
+            className='flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground'
           >
             {feedbackMutation.isPending ? (
               <Loader2 className='size-4 animate-spin' />
@@ -380,9 +380,9 @@ function TaskEditor({
                   taskNumber={taskNumber === 2 ? 2 : 1}
                 />
               ) : (
-                <div className='flex items-center gap-2 rounded-lg bg-slate-50 p-4'>
-                  <Sparkles className='size-4 shrink-0 text-slate-400' />
-                  <p className='text-[13px] text-slate-400'>
+                <div className='flex items-center gap-2 rounded-lg bg-muted p-4'>
+                  <Sparkles className='size-4 shrink-0 text-muted-foreground' />
+                  <p className='text-[13px] text-muted-foreground'>
                     Submit your essay to receive AI feedback
                   </p>
                 </div>
@@ -436,7 +436,7 @@ export function WritingSection({
   if (sortedQuestions.length === 0 || sortedQuestions.length > 2) {
     return (
       <div className='flex h-full items-center justify-center'>
-        <p className='text-sm text-slate-500'>
+        <p className='text-sm text-muted-foreground'>
           Writing section misconfigured
         </p>
       </div>
@@ -450,7 +450,7 @@ export function WritingSection({
   )
 
   return (
-    <div className='flex h-full min-h-0 flex-col bg-white'>
+    <div className='flex h-full min-h-0 flex-col bg-background'>
       <div className='min-h-0 flex-1'>
         {sortedQuestions.map((q, i) => {
           if (i !== safeTaskIdx) return null

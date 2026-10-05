@@ -40,11 +40,11 @@ export function TimeoutDialog({ info, countdown, onContinue }: Props) {
           <AlertDialogDescription asChild>
             <div className='space-y-1 pt-1 text-center text-sm text-muted-foreground'>
               <TimeoutCopy from={from} next={next} />
-              <p className='pt-1 text-xs text-slate-400'>
+              <p className='pt-1 text-xs text-muted-foreground'>
                 Your answers have been saved automatically.
               </p>
               {countdown != null && countdown > 0 && (
-                <p className='pt-1 text-xs text-slate-500'>
+                <p className='pt-1 text-xs text-muted-foreground'>
                   Continues in {countdown}s
                 </p>
               )}
@@ -81,7 +81,7 @@ function TimeoutCopy({
   if (from && next) {
     return (
       <>
-        <p className='font-medium text-slate-700'>
+        <p className='font-medium text-foreground'>
           {SECTION_LABELS[from]} section has ended.
         </p>
         <p>
@@ -92,6 +92,6 @@ function TimeoutCopy({
     )
   }
   return (
-    <p className='font-medium text-slate-700'>All sections completed.</p>
+    <p className='font-medium text-foreground'>All sections completed.</p>
   )
 }

@@ -75,10 +75,10 @@ export function SectionProgress({
   return (
     <div
       className={cn(
-        'flex items-center bg-white',
+        'flex items-center bg-background',
         inline
           ? 'gap-0 justify-start'
-          : 'gap-1 snap-x snap-mandatory overflow-x-auto justify-start border-b border-slate-200 px-4 py-2 [&::-webkit-scrollbar]:hidden [scrollbar-width:none] sm:px-6 sm:py-2.5 lg:gap-0 lg:justify-center lg:overflow-x-visible',
+          : 'gap-1 snap-x snap-mandatory overflow-x-auto justify-start border-b border-border px-4 py-2 [&::-webkit-scrollbar]:hidden [scrollbar-width:none] sm:px-6 sm:py-2.5 lg:gap-0 lg:justify-center lg:overflow-x-visible',
         className,
       )}
     >
@@ -112,14 +112,14 @@ export function SectionProgress({
               visual === 'sealed' && 'cursor-not-allowed text-emerald-600',
               visual === 'active' && 'cursor-default text-blue-600',
               visual === 'available' &&
-                'cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-700',
-              visual === 'locked' && 'cursor-not-allowed text-slate-300',
+                'cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground',
+              visual === 'locked' && 'cursor-not-allowed text-muted-foreground/50',
             )}
           >
             {visual === 'sealed' ? (
               <Check className='size-3.5 text-emerald-500' />
             ) : visual === 'locked' ? (
-              <Lock className='size-3.5 text-slate-300' />
+              <Lock className='size-3.5 text-muted-foreground/50' />
             ) : completedTypes.has(type) && freeNav ? (
               <Check className='size-3.5 text-emerald-500' />
             ) : (
@@ -140,7 +140,7 @@ export function SectionProgress({
                   'mx-2 hidden h-px w-6 lg:block sm:mx-3 sm:w-8',
                   visual === 'sealed' || progress?.state === 'sealed'
                     ? 'bg-emerald-400'
-                    : 'bg-slate-200',
+                    : 'bg-border',
                 )}
               />
             )}

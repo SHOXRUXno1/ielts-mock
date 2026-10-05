@@ -437,7 +437,7 @@ export function ListeningSection({
 
   const audioContent = (
     <>
-      <h2 className='mb-6 text-lg font-medium text-slate-900'>
+      <h2 className='mb-6 text-lg font-medium text-foreground'>
         Part {activePartNumber}
       </h2>
 
@@ -451,12 +451,12 @@ export function ListeningSection({
       )}
 
       {section.audioscript && reviewMode && (
-        <details className='mt-6 rounded-lg border border-slate-200'>
-          <summary className='cursor-pointer select-none px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50'>
+        <details className='mt-6 rounded-lg border border-border'>
+          <summary className='cursor-pointer select-none px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted'>
             Audioscript
           </summary>
           <div
-            className='px-4 pb-4 pt-2 text-[14px] leading-relaxed text-slate-700'
+            className='px-4 pb-4 pt-2 text-[14px] leading-relaxed text-foreground'
             style={{ fontFamily: 'Georgia, serif' }}
           >
             {section.audioscript}
@@ -471,13 +471,13 @@ export function ListeningSection({
       {!questionsLoaded ? (
         <div
           role='status'
-          className='flex items-center gap-2 text-sm text-slate-400'
+          className='flex items-center gap-2 text-sm text-muted-foreground'
         >
           <Loader2 className='size-4 animate-spin' />
           Loading questions…
         </div>
       ) : visibleQuestions.length === 0 ? (
-        <p className='text-sm text-slate-400'>
+        <p className='text-sm text-muted-foreground'>
           No questions added to this section yet.
         </p>
       ) : (
@@ -626,7 +626,7 @@ export function ListeningSection({
   if (!isDesktop) {
     return (
       <div className='flex h-full flex-col'>
-        <div className='flex justify-center border-b border-slate-200 px-4 py-2'>
+        <div className='flex justify-center border-b border-border px-4 py-2'>
           <PillTabs
             items={[
               { label: 'Audio', icon: <Headphones className='size-3.5' /> },
@@ -637,14 +637,14 @@ export function ListeningSection({
           />
         </div>
         {mobileTab === 'audio' && (
-          <div className='min-h-0 flex-1 overflow-y-auto bg-white px-5 py-6'>
+          <div className='min-h-0 flex-1 overflow-y-auto bg-background px-5 py-6'>
             {audioContent}
           </div>
         )}
         {mobileTab === 'questions' && (
           <div
             data-exam-scroll-pane
-            className='min-h-0 flex-1 overflow-y-auto overflow-x-clip bg-white px-5 py-6 pb-24'
+            className='min-h-0 flex-1 overflow-y-auto overflow-x-clip bg-background px-5 py-6 pb-24'
           >
             {section?.id ? (
               <PassageHighlighter
@@ -666,7 +666,7 @@ export function ListeningSection({
   return (
     <ResizablePanelGroup orientation='horizontal' className='h-full'>
       <ResizablePanel defaultSize='50%' minSize='25%'>
-        <div className='h-full overflow-y-auto overflow-x-hidden bg-white px-5 py-6 xl:px-8 xl:py-8'>
+        <div className='h-full overflow-y-auto overflow-x-hidden bg-background px-5 py-6 xl:px-8 xl:py-8'>
           {audioContent}
         </div>
       </ResizablePanel>
@@ -674,7 +674,7 @@ export function ListeningSection({
       <ResizablePanel defaultSize='50%' minSize='25%'>
         <div
           data-exam-scroll-pane
-          className='h-full overflow-y-auto overflow-x-clip bg-white px-5 py-6 pb-24 xl:px-8 xl:py-8'
+          className='h-full overflow-y-auto overflow-x-clip bg-background px-5 py-6 pb-24 xl:px-8 xl:py-8'
         >
           {section?.id ? (
             <PassageHighlighter
