@@ -76,10 +76,10 @@ export function StudentLogin() {
         <div className='mb-8 flex flex-col items-center gap-3 text-center'>
           <img
             src={imperiaLogo}
-            alt='IELTS Imperia of Khushnud Rustamovich'
+            alt='Ielts Imperia Mock'
             className='size-24 rounded-2xl border border-border/70 object-cover shadow-sm'
           />
-          <h1 className='text-3xl font-bold tracking-tight'>IELTS Imperia</h1>
+          <h1 className='text-3xl font-bold tracking-tight'>Ielts Imperia Mock</h1>
           <p className='text-muted-foreground text-sm'>
             Sign in to continue
           </p>
