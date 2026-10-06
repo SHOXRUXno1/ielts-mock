@@ -43,7 +43,7 @@ export function StudentLayout() {
               to='/student/dashboard'
               className='rounded-lg text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
             >
-              IELTS Mock
+              Ielts Imperia Mock
             </Link>
             <nav className='hidden items-center gap-1 lg:flex' aria-label='Student'>
               {STUDENT_NAV.map(({ to, label, icon: Icon }) => {
