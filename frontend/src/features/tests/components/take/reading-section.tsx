@@ -1,22 +1,12 @@
 import { useState } from 'react'
 import { BookOpen, HelpCircle, Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { useIsDesktop } from '@/hooks/use-mobile'
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
-import { useIsDesktop } from '@/hooks/use-mobile'
-import {
-  adaptInstructionForScreen,
-  hasTfngKeyLegend,
-  hasYnngKeyLegend,
-  highlightCaps,
-  InstructionBlock,
-  renderFormattedText,
-} from './shared/instruction-block'
-import { PillTabs } from './shared/pill-tabs'
-import { QuestionRangeTitle } from './shared/question-range-title'
-import { PassageHighlighter } from './shared/passage-highlighter'
 import {
   asCompoundStructure,
   compoundHasWordBank,
@@ -40,6 +30,17 @@ import {
   type NotesSpec,
   type TableSpec,
 } from './question-renderer'
+import {
+  adaptInstructionForScreen,
+  hasTfngKeyLegend,
+  hasYnngKeyLegend,
+  highlightCaps,
+  InstructionBlock,
+  renderFormattedText,
+} from './shared/instruction-block'
+import { PassageHighlighter } from './shared/passage-highlighter'
+import { PillTabs } from './shared/pill-tabs'
+import { QuestionRangeTitle } from './shared/question-range-title'
 
 type Props = {
   section?: Section
@@ -106,7 +107,10 @@ function groupQuestionsLegacy(sorted: Question[]): RuntimeGroup[] {
     if (notesId) {
       const group: Question[] = [q]
       let j = i + 1
-      while (j < sorted.length && (sorted[j].content?.notes_id as string | undefined) === notesId) {
+      while (
+        j < sorted.length &&
+        (sorted[j].content?.notes_id as string | undefined) === notesId
+      ) {
         group.push(sorted[j])
         j++
       }
@@ -115,7 +119,10 @@ function groupQuestionsLegacy(sorted: Question[]): RuntimeGroup[] {
     } else if (tableId) {
       const group: Question[] = [q]
       let j = i + 1
-      while (j < sorted.length && (sorted[j].content?.table_id as string | undefined) === tableId) {
+      while (
+        j < sorted.length &&
+        (sorted[j].content?.table_id as string | undefined) === tableId
+      ) {
         group.push(sorted[j])
         j++
       }
@@ -147,7 +154,10 @@ function groupQuestionsLegacy(sorted: Question[]): RuntimeGroup[] {
 
 // ── Build render-groups from QuestionGroup model ──────────────────────────────
 
-function buildRenderGroups(apiGroups: QuestionGroup[], questions: Question[]): RuntimeGroup[] {
+function buildRenderGroups(
+  apiGroups: QuestionGroup[],
+  questions: Question[]
+): RuntimeGroup[] {
   if (apiGroups.length === 0) {
     // Legacy fallback: use runtime auto-grouping
     const sorted = [...questions].sort((a, b) => a.order - b.order)
@@ -178,14 +188,24 @@ function buildRenderGroups(apiGroups: QuestionGroup[], questions: Question[]): R
     const firstNotes = groupQs[0].content?.notes_id as string | undefined
     const firstTable = groupQs[0].content?.table_id as string | undefined
 
-    const opts = Array.isArray((group.options_shared as { options?: unknown[] } | null)?.options)
+    const opts = Array.isArray(
+      (group.options_shared as { options?: unknown[] } | null)?.options
+    )
       ? (group.options_shared as { options: string[] }).options
       : undefined
 
     if (firstNotes) {
-      result.push({ type: 'notes_card', questions: groupQs, subtitle: group.subtitle })
+      result.push({
+        type: 'notes_card',
+        questions: groupQs,
+        subtitle: group.subtitle,
+      })
     } else if (firstTable) {
-      result.push({ type: 'table', questions: groupQs, subtitle: group.subtitle })
+      result.push({
+        type: 'table',
+        questions: groupQs,
+        subtitle: group.subtitle,
+      })
     } else if (
       group.question_type === 'matching_headings' ||
       group.question_type === 'matching_information' ||
@@ -244,9 +264,14 @@ function GroupHeader({ group }: { group: RuntimeGroup }) {
   })
   const minQ = Math.min(...starts)
   const maxQ = Math.max(...ends)
-  const instruction = adaptInstructionForScreen(group.instruction ?? '', group.type, {
-    hasWordBank: group.type === 'compound' && compoundHasWordBank(group.structure),
-  })
+  const instruction = adaptInstructionForScreen(
+    group.instruction ?? '',
+    group.type,
+    {
+      hasWordBank:
+        group.type === 'compound' && compoundHasWordBank(group.structure),
+    }
+  )
   const subtitle = group.subtitle?.trim() || ''
 
   return (
@@ -266,67 +291,70 @@ function GroupHeader({ group }: { group: RuntimeGroup }) {
         group.type !== 'matching_information' &&
         group.type !== 'matching_features' &&
         group.type !== 'map_labeling' && (
-        <p className='mt-4 mb-5 text-center text-base font-bold text-foreground'>
-          {subtitle}
-        </p>
-      )}
+          <p className='mt-4 mb-5 text-center text-base font-bold text-foreground'>
+            {subtitle}
+          </p>
+        )}
       {group.type === 'true_false_ng' && !hasTfngKeyLegend(instruction) && (
-        <div className='mt-2 space-y-0.5 text-[15px] font-[500] leading-7 text-foreground'>
+        <div className='mt-2 space-y-0.5 text-[15px] leading-7 font-[500] text-foreground'>
           <p>
-            <span className='font-bold uppercase'>TRUE</span>
-            {' '}if the statement agrees with the information
+            <span className='font-bold uppercase'>TRUE</span> if the statement
+            agrees with the information
           </p>
           <p>
-            <span className='font-bold uppercase'>FALSE</span>
-            {' '}if the statement contradicts the information
+            <span className='font-bold uppercase'>FALSE</span> if the statement
+            contradicts the information
           </p>
           <p>
-            <span className='font-bold uppercase'>NOT GIVEN</span>
-            {' '}if there is no information on this
+            <span className='font-bold uppercase'>NOT GIVEN</span> if there is
+            no information on this
           </p>
         </div>
       )}
       {group.type === 'yes_no_ng' && !hasYnngKeyLegend(instruction) && (
-        <div className='mt-2 space-y-0.5 text-[15px] font-[500] leading-7 text-foreground'>
+        <div className='mt-2 space-y-0.5 text-[15px] leading-7 font-[500] text-foreground'>
           <p>
-            <span className='font-bold uppercase'>YES</span>
-            {' '}if the statement agrees with the claims of the writer
+            <span className='font-bold uppercase'>YES</span> if the statement
+            agrees with the claims of the writer
           </p>
           <p>
-            <span className='font-bold uppercase'>NO</span>
-            {' '}if the statement contradicts the claims of the writer
+            <span className='font-bold uppercase'>NO</span> if the statement
+            contradicts the claims of the writer
           </p>
           <p>
-            <span className='font-bold uppercase'>NOT GIVEN</span>
-            {' '}if it is impossible to say what the writer thinks about this
+            <span className='font-bold uppercase'>NOT GIVEN</span> if it is
+            impossible to say what the writer thinks about this
           </p>
         </div>
       )}
-      {group.options && group.options.length > 0 &&
+      {group.options &&
+        group.options.length > 0 &&
         group.type !== 'matching_headings' &&
         group.type !== 'matching_information' &&
         group.type !== 'matching_features' &&
         group.type !== 'map_labeling' && (
-        <div className='mt-3 flex flex-wrap gap-1.5'>
-          {group.options.map((opt, i) => (
-            <span
-              key={i}
-              className='rounded border border-border bg-muted px-2 py-0.5 text-[12px] text-muted-foreground'
-            >
-              {opt}
-            </span>
-          ))}
-        </div>
-      )}
+          <div className='mt-3 flex flex-wrap gap-1.5'>
+            {group.options.map((opt, i) => (
+              <span
+                key={i}
+                className='rounded border border-border bg-muted px-2 py-0.5 text-[12px] text-muted-foreground'
+              >
+                {opt}
+              </span>
+            ))}
+          </div>
+        )}
     </div>
   )
 }
 
 function questionsForApiGroup(
   group: QuestionGroup,
-  displayQuestions: Question[],
+  displayQuestions: Question[]
 ): Question[] {
-  const fromFlat = displayQuestions.filter((q) => q.question_group_id === group.id)
+  const fromFlat = displayQuestions.filter(
+    (q) => q.question_group_id === group.id
+  )
   const source = fromFlat.length > 0 ? fromFlat : group.questions
   return [...source].sort((a, b) => a.order - b.order)
 }
@@ -355,14 +383,19 @@ export function ReadingSection({
     .sort((a, b) => a.order - b.order)
   const passageIdxInReading =
     section != null
-      ? Math.max(0, readingSiblings.findIndex((s) => s.id === section.id))
+      ? Math.max(
+          0,
+          readingSiblings.findIndex((s) => s.id === section.id)
+        )
       : passageIndex
 
-  const priorQuestions = readingSiblings.slice(0, passageIdxInReading).flatMap((s) => {
-    const fromMap = sectionQuestions?.[s.id]
-    if (fromMap && fromMap.length > 0) return fromMap
-    return (s.question_groups ?? []).flatMap((g) => g.questions)
-  })
+  const priorQuestions = readingSiblings
+    .slice(0, passageIdxInReading)
+    .flatMap((s) => {
+      const fromMap = sectionQuestions?.[s.id]
+      if (fromMap && fromMap.length > 0) return fromMap
+      return (s.question_groups ?? []).flatMap((g) => g.questions)
+    })
   const numberOffset = countScoringSlots(priorQuestions)
 
   const displayQuestions =
@@ -380,7 +413,9 @@ export function ReadingSection({
         }
       : undefined
 
-  const sortedQuestions = [...displayQuestions].sort((a, b) => a.order - b.order)
+  const sortedQuestions = [...displayQuestions].sort(
+    (a, b) => a.order - b.order
+  )
 
   // Build groups: use section.question_groups when available, else runtime-group
   const apiGroups = displaySection?.question_groups ?? []
@@ -418,11 +453,21 @@ export function ReadingSection({
   // Shared passage content
   const passageContent = (
     <>
-      <h2 className='text-2xl font-bold uppercase text-[#0a0a0a]'>
+      <h2
+        className={cn(
+          'text-2xl font-bold uppercase',
+          previewMode ? 'text-[#0a0a0a]' : 'text-foreground'
+        )}
+      >
         Passage {passageNum}
       </h2>
 
-      <p className='mt-1 text-sm text-[#737373]'>
+      <p
+        className={cn(
+          'mt-1 text-sm',
+          previewMode ? 'text-[#737373]' : 'text-muted-foreground'
+        )}
+      >
         You should spend about 20 minutes on Questions {minQ}
         {minQ !== maxQ ? `–${maxQ}` : ''}, which are based on Reading Passage{' '}
         {passageNum}.
@@ -431,25 +476,41 @@ export function ReadingSection({
       {effectivePassage ? (
         <article className='mt-6'>
           {displayTitle && (
-            <h3 className='mb-3 text-center text-2xl font-bold leading-snug text-[#0a0a0a]'>
+            <h3
+              className={cn(
+                'mb-3 text-center text-2xl leading-snug font-bold',
+                previewMode ? 'text-[#0a0a0a]' : 'text-foreground'
+              )}
+            >
               {displayTitle}
             </h3>
           )}
           {section?.passage_subtitle && (
-            <p className='mb-6 text-center text-base font-bold italic text-[#0a0a0a]'>
+            <p
+              className={cn(
+                'mb-6 text-center text-base font-bold italic',
+                previewMode ? 'text-[#0a0a0a]' : 'text-foreground'
+              )}
+            >
               {section.passage_subtitle}
             </p>
           )}
-          {!section?.passage_subtitle && displayTitle && <div className='mb-5' />}
+          {!section?.passage_subtitle && displayTitle && (
+            <div className='mb-5' />
+          )}
           <div className='space-y-5 text-left sm:text-justify'>
             {renderFormattedText(
               body || effectivePassage,
-              'text-base leading-7 text-[#0a0a0a]',
+              cn(
+                'text-base leading-7',
+                previewMode ? 'text-[#0a0a0a]' : 'text-foreground'
+              ),
+              previewMode ? 'text-[#0a0a0a]' : 'text-foreground'
             )}
           </div>
         </article>
       ) : (
-        <p className='mt-6 text-sm italic text-muted-foreground'>
+        <p className='mt-6 text-sm text-muted-foreground italic'>
           No passage text has been added for this section.
         </p>
       )}
@@ -542,7 +603,9 @@ export function ReadingSection({
                   options={group.options ?? []}
                   answers={answers}
                   onAnswer={onAnswer}
-                  listTitle={group.optionsHeading || group.subtitle || undefined}
+                  listTitle={
+                    group.optionsHeading || group.subtitle || undefined
+                  }
                   questionsTitle={group.questionsHeading}
                   repeatable={/more than once/i.test(group.instruction ?? '')}
                   previewMode={previewMode}
@@ -567,24 +630,24 @@ export function ReadingSection({
                 group.type !== 'matching_information' &&
                 group.type !== 'matching_features' &&
                 group.type !== 'map_labeling' && (
-                <div className='space-y-5'>
-                  {group.questions.map((q) => (
-                    <div key={q.id}>
-                      <QuestionRendererWithFlag
-                        question={q}
-                        answer={answers[q.id] ?? {}}
-                        onAnswer={(resp) => onAnswer(q.id, resp)}
-                        flagged={flagged?.has(q.id)}
-                        onToggleFlag={
-                          onToggleFlag ? () => onToggleFlag(q.id) : undefined
-                        }
-                        previewMode={previewMode}
-                        hideQuestionNumber={group.questions.length === 1}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
+                  <div className='space-y-5'>
+                    {group.questions.map((q) => (
+                      <div key={q.id}>
+                        <QuestionRendererWithFlag
+                          question={q}
+                          answer={answers[q.id] ?? {}}
+                          onAnswer={(resp) => onAnswer(q.id, resp)}
+                          flagged={flagged?.has(q.id)}
+                          onToggleFlag={
+                            onToggleFlag ? () => onToggleFlag(q.id) : undefined
+                          }
+                          previewMode={previewMode}
+                          hideQuestionNumber={group.questions.length === 1}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
             </div>
           ))}
         </div>
@@ -623,7 +686,7 @@ export function ReadingSection({
         {mobileTab === 'questions' && (
           <div
             data-exam-scroll-pane
-            className='min-h-0 flex-1 overflow-y-auto overflow-x-clip bg-background px-5 py-6 pb-24'
+            className='min-h-0 flex-1 overflow-x-clip overflow-y-auto bg-background px-5 py-6 pb-24'
           >
             {section?.id ? (
               <PassageHighlighter
@@ -645,7 +708,7 @@ export function ReadingSection({
   return (
     <ResizablePanelGroup orientation='horizontal' className='h-full'>
       <ResizablePanel defaultSize='50%' minSize='25%'>
-        <div className='h-full overflow-y-auto overflow-x-hidden bg-background px-5 py-6 xl:px-10 xl:py-8'>
+        <div className='h-full overflow-x-hidden overflow-y-auto bg-background px-5 py-6 xl:px-10 xl:py-8'>
           {section?.id ? (
             <PassageHighlighter
               attemptId={attemptId}
@@ -663,7 +726,7 @@ export function ReadingSection({
       <ResizablePanel defaultSize='50%' minSize='25%'>
         <div
           data-exam-scroll-pane
-          className='h-full overflow-y-auto overflow-x-clip bg-background px-5 py-6 pb-24 xl:pl-2 xl:pr-8 xl:py-8'
+          className='h-full overflow-x-clip overflow-y-auto bg-background px-5 py-6 pb-24 xl:py-8 xl:pr-8 xl:pl-2'
         >
           {section?.id ? (
             <PassageHighlighter

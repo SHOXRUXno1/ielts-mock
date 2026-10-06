@@ -3,6 +3,7 @@
 @import './theme.css';
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant student-dark (&:where(html.dark[data-student-theme='active'] *));
 
 @layer base {
   * {
@@ -144,10 +145,14 @@
 
 @keyframes question-anchor-flash {
   0% {
-    box-shadow: 0 0 0 2px rgb(37 99 246 / 0.9), 0 0 0 6px rgb(37 99 246 / 0.28);
+    box-shadow:
+      0 0 0 2px rgb(37 99 246 / 0.9),
+      0 0 0 6px rgb(37 99 246 / 0.28);
   }
   100% {
-    box-shadow: 0 0 0 2px rgb(37 99 246 / 0), 0 0 0 11px rgb(37 99 246 / 0);
+    box-shadow:
+      0 0 0 2px rgb(37 99 246 / 0),
+      0 0 0 11px rgb(37 99 246 / 0);
   }
 }
 

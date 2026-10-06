@@ -1,6 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { LogOut } from 'lucide-react'
+import { useAuthStore } from '@/stores/auth-store'
+import { clearLocalSession, loginReplaceOptions } from '@/lib/sign-out'
+import { cn, getDisplayNameInitials } from '@/lib/utils'
+import { useStudentThemeScope } from '@/hooks/use-student-theme-scope'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -10,17 +14,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  isStudentNavActive,
+  STUDENT_NAV,
+} from '@/components/layout/data/student-nav'
 import { ThemeSwitch } from '@/components/theme-switch'
-import { isStudentNavActive, STUDENT_NAV } from '@/components/layout/data/student-nav'
-import { clearLocalSession, loginReplaceOptions } from '@/lib/sign-out'
-import { useAuthStore } from '@/stores/auth-store'
-import { cn, getDisplayNameInitials } from '@/lib/utils'
 
 function displayName(fullName?: string, name?: string): string {
   return fullName ?? name ?? 'Student'
 }
 
 export function StudentLayout() {
+  useStudentThemeScope(true)
   const { auth } = useAuthStore()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -45,7 +50,10 @@ export function StudentLayout() {
             >
               Ielts Imperia Mock
             </Link>
-            <nav className='hidden items-center gap-1 lg:flex' aria-label='Student'>
+            <nav
+              className='hidden items-center gap-1 lg:flex'
+              aria-label='Student'
+            >
               {STUDENT_NAV.map(({ to, label, icon: Icon }) => {
                 const active = isStudentNavActive(pathname, to)
                 return (
@@ -59,7 +67,7 @@ export function StudentLayout() {
                       'after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent',
                       active
                         ? 'text-foreground after:bg-foreground'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                     )}
                   >
                     <Icon size={16} strokeWidth={active ? 2.2 : 1.8} />
@@ -71,7 +79,7 @@ export function StudentLayout() {
           </div>
 
           <div className='flex items-center gap-2'>
-            <ThemeSwitch />
+            <ThemeSwitch studentSurface />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -95,14 +103,13 @@ export function StudentLayout() {
                   <p className='text-xs text-muted-foreground'>Student</p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => void navigate({ to: '/student/profile' })}>
+                <DropdownMenuItem
+                  onClick={() => void navigate({ to: '/student/profile' })}
+                >
                   Profile
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant='destructive'
-                  onClick={handleLogout}
-                >
+                <DropdownMenuItem variant='destructive' onClick={handleLogout}>
                   <LogOut />
                   Sign out
                 </DropdownMenuItem>
@@ -134,7 +141,7 @@ export function StudentLayout() {
                   'after:absolute after:top-0 after:h-0.5 after:w-8 after:rounded-full after:bg-transparent',
                   active
                     ? 'text-foreground after:bg-foreground'
-                    : 'text-muted-foreground',
+                    : 'text-muted-foreground'
                 )}
               >
                 <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />

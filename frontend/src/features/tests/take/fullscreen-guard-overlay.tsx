@@ -33,7 +33,7 @@ export function FullscreenGuardOverlay({ kind, secondsLeft, onReturn }: Props) {
       aria-labelledby='fs-guard-title'
       aria-describedby='fs-guard-desc'
     >
-      <div className='mx-4 max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl dark:bg-slate-900'>
+      <div className='mx-4 max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl dark:bg-slate-900 student-dark:bg-card'>
         <div
           className={
             'mx-auto mb-4 flex size-14 items-center justify-center rounded-full ' +
@@ -51,19 +51,19 @@ export function FullscreenGuardOverlay({ kind, secondsLeft, onReturn }: Props) {
 
         <h2
           id='fs-guard-title'
-          className='text-xl font-bold text-slate-900 dark:text-slate-100'
+          className='text-xl font-bold text-slate-900 dark:text-slate-100 student-dark:text-foreground'
         >
           {isExit ? 'Return to fullscreen' : 'Your exam is still here'}
         </h2>
 
         <p
           id='fs-guard-desc'
-          className='mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400'
+          className='mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400 student-dark:text-muted-foreground'
         >
           {isExit ? (
             <>
               You left fullscreen mode during the exam. Return within{' '}
-              <span className='font-semibold tabular-nums text-slate-900 dark:text-slate-100'>
+              <span className='font-semibold text-slate-900 tabular-nums dark:text-slate-100 student-dark:text-foreground'>
                 {secondsLeft}s
               </span>{' '}
               or the attempt will be closed and submitted for scoring.
@@ -80,7 +80,7 @@ export function FullscreenGuardOverlay({ kind, secondsLeft, onReturn }: Props) {
         <div className='mt-6 flex flex-col items-center gap-3'>
           {isExit && (
             <div
-              className='text-5xl font-bold tabular-nums text-red-600 dark:text-red-400'
+              className='text-5xl font-bold text-red-600 tabular-nums dark:text-red-400'
               aria-live='polite'
             >
               {secondsLeft}

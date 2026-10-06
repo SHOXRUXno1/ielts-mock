@@ -1,4 +1,11 @@
-import { CheckCircle2, Headphones, Info, Pause, Play, Volume2 } from 'lucide-react'
+import {
+  CheckCircle2,
+  Headphones,
+  Info,
+  Pause,
+  Play,
+  Volume2,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Section } from '../../data/schema'
 import { useListeningAudio } from '../../take/listening-audio-context'
@@ -11,7 +18,7 @@ function formatTime(seconds: number): string {
 
 export function otherPartPlayingCopy(
   playingPart: number,
-  viewedPart: number,
+  viewedPart: number
 ): string {
   return `Part ${playingPart} is still playing. Part ${viewedPart} starts automatically when the recording reaches it.`
 }
@@ -37,10 +44,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
       : 0
 
   const canToggle =
-    !isCompleted &&
-    (audio.blocked ||
-      isViewedPlaying ||
-      audio.allowReplay)
+    !isCompleted && (audio.blocked || isViewedPlaying || audio.allowReplay)
 
   const title = isCompleted
     ? 'Audio already played'
@@ -54,17 +58,17 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
     <div
       className={cn(
         'group/player rounded-xl border border-border bg-background p-3 shadow-sm ring-1 ring-foreground/[0.02]',
-        'sm:p-5',
+        'sm:p-5'
       )}
       aria-label={`Part ${partNumber} audio`}
     >
       <div className='mb-2 flex items-center justify-between sm:mb-3'>
         <div className='flex items-center gap-2'>
-          <div className='flex size-7 items-center justify-center rounded-md bg-blue-50 text-blue-600'>
+          <div className='flex size-7 items-center justify-center rounded-md bg-blue-50 text-blue-600 student-dark:bg-blue-950/40 student-dark:text-blue-300'>
             <Headphones className='size-3.5' />
           </div>
           <div className='flex flex-col'>
-            <span className='text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground'>
+            <span className='text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase'>
               Part {partNumber}
             </span>
             <span className='text-[13px] font-medium text-foreground'>
@@ -74,17 +78,17 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
         </div>
 
         {isCompleted ? (
-          <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700'>
+          <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 student-dark:bg-emerald-950/40 student-dark:text-emerald-300'>
             <CheckCircle2 className='size-3' />
             Played
           </span>
         ) : isOtherPlaying && audio.playingPartNumber != null ? (
-          <span className='inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700'>
+          <span className='inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 student-dark:bg-amber-950/40 student-dark:text-amber-300'>
             Part {audio.playingPartNumber} playing
           </span>
         ) : isViewedPlaying && audio.isPlaying ? (
-          <span className='inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700'>
-            <span className='size-1.5 animate-pulse rounded-full bg-blue-500' />
+          <span className='inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700 student-dark:bg-blue-950/40 student-dark:text-blue-300'>
+            <span className='size-1.5 animate-pulse rounded-full bg-blue-500 student-dark:bg-blue-400' />
             Playing
           </span>
         ) : null}
@@ -93,7 +97,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
       <div
         className={cn(
           'flex items-center gap-2.5 sm:gap-4',
-          isOtherPlaying && 'opacity-60',
+          isOtherPlaying && 'opacity-60'
         )}
       >
         <button
@@ -104,10 +108,10 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
           aria-label={title}
           className={cn(
             'group/btn flex size-10 shrink-0 items-center justify-center rounded-full transition-all sm:size-11',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
+            'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none student-dark:focus-visible:ring-offset-background',
             isCompleted || !canToggle
               ? 'cursor-not-allowed bg-muted text-muted-foreground'
-              : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700 hover:shadow-md active:scale-95',
+              : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700 hover:shadow-md active:scale-95'
           )}
         >
           {audio.isPlaying && isViewedPlaying ? (
@@ -128,13 +132,13 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-300 ease-out',
-                isCompleted ? 'bg-muted-foreground' : 'bg-blue-600',
+                isCompleted ? 'bg-muted-foreground' : 'bg-blue-600'
               )}
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          <div className='flex justify-between text-xs font-medium tabular-nums text-muted-foreground'>
+          <div className='flex justify-between text-xs font-medium text-muted-foreground tabular-nums'>
             <span>{isViewedPlaying ? formatTime(displayTime) : '--:--'}</span>
             <span className='text-muted-foreground'>
               {isViewedPlaying && displayDuration > 0
@@ -163,7 +167,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
         <button
           type='button'
           onClick={() => audio.resume()}
-          className='mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2'
+          className='mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-[0.99]'
         >
           <Play className='size-4 translate-x-0.5' />
           Resume audio
@@ -171,16 +175,20 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
       )}
 
       {isCompleted && (
-        <div className='mt-3 flex items-start gap-2 rounded-lg bg-amber-50/70 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-200/70'>
+        <div className='mt-3 flex items-start gap-2 rounded-lg bg-amber-50/70 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-200/70 student-dark:bg-amber-950/30 student-dark:text-amber-200 student-dark:ring-amber-900/60'>
           <Info className='mt-0.5 size-3.5 shrink-0' />
-          <span>Audio has been played. Replay is not available in a real exam.</span>
+          <span>
+            Audio has been played. Replay is not available in a real exam.
+          </span>
         </div>
       )}
 
       {!isCompleted && isOtherPlaying && audio.playingPartNumber != null && (
         <p className='mt-3 flex items-start gap-2 text-xs text-muted-foreground'>
           <Info className='mt-0.5 size-3.5 shrink-0 text-muted-foreground/70' />
-          <span>{otherPartPlayingCopy(audio.playingPartNumber, partNumber)}</span>
+          <span>
+            {otherPartPlayingCopy(audio.playingPartNumber, partNumber)}
+          </span>
         </p>
       )}
 

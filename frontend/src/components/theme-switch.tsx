@@ -10,16 +10,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-export function ThemeSwitch() {
+type ThemeSwitchProps = {
+  studentSurface?: boolean
+}
+
+export function ThemeSwitch({ studentSurface = false }: ThemeSwitchProps) {
   const { theme, setTheme } = useTheme()
 
   /* Update theme-color meta tag
    * when theme is updated */
   useEffect(() => {
-    const themeColor = theme === 'dark' ? '#020817' : '#fff'
+    const themeColor =
+      theme === 'dark' ? (studentSurface ? '#191919' : '#020817') : '#fff'
     const metaThemeColor = document.querySelector("meta[name='theme-color']")
     if (metaThemeColor) metaThemeColor.setAttribute('content', themeColor)
-  }, [theme])
+  }, [studentSurface, theme])
 
   return (
     <DropdownMenu modal={false}>

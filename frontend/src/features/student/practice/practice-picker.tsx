@@ -1,8 +1,15 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowRight, Clock, GraduationCap, Loader2, PlayCircle } from 'lucide-react'
+import {
+  ArrowRight,
+  Clock,
+  GraduationCap,
+  Loader2,
+  PlayCircle,
+} from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuthStore } from '@/stores/auth-store'
 import {
   fetchPracticeUnits,
   startPracticeAttempt,
@@ -16,8 +23,7 @@ import {
   startFullMockOnTest,
   type FullMockStatus,
 } from '@/lib/api/student'
-import { useAuthStore } from '@/stores/auth-store'
-import type { SectionType } from '@/features/tests/data/schema'
+import { cn } from '@/lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -25,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { cn } from '@/lib/utils'
+import type { SectionType } from '@/features/tests/data/schema'
 import { SKILL_ICONS } from './skill-icons'
 
 const TYPE_META: Record<
@@ -51,7 +57,8 @@ const TYPE_META: Record<
     label: 'Reading',
     icon: SKILL_ICONS.reading,
     accent: 'text-emerald-700 dark:text-emerald-300',
-    accentSoft: 'from-emerald-50 to-white dark:from-emerald-950/50 dark:to-card',
+    accentSoft:
+      'from-emerald-50 to-white dark:from-emerald-950/50 dark:to-card',
     ring: 'ring-emerald-200/80 dark:ring-emerald-800/60',
     chip: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
   },
@@ -96,8 +103,7 @@ function SkillIcon({
   label: string
   size?: 'sm' | 'md' | 'lg'
 }) {
-  const dim =
-    size === 'lg' ? 'size-14' : size === 'sm' ? 'size-9' : 'size-11'
+  const dim = size === 'lg' ? 'size-14' : size === 'sm' ? 'size-9' : 'size-11'
   return (
     <img
       src={src}
@@ -106,7 +112,7 @@ function SkillIcon({
       draggable={false}
       className={cn(
         dim,
-        'shrink-0 object-contain drop-shadow-[0_10px_18px_rgba(15,23,42,0.18)] select-none',
+        'shrink-0 object-contain drop-shadow-[0_10px_18px_rgba(15,23,42,0.18)] select-none'
       )}
       title={label}
     />
@@ -157,11 +163,10 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
   }
 
   const mockOnError = (err: unknown) => {
-    const detail = (
-      err as { response?: { data?: { detail?: unknown } } }
-    )?.response?.data?.detail
+    const detail = (err as { response?: { data?: { detail?: unknown } } })
+      ?.response?.data?.detail
     toast.error(
-      typeof detail === 'string' ? detail : 'Could not start a full mock',
+      typeof detail === 'string' ? detail : 'Could not start a full mock'
     )
   }
 
@@ -220,10 +225,10 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
       acc[key].push(unit)
       return acc
     },
-    { listening: [], reading: [], writing: [], speaking: [] },
+    { listening: [], reading: [], writing: [], speaking: [] }
   )
   const sectionByType = Object.fromEntries(
-    sections.map((s) => [s.section_type, s]),
+    sections.map((s) => [s.section_type, s])
   ) as Partial<Record<SectionType, PracticeSectionUnit>>
 
   const orderedTypes = (
@@ -235,7 +240,7 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-[44rem] gap-0 overflow-hidden p-0 sm:rounded-2xl'>
-        <div className='border-b border-border/70 bg-gradient-to-b from-muted/40 to-background px-6 pb-4 pt-6'>
+        <div className='border-b border-border/70 bg-gradient-to-b from-muted/40 to-background px-6 pt-6 pb-4'>
           <DialogHeader className='gap-1.5 text-left'>
             <DialogTitle className='text-xl font-semibold tracking-tight'>
               Practice
@@ -271,7 +276,8 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
 
             {orderedTypes.length === 0 && (
               <div className='rounded-xl border border-dashed py-10 text-center text-sm text-muted-foreground'>
-                No sub-parts to drill for this paper yet — a full mock is still available above.
+                No sub-parts to drill for this paper yet — a full mock is still
+                available above.
               </div>
             )}
 
@@ -279,14 +285,14 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
               const meta = TYPE_META[type]
               const full = sectionByType[type]
               const parts = grouped[type].sort(
-                (a, b) => a.part_number - b.part_number,
+                (a, b) => a.part_number - b.part_number
               )
               return (
                 <section key={type} className='space-y-3'>
                   <div className='flex items-center gap-2.5'>
                     <SkillIcon src={meta.icon} label={meta.label} size='sm' />
                     <div>
-                      <h3 className='text-[15px] font-semibold leading-none'>
+                      <h3 className='text-[15px] leading-none font-semibold'>
                         {meta.label}
                       </h3>
                       <p className='mt-1 text-[11px] text-muted-foreground'>
@@ -312,7 +318,7 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
 
                   {parts.length > 0 && (
                     <div>
-                      <p className='mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/80'>
+                      <p className='mb-2 text-[11px] font-medium tracking-wider text-muted-foreground/80 uppercase'>
                         Or practise one part
                       </p>
                       <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
@@ -328,7 +334,7 @@ export function PracticePicker({ testId, open, onOpenChange }: Props) {
                             disabled={busy}
                             onStart={() => {
                               setPending(
-                                `${unit.section_type}-${unit.part_number}`,
+                                `${unit.section_type}-${unit.part_number}`
                               )
                               startMutation.mutate({ scope: 'part', unit })
                             }}
@@ -361,9 +367,7 @@ function FullSectionCard({
   onStart: () => void
 }) {
   const durationLabel =
-    unit.duration_minutes != null
-      ? `${unit.duration_minutes} min`
-      : 'AI-paced'
+    unit.duration_minutes != null ? `${unit.duration_minutes} min` : 'AI-paced'
   const clickable = unit.is_enabled && !disabled
   const last = unit.last_attempt
   const lastLabel =
@@ -387,10 +391,10 @@ function FullSectionCard({
         clickable
           ? 'hover:-translate-y-0.5 hover:shadow-md'
           : 'cursor-not-allowed opacity-50',
-        pending && 'ring-2 ring-primary/50',
+        pending && 'ring-2 ring-primary/50'
       )}
     >
-      <div className='flex size-16 shrink-0 items-center justify-center rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 dark:bg-background/60'>
+      <div className='flex size-16 shrink-0 items-center justify-center rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 dark:bg-background/60 student-dark:ring-white/10'>
         <SkillIcon src={meta.icon} label={unit.label} size='lg' />
       </div>
 
@@ -401,8 +405,8 @@ function FullSectionCard({
           </span>
           <span
             className={cn(
-              'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-              meta.chip,
+              'rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase',
+              meta.chip
             )}
           >
             Exam pace
@@ -439,7 +443,7 @@ function FullSectionCard({
       <span
         className={cn(
           'hidden shrink-0 items-center gap-1 rounded-xl bg-foreground px-3 py-2 text-xs font-semibold text-background transition-transform sm:inline-flex',
-          clickable && 'group-hover:translate-x-0.5',
+          clickable && 'group-hover:translate-x-0.5'
         )}
       >
         Start
@@ -463,9 +467,7 @@ function PartCard({
   onStart: () => void
 }) {
   const durationLabel =
-    unit.duration_minutes != null
-      ? `${unit.duration_minutes} min`
-      : 'AI-paced'
+    unit.duration_minutes != null ? `${unit.duration_minutes} min` : 'AI-paced'
   const clickable = unit.is_enabled && !disabled
   const last = unit.last_attempt
   const lastScore =
@@ -483,7 +485,7 @@ function PartCard({
         clickable
           ? 'hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-sm'
           : 'cursor-not-allowed opacity-50',
-        pending && 'ring-2 ring-primary/40',
+        pending && 'ring-2 ring-primary/40'
       )}
     >
       <div className='flex items-start justify-between gap-2'>
@@ -545,7 +547,7 @@ function FullMockCard({
   onContinue: (inProgressTestId: string) => void
 }) {
   const hasInProgress = Boolean(
-    status?.in_progress_attempt_id && status?.in_progress_test_id,
+    status?.in_progress_attempt_id && status?.in_progress_test_id
   )
   // A live mock on THIS paper is a resume; on a different paper it is a hard
   // block — the backend refuses to open a second attempt, and the picker must
@@ -576,7 +578,7 @@ function FullMockCard({
       className={cn(
         'relative overflow-hidden rounded-2xl border p-4 ring-1',
         'bg-gradient-to-br from-primary/10 via-background to-background',
-        'border-primary/20 ring-primary/10',
+        'border-primary/20 ring-primary/10'
       )}
     >
       <div className='flex items-start gap-4'>
@@ -589,7 +591,7 @@ function FullMockCard({
             <span className='text-[15px] font-semibold tracking-tight'>
               Full mock
             </span>
-            <span className='rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground'>
+            <span className='rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold tracking-wide text-primary-foreground uppercase'>
               Counts toward results
             </span>
           </div>
@@ -621,7 +623,7 @@ function FullMockCard({
               'inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground transition-transform',
               anyPending
                 ? 'cursor-not-allowed opacity-60'
-                : 'hover:translate-x-0.5 hover:shadow-md',
+                : 'hover:translate-x-0.5 hover:shadow-md'
             )}
           >
             <PlayCircle className='size-3.5' />
@@ -648,7 +650,7 @@ function FullMockCard({
               }}
               className={cn(
                 'inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline',
-                anyPending && 'cursor-not-allowed opacity-60',
+                anyPending && 'cursor-not-allowed opacity-60'
               )}
             >
               <PlayCircle className='size-3.5' />
@@ -666,12 +668,10 @@ function FullMockCard({
                 anyPending || noPapers
                   ? 'cursor-not-allowed opacity-60'
                   : 'hover:translate-x-0.5 hover:shadow-md',
-                pendingThis && 'ring-2 ring-primary/40',
+                pendingThis && 'ring-2 ring-primary/40'
               )}
             >
-              {pendingThis && (
-                <Loader2 className='size-3.5 animate-spin' />
-              )}
+              {pendingThis && <Loader2 className='size-3.5 animate-spin' />}
               Start this paper
               {!pendingThis && <ArrowRight className='size-3.5' />}
             </button>
@@ -682,12 +682,10 @@ function FullMockCard({
               onClick={onStartRandom}
               className={cn(
                 'inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline',
-                (anyPending || noPapers) && 'cursor-not-allowed opacity-60',
+                (anyPending || noPapers) && 'cursor-not-allowed opacity-60'
               )}
             >
-              {pendingRandom && (
-                <Loader2 className='size-3.5 animate-spin' />
-              )}
+              {pendingRandom && <Loader2 className='size-3.5 animate-spin' />}
               or start a random paper
             </button>
           </>

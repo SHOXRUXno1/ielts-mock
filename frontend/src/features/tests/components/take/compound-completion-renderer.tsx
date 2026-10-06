@@ -1,3 +1,5 @@
+import { mediaUrl } from '@/lib/api/attempts'
+import { cn } from '@/lib/utils'
 import {
   Select,
   SelectContent,
@@ -5,13 +7,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { mediaUrl } from '@/lib/api/attempts'
-import { cn } from '@/lib/utils'
-import type { Question } from '../../data/schema'
-import {
-  joinGapAnswerParts,
-  splitJoinedGapAnswer,
-} from '../../take/joined-gap-answer'
 import type {
   CellSegment,
   CompoundStructure,
@@ -22,6 +17,11 @@ import type {
   SummaryStructure,
   TableStructure,
 } from '../../data/compound'
+import type { Question } from '../../data/schema'
+import {
+  joinGapAnswerParts,
+  splitJoinedGapAnswer,
+} from '../../take/joined-gap-answer'
 
 type Answers = Record<string, Record<string, unknown>>
 type OnAnswer = (questionId: string, response: Record<string, unknown>) => void
@@ -34,7 +34,7 @@ function FlowChartArrow({
   const glyph = dir === 'down-left' ? '↙' : dir === 'down-right' ? '↘' : '↓'
   return (
     <span
-      className='select-none py-0.5 text-[28px] leading-none text-foreground/75'
+      className='py-0.5 text-[28px] leading-none text-foreground/75 select-none'
       aria-hidden
     >
       {glyph}
@@ -68,7 +68,7 @@ function countWords(value: string): number {
 }
 
 function longestCorrectWordCount(
-  answerKey: Record<string, unknown> | null | undefined,
+  answerKey: Record<string, unknown> | null | undefined
 ): number {
   if (!answerKey) return 0
   const correct = answerKey.correct ?? answerKey.answer
@@ -88,7 +88,7 @@ function longestCorrectWordCount(
 /** Declared limit, but never stricter than the longest accepted variant. */
 function effectiveMaxWords(
   maxWords: number | undefined,
-  answerKey: Record<string, unknown> | null | undefined,
+  answerKey: Record<string, unknown> | null | undefined
 ): number | undefined {
   if (maxWords == null) return undefined
   return Math.max(maxWords, longestCorrectWordCount(answerKey))
@@ -97,9 +97,11 @@ function effectiveMaxWords(
 function formatGapAnswer(answerKey: Record<string, unknown> | null): string {
   if (!answerKey) return ''
   if (typeof answerKey.correct === 'string') return answerKey.correct
-  if (Array.isArray(answerKey.correct)) return answerKey.correct.map(String).join(' / ')
+  if (Array.isArray(answerKey.correct))
+    return answerKey.correct.map(String).join(' / ')
   if (typeof answerKey.answer === 'string') return answerKey.answer
-  if (Array.isArray(answerKey.answer)) return answerKey.answer.map(String).join(' / ')
+  if (Array.isArray(answerKey.answer))
+    return answerKey.answer.map(String).join(' / ')
   return ''
 }
 
@@ -167,7 +169,7 @@ export function GapInput({
         'scroll-mt-20 align-baseline',
         blank
           ? 'mx-1 inline-flex flex-col items-center'
-          : 'mx-0.5 inline-flex items-center gap-1 align-middle',
+          : 'mx-0.5 inline-flex items-center gap-1 align-middle'
       )}
     >
       {showNumber && (
@@ -178,7 +180,7 @@ export function GapInput({
             'inline-flex shrink-0 items-center justify-center font-medium text-muted-foreground',
             blank
               ? 'mb-0.5 text-[11px] leading-none'
-              : 'size-5 rounded-full bg-muted text-[11px]',
+              : 'size-5 rounded-full bg-muted text-[11px]'
           )}
         >
           {displayN}
@@ -197,15 +199,15 @@ export function GapInput({
             }}
             aria-label={`Question ${displayN}`}
             className={cn(
-              'h-6 w-[140px] border-0 border-b-2 bg-transparent px-1 text-center text-[13px] outline-none transition-colors',
+              'h-6 w-[140px] border-0 border-b-2 bg-transparent px-1 text-center text-[13px] transition-colors outline-none',
               readOnly && 'cursor-default',
               overLimit
                 ? 'border-destructive focus:border-destructive'
-                : 'border-foreground/70 focus:border-primary',
+                : 'border-foreground/70 focus:border-primary'
             )}
           />
           {previewMode && hint && (
-            <span className='mt-0.5 text-[9px] font-medium leading-none text-success-foreground'>
+            <span className='mt-0.5 text-[9px] leading-none font-medium text-success-foreground'>
               {hint}
             </span>
           )}
@@ -226,14 +228,18 @@ export function GapInput({
                 className={cn(
                   'h-7 min-w-14 justify-center gap-1 border bg-card px-1.5 text-center text-[13px] font-medium shadow-sm [&>svg]:size-3',
                   readOnly && 'cursor-default bg-muted',
-                  'border-border',
+                  'border-border'
                 )}
               >
                 <SelectValue placeholder='—' />
               </SelectTrigger>
               <SelectContent align='center' className='min-w-14'>
                 {letters.map((letter) => (
-                  <SelectItem key={letter} value={letter} className='justify-center text-[13px]'>
+                  <SelectItem
+                    key={letter}
+                    value={letter}
+                    className='justify-center text-[13px]'
+                  >
                     {letter}
                   </SelectItem>
                 ))}
@@ -252,16 +258,16 @@ export function GapInput({
               }}
               aria-label={`Question ${displayN}`}
               className={cn(
-                'inline-block h-7 min-w-32 max-w-[18rem] rounded-md border bg-card px-2 text-center text-[13px] shadow-sm transition-colors focus:outline-none focus:ring-1',
+                'inline-block h-7 max-w-[18rem] min-w-32 rounded-md border bg-card px-2 text-center text-[13px] shadow-sm transition-colors focus:ring-1 focus:outline-none',
                 readOnly && 'cursor-default bg-muted',
                 overLimit
                   ? 'border-destructive focus:border-destructive focus:ring-destructive/30'
-                  : 'border-border focus:border-primary focus:ring-primary/30',
+                  : 'border-border focus:border-primary focus:ring-primary/30'
               )}
             />
           )}
           {previewMode && hint && (
-            <span className='mt-0.5 text-[9px] font-medium leading-none text-success-foreground'>
+            <span className='mt-0.5 text-[9px] leading-none font-medium text-success-foreground'>
               {hint}
             </span>
           )}
@@ -274,7 +280,7 @@ export function GapInput({
 function blankCountForQuestion(
   segments: CellSegment[],
   gapToQ: Map<string, Question>,
-  questionId: string,
+  questionId: string
 ): number {
   let n = 0
   for (const seg of segments) {
@@ -294,7 +300,7 @@ function renderSegments(
   previewMode?: boolean,
   choiceOptions?: string[],
   inputAppearance: 'box' | 'blank' = 'box',
-  showNumbers = true,
+  showNumbers = true
 ) {
   const seenQuestion = new Set<string>()
   const seenNumber = new Set<number>()
@@ -364,7 +370,7 @@ function renderTableCell(
   readOnly: boolean | undefined,
   highlighted?: boolean,
   previewMode?: boolean,
-  choiceOptions?: string[],
+  choiceOptions?: string[]
 ) {
   const body =
     cell.variant === 'bullets' ? (
@@ -379,7 +385,7 @@ function renderTableCell(
               maxWords,
               readOnly,
               previewMode,
-              choiceOptions,
+              choiceOptions
             )}
           </li>
         ))}
@@ -394,7 +400,7 @@ function renderTableCell(
           maxWords,
           readOnly,
           previewMode,
-          choiceOptions,
+          choiceOptions
         )}
       </span>
     )
@@ -403,7 +409,8 @@ function renderTableCell(
     <div
       className={cn(
         'rounded-sm transition-colors duration-200',
-        highlighted && 'bg-sky-100/80 ring-2 ring-sky-300 ring-inset',
+        highlighted &&
+          'bg-sky-100/80 ring-2 ring-sky-300 ring-inset student-dark:bg-sky-900/40 student-dark:ring-sky-600'
       )}
     >
       {body}
@@ -437,51 +444,51 @@ function TableCompletion({
     <div className='space-y-5'>
       <WordBankList options={options} />
       <div className='overflow-x-auto rounded-lg border border-border bg-card p-4'>
-      {structure.title && (
-        <p className='mb-3 text-center text-[15px] font-bold text-foreground'>
-          {structure.title}
-        </p>
-      )}
-      <table className='w-full border-collapse border border-border text-sm'>
-        {structure.headers.length > 0 && (
-          <thead>
-            <tr>
-              {structure.headers.map((h, i) => (
-                <th
-                  key={i}
-                  className='border border-border bg-muted px-3 py-2.5 text-center text-[13px] font-bold text-foreground'
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
+        {structure.title && (
+          <p className='mb-3 text-center text-[15px] font-bold text-foreground'>
+            {structure.title}
+          </p>
         )}
-        <tbody>
-          {structure.rows.map((row, ri) => (
-            <tr key={ri}>
-              {row.map((cell, ci) => (
-                <td
-                  key={ci}
-                  className='border border-border px-3 py-2.5 align-top text-[13px] text-foreground'
-                >
-                  {renderTableCell(
-                    cell,
-                    gapToQ,
-                    answers,
-                    onAnswer,
-                    maxWords,
-                    readOnly,
-                    highlightCell?.row === ri && highlightCell?.col === ci,
-                    previewMode,
-                    choiceOptions,
-                  )}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <table className='w-full border-collapse border border-border text-sm'>
+          {structure.headers.length > 0 && (
+            <thead>
+              <tr>
+                {structure.headers.map((h, i) => (
+                  <th
+                    key={i}
+                    className='border border-border bg-muted px-3 py-2.5 text-center text-[13px] font-bold text-foreground'
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            {structure.rows.map((row, ri) => (
+              <tr key={ri}>
+                {row.map((cell, ci) => (
+                  <td
+                    key={ci}
+                    className='border border-border px-3 py-2.5 align-top text-[13px] text-foreground'
+                  >
+                    {renderTableCell(
+                      cell,
+                      gapToQ,
+                      answers,
+                      onAnswer,
+                      maxWords,
+                      readOnly,
+                      highlightCell?.row === ri && highlightCell?.col === ci,
+                      previewMode,
+                      choiceOptions
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
@@ -511,88 +518,88 @@ function NoteCompletion({
     <div className='space-y-5'>
       <WordBankList options={options} />
       <div className='mx-auto rounded-lg border border-border bg-card px-8 py-7'>
-      {structure.title && (
-        <p className='mb-6 text-center text-[17px] font-bold text-foreground'>
-          {structure.title}
-        </p>
-      )}
-      {structure.sections.map((section, si) => {
-        const showBullets = section.bullets ?? structure.bullets !== false
-        return (
-        <div key={si}>
-          {section.heading && (
-            <p
-              className={cn(
-                'mb-2.5 whitespace-pre-line text-[14px] font-bold text-foreground',
-                si > 0 && 'mt-6',
-              )}
-            >
-              {section.heading}
-            </p>
-          )}
-          {!showBullets ? (
-            <div className='space-y-2'>
-              {section.items.map((item, ii) => (
-                <div
-                  key={ii}
+        {structure.title && (
+          <p className='mb-6 text-center text-[17px] font-bold text-foreground'>
+            {structure.title}
+          </p>
+        )}
+        {structure.sections.map((section, si) => {
+          const showBullets = section.bullets ?? structure.bullets !== false
+          return (
+            <div key={si}>
+              {section.heading && (
+                <p
                   className={cn(
-                    'text-[14px] leading-7 text-foreground',
-                    item.role === 'subheading' && 'font-bold',
-                    item.role === 'subheading' && ii > 0 && 'mt-4',
+                    'mb-2.5 text-[14px] font-bold whitespace-pre-line text-foreground',
+                    si > 0 && 'mt-6'
                   )}
                 >
-                  {renderSegments(
-                    stripIndent(item.segments),
-                    gapToQ,
-                    answers,
-                    onAnswer,
-                    maxWords,
-                    readOnly,
-                    previewMode,
-                    choiceOptions,
-                  )}
+                  {section.heading}
+                </p>
+              )}
+              {!showBullets ? (
+                <div className='space-y-2'>
+                  {section.items.map((item, ii) => (
+                    <div
+                      key={ii}
+                      className={cn(
+                        'text-[14px] leading-7 text-foreground',
+                        item.role === 'subheading' && 'font-bold',
+                        item.role === 'subheading' && ii > 0 && 'mt-4'
+                      )}
+                    >
+                      {renderSegments(
+                        stripIndent(item.segments),
+                        gapToQ,
+                        answers,
+                        onAnswer,
+                        maxWords,
+                        readOnly,
+                        previewMode,
+                        choiceOptions
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <ul className='space-y-1.5'>
+                  {section.items.map((item, ii) => {
+                    const nested = isNested(item.segments)
+                    const subheading = item.role === 'subheading'
+                    const lead = item.role === 'lead'
+                    return (
+                      <li
+                        key={ii}
+                        className={cn(
+                          'text-[14px] leading-7 text-foreground',
+                          subheading
+                            ? cn('list-none font-bold', ii > 0 && 'mt-4')
+                            : lead
+                              ? 'list-none'
+                              : cn(
+                                  'list-disc marker:text-foreground',
+                                  nested ? 'ml-11 list-[circle]' : 'ml-5'
+                                )
+                        )}
+                      >
+                        {renderSegments(
+                          stripIndent(item.segments),
+                          gapToQ,
+                          answers,
+                          onAnswer,
+                          maxWords,
+                          readOnly,
+                          previewMode,
+                          choiceOptions
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
             </div>
-          ) : (
-            <ul className='space-y-1.5'>
-              {section.items.map((item, ii) => {
-                const nested = isNested(item.segments)
-                const subheading = item.role === 'subheading'
-                const lead = item.role === 'lead'
-                return (
-                  <li
-                    key={ii}
-                    className={cn(
-                      'text-[14px] leading-7 text-foreground',
-                      subheading
-                        ? cn('list-none font-bold', ii > 0 && 'mt-4')
-                        : lead
-                          ? 'list-none'
-                        : cn(
-                            'list-disc marker:text-foreground',
-                            nested ? 'ml-11 list-[circle]' : 'ml-5',
-                          ),
-                    )}
-                  >
-                    {renderSegments(
-                      stripIndent(item.segments),
-                      gapToQ,
-                      answers,
-                      onAnswer,
-                      maxWords,
-                      readOnly,
-                      previewMode,
-                      choiceOptions,
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </div>
-        )
-      })}
+          )
+        })}
       </div>
     </div>
   )
@@ -607,7 +614,10 @@ function isNested(segments: CellSegment[]): boolean {
 function stripIndent(segments: CellSegment[]): CellSegment[] {
   const first = segments[0]
   if (first?.type !== 'text' || !/^\s+/.test(first.value)) return segments
-  return [{ ...first, value: first.value.replace(/^\s+/, '') }, ...segments.slice(1)]
+  return [
+    { ...first, value: first.value.replace(/^\s+/, '') },
+    ...segments.slice(1),
+  ]
 }
 
 function FormCompletion({
@@ -630,7 +640,7 @@ function FormCompletion({
 
   return (
     <div className='mx-auto max-w-xl rounded-lg border border-border bg-card p-6'>
-      <p className='mb-6 whitespace-pre-line text-center text-sm font-medium uppercase tracking-wide text-foreground'>
+      <p className='mb-6 text-center text-sm font-medium tracking-wide whitespace-pre-line text-foreground uppercase'>
         {structure.form_title}
       </p>
       <div className='space-y-4'>
@@ -640,7 +650,8 @@ function FormCompletion({
             className='grid grid-cols-[auto_1fr] items-baseline gap-x-3 text-[14px]'
           >
             <span className='font-semibold text-foreground'>
-              {field.label}{field.label ? ':' : ''}
+              {field.label}
+              {field.label ? ':' : ''}
             </span>
             {field.type === 'static' ? (
               <span className='text-muted-foreground'>{field.value}</span>
@@ -653,7 +664,7 @@ function FormCompletion({
                   onAnswer,
                   maxWords,
                   readOnly,
-                  previewMode,
+                  previewMode
                 )}
               </span>
             )}
@@ -704,7 +715,7 @@ function SummaryCompletion({
                 maxWords,
                 readOnly,
                 previewMode,
-                options.length > 0 ? options : undefined,
+                options.length > 0 ? options : undefined
               )}
             </p>
           ))}
@@ -744,7 +755,7 @@ function FlowCompletion({
       readOnly,
       previewMode,
       choiceOptions,
-      'blank',
+      'blank'
     )
 
   return (
@@ -772,7 +783,9 @@ function FlowCompletion({
                 </div>
               ) : (
                 <div className='w-full max-w-md'>
-                  <FlowStepCard>{renderFlowSegments(step.segments)}</FlowStepCard>
+                  <FlowStepCard>
+                    {renderFlowSegments(step.segments)}
+                  </FlowStepCard>
                 </div>
               )}
               {si < structure.steps.length - 1 &&
@@ -858,7 +871,7 @@ function DiagramCompletion({
       {structure.markers.map((m, i) => (
         <div
           key={i}
-          className='absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap text-[13px] leading-6'
+          className='absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 text-[13px] leading-6 whitespace-nowrap'
           style={{ left: `${m.x}%`, top: `${m.y}%` }}
         >
           {renderSegments(
@@ -871,7 +884,7 @@ function DiagramCompletion({
             previewMode,
             undefined,
             'box',
-            !structure.hide_numbers,
+            !structure.hide_numbers
           )}
         </div>
       ))}

@@ -15,6 +15,7 @@ import {
 } from '@tanstack/react-router'
 import { AlertCircle, Clock, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuthStore } from '@/stores/auth-store'
 import {
   finishAttempt,
   getAttempt,
@@ -24,9 +25,12 @@ import {
   type AttemptDetailRead,
   type AttemptRead,
 } from '@/lib/api/attempts'
-import { startFullMockOnTest } from '@/lib/api/student'
 import { fetchQuestions } from '@/lib/api/questions'
+import { startFullMockOnTest } from '@/lib/api/student'
 import { fetchTest, fetchTestBySlug } from '@/lib/api/tests'
+import { loginSearchFromLocation } from '@/lib/sign-out'
+import { cn } from '@/lib/utils'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,10 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { useAuthStore } from '@/stores/auth-store'
-import { loginSearchFromLocation } from '@/lib/sign-out'
 import type { SpeakingSessionControls } from '@/features/speaking-examiner/speaking-examiner-session'
 import { QuestionNavBar } from '../components/take/question-nav-bar'
 import { durationByType } from '../data/duration-rules'
@@ -51,45 +52,44 @@ import {
   type SectionType,
 } from '../data/schema'
 import { isSectionType } from '../lib/part-resolver'
+import { countAnsweredSlots } from './answer-progress'
+import { collectAnswersForTypes } from './collect-answers'
 import {
   lsKeyForAttempt,
   PREVIEW_ATTEMPT_ID,
   SECTION_LABELS,
   TYPE_ORDER,
 } from './constants'
+import { exitExamFullscreen } from './exam-fullscreen'
+import { ExamTimerChrome } from './exam-timer-chrome'
+import { FullscreenGuardOverlay } from './fullscreen-guard-overlay'
 import { IntroScreen } from './intro-screen'
 import { ListeningAudioProvider } from './listening-audio-provider'
+import { mergeAnswersServerWins } from './merge-answers'
+import { buildPagehideFlushInit } from './pagehide-flush'
+import { isBenignSectionConflict } from './section-conflict'
+import { parseSectionExpired, toExpiredInfo } from './section-expired'
+import {
+  asSectionType,
+  nextTypeAfter,
+  nextUnlockableType,
+} from './section-order'
 import {
   TakeTestProvider,
   useTakeTest,
   type SectionAnswers,
   type TakeTestContextValue,
 } from './take-test-context'
-import {
-  collectAnswersForTypes,
-} from './collect-answers'
-import { buildPagehideFlushInit } from './pagehide-flush'
-import { mergeAnswersServerWins } from './merge-answers'
-import { countAnsweredSlots } from './answer-progress'
-import { isBenignSectionConflict } from './section-conflict'
-import {
-  parseSectionExpired,
-  toExpiredInfo,
-} from './section-expired'
-import { asSectionType, nextTypeAfter, nextUnlockableType } from './section-order'
+import { TakeTestTimerProvider } from './take-test-timer-context'
+import { testLoadError } from './test-load-error'
+import { useFullscreenGuard } from './use-fullscreen-guard'
 import {
   useSectionExpiryDialog,
   type TimeoutDialogInfo,
 } from './use-section-expiry-dialog'
 import { useSectionGuard } from './use-section-guard'
 import { useSectionProgress } from './use-section-progress'
-import { ExamTimerChrome } from './exam-timer-chrome'
-import { TakeTestTimerProvider } from './take-test-timer-context'
 import { useTestNavigation } from './use-test-navigation'
-import { exitExamFullscreen } from './exam-fullscreen'
-import { FullscreenGuardOverlay } from './fullscreen-guard-overlay'
-import { useFullscreenGuard } from './use-fullscreen-guard'
-import { testLoadError } from './test-load-error'
 
 function isAttemptDone(err: unknown): boolean {
   const detail = (err as { response?: { data?: { detail?: string } } })
@@ -136,11 +136,12 @@ export function TakeTestShell({
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const currentHref = useRouterState({ select: (s) => s.location.href })
   const routeSearch = useRouterState({
-    select: (s) => s.location.search as {
-      resume?: string
-      section?: string
-      part?: string
-    },
+    select: (s) =>
+      s.location.search as {
+        resume?: string
+        section?: string
+        part?: string
+      },
   })
 
   const testNumber = testSlug
@@ -174,7 +175,9 @@ export function TakeTestShell({
 
   useEffect(() => {
     if (!resumeTestNotFound) return
-    toast.info('This saved attempt is no longer available. Choose another test.')
+    toast.info(
+      'This saved attempt is no longer available. Choose another test.'
+    )
     void navigate({ to: '/student/tests', replace: true })
   }, [navigate, resumeTestNotFound])
 
@@ -225,13 +228,11 @@ export function TakeTestShell({
           pathname.endsWith('/review')))
 
   const [localAttemptId, setLocalAttemptId] = useState<string | null>(null)
-  const attemptId = isPreview
-    ? PREVIEW_ATTEMPT_ID
-    : (resume ?? localAttemptId)
+  const attemptId = isPreview ? PREVIEW_ATTEMPT_ID : (resume ?? localAttemptId)
 
-  const [attempt, setAttempt] = useState<AttemptRead | AttemptDetailRead | null>(
-    null,
-  )
+  const [attempt, setAttempt] = useState<
+    AttemptRead | AttemptDetailRead | null
+  >(null)
   const [attemptError, setAttemptError] = useState<
     'forbidden' | 'not_found' | null
   >(null)
@@ -283,7 +284,14 @@ export function TakeTestShell({
     if (sectionProgress.allSealed && !showSubmitDialog) {
       setShowSubmitDialog(true)
     }
-  }, [isPreview, attemptId, finished, sectionProgress.allSealed, showSubmitDialog, setShowSubmitDialog])
+  }, [
+    isPreview,
+    attemptId,
+    finished,
+    sectionProgress.allSealed,
+    showSubmitDialog,
+    setShowSubmitDialog,
+  ])
 
   /** Only the active section may receive answer writes (sealed → 409). */
   const collectWritableAnswers = useCallback(() => {
@@ -319,7 +327,7 @@ export function TakeTestShell({
       })
       return true
     },
-    [reportSectionExpired, sectionProgress],
+    [reportSectionExpired, sectionProgress]
   )
 
   const goToResult = useCallback(
@@ -337,7 +345,7 @@ export function TakeTestShell({
         })
       }
     },
-    [navigate, role],
+    [navigate, role]
   )
 
   // ── Load attempt (guards + hydrate answers) ──────────────────────────────
@@ -418,9 +426,7 @@ export function TakeTestShell({
             resume: current.id,
             section: section && isSectionType(section) ? section : 'listening',
             part:
-              section === 'speaking'
-                ? undefined
-                : (routeSearch.part ?? '1'),
+              section === 'speaking' ? undefined : (routeSearch.part ?? '1'),
           },
           replace: true,
         })
@@ -450,9 +456,7 @@ export function TakeTestShell({
         })
         return
       }
-      const sectionMatch = pathname.match(
-        /\/take-test\/[^/]+\/[^/]+\/([^/]+)/,
-      )
+      const sectionMatch = pathname.match(/\/take-test\/[^/]+\/[^/]+\/([^/]+)/)
       const section = sectionMatch?.[1]
       if (section && isSectionType(section)) {
         if (section === 'speaking') {
@@ -464,7 +468,7 @@ export function TakeTestShell({
           })
         } else {
           const partMatch = pathname.match(
-            /\/take-test\/[^/]+\/[^/]+\/[^/]+\/(\d+)/,
+            /\/take-test\/[^/]+\/[^/]+\/[^/]+\/(\d+)/
           )
           const part = partMatch?.[1] ?? '1'
           void navigate({
@@ -545,7 +549,9 @@ export function TakeTestShell({
     if (isReviewRoute) return sortedSections[0] ?? null
     // Single-part practice has only one section row — no URL part lookup.
     if (isPracticePart) return sortedSections[0] ?? null
-    const m = pathname.match(/\/(listening|reading|writing|speaking)(?:\/(\d+))?/)
+    const m = pathname.match(
+      /\/(listening|reading|writing|speaking)(?:\/(\d+))?/
+    )
     const typeRaw = m?.[1] ?? routeSearch.section
     if (!typeRaw || !isSectionType(typeRaw)) return sortedSections[0] ?? null
     const type = typeRaw as SectionType
@@ -608,7 +614,14 @@ export function TakeTestShell({
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [test?.id, activeSectionFromPath?.id, isReviewRoute, isPracticePart, practiceSectionType, practicePartNumber])
+  }, [
+    test?.id,
+    activeSectionFromPath?.id,
+    isReviewRoute,
+    isPracticePart,
+    practiceSectionType,
+    practicePartNumber,
+  ])
 
   const LS_KEY =
     !isPreview && attemptId && attemptId !== PREVIEW_ATTEMPT_ID
@@ -638,7 +651,7 @@ export function TakeTestShell({
             JSON.stringify({
               answers: saved.answers,
               resume: saved.resume,
-            }),
+            })
           )
         }
       }
@@ -651,7 +664,7 @@ export function TakeTestShell({
     if (!LS_KEY) return
     try {
       const m = pathname.match(
-        /\/(listening|reading|writing|speaking)(?:\/(\d+))?/,
+        /\/(listening|reading|writing|speaking)(?:\/(\d+))?/
       )
       const section = m?.[1] ?? routeSearch.section
       let resume: { section?: string; part?: string } | undefined
@@ -672,7 +685,7 @@ export function TakeTestShell({
         JSON.stringify({
           answers: answersRef.current,
           resume,
-        }),
+        })
       )
     } catch {
       // quota
@@ -763,9 +776,7 @@ export function TakeTestShell({
 
   const startMutation = useMutation({
     mutationFn: () =>
-      role === 'student'
-        ? startFullMockOnTest(testId)
-        : startAttempt(testId),
+      role === 'student' ? startFullMockOnTest(testId) : startAttempt(testId),
     onSuccess: (data) => {
       startedThisVisitRef.current = true
       if (role === 'student' && data.test_id !== testId) {
@@ -781,9 +792,8 @@ export function TakeTestShell({
       toast.success('Test started')
     },
     onError: (err: unknown) => {
-      const detail =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail
+      const detail = (err as { response?: { data?: { detail?: string } } })
+        ?.response?.data?.detail
       toast.error(detail || 'Failed to start test')
     },
   })
@@ -887,7 +897,8 @@ export function TakeTestShell({
               !isBenignSectionConflict(err)
             ) {
               // Still finish — answers may already be on the server.
-              if (import.meta.env.DEV) console.warn('Pre-finish flush failed', err)
+              if (import.meta.env.DEV)
+                console.warn('Pre-finish flush failed', err)
             }
           }
         }
@@ -929,14 +940,18 @@ export function TakeTestShell({
   const { mutate: finishMutate, isPending: finishIsPending } = finishMutation
 
   const updateAnswer = useCallback(
-    (sectionId: string, questionId: string, response: Record<string, unknown>) => {
+    (
+      sectionId: string,
+      questionId: string,
+      response: Record<string, unknown>
+    ) => {
       if (inputsLocked) return
       setAnswers((prev) => ({
         ...prev,
         [sectionId]: { ...prev[sectionId], [questionId]: response },
       }))
     },
-    [inputsLocked],
+    [inputsLocked]
   )
 
   const toggleFlag = useCallback((questionId: string) => {
@@ -1077,11 +1092,7 @@ export function TakeTestShell({
               </Button>
             ) : null}
             {loadError.action === 'tests' ? (
-              <Button
-                size='sm'
-                variant='outline'
-                onClick={goToTests}
-              >
+              <Button size='sm' variant='outline' onClick={goToTests}>
                 Back to tests
               </Button>
             ) : null}
@@ -1098,7 +1109,14 @@ export function TakeTestShell({
 
   if (attemptError === 'forbidden') {
     return (
-      <div className='flex h-screen items-center justify-center bg-white px-4'>
+      <div
+        className={cn(
+          'flex h-screen items-center justify-center px-4',
+          role === 'student'
+            ? 'bg-background text-foreground'
+            : 'bg-white text-slate-900'
+        )}
+      >
         <Alert variant='destructive' className='max-w-md'>
           <AlertCircle className='size-4' />
           <AlertDescription>
@@ -1111,7 +1129,14 @@ export function TakeTestShell({
 
   if (attemptError === 'not_found') {
     return (
-      <div className='flex h-screen items-center justify-center bg-white px-4'>
+      <div
+        className={cn(
+          'flex h-screen items-center justify-center px-4',
+          role === 'student'
+            ? 'bg-background text-foreground'
+            : 'bg-white text-slate-900'
+        )}
+      >
         <Alert variant='destructive' className='max-w-md'>
           <AlertCircle className='size-4' />
           <AlertDescription>Attempt not found.</AlertDescription>
@@ -1131,9 +1156,8 @@ export function TakeTestShell({
         sortedSections={sortedSections}
         onStart={() => startMutation.mutate()}
         onCancel={() => {
-          window.location.href = role === 'student'
-            ? '/student/tests'
-            : '/tests'
+          window.location.href =
+            role === 'student' ? '/student/tests' : '/tests'
         }}
         isStarting={startMutation.isPending}
       />
@@ -1207,6 +1231,7 @@ function ActiveChrome({
   onIntegrityTerminated: () => void
 }) {
   const ctx = useTakeTest()
+  const role = useAuthStore((state) => state.auth.user?.role)
   const nav = useTestNavigation()
   const guard = useSectionGuard()
 
@@ -1236,7 +1261,7 @@ function ActiveChrome({
   const unlockableType = nextUnlockableType(
     presentTypes,
     stateOf,
-    activeSectionType,
+    activeSectionType
   )
   const [finishSectionOpen, setFinishSectionOpen] = useState(false)
   const [isFinishingSection, setIsFinishingSection] = useState(false)
@@ -1326,7 +1351,7 @@ function ActiveChrome({
   const getAnsweredCount = (section: Section) => {
     return countAnsweredSlots(
       answers[section.id] ?? {},
-      sectionQuestions[section.id] ?? [],
+      sectionQuestions[section.id] ?? []
     )
   }
 
@@ -1334,11 +1359,11 @@ function ActiveChrome({
   const currentSections = sortedSections.filter((s) => s.type === currentType)
   const totalQuestions = currentSections.reduce(
     (sum, s) => sum + countScoringSlots(sectionQuestions[s.id] ?? []),
-    0,
+    0
   )
   const totalAnswered = currentSections.reduce(
     (sum, s) => sum + getAnsweredCount(s),
-    0,
+    0
   )
 
   const switchToDuration = guard.pendingSwitch
@@ -1347,7 +1372,14 @@ function ActiveChrome({
 
   return (
     <>
-      <div className='flex h-svh flex-col bg-white'>
+      <div
+        className={cn(
+          'flex h-svh flex-col',
+          role === 'student'
+            ? 'bg-background text-foreground'
+            : 'bg-white text-slate-900'
+        )}
+      >
         {isPreview && (
           <div className='sticky top-0 z-50 flex items-center justify-between gap-3 bg-orange-500 px-3 py-2 text-sm font-medium text-white sm:px-6 sm:py-2.5'>
             <span>
@@ -1421,7 +1453,9 @@ function ActiveChrome({
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>
-                {isPractice ? 'Finish practice?' : 'All done! Submit your test?'}
+                {isPractice
+                  ? 'Finish practice?'
+                  : 'All done! Submit your test?'}
               </AlertDialogTitle>
               <AlertDialogDescription>
                 You have answered {totalAnswered} of {totalQuestions} questions
@@ -1533,15 +1567,11 @@ function ActiveChrome({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Finish{' '}
-              {SECTION_LABELS[activeSectionType ?? currentType]}?
+              Finish {SECTION_LABELS[activeSectionType ?? currentType]}?
             </AlertDialogTitle>
             <AlertDialogDescription>
               You will not be able to return to this section. Next up:{' '}
-              {unlockableType
-                ? SECTION_LABELS[unlockableType]
-                : 'review'}
-              .
+              {unlockableType ? SECTION_LABELS[unlockableType] : 'review'}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

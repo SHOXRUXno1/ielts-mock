@@ -2,20 +2,23 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Eraser, Info, Loader2, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '@/components/ui/resizable'
-import { useIsDesktop } from '@/hooks/use-mobile'
 import { mediaUrl } from '@/lib/api/attempts'
 import {
   requestWritingFeedback,
   type WritingFeedbackResult,
 } from '@/lib/api/feedback'
 import { cn } from '@/lib/utils'
+import { useIsDesktop } from '@/hooks/use-mobile'
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable'
 import type { Question } from '../../data/schema'
-import { getDefaultInstruction, getDefaultQuestion } from '../../data/writing-presets'
+import {
+  getDefaultInstruction,
+  getDefaultQuestion,
+} from '../../data/writing-presets'
 import { WritingFeedbackView } from './writing-feedback-view'
 
 // ── Types & helpers ──────────────────────────────────────────────────────────
@@ -76,11 +79,11 @@ function TaskEditor({
     question.min_words ??
     (question.content.min_words as number | undefined) ??
     (isTask1 ? 150 : 250)
-  const taskStatement =
-    (question.content.task_statement as string) ?? ''
+  const taskStatement = (question.content.task_statement as string) ?? ''
   const taskDescription =
     (question.content.task_description as string) ??
-    (question.content.prompt as string) ?? ''
+    (question.content.prompt as string) ??
+    ''
   const taskQuestion =
     (question.content.task_question as string) ??
     (!isTask1 ? (getDefaultQuestion(question.essay_type) ?? '') : '')
@@ -96,8 +99,7 @@ function TaskEditor({
       .join('\n\n')
   // image_url from DB column takes priority; fallback to content JSON
   const imageUrl =
-    question.image_url ??
-    (question.content.image_url as string | undefined)
+    question.image_url ?? (question.content.image_url as string | undefined)
   // Only Task 1 ever shows an image (Task 2 is always essay, no charts)
   const hasImage = isTask1 && !!imageUrl
 
@@ -224,27 +226,25 @@ function TaskEditor({
   // ── Left pane ──────────────────────────────────────────────────────────────
   const leftPane = (
     <div className='h-full overflow-y-auto px-10 py-8'>
-      <h2 className='text-lg font-medium text-foreground'>
-        Task {taskNumber}
-      </h2>
+      <h2 className='text-lg font-medium text-foreground'>Task {taskNumber}</h2>
       <p className='mt-1 text-[13px] text-muted-foreground'>
         You should spend about {isTask1 ? '20' : '40'} minutes on this task.
       </p>
 
-      <div className='mt-6 rounded-lg border-l-[3px] border-blue-500 bg-muted p-6'>
+      <div className='mt-6 rounded-lg border-l-[3px] border-blue-500 bg-muted p-6 student-dark:border-border'>
         <div className='text-[15px] leading-[1.9] text-foreground'>
           {promptBody.split('\n').map((line, i) =>
             line.trim() ? (
               <p key={i} className={i > 0 ? 'mt-3' : undefined}>
                 {line}
               </p>
-            ) : null,
+            ) : null
           )}
         </div>
       </div>
 
       {taskInstruction && (
-        <p className='mt-3 text-sm italic leading-relaxed text-muted-foreground'>
+        <p className='mt-3 text-sm leading-relaxed text-muted-foreground italic'>
           {taskInstruction}
         </p>
       )}
@@ -323,13 +323,15 @@ function TaskEditor({
         data-gramm='false'
         data-gramm_editor='false'
         data-enable-grammarly='false'
-        className='mx-5 h-[min(42vh,360px)] min-h-[200px] shrink-0 resize-y rounded-lg border-[0.5px] border-border bg-background px-5 py-5 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-[3px] focus:ring-blue-500/10'
+        className='mx-5 h-[min(42vh,360px)] min-h-[200px] shrink-0 resize-y rounded-lg border-[0.5px] border-border bg-background px-5 py-5 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:ring-[3px] focus:ring-blue-500/10 focus:outline-none'
         style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}
       />
 
       {/* Word count + Get Feedback */}
       <div className='flex shrink-0 items-center justify-between px-5 py-4'>
-        <span className={cn('text-[13px] font-medium tabular-nums', wordCountColor)}>
+        <span
+          className={cn('text-[13px] font-medium tabular-nums', wordCountColor)}
+        >
           {wordCount} / {minWords}+ words
         </span>
         {showInstantFeedback && (
@@ -350,11 +352,11 @@ function TaskEditor({
       </div>
 
       {showInstantFeedback && (
-        <div className='mx-5 mb-5 shrink-0 overflow-hidden rounded-lg border border-blue-200'>
+        <div className='mx-5 mb-5 shrink-0 overflow-hidden rounded-lg border border-blue-200 student-dark:border-blue-900'>
           <button
             type='button'
             onClick={() => setFeedbackOpen((v) => !v)}
-            className='flex w-full items-center justify-between bg-blue-50 px-4 py-3 text-left text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100'
+            className='flex w-full items-center justify-between bg-blue-50 px-4 py-3 text-left text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100 student-dark:bg-blue-950/40 student-dark:text-blue-200 student-dark:hover:bg-blue-950/60'
           >
             <div className='flex items-center gap-2'>
               <Sparkles className='size-4' />
@@ -362,11 +364,11 @@ function TaskEditor({
             </div>
             <div className='flex items-center gap-2'>
               {feedback && (
-                <span className='rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700'>
+                <span className='rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 student-dark:bg-blue-900/60 student-dark:text-blue-200'>
                   Band {feedback.overall_band.toFixed(1)}
                 </span>
               )}
-              <span className='text-xs text-blue-400'>
+              <span className='text-xs text-blue-400 student-dark:text-blue-300'>
                 {feedbackOpen ? '▲' : '▼'}
               </span>
             </div>
@@ -406,11 +408,15 @@ function TaskEditor({
   return (
     <ResizablePanelGroup orientation='horizontal' className='h-full min-h-0'>
       <ResizablePanel defaultSize='50%' minSize='25%'>
-        <div className='h-full min-h-0 overflow-y-auto overflow-x-hidden'>{leftPane}</div>
+        <div className='h-full min-h-0 overflow-x-hidden overflow-y-auto'>
+          {leftPane}
+        </div>
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize='50%' minSize='25%'>
-        <div className='h-full min-h-0 overflow-y-auto overflow-x-hidden'>{rightPane}</div>
+        <div className='h-full min-h-0 overflow-x-hidden overflow-y-auto'>
+          {rightPane}
+        </div>
       </ResizablePanel>
     </ResizablePanelGroup>
   )
@@ -429,7 +435,7 @@ export function WritingSection({
 }: Props) {
   const sortedQuestions = useMemo(
     () => [...questions].sort((a, b) => a.order - b.order),
-    [questions],
+    [questions]
   )
 
   // Full mock / whole-section practice: 2 tasks. Single-part practice: 1 task.
@@ -446,7 +452,7 @@ export function WritingSection({
   // Practice may pass only Task 2 while URL still says part=2 → clamp to 0.
   const safeTaskIdx = Math.min(
     Math.max(0, activeTaskIdx),
-    sortedQuestions.length - 1,
+    sortedQuestions.length - 1
   )
 
   return (

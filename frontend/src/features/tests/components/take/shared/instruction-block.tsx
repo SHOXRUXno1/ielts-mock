@@ -10,8 +10,8 @@ export function InstructionBlock({ children, className }: Props) {
   return (
     <div
       className={cn(
-        'rounded-lg border-l-[3px] border-blue-500 bg-muted p-4 text-sm leading-[1.7] text-foreground',
-        className,
+        'rounded-lg border-l-[3px] border-blue-500 bg-muted p-4 text-sm leading-[1.7] text-foreground student-dark:border-border',
+        className
       )}
     >
       {children}
@@ -64,7 +64,7 @@ export function highlightCaps(text: string): ReactNode[] {
     parts.push(
       <span key={match.index} className='font-bold text-foreground'>
         {match[1]}
-      </span>,
+      </span>
     )
     lastIndex = re.lastIndex
   }
@@ -145,7 +145,7 @@ export function parsePassageParagraphLabel(paragraph: string): {
  * A section may span several paragraphs; only its first one carries the letter.
  */
 export function assemblePassageParagraphs(
-  paragraphs: string[],
+  paragraphs: string[]
 ): { label: string | null; body: string }[] {
   const out: { label: string | null; body: string }[] = []
   let pending: string | null = null
@@ -204,20 +204,20 @@ function normalizeLetterRange(raw: string): string {
 function adaptInstructionLine(
   line: string,
   groupType: string,
-  options?: AdaptInstructionOptions,
+  options?: AdaptInstructionOptions
 ): string {
   const trimmed = line.trim()
   if (!trimmed || SCREEN_LETTER_HINT_RE.test(trimmed)) return line
 
   const letterInBoxes =
     /^(Write the correct letters?|Write the appropriate letters?|Choose the correct letters?),?\s+(?:\(([A-Z])\s*[-–]\s*([A-Z])\)|([A-Z](?:\s*[-–]\s*[A-Z])?))\s*,?\s+in boxes?\s+[\d\s–-]+ on your answer sheet\.?\s*$/i.exec(
-      trimmed,
+      trimmed
     )
   if (letterInBoxes && SELECT_LETTER_GROUP_TYPES.has(groupType)) {
     const range = normalizeLetterRange(
       letterInBoxes[2] && letterInBoxes[3]
         ? `${letterInBoxes[2]}–${letterInBoxes[3]}`
-        : (letterInBoxes[4] ?? ''),
+        : (letterInBoxes[4] ?? '')
     )
     return range
       ? `Select the correct letter, ${range}, for each question.`
@@ -226,7 +226,7 @@ function adaptInstructionLine(
 
   if (
     /^Write the correct letters in boxes?\s+[\d\s–-]+ on your answer sheet\.?\s*$/i.test(
-      trimmed,
+      trimmed
     ) &&
     (options?.hasWordBank || groupType === 'compound')
   ) {
@@ -258,14 +258,20 @@ function adaptInstructionLine(
   if (
     groupType === 'mcq' &&
     /^Write your answer in box\s+[\d\s–-]+ on your answer sheet\.?\s*$/i.test(
-      trimmed,
+      trimmed
     )
   ) {
     return 'Select the correct answer below.'
   }
 
-  if (/^Write the correct letter/i.test(trimmed) && /next to Questions/i.test(trimmed)) {
-    return trimmed.replace(/^Write the correct letter/i, 'Choose the correct letter')
+  if (
+    /^Write the correct letter/i.test(trimmed) &&
+    /next to Questions/i.test(trimmed)
+  ) {
+    return trimmed.replace(
+      /^Write the correct letter/i,
+      'Choose the correct letter'
+    )
   }
 
   return line
@@ -278,7 +284,7 @@ function adaptInstructionLine(
 export function adaptInstructionForScreen(
   instruction: string,
   groupType: string,
-  options?: AdaptInstructionOptions,
+  options?: AdaptInstructionOptions
 ): string {
   if (!instruction.trim()) return instruction
 
@@ -301,7 +307,9 @@ export function adaptInstructionForScreen(
 
     if (
       SCREEN_LETTER_HINT_RE.test(trimmed) &&
-      [...seenSelectFromList].some((k) => k.includes('select the correct letter from the list'))
+      [...seenSelectFromList].some((k) =>
+        k.includes('select the correct letter from the list')
+      )
     ) {
       continue
     }
@@ -318,6 +326,7 @@ export function adaptInstructionForScreen(
 export function renderFormattedText(
   text: string,
   paragraphClassName = 'text-[15px] leading-[1.9] text-foreground tracking-[-0.01em]',
+  paragraphLabelClassName = 'text-[15px] font-bold text-foreground'
 ): ReactNode[] {
   const paragraphs = assemblePassageParagraphs(splitPassageParagraphs(text))
   if (paragraphs.length === 0) return []
@@ -332,9 +341,9 @@ export function renderFormattedText(
       nodes.push(
         createElement(
           'p',
-          { key: `l${i}`, className: 'text-[15px] font-bold text-foreground' },
-          label,
-        ),
+          { key: `l${i}`, className: paragraphLabelClassName },
+          label
+        )
       )
     }
     if (body || !label) {
@@ -342,8 +351,8 @@ export function renderFormattedText(
         createElement(
           'p',
           { key: `b${i}`, className: paragraphClassName },
-          ...parseInlineFormatting(body),
-        ),
+          ...parseInlineFormatting(body)
+        )
       )
     }
   })
