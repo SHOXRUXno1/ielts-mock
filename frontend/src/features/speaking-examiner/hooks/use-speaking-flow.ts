@@ -75,18 +75,25 @@ export function useSpeakingFlow({
 
         // Post speaking score back to the test attempt if launched from one
         if (attemptId && result.overall_band != null) {
-          try {
-            await submitSpeakingScore(attemptId, {
-              speaking_band: result.overall_band,
-              score_json: result as unknown as Record<string, unknown>,
-              session_id: liveSessionIdRef.current,
-            })
-            toast.success('Speaking score saved to your test attempt.')
-          } catch {
-            // Non-fatal — the score is displayed locally regardless
-            if (import.meta.env.DEV) {
-              // eslint-disable-next-line no-console
-              console.warn('[SpeakingFlow] failed to save speaking score to attempt')
+          const sessionId = liveSessionIdRef.current
+          const payload = {
+            speaking_band: result.overall_band,
+            score_json: result as unknown as Record<string, unknown>,
+            session_id: sessionId,
+          }
+          for (let retry = 0; retry < 3; retry++) {
+            try {
+              await submitSpeakingScore(attemptId, payload)
+              toast.success('Speaking score saved to your test attempt.')
+              break
+            } catch {
+              if (retry < 2) {
+                await new Promise((r) => setTimeout(r, 1500 * (retry + 1)))
+              } else {
+                toast.error(
+                  'Could not save speaking score to your attempt. Please contact support.',
+                )
+              }
             }
           }
         }

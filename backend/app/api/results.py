@@ -686,6 +686,16 @@ async def get_result_detail(
     sess = sess_result.scalar_one_or_none()
     if sess is not None:
         speaking_session_out = SpeakingSessionSummary.model_validate(sess)
+        if (
+            attempt.speaking_band is None
+            and sess.overall_band is not None
+        ):
+            from app.services.band_calc import compute_overall_band
+
+            attempt.speaking_band = sess.overall_band
+            attempt.overall_band = compute_overall_band(attempt)
+            await db.commit()
+            await db.refresh(attempt)
 
     return AttemptDetailRead(
         **AttemptRead.model_validate(attempt).model_dump(),
