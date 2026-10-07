@@ -79,7 +79,7 @@ export function VideoStageInner({
   transcriptHistory = [],
   showLiveTranscript = false,
 }: VideoStageProps) {
-  const { ref: frameRef, isFullscreen, toggle: toggleFullscreen } = useFullscreen()
+  const { ref: frameRef, isFullscreen, toggle: toggleFullscreen, supported: fullscreenSupported } = useFullscreen()
 
   if (!showSimli && !showUserCamera) return null
 
@@ -133,20 +133,22 @@ export function VideoStageInner({
           />
         )}
 
-        <button
-          type='button'
-          aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-          className='absolute right-3 top-3 z-40 rounded-md bg-black/50 p-2 text-white backdrop-blur-sm hover:bg-black/70'
-          onClick={() => {
-            void toggleFullscreen()
-          }}
-        >
-          {isFullscreen ? (
-            <Minimize2 className='size-4' />
-          ) : (
-            <Maximize2 className='size-4' />
-          )}
-        </button>
+        {fullscreenSupported && (
+          <button
+            type='button'
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            className='absolute right-3 top-3 z-40 flex size-11 items-center justify-center rounded-md bg-black/50 text-white backdrop-blur-sm hover:bg-black/70'
+            onClick={() => {
+              void toggleFullscreen()
+            }}
+          >
+            {isFullscreen ? (
+              <Minimize2 className='size-4' />
+            ) : (
+              <Maximize2 className='size-4' />
+            )}
+          </button>
+        )}
 
         {showStatus && (
           <div className='pointer-events-none absolute left-3 top-3 z-20 rounded-md bg-black/50 px-2.5 py-1.5 text-left backdrop-blur-sm'>

@@ -1,5 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { markIntentionalExamFullscreenExit } from '@/features/tests/take/exam-fullscreen'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  isExamFullscreenSupported,
+  markIntentionalExamFullscreenExit,
+} from '@/features/tests/take/exam-fullscreen'
 
 type FullscreenElement = HTMLElement & {
   webkitRequestFullscreen?: () => Promise<void>
@@ -88,13 +91,17 @@ export function useFullscreen() {
       if (getFullscreenElement() === el) {
         // Shrinking: hand fullscreen back to the exam page if it had it.
         markIntentionalExamFullscreenExit()
-        await exitFullscreen()
         if (restoreDocumentFullscreenRef.current) {
           restoreDocumentFullscreenRef.current = false
+          // Swap directly — calling requestFullscreen while already
+          // fullscreen switches the target without an intermediate exit,
+          // preserving the user gesture context on mobile browsers.
           markIntentionalExamFullscreenExit()
           await requestFullscreen(
             document.documentElement as FullscreenElement,
           )
+        } else {
+          await exitFullscreen()
         }
       } else {
         // Enlarging: remember whether the page owns fullscreen so we can
@@ -109,5 +116,7 @@ export function useFullscreen() {
     }
   }, [])
 
-  return { ref, isFullscreen, toggle }
+  const supported = useMemo(() => isExamFullscreenSupported(), [])
+
+  return { ref, isFullscreen, toggle, supported }
 }
