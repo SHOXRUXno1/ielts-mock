@@ -17,6 +17,7 @@ export type ExaminerTurnResponse = {
   part: number
   is_end: boolean
   question_number: number
+  questions_total?: number | null
   cue_card?: string | null
   session_id?: string
   tts_error?: string | null

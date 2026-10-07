@@ -42,6 +42,7 @@ type VideoStageProps = {
   expanded?: boolean
   currentPart?: number
   questionNumber?: number
+  questionsTotal?: number | null
   showPartIndicator?: boolean
   transcriptHistory?: { role: 'examiner' | 'candidate'; text: string }[]
   showLiveTranscript?: boolean
@@ -73,6 +74,7 @@ export function VideoStageInner({
   expanded = false,
   currentPart = 1,
   questionNumber = 1,
+  questionsTotal,
   showPartIndicator = false,
   transcriptHistory = [],
   showLiveTranscript = false,
@@ -179,6 +181,7 @@ export function VideoStageInner({
             <PartIndicator
               currentPart={currentPart}
               questionNumber={questionNumber}
+              questionsTotal={questionsTotal}
               compact
             />
           </div>
@@ -235,6 +238,7 @@ function videoStagePropsEqual(prev: VideoStageProps, next: VideoStageProps): boo
     'expanded',
     'currentPart',
     'questionNumber',
+    'questionsTotal',
     'showPartIndicator',
     'showLiveTranscript',
     'controlsOverlay',

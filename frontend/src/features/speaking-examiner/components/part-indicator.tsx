@@ -4,10 +4,11 @@ import { getPartSubtitle, getQuestionsTotalForPart } from '../data/questions'
 type Props = {
   currentPart: number
   questionNumber: number
+  questionsTotal?: number | null
   compact?: boolean
 }
 
-export function PartIndicator({ currentPart, questionNumber, compact = false }: Props) {
+export function PartIndicator({ currentPart, questionNumber, questionsTotal, compact = false }: Props) {
   const parts = [1, 2, 3] as const
 
   return (
@@ -46,7 +47,7 @@ export function PartIndicator({ currentPart, questionNumber, compact = false }: 
           compact ? 'text-[10px] text-white/70' : 'text-center text-xs text-muted-foreground',
         )}
       >
-        Question {questionNumber} of {getQuestionsTotalForPart(currentPart)}
+        Question {questionNumber} of {questionsTotal ?? getQuestionsTotalForPart(currentPart)}
       </p>
     </div>
   )

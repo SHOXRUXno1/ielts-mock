@@ -71,9 +71,11 @@ function applyExaminerMeta(
   setCurrentPart: (p: number) => void,
   setQuestionNumber: (n: number) => void,
   setCueCard: (c: string | null) => void,
+  setQuestionsTotal: (n: number | null) => void,
 ): number {
   setCurrentPart(resp.part)
   setQuestionNumber(resp.question_number)
+  setQuestionsTotal(resp.questions_total ?? null)
   if (resp.cue_card) {
     setCueCard(resp.cue_card)
   } else if (resp.part !== 2) {
@@ -106,6 +108,7 @@ export function SpeakingExaminerSession({
   const [history, setHistory] = useState<ConversationTurn[]>([])
   const [currentPart, setCurrentPart] = useState(1)
   const [questionNumber, setQuestionNumber] = useState(1)
+  const [questionsTotal, setQuestionsTotal] = useState<number | null>(null)
   const [cueCard, setCueCard] = useState<string | null>(null)
   // The cue-card answer and the rounding-off question that follows it both
   // report part 2; only the former earns the two-minute long turn.
@@ -340,7 +343,7 @@ export function SpeakingExaminerSession({
           text: resp.transcript,
         }
 
-        const newPart = applyExaminerMeta(resp, setCurrentPart, setQuestionNumber, setCueCard)
+        const newPart = applyExaminerMeta(resp, setCurrentPart, setQuestionNumber, setCueCard, setQuestionsTotal)
         if (newPart !== prevPartRef.current) {
           playPartTransition(newPart)
           prevPartRef.current = newPart
@@ -522,6 +525,7 @@ export function SpeakingExaminerSession({
     setHistory([])
     setCurrentPart(1)
     setQuestionNumber(1)
+    setQuestionsTotal(null)
     setCueCard(null)
     setIsPart2LongTurn(false)
 
@@ -534,7 +538,7 @@ export function SpeakingExaminerSession({
         return false
       }
 
-      applyExaminerMeta(resp, setCurrentPart, setQuestionNumber, setCueCard)
+      applyExaminerMeta(resp, setCurrentPart, setQuestionNumber, setCueCard, setQuestionsTotal)
       if (resp.session_id) {
         setLiveSessionId(resp.session_id)
       }
@@ -816,6 +820,7 @@ export function SpeakingExaminerSession({
       expanded={isActiveSession || (autoStart && showLoading)}
       currentPart={currentPart}
       questionNumber={questionNumber}
+      questionsTotal={questionsTotal}
       showPartIndicator={isActiveSession && phase !== 'prep' && !showLoading}
       transcriptHistory={history}
       showLiveTranscript={
