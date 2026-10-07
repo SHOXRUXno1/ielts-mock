@@ -257,9 +257,13 @@ def check_text_answer(
     - *max_words* only rejects answers that do **not** match any variant.
     """
     def _canon_dashes(s: str) -> str:
-        # Autocorrect on iOS/Word/Google Docs silently converts a hyphen to an
-        # en-dash or em-dash. Treat all three as identical for scoring.
-        return s.replace("—", "-").replace("–", "-")
+        # 1. Autocorrect on iOS/Word/Google Docs silently converts a hyphen
+        #    to an en-dash or em-dash. Normalise all three to a plain hyphen.
+        # 2. In IELTS gap-fill, hyphens and spaces are interchangeable
+        #    ("liberal-democrats" = "liberal democrats"), so replace hyphens
+        #    with spaces and collapse any resulting double spaces.
+        s = s.replace("—", " ").replace("–", " ").replace("-", " ")
+        return re.sub(r" {2,}", " ", s).strip()
 
     student_raw = str(student).strip()
     student_norm = student_raw if case_sensitive else student_raw.lower()
