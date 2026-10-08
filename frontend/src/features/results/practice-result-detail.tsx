@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, RotateCcw, Timer } from 'lucide-react'
+import { ArrowLeft, AudioLines, Mic, RotateCcw, Sparkles, Timer } from 'lucide-react'
 import { toast } from 'sonner'
 import type { AttemptDetailRead } from '@/lib/api/attempts'
 import {
@@ -12,9 +12,11 @@ import {
   type PracticeUnit,
 } from '@/lib/api/practice'
 import type { SectionType } from '@/features/tests/data/schema'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Table,
   TableBody,
@@ -27,10 +29,12 @@ import { Main } from '@/components/layout/main'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import {
+  CriteriaGrid,
+  FeedbackList,
   WritingFeedbackPanel,
   writingBandFromJobs,
 } from './writing-feedback-panel'
-import { EvaluationProgressCard, isJobActive } from './evaluation-progress'
+import { EvaluationProgressCard, isJobActive, jobPhase } from './evaluation-progress'
 import { AnswerMark } from './components/answer-mark'
 import {
   answerMarks,
@@ -84,6 +88,21 @@ export function PracticeResultDetail({ attempt }: Props) {
   )
   const writingBand = band ?? writingBandFromJobs(writingJobs)
   const writingPending = sectionType === 'writing' && isJobActive(writingJobs)
+
+  const speakingJobs = attempt.evaluation_jobs.filter(
+    (j) => j.section_type === 'speaking',
+  )
+  const speakingSession = attempt.speaking_session ?? null
+  const speakingScoreJson = useMemo(() => {
+    const job = speakingJobs.find((j) => j.status === 'done') ?? speakingJobs[0]
+    return (
+      (job?.result as Record<string, unknown> | null) ??
+      speakingSession?.score_json ??
+      null
+    )
+  }, [speakingJobs, speakingSession])
+  const speakingTurns = speakingSession?.history_json ?? []
+  const speakingPhase = jobPhase(speakingJobs)
 
   const correct = attempt.practice_correct ?? 0
   const total = attempt.practice_total ?? 0
@@ -471,6 +490,93 @@ export function PracticeResultDetail({ attempt }: Props) {
           )}
         </div>
       )}
+
+      {sectionType === 'speaking' && (
+        <div className='space-y-4'>
+          {(speakingPhase === 'queued' || speakingPhase === 'scoring') && (
+            <EvaluationProgressCard jobs={speakingJobs} section='speaking' />
+          )}
+          {speakingScoreJson && (
+            <BreakdownCard sectionType='speaking' title='Speaking feedback'>
+              <div className='space-y-6'>
+                <section>
+                  <SectionHeading icon={AudioLines} title='Assessment by criterion' />
+                  <div className='mt-3'>
+                    <CriteriaGrid data={speakingScoreJson} sectionType='speaking' variant='report' />
+                  </div>
+                </section>
+                {(Array.isArray(speakingScoreJson.strengths) || Array.isArray(speakingScoreJson.improvements)) && (
+                  <section className='rounded-xl bg-muted/45 p-4 sm:p-5'>
+                    <SectionHeading icon={Sparkles} title='Overall review' />
+                    <div className='mt-4 grid gap-4 md:grid-cols-2'>
+                      {Array.isArray(speakingScoreJson.strengths) && (
+                        <FeedbackList title='What went well' items={speakingScoreJson.strengths as string[]} />
+                      )}
+                      {Array.isArray(speakingScoreJson.improvements) && (
+                        <FeedbackList title='What to improve next' items={speakingScoreJson.improvements as string[]} />
+                      )}
+                    </div>
+                  </section>
+                )}
+                {typeof speakingScoreJson.transcript === 'string' && speakingScoreJson.transcript && (
+                  <section>
+                    <SectionHeading icon={Mic} title='Your transcript' />
+                    <ScrollArea className='mt-3 h-64 rounded-xl border bg-muted/30'>
+                      <p className='whitespace-pre-wrap p-4 text-sm leading-7'>{speakingScoreJson.transcript}</p>
+                    </ScrollArea>
+                  </section>
+                )}
+              </div>
+            </BreakdownCard>
+          )}
+          {speakingTurns.length > 0 && (
+            <BreakdownCard sectionType='speaking' title='Conversation with the examiner'>
+              <ScrollArea className='h-96 rounded-xl border bg-muted/30 p-4'>
+                <div className='space-y-3'>
+                  {speakingTurns.map((turn, i) => {
+                    const isExaminer = turn.role === 'examiner'
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          'flex items-end gap-2',
+                          isExaminer ? 'justify-start' : 'flex-row-reverse',
+                        )}
+                      >
+                        <Avatar className='size-7'>
+                          <AvatarFallback
+                            className={cn(
+                              'text-[10px] font-semibold',
+                              isExaminer
+                                ? 'bg-muted text-muted-foreground'
+                                : 'bg-primary text-primary-foreground',
+                            )}
+                          >
+                            {isExaminer ? 'EX' : 'YOU'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div
+                          className={cn(
+                            'max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed',
+                            isExaminer
+                              ? 'rounded-bl-md bg-muted text-foreground'
+                              : 'rounded-br-md bg-primary text-primary-foreground',
+                          )}
+                        >
+                          <span className='mb-0.5 block text-[10px] font-medium uppercase tracking-wide opacity-70'>
+                            {turn.role}
+                          </span>
+                          {turn.text}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </ScrollArea>
+            </BreakdownCard>
+          )}
+        </div>
+      )}
     </Main>
     </TooltipProvider>
   )
@@ -629,6 +735,17 @@ function BreakdownCard({
         {children}
       </CardContent>
     </Card>
+  )
+}
+
+function SectionHeading({ icon: Icon, title }: { icon: typeof Mic; title: string }) {
+  return (
+    <div className='flex items-center gap-2'>
+      <div className='rounded-lg bg-muted p-1.5'>
+        <Icon className='size-4 text-muted-foreground' />
+      </div>
+      <h3 className='text-sm font-semibold'>{title}</h3>
+    </div>
   )
 }
 

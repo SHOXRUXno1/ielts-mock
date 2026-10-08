@@ -1356,15 +1356,21 @@ function ActiveChrome({
   }
 
   // Header counter: current skill only (not cumulative L+R+W).
+  // Speaking uses a live AI conversation — no traditional answers to count.
+  const isSpeakingType = currentType === 'speaking'
   const currentSections = sortedSections.filter((s) => s.type === currentType)
-  const totalQuestions = currentSections.reduce(
-    (sum, s) => sum + countScoringSlots(sectionQuestions[s.id] ?? []),
-    0
-  )
-  const totalAnswered = currentSections.reduce(
-    (sum, s) => sum + getAnsweredCount(s),
-    0
-  )
+  const totalQuestions = isSpeakingType
+    ? 0
+    : currentSections.reduce(
+        (sum, s) => sum + countScoringSlots(sectionQuestions[s.id] ?? []),
+        0,
+      )
+  const totalAnswered = isSpeakingType
+    ? 0
+    : currentSections.reduce(
+        (sum, s) => sum + getAnsweredCount(s),
+        0,
+      )
 
   const switchToDuration = guard.pendingSwitch
     ? durationByType(test.section_settings)[guard.pendingSwitch.to]
@@ -1458,10 +1464,16 @@ function ActiveChrome({
                   : 'All done! Submit your test?'}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                You have answered {totalAnswered} of {totalQuestions} questions
-                {isPractice
-                  ? '. Your practice run will be scored right away.'
-                  : ' in this section. Once submitted, your test will be graded.'}
+                {isSpeakingType
+                  ? isPractice
+                    ? 'Your speaking session is complete. Submit to see your score and feedback.'
+                    : 'Your speaking session is complete. Once submitted, your test will be graded.'
+                  : <>
+                      You have answered {totalAnswered} of {totalQuestions} questions
+                      {isPractice
+                        ? '. Your practice run will be scored right away.'
+                        : ' in this section. Once submitted, your test will be graded.'}
+                    </>}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

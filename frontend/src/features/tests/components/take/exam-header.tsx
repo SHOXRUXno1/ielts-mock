@@ -110,12 +110,14 @@ export function ExamHeader({
         </div>
 
         <div className='flex items-center justify-end gap-2 sm:gap-3'>
-          <span className='hidden tabular-nums text-[13px] text-muted-foreground sm:inline'>
-            <span className='font-medium text-foreground'>
-              {totalAnswered}/{totalQuestions}
-            </span>{' '}
-            answered
-          </span>
+          {currentType !== 'speaking' && (
+            <span className='hidden tabular-nums text-[13px] text-muted-foreground sm:inline'>
+              <span className='font-medium text-foreground'>
+                {totalAnswered}/{totalQuestions}
+              </span>{' '}
+              answered
+            </span>
+          )}
           {showFinishSection && (
             <button
               type='button'
