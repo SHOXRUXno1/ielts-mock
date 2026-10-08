@@ -13,6 +13,10 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { downloadResultPdf } from '@/lib/api/attempts'
+import {
+  fetchPracticeResults,
+  type PracticeResultRow,
+} from '@/lib/api/practice'
 import { cn } from '@/lib/utils'
 import {
   BandValue,
@@ -34,7 +38,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { SKILL_KEYS } from '@/features/results/lib/skill'
+import { SKILL_KEYS, SKILL_META, type SkillKey } from '@/features/results/lib/skill'
 import { attemptStatusMeta } from '@/features/results/lib/status'
 import { formatBand } from '@/features/results/lib/band'
 
@@ -49,7 +53,23 @@ interface ResultItem {
   writing_band: number | null
   speaking_band: number | null
   status: string
+  kind: 'mock'
 }
+
+interface PracticeItem {
+  id: string
+  test_title: string
+  created_at: string
+  finished_at: string | null
+  section_type: string | null
+  band: number | null
+  correct: number | null
+  total: number | null
+  status: string
+  kind: 'practice'
+}
+
+type UnifiedItem = ResultItem | PracticeItem
 
 function bandFor(
   result: ResultItem,
@@ -147,6 +167,85 @@ function ResultCard({ result }: { result: ResultItem }) {
   )
 }
 
+function PracticeCard({ result }: { result: PracticeItem }) {
+  const statusCfg = attemptStatusMeta(result.status)
+  const date = result.finished_at
+    ? new Date(result.finished_at)
+    : new Date(result.created_at)
+
+  const skill = (result.section_type ?? 'listening') as SkillKey
+  const meta = SKILL_META[skill] ?? SKILL_META.listening
+  const Icon = meta.icon
+
+  return (
+    <div className='group relative'>
+      <Link
+        to='/student/results/$attemptId'
+        params={{ attemptId: result.id }}
+        className='block rounded-2xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
+      >
+        <Panel className='transition-colors group-hover:bg-muted/30'>
+          <div className='flex flex-col gap-4 sm:flex-row sm:items-start'>
+            <BandValue
+              band={result.band}
+              label={meta.label}
+              size='sm'
+              showDescriptor={false}
+            />
+            <div className='min-w-0 flex-1'>
+              <div className='flex items-start justify-between gap-3'>
+                <h3 className='truncate pr-16 text-sm font-semibold text-foreground'>
+                  {result.test_title}
+                </h3>
+              </div>
+              <div className='mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground'>
+                <span className='inline-flex items-center gap-1.5'>
+                  <Calendar size={12} />
+                  {date.toLocaleDateString(undefined, {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </span>
+                <span className='inline-flex items-center gap-1.5'>
+                  <span className={cn('size-1.5 rounded-full', statusCfg.dot)} />
+                  <span className={statusCfg.text}>{statusCfg.label}</span>
+                </span>
+                <span className='inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium'>
+                  Practice
+                </span>
+              </div>
+              <div className='mt-3'>
+                <div className='flex items-center gap-3 rounded-xl px-0 py-2'>
+                  <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg', meta.surface)}>
+                    <Icon className={cn('size-4', meta.accent)} />
+                  </div>
+                  <div className='min-w-0 flex-1'>
+                    <p className='text-sm font-medium text-foreground'>{meta.label}</p>
+                    {result.correct != null && result.total != null && (
+                      <p className='text-xs tabular-nums text-muted-foreground'>
+                        {result.correct}/{result.total} correct
+                      </p>
+                    )}
+                  </div>
+                  {result.band != null && (
+                    <span className='font-manrope text-lg font-semibold tracking-tight tabular-nums text-foreground'>
+                      {formatBand(result.band)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Panel>
+      </Link>
+      <div className='pointer-events-none absolute right-5 top-5'>
+        <ChevronRight className='size-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-foreground' />
+      </div>
+    </div>
+  )
+}
+
 function ResultCardSkeleton() {
   return (
     <Panel>
@@ -166,6 +265,29 @@ function ResultCardSkeleton() {
 type SortKey = 'latest' | 'oldest' | 'band_high' | 'band_low'
 type StatusFilter = 'all' | 'scored' | 'in_progress' | 'abandoned'
 
+function sortDate(item: UnifiedItem): number {
+  return new Date(item.finished_at ?? item.created_at).getTime()
+}
+
+function itemBand(item: UnifiedItem): number | null {
+  return item.kind === 'mock' ? item.overall_band : item.band
+}
+
+function practiceToItem(r: PracticeResultRow): PracticeItem {
+  return {
+    id: r.id,
+    test_title: r.test_title,
+    created_at: r.created_at,
+    finished_at: r.finished_at,
+    section_type: r.section_type,
+    band: r.band,
+    correct: r.correct,
+    total: r.total,
+    status: r.status,
+    kind: 'practice',
+  }
+}
+
 export function StudentResults() {
   const signedIn = useAuthStore((s) => Boolean(s.auth.accessToken))
   const { data: results = [], isLoading } = useQuery({
@@ -173,13 +295,24 @@ export function StudentResults() {
     queryFn: () => getMyResults(),
     enabled: signedIn,
   })
+  const { data: practiceRaw = [], isLoading: practiceLoading } = useQuery({
+    queryKey: ['student-practice-results'],
+    queryFn: fetchPracticeResults,
+    enabled: signedIn,
+  })
 
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortKey>('latest')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
+  const allItems: UnifiedItem[] = useMemo(() => {
+    const mocks: UnifiedItem[] = results.map((r) => ({ ...r, kind: 'mock' as const }))
+    const practices: UnifiedItem[] = practiceRaw.map(practiceToItem)
+    return [...mocks, ...practices]
+  }, [results, practiceRaw])
+
   const filtered = useMemo(() => {
-    let list = [...results]
+    let list = [...allItems]
 
     if (search.trim()) {
       const q = search.toLowerCase()
@@ -203,25 +336,17 @@ export function StudentResults() {
     }
 
     if (sort === 'latest') {
-      list.sort(
-        (a, b) =>
-          new Date(b.finished_at ?? b.created_at).getTime() -
-          new Date(a.finished_at ?? a.created_at).getTime(),
-      )
+      list.sort((a, b) => sortDate(b) - sortDate(a))
     } else if (sort === 'oldest') {
-      list.sort(
-        (a, b) =>
-          new Date(a.finished_at ?? a.created_at).getTime() -
-          new Date(b.finished_at ?? b.created_at).getTime(),
-      )
+      list.sort((a, b) => sortDate(a) - sortDate(b))
     } else if (sort === 'band_high') {
-      list.sort((a, b) => (b.overall_band ?? -1) - (a.overall_band ?? -1))
+      list.sort((a, b) => (itemBand(b) ?? -1) - (itemBand(a) ?? -1))
     } else if (sort === 'band_low') {
-      list.sort((a, b) => (a.overall_band ?? 99) - (b.overall_band ?? 99))
+      list.sort((a, b) => (itemBand(a) ?? 99) - (itemBand(b) ?? 99))
     }
 
     return list
-  }, [results, search, sort, statusFilter])
+  }, [allItems, search, sort, statusFilter])
 
   const stats = useMemo(() => {
     const scored = results.filter((r) => r.overall_band != null)
@@ -231,8 +356,10 @@ export function StudentResults() {
     const best = scored.length
       ? Math.max(...scored.map((r) => r.overall_band ?? 0))
       : null
-    return { total: results.length, scored: scored.length, avg, best }
-  }, [results])
+    return { total: allItems.length, scored: scored.length, avg, best }
+  }, [results, allItems.length])
+
+  const loading = isLoading || practiceLoading
 
   return (
     <div className='space-y-6'>
@@ -246,7 +373,7 @@ export function StudentResults() {
           </p>
         </div>
 
-        {!isLoading && results.length > 0 && (
+        {!loading && allItems.length > 0 && (
           <div className='flex flex-wrap gap-4'>
             <Metric icon={FileText} label='Attempts' value={String(stats.total)} />
             {stats.avg != null && (
@@ -263,7 +390,7 @@ export function StudentResults() {
         )}
       </div>
 
-      {!isLoading && results.length > 0 && (
+      {!loading && allItems.length > 0 && (
         <Panel padding='sm'>
           <div className='flex flex-wrap items-center gap-3'>
             <div className='relative min-w-[160px] max-w-xs flex-1'>
@@ -321,13 +448,13 @@ export function StudentResults() {
         </Panel>
       )}
 
-      {isLoading ? (
+      {loading ? (
         <div className='space-y-3'>
           {[0, 1, 2, 3].map((i) => (
             <ResultCardSkeleton key={i} />
           ))}
         </div>
-      ) : results.length === 0 ? (
+      ) : allItems.length === 0 ? (
         <EmptyState
           icon={FileText}
           title='No results yet'
@@ -358,9 +485,13 @@ export function StudentResults() {
         />
       ) : (
         <div className='space-y-3'>
-          {filtered.map((result) => (
-            <ResultCard key={result.id} result={result} />
-          ))}
+          {filtered.map((item) =>
+            item.kind === 'mock' ? (
+              <ResultCard key={`mock-${item.id}`} result={item} />
+            ) : (
+              <PracticeCard key={`practice-${item.id}`} result={item} />
+            ),
+          )}
         </div>
       )}
     </div>
