@@ -50,6 +50,8 @@ def transition_state(
 
     Commit is the caller's responsibility. When entering a part-entry state
     the question index is reset to 0 unless ``reset_index`` overrides.
+    Clarification counter is always reset on any state transition — moving
+    off a question (for any reason) ends its clarification streak.
     """
     if isinstance(new_state, str):
         new_state_enum = SpeakingState(new_state)
@@ -67,6 +69,9 @@ def transition_state(
     )
     if should_reset:
         session.current_question_index = 0
+
+    # Any state change ends the clarification streak for the previous question.
+    session.clarification_count = 0
 
     logger.info(
         "Session %s: %s → %s",

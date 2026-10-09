@@ -69,3 +69,10 @@ class SpeakingSession(UUIDPrimaryKey, TimestampMixin, Base):
     current_question_index: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )
+    # Count of consecutive clarification requests on the CURRENT question.
+    # Reset to 0 whenever ``current_question_index`` or ``current_state``
+    # moves forward (see services.speaking_state.transition_state and the
+    # advancement branches in api.speaking_examiner._advance_turn).
+    clarification_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )

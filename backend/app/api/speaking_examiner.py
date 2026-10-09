@@ -59,6 +59,10 @@ from app.services.speaking_state import (
     transition_state,
     PREP_MIN_SECONDS,
 )
+from app.services.speaking_clarification import (
+    MAX_CLARIFICATION_REPEATS,
+    is_clarification_request,
+)
 from pydantic import BaseModel
 from app.services.llm import (
     Transcription,
@@ -415,17 +419,36 @@ def _non_intro_examiner_count(history: list[dict]) -> int:
     )
 
 
-def strip_intro(history: list[dict]) -> list[dict]:
-    """Remove INTRO turns from history for scoring / flow stats.
+def strip_for_scoring(history: list[dict]) -> list[dict]:
+    """Remove INTRO and CLARIFICATION turns from history before scoring.
 
-    Prefer explicit ``phase: intro`` markers; fall back to positional strip
-    when the client history has no phase metadata but starts with GREETING.
+    Scoring consumes this. Keeping clarification requests ("Pardon?") or
+    their verbatim examiner repeats in the transcript would (a) make Gemini
+    see the student as non-responsive and drop the band, and (b) corrupt
+    the _candidate_speech_stats word/turn counters used by the scoring
+    guard tiers. Both effects would silently penalize students on noisy
+    mics. Filter them here — single choke point for every
+    ``evaluate_speaking_dialog`` call path.
+
+    Order matters: strip clarification turns first (new ``kind`` field,
+    always applied), then intro turns (existing ``phase: intro`` or legacy
+    positional strip, applied to the already-cleaned list).
     """
-    if any(t.get("phase") == "intro" for t in history):
-        return [t for t in history if t.get("phase") != "intro"]
-    if history and (history[0].get("text") or "").strip() == _LEGACY_INTRO_GREETING:
-        return history[4:]
-    return history
+    cleaned = [
+        t
+        for t in history
+        if t.get("kind") not in ("clarification_request", "clarification_repeat")
+    ]
+    if any(t.get("phase") == "intro" for t in cleaned):
+        return [t for t in cleaned if t.get("phase") != "intro"]
+    if cleaned and (cleaned[0].get("text") or "").strip() == _LEGACY_INTRO_GREETING:
+        return cleaned[4:]
+    return cleaned
+
+
+# Backward-compat alias — kept so external imports (tests, ad-hoc scripts)
+# keep working. New code should call ``strip_for_scoring`` directly.
+strip_intro = strip_for_scoring
 
 
 def count_questions_by_part(history: list[dict]) -> dict:
@@ -883,6 +906,210 @@ async def _part3_question(
     return clean.strip() or "What are the advantages and disadvantages of this?"
 
 
+def _current_question_text(
+    session: SpeakingSession,
+    plan: SpeakingPlan,
+    history: list[dict],
+) -> tuple[str, int, int | None, str, str | None]:
+    """Return (question_text, part, questions_total, exam_phase, cue_card).
+
+    Reconstructs the question that was JUST asked, so the examiner can
+    repeat it on a clarification. ``current_question_index`` is already
+    pointing one past that question (it was incremented when the question
+    was emitted), so we subtract 1.
+
+    For Part 1 we return a bare question with no reaction prefix: a repeat
+    sounds unnatural with the same "I see." stuck on the front twice.
+    For Part 3 same approach, bare question. Part 2 cue card: hand back
+    the display text already shown. Part 2 prep/talk: there is no new
+    question to repeat (student is doing a monologue after seeing the cue
+    card), so repeat the cue intro so the student knows to just keep
+    going. Part 2 rounding: deterministic question from session id,
+    recoverable.
+    """
+    state = session.current_state
+    idx = int(getattr(session, "current_question_index", 0) or 0)
+    part1_questions = plan.part1 or list(DEFAULT_PART1)
+
+    if state == SpeakingState.PART_1_ACTIVE.value:
+        # The question just asked is at idx-1 (idx was incremented when it
+        # was emitted). Clamp defensively — a fresh PART_1_ACTIVE session
+        # straight from /start also has idx=1 pointing at the question
+        # already in the greeting.
+        q_idx = max(0, idx - 1)
+        if q_idx < len(part1_questions):
+            return (
+                part1_questions[q_idx],
+                1,
+                len(part1_questions),
+                "part1",
+                None,
+            )
+        # Degenerate: index past the end of Part 1 but still in state
+        # (shouldn't happen — _advance_turn would have moved to PART_2_PREP).
+        return (part1_questions[-1], 1, len(part1_questions), "part1", None)
+
+    if state == SpeakingState.PART_3_ACTIVE.value:
+        q_idx = max(0, idx - 1)
+        if plan.part3_authored and q_idx < len(plan.part3):
+            return (plan.part3[q_idx], 3, plan.part3_target, "part3", None)
+        # Non-authored Part 3 uses Gemini-generated questions that were
+        # already stored in history. Re-fetching would regenerate a
+        # different question. Fall back to the last examiner utterance
+        # from history.
+        last_q = _last_examiner_text(history) or ""
+        return (last_q, 3, plan.part3_target, "part3", None)
+
+    if state in (
+        SpeakingState.PART_2_CUE.value,
+        SpeakingState.PART_2_PREP.value,
+        SpeakingState.PART_2_TALK.value,
+    ):
+        cue_text = (
+            format_cue_card(plan.cue_card) if plan.cue_card is not None else ""
+        )
+        return (PART2_CUE_INTRO, 2, 1, "part2", cue_text or None)
+
+    if state == SpeakingState.PART_2_ROUNDING.value:
+        return (rounding_question(session), 2, 1, "part2", None)
+
+    # INTRO states — repeat the frame + first Part 1 question.
+    if state in (SpeakingState.INTRO_GREETING.value, SpeakingState.INTRO_NICKNAME.value):
+        return (
+            f"{INTRO_PART1_FRAME} {part1_questions[0]}",
+            1,
+            len(part1_questions),
+            "part1",
+            None,
+        )
+
+    # Terminal states filter out before we get here; defensive fallback.
+    return (FORCED_END_TEXT, 3, None, "end", None)
+
+
+def _last_examiner_text(history: list[dict]) -> str | None:
+    for turn in reversed(history):
+        if (
+            turn.get("role") == "examiner"
+            and turn.get("kind") != "clarification_repeat"
+        ):
+            return turn.get("text")
+    return None
+
+
+# Fillers prepended to the examiner's repeat, stable per repeat count.
+# Index 0 = first repeat (bare, no filler). Capped at index 2+; after
+# MAX_CLARIFICATION_REPEATS the examiner force-advances.
+_CLARIFICATION_FILLERS = ("", "Sure. ", "Let me rephrase. ")
+
+
+async def _emit_clarification(
+    *,
+    session: SpeakingSession,
+    candidate_text: str,
+    plan: SpeakingPlan,
+    history: list[dict],
+    db: AsyncSession,
+    include_tts: bool,
+    stt: "Transcription | None",
+) -> dict:
+    """Repeat the current question; do NOT advance index or state.
+
+    Hard cap: after MAX_CLARIFICATION_REPEATS consecutive clarifications
+    we force a normal advancement to prevent a stuck mic from eating the
+    whole 15-turn session on one question.
+    """
+    streak = int(getattr(session, "clarification_count", 0) or 0) + 1
+
+    if streak > MAX_CLARIFICATION_REPEATS:
+        logger.warning(
+            "Session %s: clarification cap reached (%d) — force-advancing",
+            session.id,
+            MAX_CLARIFICATION_REPEATS,
+        )
+        # Reset streak and route through the normal path with the gate
+        # explicitly bypassed. The (possibly empty) candidate text goes
+        # into history as a real answer — scoring's existing guard tiers
+        # will handle a near-empty response by capping the band low,
+        # which is the correct outcome when the student truly isn't
+        # responding.
+        session.clarification_count = 0
+        return await _advance_turn(
+            session,
+            candidate_text,
+            plan,
+            db,
+            include_tts=include_tts,
+            stt=stt,
+            force_advance=True,
+        )
+
+    q_text, part, questions_total, exam_phase, cue_card = _current_question_text(
+        session, plan, history
+    )
+    filler = _CLARIFICATION_FILLERS[min(streak - 1, len(_CLARIFICATION_FILLERS) - 1)]
+    text = f"{filler}{q_text}".strip()
+
+    # Store the exchange so admins can see what happened, but tag it so
+    # strip_for_scoring drops it before Gemini sees anything.
+    cand_turn = _history_turn("candidate", candidate_text or "", exam_phase, stt)
+    cand_turn["kind"] = "clarification_request"
+    exam_turn = _history_turn("examiner", text, exam_phase)
+    exam_turn["kind"] = "clarification_repeat"
+    history.append(cand_turn)
+    history.append(exam_turn)
+    session.history_json = history
+    session.clarification_count = streak
+    await db.commit()
+
+    audio_b64 = ""
+    tts_error: str | None = None
+    cache_hit: bool | None = None
+    tts_ms = 0
+    if include_tts:
+        t1 = time.perf_counter()
+        audio_b64, tts_error, cache_hit = await _tts_for_turn(text, part, cue_card)
+        tts_ms = int((time.perf_counter() - t1) * 1000)
+    else:
+        cached = get_cached_tts(_tts_text_for_turn(text, part, cue_card))
+        if cached:
+            audio_b64 = cached
+            cache_hit = True
+        else:
+            asyncio.create_task(_warm_tts_for_turn(text, part, cue_card))
+
+    # Keep the same question_number as the previous emission: we repeated
+    # question N, we are still on question N. Derive from current index
+    # (which was NOT incremented).
+    question_number = max(1, int(getattr(session, "current_question_index", 1)))
+
+    logger.info(
+        "Clarification repeat state=%s part=%s q=%s/%s streak=%d",
+        session.current_state,
+        part,
+        question_number,
+        questions_total,
+        streak,
+    )
+
+    return _examiner_turn_payload(
+        text,
+        part,
+        False,
+        cue_card,
+        audio_b64,
+        question_number,
+        session_id=str(session.id),
+        tts_error=tts_error,
+        timings=PerformanceTimings(
+            tts_ms=tts_ms if include_tts else None,
+            tts_cache_hit=cache_hit,
+            history_turns=len(history),
+        ),
+        questions_total=questions_total,
+    )
+
+
 async def _advance_turn(
     session: SpeakingSession,
     candidate_text: str,
@@ -891,12 +1118,52 @@ async def _advance_turn(
     *,
     include_tts: bool,
     stt: "Transcription | None" = None,
+    force_advance: bool = False,
 ) -> dict:
-    """Server-driven next examiner turn using current_state + question index."""
+    """Server-driven next examiner turn using current_state + question index.
+
+    ``force_advance`` bypasses the clarification gate. Only
+    ``_emit_clarification`` uses it, when the MAX_CLARIFICATION_REPEATS
+    cap triggers and we need to move on despite another "Pardon?".
+    """
     history = list(session.history_json or [])
     state = session.current_state
     idx = int(getattr(session, "current_question_index", 0) or 0)
     part1_questions = plan.part1 or list(DEFAULT_PART1)
+
+    # --- Clarification gate -------------------------------------------------
+    # Runs BEFORE any state branch so a "Pardon?" never advances the index
+    # or triggers transition_state. Also catches empty transcripts, which
+    # Whisper's hallucination filter emits for silence — treating silence
+    # as "please repeat" is better UX than an error.
+    #
+    # Terminal / forced-end states skip clarification: once the end-of-test
+    # line has been fired we must not re-ask it indefinitely.
+    needs_clarification = (
+        not force_advance
+        and not _is_intro_state(session)
+        and _non_intro_examiner_count(history) < MAX_EXAMINER_TURNS
+        and state not in (
+            SpeakingState.ENDED.value,
+            SpeakingState.SCORING.value,
+            SpeakingState.ABANDONED.value,
+        )
+        and (
+            not (candidate_text or "").strip()
+            or is_clarification_request(candidate_text)
+        )
+    )
+    if needs_clarification:
+        return await _emit_clarification(
+            session=session,
+            candidate_text=candidate_text,
+            plan=plan,
+            history=history,
+            db=db,
+            include_tts=include_tts,
+            stt=stt,
+        )
+    # ------------------------------------------------------------------------
 
     text = FORCED_END_TEXT
     exam_phase = "end"
@@ -999,6 +1266,11 @@ async def _advance_turn(
     history.append(_history_turn("candidate", candidate_text, cand_phase, stt))
     history.append(_history_turn("examiner", text, exam_phase))
     session.history_json = history
+    # Real advancement — the previous question is behind us, so its
+    # clarification streak ends here. (transition_state also resets this
+    # on state changes, but Part 1 / Part 3 question-to-question advances
+    # within the same state would otherwise retain a stale counter.)
+    session.clarification_count = 0
     if is_end:
         session.status = "completed"
         if session.finished_at is None:
@@ -1472,11 +1744,12 @@ async def transcribe_and_respond(
         else:
             history = []
 
-        if not transcript.strip() and not _is_intro_state(live_session):
-            return JSONResponse(
-                status_code=400,
-                content={"detail": "Could not detect speech — try again"},
-            )
+        # Empty transcript in a non-intro state is NOT a 400 anymore —
+        # _advance_turn treats it as a clarification request and re-asks
+        # the current question. This is strictly better UX for mic
+        # problems: the student gets another chance instead of an error
+        # that drops them out of the flow. Intro-state silence stays
+        # ignored (session hasn't really started yet).
 
         if live_session is not None:
             plan = await load_speaking_plan(live_session.test_id, db)
@@ -1668,7 +1941,7 @@ def _cap_score_bands(result: dict, max_band: float) -> dict:
 
 async def _score_with_guard(history: list[dict]) -> ExaminerScore:
     # Score only the rated portion of the test; keep full history for the response.
-    scored_history = strip_intro(history)
+    scored_history = strip_for_scoring(history)
     candidate_lines, total_words, total_turns = _candidate_speech_stats(scored_history)
     logger.info(
         "SCORING INPUT: words=%d turns=%d history_len=%d scored_len=%d",

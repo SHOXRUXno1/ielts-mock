@@ -104,8 +104,16 @@ class TestSilenceAtTheIntro:
         resp = self._post(auth_client, _session(SpeakingState.INTRO_NICKNAME.value))
         assert resp.status_code == 200, resp.text
 
-    def test_silence_in_a_marked_part_still_asks_again(self, auth_client):
-        """Outside the intro the answer counts, so guessing at it would be worse."""
+    def test_silence_in_a_marked_part_is_treated_as_a_clarification(self, auth_client):
+        """Silence outside the intro re-asks the current question (clarification path).
+
+        Previously silence here returned 400 and dropped the student out
+        of the flow. That was punishing a mic failure as if it were an
+        answer. _advance_turn now treats empty transcripts as "please
+        repeat" — the clarification gate handles it without advancing
+        the index. This test only verifies the endpoint doesn't 400;
+        the clarification semantics are covered in
+        test_speaking_clarification.py.
+        """
         resp = self._post(auth_client, _session(SpeakingState.PART_1_ACTIVE.value))
-        assert resp.status_code == 400
-        assert "detect speech" in resp.json()["detail"].lower()
+        assert resp.status_code == 200, resp.text
