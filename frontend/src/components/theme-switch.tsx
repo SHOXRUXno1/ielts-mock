@@ -15,16 +15,40 @@ type ThemeSwitchProps = {
 }
 
 export function ThemeSwitch({ studentSurface = false }: ThemeSwitchProps) {
-  const { theme, setTheme } = useTheme()
+  const { theme, resolvedTheme, setTheme } = useTheme()
 
   /* Update theme-color meta tag
    * when theme is updated */
   useEffect(() => {
     const themeColor =
-      theme === 'dark' ? (studentSurface ? '#191919' : '#020817') : '#fff'
+      resolvedTheme === 'dark'
+        ? studentSurface
+          ? '#191919'
+          : '#020817'
+        : '#fff'
     const metaThemeColor = document.querySelector("meta[name='theme-color']")
     if (metaThemeColor) metaThemeColor.setAttribute('content', themeColor)
-  }, [studentSurface, theme])
+  }, [studentSurface, resolvedTheme])
+
+  // Student surface: no "System" — just a one-click toggle between
+  // light and dark. If the student lands with theme="system" (default
+  // from the cookie), the first click resolves to the opposite of
+  // whatever their OS was giving them, which matches what they'd expect.
+  if (studentSurface) {
+    const isDark = resolvedTheme === 'dark'
+    return (
+      <Button
+        variant='ghost'
+        size='icon'
+        className='scale-95 rounded-full'
+        aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+        onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      >
+        <Sun className='size-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90' />
+        <Moon className='absolute size-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0' />
+      </Button>
+    )
+  }
 
   return (
     <DropdownMenu modal={false}>
