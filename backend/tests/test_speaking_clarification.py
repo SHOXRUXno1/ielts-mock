@@ -14,35 +14,80 @@ class TestClarificationExactPhrases:
     @pytest.mark.parametrize(
         "phrase",
         [
+            # --- Classic polite ---
             "Pardon?",
             "pardon",
             "Pardon me.",
             "Come again?",
-            "Say that again",
-            "Could you say that again?",
-            "Can you say that again please",
-            "Please repeat that.",
-            "Repeat please",
-            "Repeat it.",
-            "Could you repeat that?",
-            "One more time.",
-            "One more time please",
             "What was that?",
+            "What did you say?",
+            "I beg your pardon",
+            "Beg your pardon",
             "Could you run that by me again?",
             "Can you run that by me again?",
+            # --- Standalone (new) ---
+            "Sorry?",
+            "sorry",
+            "Excuse me?",
+            "excuse me",
+            # --- "Sorry, ..." compounds ---
             "Sorry, what?",
             "Sorry, I missed that.",
             "Sorry I didn't catch that.",
             "I'm sorry I didn't catch that",
             "I am sorry I didn't catch that",
+            "Sorry, I'm not with you",
+            "I'm sorry not with you",
+            # --- Didn't catch / didn't understand (new) ---
             "Didn't catch that",
             "I didn't catch that",
             "I didn't hear that",
             "I didn't get that",
             "Didn't quite catch that",
-            "What did you say?",
-            "I beg your pardon",
-            "Beg your pardon",
+            "I don't understand",
+            "I didn't understand",
+            "Don't understand",
+            "I don't understand the question",
+            "I didn't understand the question",
+            # --- Say / repeat (that | it | the question) ---
+            "Say that again",
+            "Say it again",
+            "Say again",
+            "Say again please",
+            "Say the question again",
+            "Could you say the question again?",
+            "Could you say that again?",
+            "Can you say that again please",
+            "Please repeat that.",
+            "Repeat please",
+            "Repeat it.",
+            "Repeat the question",
+            "Please repeat the question",
+            "Could you repeat that?",
+            "Could you repeat the question?",
+            "Can you repeat the question?",
+            "One more time.",
+            "One more time please",
+            "Say that one more time",
+            "Could you say that one more time?",
+            "Say the question one more time",
+            # --- Again please (new, bare 'again' intentionally not matched) ---
+            "Again please",
+            "again please",
+            # --- Ask again (new) ---
+            "Can you ask again?",
+            "Could you ask again?",
+            "Ask again please",
+            "Please ask again",
+            "Can you ask the question again?",
+            # --- Explain (new) ---
+            "Can you explain the question?",
+            "Could you explain the question?",
+            "Please explain the question",
+            # --- Would you mind (new) ---
+            "Would you mind repeating that?",
+            "Would you mind saying that again?",
+            "Would you mind repeating it?",
         ],
     )
     def test_matches(self, phrase: str) -> None:
@@ -95,6 +140,36 @@ class TestClarificationNotMatched:
             "",
             "   ",
             None,
+            # --- Danger zone: these must NEVER be mistaken for a repeat ---
+            # "I don't know" is a VALID answer. If misclassified as
+            # clarification, the examiner would re-ask the question,
+            # student would say "I don't know" again, and the session
+            # would loop until MAX_CLARIFICATION_REPEATS. Explicit guard.
+            "I don't know",
+            "I don't know.",
+            "I do not know",
+            "I dont know",
+            "I don't know, really",
+            # Bare "again" alone — too ambiguous to treat as a request
+            # (could be a mic clip of "again, as I said earlier...").
+            "again",
+            # Short Whisper fragments we deliberately removed from the
+            # patterns earlier. Keep these in the regression suite.
+            "huh",
+            "what",
+            # Follow-up questions / surprise — not clarification.
+            "Why?",
+            "Really?",
+            "Hmm",
+            # "What do you mean" is deliberately NOT matched — too easily
+            # a challenge to the content of the question rather than a
+            # mishearing. Keep as regression anchor.
+            "What do you mean?",
+            "What do you mean by that?",
+            # Just-starting answer that happens to begin with "Sorry"
+            # or "Pardon" — the ^...$ anchor must save us.
+            "Sorry, I was thinking about the answer",
+            "Pardon me for saying this but I disagree",
         ],
     )
     def test_answers_not_matched(self, answer: str | None) -> None:
