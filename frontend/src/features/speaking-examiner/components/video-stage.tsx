@@ -89,6 +89,7 @@ export function VideoStageInner({
     <div className={cn('flex w-full flex-col', expanded ? 'min-h-0 w-full' : 'gap-2')}>
       <div
         ref={frameRef}
+        data-tour='speaking-avatar'
         className={cn(
           'relative w-full overflow-hidden border [contain:layout_style]',
           showSimli ? 'bg-black' : 'bg-muted',

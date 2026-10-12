@@ -644,6 +644,7 @@ export function ListeningSection({
         {mobileTab === 'questions' && (
           <div
             data-exam-scroll-pane
+            data-tour='listening-questions'
             className='min-h-0 flex-1 overflow-y-auto overflow-x-clip bg-background px-5 py-6 pb-24'
           >
             {section?.id ? (
@@ -674,6 +675,7 @@ export function ListeningSection({
       <ResizablePanel defaultSize='50%' minSize='25%'>
         <div
           data-exam-scroll-pane
+          data-tour='listening-questions'
           className='h-full overflow-y-auto overflow-x-clip bg-background px-5 py-6 pb-24 xl:px-8 xl:py-8'
         >
           {section?.id ? (

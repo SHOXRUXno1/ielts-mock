@@ -752,6 +752,7 @@ export function SpeakingExaminerSession({
     <Button
       variant='outline'
       size='sm'
+      data-tour='speaking-end'
       className={cn(
         'border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive',
         isActiveSession &&

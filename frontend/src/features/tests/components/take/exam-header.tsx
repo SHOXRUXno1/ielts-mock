@@ -1,4 +1,4 @@
-import { Clock, Loader2 } from 'lucide-react'
+import { Clock, HelpCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { SectionType } from '../../data/schema'
 import {
@@ -31,6 +31,8 @@ type Props = {
   showFinishSection: boolean
   onSubmit: () => void
   isSubmitting: boolean
+  /** Opens the per-section onboarding tour again. Omit to hide the ? button. */
+  onShowHelp?: () => void
 }
 
 export function ExamHeader({
@@ -52,6 +54,7 @@ export function ExamHeader({
   showFinishSection,
   onSubmit,
   isSubmitting,
+  onShowHelp,
 }: Props) {
   const tabs = !isPractice ? (
     <SectionProgress
@@ -94,6 +97,7 @@ export function ExamHeader({
           )}
           {showCountdown && (
             <span
+              data-tour='exam-timer'
               className={cn(
                 'inline-flex items-center gap-1.5 tabular-nums text-[13px]',
                 remainingSec < 60
@@ -118,11 +122,24 @@ export function ExamHeader({
               answered
             </span>
           )}
+          {onShowHelp && (
+            <button
+              type='button'
+              onClick={onShowHelp}
+              data-tour='help'
+              aria-label='Show section instructions'
+              title='Show section instructions'
+              className='inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+            >
+              <HelpCircle className='size-4' />
+            </button>
+          )}
           {showFinishSection && (
             <button
               type='button'
               onClick={onFinishSection}
               disabled={finishDisabled}
+              data-tour='finish-section'
               className='hidden h-9 items-center rounded-lg border border-border bg-background px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60 sm:inline-flex'
             >
               Finish section
@@ -132,6 +149,7 @@ export function ExamHeader({
             type='button'
             onClick={onSubmit}
             disabled={!isPreview && isSubmitting}
+            data-tour='submit-test'
             className={cn(
               'inline-flex h-9 items-center gap-1.5 rounded-lg px-4 text-[13px] font-medium text-white transition-colors disabled:opacity-60',
               isPreview

@@ -669,7 +669,10 @@ export function ReadingSection({
           />
         </div>
         {mobileTab === 'passage' && (
-          <div className='min-h-0 flex-1 overflow-y-auto bg-background px-5 py-6'>
+          <div
+            data-tour='reading-passage'
+            className='min-h-0 flex-1 overflow-y-auto bg-background px-5 py-6'
+          >
             {section?.id ? (
               <PassageHighlighter
                 attemptId={attemptId}
@@ -686,6 +689,7 @@ export function ReadingSection({
         {mobileTab === 'questions' && (
           <div
             data-exam-scroll-pane
+            data-tour='reading-questions'
             className='min-h-0 flex-1 overflow-x-clip overflow-y-auto bg-background px-5 py-6 pb-24'
           >
             {section?.id ? (
@@ -708,7 +712,10 @@ export function ReadingSection({
   return (
     <ResizablePanelGroup orientation='horizontal' className='h-full'>
       <ResizablePanel defaultSize='50%' minSize='25%'>
-        <div className='h-full overflow-x-hidden overflow-y-auto bg-background px-5 py-6 xl:px-10 xl:py-8'>
+        <div
+          data-tour='reading-passage'
+          className='h-full overflow-x-hidden overflow-y-auto bg-background px-5 py-6 xl:px-10 xl:py-8'
+        >
           {section?.id ? (
             <PassageHighlighter
               attemptId={attemptId}
@@ -726,6 +733,7 @@ export function ReadingSection({
       <ResizablePanel defaultSize='50%' minSize='25%'>
         <div
           data-exam-scroll-pane
+          data-tour='reading-questions'
           className='h-full overflow-x-clip overflow-y-auto bg-background px-5 py-6 pb-24 xl:py-8 xl:pr-8 xl:pl-2'
         >
           {section?.id ? (

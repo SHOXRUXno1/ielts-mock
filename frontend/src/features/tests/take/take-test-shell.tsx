@@ -62,6 +62,8 @@ import {
 } from './constants'
 import { exitExamFullscreen } from './exam-fullscreen'
 import { ExamTimerChrome } from './exam-timer-chrome'
+import { OnboardingTour } from './onboarding/onboarding-tour'
+import { useOnboardingTour } from './onboarding/use-onboarding-tour'
 import { FullscreenGuardOverlay } from './fullscreen-guard-overlay'
 import { IntroScreen } from './intro-screen'
 import { ListeningAudioProvider } from './listening-audio-provider'
@@ -1266,6 +1268,12 @@ function ActiveChrome({
   const [finishSectionOpen, setFinishSectionOpen] = useState(false)
   const [isFinishingSection, setIsFinishingSection] = useState(false)
 
+  // First-visit onboarding tour per section. Opens automatically the
+  // first time the student lands in each L/R/W/S section; the Help (?)
+  // button in the header re-opens it on demand. Hidden in preview mode
+  // where the admin is looking at the UI, not taking the test.
+  const tour = useOnboardingTour(currentType, { enabled: !isPreview })
+
   // Fullscreen proctoring — blocks the exam when the student leaves fullscreen
   // and closes the attempt if they do not come back inside the grace window.
   const {
@@ -1424,6 +1432,7 @@ function ActiveChrome({
           clearTimeoutDialog={clearTimeoutDialog}
           peekTimeoutNext={peekTimeoutNext}
           onTimeoutExhausted={onTimeoutExhausted}
+          onShowHelp={isPreview ? undefined : tour.openTour}
         />
 
         <main className='relative min-h-0 flex-1 overflow-hidden'>
@@ -1432,6 +1441,14 @@ function ActiveChrome({
 
         <QuestionNavBar />
       </div>
+
+      {!isPreview && (
+        <OnboardingTour
+          section={nav.currentType}
+          open={tour.isOpen}
+          onClose={tour.closeTour}
+        />
+      )}
 
       {fullscreenViolation && (
         <FullscreenGuardOverlay

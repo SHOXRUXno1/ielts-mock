@@ -66,6 +66,7 @@ export function ActionDock({
       {phase === 'ready' && (
         <Button
           size='lg'
+          data-tour='speaking-mic'
           className='min-h-12 w-full max-w-xs bg-green-600 hover:bg-green-700 sm:max-w-sm'
           onClick={onStartRecording}
         >

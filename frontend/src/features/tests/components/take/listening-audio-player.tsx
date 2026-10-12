@@ -56,6 +56,7 @@ export function ListeningAudioPlayer({ section, partNumber }: Props) {
 
   return (
     <div
+      data-tour='listening-audio'
       className={cn(
         'group/player rounded-xl border border-border bg-background p-3 shadow-sm ring-1 ring-foreground/[0.02]',
         'sm:p-5'

@@ -225,7 +225,7 @@ function TaskEditor({
 
   // ── Left pane ──────────────────────────────────────────────────────────────
   const leftPane = (
-    <div className='h-full overflow-y-auto px-10 py-8'>
+    <div data-tour='writing-prompt' className='h-full overflow-y-auto px-10 py-8'>
       <h2 className='text-lg font-medium text-foreground'>Task {taskNumber}</h2>
       <p className='mt-1 text-[13px] text-muted-foreground'>
         You should spend about {isTask1 ? '20' : '40'} minutes on this task.
@@ -323,6 +323,7 @@ function TaskEditor({
         data-gramm='false'
         data-gramm_editor='false'
         data-enable-grammarly='false'
+        data-tour='writing-textarea'
         className='mx-5 h-[min(42vh,360px)] min-h-[200px] shrink-0 resize-y rounded-lg border-[0.5px] border-border bg-background px-5 py-5 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:ring-[3px] focus:ring-blue-500/10 focus:outline-none'
         style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}
       />
@@ -330,6 +331,7 @@ function TaskEditor({
       {/* Word count + Get Feedback */}
       <div className='flex shrink-0 items-center justify-between px-5 py-4'>
         <span
+          data-tour='writing-wordcount'
           className={cn('text-[13px] font-medium tabular-nums', wordCountColor)}
         >
           {wordCount} / {minWords}+ words

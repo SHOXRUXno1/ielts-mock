@@ -22,6 +22,7 @@ type ExamTimerChromeProps = {
   clearTimeoutDialog: () => void
   peekTimeoutNext: () => SectionType | null
   onTimeoutExhausted: () => void
+  onShowHelp?: () => void
 }
 
 /**
@@ -41,6 +42,7 @@ export function ExamTimerChrome({
   clearTimeoutDialog,
   peekTimeoutNext,
   onTimeoutExhausted,
+  onShowHelp,
 }: ExamTimerChromeProps) {
   const ctx = useTakeTest()
   const nav = useTestNavigation()
@@ -151,6 +153,7 @@ export function ExamTimerChrome({
         finishDisabled={finishDisabled}
         onSubmit={submitTest}
         isSubmitting={isSubmitting}
+        onShowHelp={onShowHelp}
       />
       <TimeoutDialog
         info={timeoutDialog}
