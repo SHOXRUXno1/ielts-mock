@@ -104,6 +104,7 @@ export function SpeakingReadyGate() {
           <Button
             variant='outline'
             className='w-full'
+            data-tour='speaking-mic-check'
             disabled={micStatus === 'checking' || starting}
             onClick={() => {
               void checkMicrophone()
@@ -122,6 +123,7 @@ export function SpeakingReadyGate() {
           <Button
             size='lg'
             className='min-h-14 w-full'
+            data-tour='speaking-start'
             onClick={handleStart}
             disabled={starting}
           >

@@ -5,6 +5,7 @@ type PillTabItem = {
   label: string
   icon?: ReactNode
   badge?: ReactNode
+  dataTour?: string
 }
 
 type Props = {
@@ -25,13 +26,14 @@ export function PillTabs({ items, active, onChange, className }: Props) {
           key={i}
           type='button'
           role='tab'
+          data-tour={it.dataTour}
           aria-selected={i === active}
           onClick={() => onChange(i)}
           className={cn(
             'flex min-h-9 items-center justify-center gap-1.5 rounded-md px-4 py-[7px] text-[13px] font-medium transition-all',
             i === active
               ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground',
+              : 'text-muted-foreground hover:text-foreground'
           )}
         >
           {it.icon}

@@ -662,7 +662,11 @@ export function ReadingSection({
           <PillTabs
             items={[
               { label: 'Passage', icon: <BookOpen className='size-3.5' /> },
-              { label: 'Questions', icon: <HelpCircle className='size-3.5' /> },
+              {
+                label: 'Questions',
+                icon: <HelpCircle className='size-3.5' />,
+                dataTour: 'reading-questions-tab',
+              },
             ]}
             active={mobileTab === 'passage' ? 0 : 1}
             onChange={(i) => setMobileTab(i === 0 ? 'passage' : 'questions')}

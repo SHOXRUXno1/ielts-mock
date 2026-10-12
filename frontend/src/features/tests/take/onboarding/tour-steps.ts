@@ -186,16 +186,67 @@ export const SPEAKING_STEPS: Step[] = [
   },
 ]
 
-export function stepsForSection(type: SectionType): Step[] {
+const SPEAKING_READY_STEPS: Step[] = [
+  {
+    ...BASE,
+    target: 'body',
+    placement: 'center',
+    title: 'Speaking section',
+    content:
+      'You will have a live conversation with James, an AI examiner. Check your microphone before starting.',
+  },
+  {
+    ...BASE,
+    target: '[data-tour="speaking-mic-check"]',
+    title: 'Check your microphone',
+    content:
+      'Use this check to make sure James can hear you. You can take your time here; the Speaking timer has not started yet.',
+  },
+  {
+    ...BASE,
+    target: '[data-tour="speaking-start"]',
+    title: 'Start when ready',
+    content:
+      'After the tour, tap Start Speaking Test when you are ready. The timer starts when you begin.',
+  },
+]
+
+export function stepsForSection(
+  type: SectionType,
+  isDesktop = true,
+  speakingReady = false,
+): Step[] {
   switch (type) {
     case 'listening':
-      return LISTENING_STEPS
+      return isDesktop
+        ? LISTENING_STEPS
+        : [
+            ...LISTENING_STEPS.slice(0, 2),
+            {
+              ...LISTENING_STEPS[2],
+              target: '[data-tour="listening-questions-tab"]',
+              content:
+                'On a smaller screen, tap Questions to open the answer area. Switch back to Audio whenever you need the recording.',
+            },
+            ...LISTENING_STEPS.slice(3),
+          ]
     case 'reading':
-      return READING_STEPS
+      return isDesktop
+        ? READING_STEPS
+        : [
+            ...READING_STEPS.slice(0, 2),
+            {
+              ...READING_STEPS[2],
+              target: '[data-tour="reading-questions-tab"]',
+              content:
+                'On a smaller screen, tap Questions to switch from the passage to the answer area. You can return to Passage at any time.',
+            },
+            ...READING_STEPS.slice(3),
+          ]
     case 'writing':
       return WRITING_STEPS
     case 'speaking':
-      return SPEAKING_STEPS
+      return speakingReady ? SPEAKING_READY_STEPS : SPEAKING_STEPS
     default:
       return []
   }
@@ -206,4 +257,4 @@ export function stepsForSection(type: SectionType): Step[] {
  * Older "seen" flags in localStorage carry a version suffix and become
  * stale on bump — students will see the refreshed tour once more.
  */
-export const TOUR_VERSION = 1
+export const TOUR_VERSION = 2

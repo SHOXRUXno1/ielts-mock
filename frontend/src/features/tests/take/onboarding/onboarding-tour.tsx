@@ -1,16 +1,27 @@
 import { memo, useMemo } from 'react'
 import { Joyride, STATUS, type EventData } from 'react-joyride'
+import { useIsDesktop } from '@/hooks/use-mobile'
 import type { SectionType } from '../../data/schema'
 import { stepsForSection } from './tour-steps'
 
 type OnboardingTourProps = {
   section: SectionType | null
+  speakingReady: boolean
   open: boolean
   onClose: () => void
 }
 
-function OnboardingTourInner({ section, open, onClose }: OnboardingTourProps) {
-  const steps = useMemo(() => (section ? stepsForSection(section) : []), [section])
+function OnboardingTourInner({
+  section,
+  speakingReady,
+  open,
+  onClose,
+}: OnboardingTourProps) {
+  const isDesktop = useIsDesktop()
+  const steps = useMemo(
+    () => (section ? stepsForSection(section, isDesktop, speakingReady) : []),
+    [section, isDesktop, speakingReady]
+  )
 
   if (!section || steps.length === 0) return null
 
@@ -52,19 +63,34 @@ function OnboardingTourInner({ section, open, onClose }: OnboardingTourProps) {
         tooltip: {
           borderRadius: 12,
           fontSize: 14,
-          padding: 20,
+          width: 'min(360px, calc(100vw - 24px))',
+          maxHeight: 'calc(100svh - 32px)',
+          overflowY: 'auto',
+          padding: 16,
+        },
+        tooltipTitle: {
+          fontSize: 16,
+        },
+        tooltipContent: {
+          paddingTop: 8,
+          paddingBottom: 8,
         },
         buttonPrimary: {
           borderRadius: 8,
-          padding: '8px 16px',
+          padding: '7px 12px',
+          fontSize: 13,
           fontWeight: 500,
         },
         buttonBack: {
           color: '#cbd5e1',
-          marginRight: 8,
+          marginRight: 4,
+          padding: 7,
+          fontSize: 13,
         },
         buttonSkip: {
           color: '#94a3b8',
+          padding: 7,
+          fontSize: 13,
         },
         buttonClose: {
           display: 'none',

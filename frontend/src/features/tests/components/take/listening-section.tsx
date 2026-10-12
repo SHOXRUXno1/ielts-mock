@@ -630,7 +630,11 @@ export function ListeningSection({
           <PillTabs
             items={[
               { label: 'Audio', icon: <Headphones className='size-3.5' /> },
-              { label: 'Questions', icon: <HelpCircle className='size-3.5' /> },
+              {
+                label: 'Questions',
+                icon: <HelpCircle className='size-3.5' />,
+                dataTour: 'listening-questions-tab',
+              },
             ]}
             active={mobileTab === 'audio' ? 0 : 1}
             onChange={(i) => setMobileTab(i === 0 ? 'audio' : 'questions')}

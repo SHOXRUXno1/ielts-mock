@@ -1445,6 +1445,9 @@ function ActiveChrome({
       {!isPreview && (
         <OnboardingTour
           section={nav.currentType}
+          speakingReady={
+            !isPractice && stateOf('speaking') === 'not_started'
+          }
           open={tour.isOpen}
           onClose={tour.closeTour}
         />
