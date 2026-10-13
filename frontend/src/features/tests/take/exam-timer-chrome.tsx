@@ -60,7 +60,6 @@ export function ExamTimerChrome({
     sealedTypes,
     flushBeforeNavigate,
     sealSection,
-    enterSection,
     reportSectionExpired,
     activeSectionType,
     stateOf,
@@ -100,6 +99,10 @@ export function ExamTimerChrome({
     remainingMs,
     remainingSec,
   })
+  const showNotStartedTimer =
+    !isPreview &&
+    ['listening', 'reading', 'writing'].includes(nav.currentType) &&
+    stateOf(nav.currentType) === 'not_started'
 
   useSectionTimeWarnings({
     remainingMs,
@@ -123,7 +126,6 @@ export function ExamTimerChrome({
     clearTimeoutDialog,
     flushBeforeNavigate,
     sealSection,
-    enterSection,
     goToSection: nav.goToSection,
     onExhausted: onTimeoutExhausted,
   })
@@ -145,6 +147,7 @@ export function ExamTimerChrome({
         onSwitchType={onSwitchType}
         showAiPaced={showAiPaced}
         showCountdown={showCountdown}
+        showNotStartedTimer={showNotStartedTimer}
         remainingSec={remainingSec}
         totalAnswered={totalAnswered}
         totalQuestions={totalQuestions}

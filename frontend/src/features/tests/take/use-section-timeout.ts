@@ -30,7 +30,6 @@ type Options = {
     }>
     reason?: SealReason
   }) => Promise<SealSectionResponse>
-  enterSection: (sectionType: string) => Promise<unknown>
   goToSection: (type: SectionType) => Promise<unknown>
   onExhausted: () => void
 }
@@ -54,7 +53,6 @@ export function useSectionTimeout({
   clearTimeoutDialog,
   flushBeforeNavigate: _flushBeforeNavigate,
   sealSection,
-  enterSection,
   goToSection,
   onExhausted,
 }: Options) {
@@ -131,15 +129,8 @@ export function useSectionTimeout({
     const next = peekNext() ?? timeoutDialog.next
     sealingRef.current = false
     if (next) {
-      // Speaking has its own readiness gate; the safety cap must only
-      // start on the student's Start click there. Navigate without entering.
-      if (next !== 'speaking') {
-        try {
-          await enterSection(next)
-        } catch {
-          /* may already be entered */
-        }
-      }
+      // The section guard starts the destination after navigation. That lets
+      // an unseen first-visit tour run before its deadline begins.
       clearTimeoutDialog()
       await goToSection(next)
       return
@@ -150,7 +141,6 @@ export function useSectionTimeout({
     timeoutDialog,
     peekNext,
     clearTimeoutDialog,
-    enterSection,
     goToSection,
     onExhausted,
   ])

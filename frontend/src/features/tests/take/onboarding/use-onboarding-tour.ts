@@ -23,7 +23,7 @@ function storageKey(section: SectionType): string {
   return `${PREFIX}${section}`
 }
 
-function hasSeen(section: SectionType): boolean {
+export function hasSeenOnboardingTour(section: SectionType): boolean {
   try {
     return localStorage.getItem(storageKey(section)) === '1'
   } catch {
@@ -78,7 +78,7 @@ export function useOnboardingTour(
     // Short tick before showing: lets the section mount its DOM first,
     // otherwise react-joyride targets like [data-tour="…"] are missing
     // and the first step falls back to body.
-    if (hasSeen(section)) return
+    if (hasSeenOnboardingTour(section)) return
     const timer = window.setTimeout(() => setIsOpen(true), 400)
     return () => window.clearTimeout(timer)
   }, [section, enabled])

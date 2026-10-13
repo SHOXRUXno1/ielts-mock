@@ -23,6 +23,7 @@ type Props = {
   onSwitchType: (type: SectionType) => void
   showAiPaced: boolean
   showCountdown: boolean
+  showNotStartedTimer: boolean
   remainingSec: number
   totalAnswered: number
   totalQuestions: number
@@ -46,6 +47,7 @@ export function ExamHeader({
   onSwitchType,
   showAiPaced,
   showCountdown,
+  showNotStartedTimer,
   remainingSec,
   totalAnswered,
   totalQuestions,
@@ -109,6 +111,17 @@ export function ExamHeader({
             >
               <Clock className='size-3.5 stroke-[1.75]' aria-hidden />
               <span>{formatTime(remainingSec)}</span>
+            </span>
+          )}
+          {showNotStartedTimer && !showCountdown && (
+            <span
+              data-tour='exam-timer'
+              className='inline-flex items-center gap-1.5 whitespace-nowrap text-[12px] text-muted-foreground sm:text-[13px]'
+              aria-label='Section timer has not started'
+            >
+              <Clock className='size-3.5 stroke-[1.75]' aria-hidden />
+              <span className='hidden sm:inline'>Timer not started</span>
+              <span className='sm:hidden'>Not started</span>
             </span>
           )}
         </div>

@@ -8,6 +8,9 @@ type OnboardingTourProps = {
   section: SectionType | null
   speakingReady: boolean
   open: boolean
+  preStart?: boolean
+  retryToken?: number
+  onStart?: () => void
   onClose: () => void
 }
 
@@ -15,6 +18,9 @@ function OnboardingTourInner({
   section,
   speakingReady,
   open,
+  preStart = false,
+  retryToken = 0,
+  onStart,
   onClose,
 }: OnboardingTourProps) {
   const isDesktop = useIsDesktop()
@@ -29,13 +35,14 @@ function OnboardingTourInner({
     const { status } = data
     const terminal: readonly string[] = [STATUS.FINISHED, STATUS.SKIPPED]
     if (terminal.includes(status)) {
-      onClose()
+      if (preStart) onStart?.()
+      else onClose()
     }
   }
 
   return (
     <Joyride
-      key={section /* fresh state when section changes */}
+      key={`${section}:${retryToken}` /* fresh state after a failed start */}
       steps={steps}
       run={open}
       continuous
@@ -99,7 +106,9 @@ function OnboardingTourInner({
       locale={{
         back: 'Back',
         close: 'Close',
-        last: 'Got it',
+        last: preStart
+          ? `Start ${section[0].toUpperCase()}${section.slice(1)}`
+          : 'Got it',
         next: 'Next',
         skip: 'Skip',
       }}

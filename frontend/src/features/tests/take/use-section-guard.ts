@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useAuthStore } from '@/stores/auth-store'
 import type { SectionType } from '../data/schema'
 import { collectAnswersForTypes } from './collect-answers'
 import { SECTION_LABELS } from './constants'
@@ -8,6 +9,13 @@ import { resolveSealedRedirectTarget } from './section-guard-logic'
 import { isNextSection, nextUnlockableType } from './section-order'
 import { useTakeTest } from './take-test-context'
 import { useTestNavigation } from './use-test-navigation'
+import { hasSeenOnboardingTour } from './onboarding/use-onboarding-tour'
+
+const TOUR_GATED_TYPES: readonly SectionType[] = [
+  'listening',
+  'reading',
+  'writing',
+]
 
 type PendingSwitch = {
   from: SectionType
@@ -25,6 +33,7 @@ type PendingSwitch = {
 export function useSectionGuard() {
   const ctx = useTakeTest()
   const nav = useTestNavigation()
+  const role = useAuthStore((state) => state.auth.user?.role)
   const [pendingSwitch, setPendingSwitch] = useState<PendingSwitch | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const handledKeyRef = useRef<string | null>(null)
@@ -150,6 +159,16 @@ export function useSectionGuard() {
       // Speaking has a readiness gate; leave state as not_started and let the
       // gate call enterSection when the student clicks Start.
       if (first === 'speaking') return
+      // For students, an unseen first-visit tour is the pre-start briefing.
+      // The tour's Start/Skip action enters the section after the server
+      // confirms it, so the deadline does not run during the briefing.
+      if (
+        role === 'student' &&
+        TOUR_GATED_TYPES.includes(first) &&
+        !hasSeenOnboardingTour(first)
+      ) {
+        return
+      }
       void enterSection(first).catch(() => {
         toast.error(`Failed to start ${SECTION_LABELS[first]}`)
       })
@@ -197,6 +216,7 @@ export function useSectionGuard() {
     nav,
     triggerSubmit,
     inputsLocked,
+    role,
   ])
 
   const confirmSwitch = useCallback(async () => {
@@ -227,11 +247,8 @@ export function useSectionGuard() {
       } catch (err) {
         if (!isBenignSectionConflict(err)) throw err
       }
-      // Speaking has its own readiness gate — hold on the URL without
-      // entering so the safety cap starts on the Start click there.
-      if (to !== 'speaking') {
-        await enterSection(to)
-      }
+      // Let the destination guard decide whether to start immediately or
+      // wait for its first-visit tour. Speaking keeps its existing gate.
       handledKeyRef.current = null
       await nav.goToSection(to)
     } catch {
@@ -245,7 +262,6 @@ export function useSectionGuard() {
     pendingSwitch,
     flushBeforeNavigate,
     sealSection,
-    enterSection,
     nav,
     presentTypes,
     answers,
@@ -324,6 +340,14 @@ export function useSectionGuard() {
           void nav.goToSection(to)
           return
         }
+        if (
+          role === 'student' &&
+          TOUR_GATED_TYPES.includes(to) &&
+          !hasSeenOnboardingTour(to)
+        ) {
+          void nav.goToSection(to)
+          return
+        }
         void enterSection(to)
           .then(() => nav.goToSection(to))
           .catch(() => {
@@ -343,6 +367,7 @@ export function useSectionGuard() {
       activeSectionType,
       presentTypes,
       enterSection,
+      role,
     ],
   )
 

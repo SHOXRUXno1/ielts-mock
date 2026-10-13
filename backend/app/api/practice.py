@@ -183,6 +183,17 @@ async def _enter_practice(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=exc.detail) from exc
 
 
+async def _seed_not_started_practice(
+    db: AsyncSession,
+    attempt: Attempt,
+    section_type: str,
+) -> None:
+    """Create the timed section's progress row without starting its clock."""
+    for row in sp.ensure_progress_rows(attempt.id, present_types=[section_type]):
+        db.add(row)
+    await db.flush()
+
+
 @router.get("/tests/{test_id}/practice-units", response_model=PracticeUnitsResponse)
 async def list_practice_units(
     test_id: uuid.UUID,
@@ -242,7 +253,7 @@ async def start_practice_attempt(
     db: AsyncSession = Depends(get_db),
     actor: Actor = Depends(get_current_actor),
 ):
-    """Create a practice attempt and enter its target section in one call."""
+    """Create a practice attempt; timed sections start on explicit entry."""
     if payload.section_type not in _VALID_TYPES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid section type")
 
@@ -306,15 +317,18 @@ async def _start_part_practice(
     db.add(attempt)
     try:
         await db.flush()
-        duration_override = practice_parts.duration_for_practice_attempt(unit)
-        await _enter_practice(
-            db,
-            attempt,
-            test_id,
-            unit.section_type,
-            now,
-            duration_override=duration_override,
-        )
+        if unit.section_type == SectionType.SPEAKING.value:
+            duration_override = practice_parts.duration_for_practice_attempt(unit)
+            await _enter_practice(
+                db,
+                attempt,
+                test_id,
+                unit.section_type,
+                now,
+                duration_override=duration_override,
+            )
+        else:
+            await _seed_not_started_practice(db, attempt, unit.section_type)
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -393,14 +407,17 @@ async def _start_section_practice(
     try:
         await db.flush()
         # Whole-section uses TestSectionSettings duration (override=None).
-        await _enter_practice(
-            db,
-            attempt,
-            test_id,
-            payload.section_type,
-            now,
-            duration_override=None,
-        )
+        if payload.section_type == SectionType.SPEAKING.value:
+            await _enter_practice(
+                db,
+                attempt,
+                test_id,
+                payload.section_type,
+                now,
+                duration_override=None,
+            )
+        else:
+            await _seed_not_started_practice(db, attempt, payload.section_type)
         await db.commit()
     except IntegrityError:
         await db.rollback()

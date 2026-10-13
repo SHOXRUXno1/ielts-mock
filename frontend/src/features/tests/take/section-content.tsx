@@ -62,7 +62,12 @@ export function SectionContent() {
   const onAnswer = (qId: string, resp: Record<string, unknown>) =>
     ctx.updateAnswer(activeSection.id, qId, resp)
 
-  const locked = ctx.inputsLocked && !ctx.isPreview
+  const timedSectionNotStarted =
+    !ctx.isPreview &&
+    ['listening', 'reading', 'writing'].includes(activeSection.type) &&
+    ctx.stateOf(activeSection.type) !== 'active'
+  const locked =
+    !ctx.isPreview && (ctx.inputsLocked || timedSectionNotStarted)
 
   let body: ReactNode
   switch (activeSection.type) {

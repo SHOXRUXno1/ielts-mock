@@ -63,7 +63,10 @@ import {
 import { exitExamFullscreen } from './exam-fullscreen'
 import { ExamTimerChrome } from './exam-timer-chrome'
 import { OnboardingTour } from './onboarding/onboarding-tour'
-import { useOnboardingTour } from './onboarding/use-onboarding-tour'
+import {
+  hasSeenOnboardingTour,
+  useOnboardingTour,
+} from './onboarding/use-onboarding-tour'
 import { FullscreenGuardOverlay } from './fullscreen-guard-overlay'
 import { IntroScreen } from './intro-screen'
 import { ListeningAudioProvider } from './listening-audio-provider'
@@ -265,6 +268,7 @@ export function TakeTestShell({
     enabled: !isPreview && !!attemptId && !finished,
     presentTypes,
   })
+  const getSectionState = sectionProgress.stateOf
 
   useEffect(() => {
     activeTypeRef.current = sectionProgress.activeType
@@ -948,12 +952,23 @@ export function TakeTestShell({
       response: Record<string, unknown>
     ) => {
       if (inputsLocked) return
+      const sectionType = sortedSections.find(
+        (section) => section.id === sectionId,
+      )?.type
+      if (
+        !isPreview &&
+        sectionType &&
+        ['listening', 'reading', 'writing'].includes(sectionType) &&
+        getSectionState(sectionType) !== 'active'
+      ) {
+        return
+      }
       setAnswers((prev) => ({
         ...prev,
         [sectionId]: { ...prev[sectionId], [questionId]: response },
       }))
     },
-    [inputsLocked]
+    [inputsLocked, isPreview, getSectionState, sortedSections]
   )
 
   const toggleFlag = useCallback((questionId: string) => {
@@ -1260,6 +1275,10 @@ function ActiveChrome({
 
   const currentType = nav.currentType
   const currentTypeIdx = nav.currentTypeIdx
+  const timedSection =
+    currentType === 'listening' ||
+    currentType === 'reading' ||
+    currentType === 'writing'
   const unlockableType = nextUnlockableType(
     presentTypes,
     stateOf,
@@ -1268,11 +1287,62 @@ function ActiveChrome({
   const [finishSectionOpen, setFinishSectionOpen] = useState(false)
   const [isFinishingSection, setIsFinishingSection] = useState(false)
 
-  // First-visit onboarding tour per section. Opens automatically the
-  // first time the student lands in each L/R/W/S section; the Help (?)
-  // button in the header re-opens it on demand. Hidden in preview mode
-  // where the admin is looking at the UI, not taking the test.
-  const tour = useOnboardingTour(currentType, { enabled: !isPreview })
+  // The Help button can replay the tour; L/R/W first-visit tours are also
+  // used as the timed-section briefing. Preview keeps its existing behavior.
+  const preStartTour =
+    role === 'student' &&
+    timedSection &&
+    stateOf(currentType) === 'not_started'
+  const tour = useOnboardingTour(currentType, {
+    enabled: !isPreview && (preStartTour || currentType === 'speaking'),
+  })
+  const closeTour = tour.closeTour
+  const [tourRetryToken, setTourRetryToken] = useState(0)
+  const tourStartInFlightRef = useRef(false)
+  const practiceAutoStartRef = useRef<string | null>(null)
+
+  const startAfterTour = useCallback(async () => {
+    if (!preStartTour || tourStartInFlightRef.current) return
+    tourStartInFlightRef.current = true
+    try {
+      await enterSection(currentType)
+      closeTour()
+    } catch {
+      toast.error(
+        `Failed to start ${SECTION_LABELS[currentType]}. Please try again.`,
+      )
+      setTourRetryToken((token) => token + 1)
+    } finally {
+      tourStartInFlightRef.current = false
+    }
+  }, [preStartTour, enterSection, currentType, closeTour])
+
+  useEffect(() => {
+    if (
+      !isPractice ||
+      role !== 'student' ||
+      !timedSection ||
+      stateOf(currentType) !== 'not_started' ||
+      !hasSeenOnboardingTour(currentType)
+    ) {
+      return
+    }
+    const key = `${attemptId ?? 'none'}:${currentType}`
+    if (practiceAutoStartRef.current === key) return
+    practiceAutoStartRef.current = key
+    void enterSection(currentType).catch(() => {
+      practiceAutoStartRef.current = null
+      toast.error(`Failed to start ${SECTION_LABELS[currentType]}`)
+    })
+  }, [
+    isPractice,
+    role,
+    timedSection,
+    stateOf,
+    currentType,
+    attemptId,
+    enterSection,
+  ])
 
   // Fullscreen proctoring — blocks the exam when the student leaves fullscreen
   // and closes the attempt if they do not come back inside the grace window.
@@ -1318,16 +1388,8 @@ function ActiveChrome({
       }
       setFinishSectionOpen(false)
       if (next) {
-        // Speaking is gated by an interstitial readiness screen — the safety
-        // cap must only start on the student's explicit click there.
-        // Navigate to the section URL without calling enterSection.
-        if (next !== 'speaking') {
-          try {
-            await enterSection(next)
-          } catch {
-            /* may already be active */
-          }
-        }
+        // The destination guard starts the section after its pre-start tour
+        // when needed. Speaking keeps its readiness gate.
         await nav.goToSection(next)
       } else {
         guard.triggerSubmit()
@@ -1346,7 +1408,6 @@ function ActiveChrome({
     sealSection,
     activeSectionType,
     currentType,
-    enterSection,
     nav,
     guard,
     presentTypes,
@@ -1449,6 +1510,9 @@ function ActiveChrome({
             !isPractice && stateOf('speaking') === 'not_started'
           }
           open={tour.isOpen}
+          preStart={preStartTour}
+          retryToken={tourRetryToken}
+          onStart={() => void startAfterTour()}
           onClose={tour.closeTour}
         />
       )}
