@@ -30,4 +30,10 @@ describe('stepsForSection', () => {
     expect(steps[1].target).toBe('[data-tour="speaking-mic-check"]')
     expect(steps[2].target).toBe('[data-tour="speaking-start"]')
   })
+
+  it('uses writing-specific guidance in the Writing tour', () => {
+    expect(stepsForSection('writing')[0].content).toContain(
+      'Plan what you want to write'
+    )
+  })
 })

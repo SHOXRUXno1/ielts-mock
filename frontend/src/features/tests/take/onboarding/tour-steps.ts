@@ -114,7 +114,7 @@ export const WRITING_STEPS: Step[] = [
     target: '[data-tour="writing-prompt"]',
     title: 'Read the task',
     content:
-      'Read the task carefully before you start. Plan what you want to say — a few minutes of planning saves time later.',
+      'Read the task carefully before you start. Plan what you want to write — a few minutes of planning saves time later.',
   },
   {
     ...BASE,
