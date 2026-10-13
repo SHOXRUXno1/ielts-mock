@@ -48,69 +48,88 @@ function OnboardingTourInner({
       continuous
       scrollToFirstStep={true}
       options={{
-        // Visual theming — matches the exam blue of the Submit button
-        // so the tour reads as native chrome, not a bolt-on overlay.
         primaryColor: '#2563eb',
-        backgroundColor: '#0f172a',
-        textColor: '#f8fafc',
-        arrowColor: '#0f172a',
-        overlayColor: 'rgba(2, 6, 23, 0.55)',
+        backgroundColor: '#ffffff',
+        textColor: '#0f172a',
+        arrowColor: '#ffffff',
+        overlayColor: 'rgba(15, 23, 42, 0.35)',
         zIndex: 10_000,
-        // Behavior
         showProgress: true,
-        // Which buttons appear in the tooltip. 'close' is intentionally
-        // omitted — we hide the X and rely on Skip + the final Got it.
         buttons: ['back', 'primary', 'skip'],
-        // Explicit `false` keeps the backdrop click inert so the student
-        // can't dismiss the tour by misclicking outside the tooltip.
         overlayClickAction: false,
-        spotlightPadding: 6,
+        spotlightPadding: 10,
       }}
       styles={{
         tooltip: {
-          borderRadius: 12,
+          borderRadius: 16,
           fontSize: 14,
-          width: 'min(360px, calc(100vw - 24px))',
-          maxHeight: 'calc(100svh - 32px)',
-          overflowY: 'auto',
-          padding: 16,
+          width: 'min(360px, calc(100vw - 20px))',
+          padding: 0,
+          boxShadow:
+            '0 0 0 1px rgba(0,0,0,0.06), 0 4px 8px rgba(0,0,0,0.04), 0 16px 40px rgba(0,0,0,0.1)',
+          borderTop: '3px solid #2563eb',
+          overflow: 'hidden',
+        },
+        tooltipContainer: {
+          padding: '18px 20px 0',
+          textAlign: 'left',
         },
         tooltipTitle: {
-          fontSize: 16,
+          fontSize: 15,
+          fontWeight: 700,
+          color: '#0f172a',
+          letterSpacing: '-0.015em',
+          lineHeight: 1.3,
+          marginBottom: 0,
         },
         tooltipContent: {
-          paddingTop: 8,
-          paddingBottom: 8,
+          color: '#64748b',
+          lineHeight: 1.65,
+          fontSize: 14,
+          padding: '8px 0 18px',
+        },
+        tooltipFooter: {
+          padding: '10px 20px 14px',
+          borderTop: '1px solid #f1f5f9',
+          display: 'flex',
+          alignItems: 'center',
         },
         buttonPrimary: {
           borderRadius: 8,
-          padding: '7px 12px',
+          padding: '7px 16px',
+          fontSize: 13,
+          fontWeight: 600,
+          background: '#2563eb',
+          color: '#ffffff',
+          boxShadow: '0 1px 3px rgba(37,99,235,0.25)',
+          letterSpacing: '0.005em',
+        },
+        buttonBack: {
+          color: '#64748b',
+          marginRight: 6,
+          padding: '7px 10px',
           fontSize: 13,
           fontWeight: 500,
         },
-        buttonBack: {
-          color: '#cbd5e1',
-          marginRight: 4,
-          padding: 7,
-          fontSize: 13,
-        },
         buttonSkip: {
           color: '#94a3b8',
-          padding: 7,
-          fontSize: 13,
+          padding: '7px 0',
+          fontSize: 12,
+          fontWeight: 500,
+          marginRight: 'auto',
         },
         buttonClose: {
           display: 'none',
         },
       }}
       locale={{
-        back: 'Back',
+        back: '← Back',
         close: 'Close',
         last: preStart
           ? `Start ${section[0].toUpperCase()}${section.slice(1)}`
-          : 'Got it',
-        next: 'Next',
-        skip: 'Skip',
+          : 'Got it ✓',
+        next: 'Next →',
+        skip: 'Skip tour',
       }}
       onEvent={handleEvent}
     />
