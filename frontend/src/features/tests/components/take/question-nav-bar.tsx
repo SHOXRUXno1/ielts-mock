@@ -103,7 +103,7 @@ export function QuestionNavBar() {
         data-tour='question-navigator'
         className='shrink-0 border-t border-border bg-background pb-[max(0.25rem,env(safe-area-inset-bottom))]'
       >
-        <div className='mx-auto flex w-full max-w-5xl items-center justify-between px-6'>
+        <div className='mx-auto flex w-max items-center gap-10 px-6'>
           {groups.map((group) => {
             const isActive = group.partIndex === currentPart
             const q = group.writingQuestion
