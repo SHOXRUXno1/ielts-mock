@@ -158,12 +158,11 @@ export function TourTooltip({
   const prefersReducedMotion = usePrefersReducedMotion()
   const docHidden = useDocumentHidden()
 
-  // First and last steps are always manual:
-  //   - first teaches the student the controls exist (Next / Back / Skip),
-  //   - last requires an intentional "Got it" / "Start Speaking" click.
-  // Reduced motion disables auto-advance entirely — people who ask for less
-  // motion typically also need more reading time.
-  const canAutoAdvance = !isFirst && !isLastStep && !prefersReducedMotion
+  // Only the last step stays manual — "Got it" / "Start Speaking" is a
+  // commitment (it closes the tour or actually starts the exam), so it must
+  // be an intentional click. Reduced motion disables auto-advance entirely:
+  // students who prefer less motion typically also need more reading time.
+  const canAutoAdvance = !isLastStep && !prefersReducedMotion
   const paused = hovered || focused || docHidden
 
   const handleComplete = useCallback(() => {
