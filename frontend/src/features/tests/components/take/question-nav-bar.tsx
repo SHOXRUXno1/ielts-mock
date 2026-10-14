@@ -101,9 +101,9 @@ export function QuestionNavBar() {
       <nav
         aria-label='Writing task navigator'
         data-tour='question-navigator'
-        className='shrink-0 border-t border-border bg-background pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]'
+        className='shrink-0 border-t border-border bg-background pb-[max(0.25rem,env(safe-area-inset-bottom))]'
       >
-        <div className='mx-auto flex w-max items-center gap-0.5 rounded-lg bg-muted/60 p-0.5 ring-1 ring-black/[0.03] dark:ring-white/[0.03]'>
+        <div className='mx-auto flex w-full max-w-5xl items-center justify-between px-6'>
           {groups.map((group) => {
             const isActive = group.partIndex === currentPart
             const q = group.writingQuestion
@@ -121,15 +121,15 @@ export function QuestionNavBar() {
                 onClick={() => void nav.goToPart(group.partIndex)}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'inline-flex min-h-7 items-center gap-1.5 rounded-md px-3 text-[12px] font-semibold whitespace-nowrap transition-colors',
+                  'inline-flex items-center gap-2 border-b-2 py-2.5 text-[13px] font-semibold whitespace-nowrap transition-colors',
                   isActive
-                    ? 'bg-background text-foreground shadow-sm ring-1 ring-black/[0.04] dark:ring-white/[0.06]'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'border-blue-500 text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
                 )}
               >
                 {group.label}
                 {words > 0 ? (
-                  <span className='text-[10.5px] font-medium tabular-nums text-muted-foreground'>
+                  <span className='text-[11px] font-medium tabular-nums text-muted-foreground'>
                     {words}
                   </span>
                 ) : null}
