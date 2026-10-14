@@ -9,6 +9,12 @@ type OnboardingTourProps = {
   section: SectionType | null
   speakingReady: boolean
   isPractice: boolean
+  /**
+   * The section the student will land on after pressing Finish section.
+   * Used to name the destination in the last tour step ("go to Reading").
+   * Pass undefined if the current section is the final one in this test.
+   */
+  nextSection?: SectionType
   open: boolean
   preStart?: boolean
   retryToken?: number
@@ -20,6 +26,7 @@ function OnboardingTourInner({
   section,
   speakingReady,
   isPractice,
+  nextSection,
   open,
   preStart = false,
   retryToken = 0,
@@ -30,9 +37,15 @@ function OnboardingTourInner({
   const steps = useMemo(
     () =>
       section
-        ? stepsForSection(section, isDesktop, speakingReady, isPractice)
+        ? stepsForSection(
+            section,
+            isDesktop,
+            speakingReady,
+            isPractice,
+            nextSection
+          )
         : [],
-    [section, isDesktop, speakingReady, isPractice]
+    [section, isDesktop, speakingReady, isPractice, nextSection]
   )
 
   if (!section || steps.length === 0) return null

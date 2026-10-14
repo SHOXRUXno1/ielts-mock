@@ -283,6 +283,14 @@ const SPEAKING_READY_STEPS: TourStep[] = [
   },
 ]
 
+/** Human-readable label for a section type, matching how students see it. */
+const SECTION_LABEL: Record<SectionType, string> = {
+  listening: 'Listening',
+  reading: 'Reading',
+  writing: 'Writing',
+  speaking: 'Speaking',
+}
+
 /**
  * The final step in a full-mock L/R/W tour.
  *
@@ -291,30 +299,40 @@ const SPEAKING_READY_STEPS: TourStep[] = [
  * clicks "Finish section" to move on, so pointing them at the Submit button
  * would mislearn the flow. Practice tests (one section) keep the Submit
  * step because Finish section isn't shown.
+ *
+ * The copy names the next section ("go to Reading") when we know it, so the
+ * student sees exactly where they are heading. If this happens to be the
+ * final section in a non-standard mock, we fall back to a generic ending.
  */
-const MOCK_FINISH_SECTION_STEP: TourStep = {
-  ...BASE,
-  target: '[data-tour="finish-section"]',
-  data: { icon: Flag, hint: 'Top-right' },
-  title: 'Finish this section',
-  content:
-    'Press Finish section once every answer is in — you will move on to the next section automatically.',
+function makeMockFinishSectionStep(nextSection?: SectionType): TourStep {
+  const nextLabel = nextSection ? SECTION_LABEL[nextSection] : null
+  return {
+    ...BASE,
+    target: '[data-tour="finish-section"]',
+    data: { icon: Flag, hint: 'Top-right' },
+    title: 'Move on when you’re ready',
+    content: nextLabel
+      ? `Press Finish section to go to ${nextLabel}. You cannot return to this section once you leave — check your answers first.`
+      : 'Press Finish section when you are done. You cannot return to this section once you leave — check your answers first.',
+  }
 }
 
 /** Swap the trailing "Submit" step for a "Finish section" one in full mock. */
 function withSectionEndStep(
   baseSteps: TourStep[],
-  isPractice: boolean
+  isPractice: boolean,
+  nextSection?: SectionType
 ): TourStep[] {
   if (isPractice) return baseSteps
-  return [...baseSteps.slice(0, -1), MOCK_FINISH_SECTION_STEP]
+  return [...baseSteps.slice(0, -1), makeMockFinishSectionStep(nextSection)]
 }
 
 export function stepsForSection(
   type: SectionType,
   isDesktop = true,
   speakingReady = false,
-  isPractice = true
+  isPractice = true,
+  nextSection?: SectionType
 ): TourStep[] {
   switch (type) {
     case 'listening': {
@@ -331,7 +349,7 @@ export function stepsForSection(
             },
             ...LISTENING_STEPS.slice(3),
           ]
-      return withSectionEndStep(base, isPractice)
+      return withSectionEndStep(base, isPractice, nextSection)
     }
     case 'reading': {
       const base = isDesktop
@@ -347,10 +365,10 @@ export function stepsForSection(
             },
             ...READING_STEPS.slice(3),
           ]
-      return withSectionEndStep(base, isPractice)
+      return withSectionEndStep(base, isPractice, nextSection)
     }
     case 'writing':
-      return withSectionEndStep(WRITING_STEPS, isPractice)
+      return withSectionEndStep(WRITING_STEPS, isPractice, nextSection)
     case 'speaking':
       return speakingReady ? SPEAKING_READY_STEPS : SPEAKING_STEPS
     default:
@@ -363,4 +381,4 @@ export function stepsForSection(
  * Older "seen" flags in localStorage carry a version suffix and become
  * stale on bump — students will see the refreshed tour once more.
  */
-export const TOUR_VERSION = 12
+export const TOUR_VERSION = 13

@@ -1510,6 +1510,12 @@ function ActiveChrome({
             !isPractice && stateOf('speaking') === 'not_started'
           }
           isPractice={isPractice}
+          nextSection={(() => {
+            if (isPractice || !nav.currentType) return undefined
+            const idx = presentTypes.indexOf(nav.currentType)
+            if (idx < 0 || idx === presentTypes.length - 1) return undefined
+            return presentTypes[idx + 1]
+          })()}
           open={tour.isOpen}
           preStart={preStartTour}
           retryToken={tourRetryToken}
