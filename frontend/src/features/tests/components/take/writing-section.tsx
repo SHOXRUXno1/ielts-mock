@@ -324,7 +324,7 @@ function TaskEditor({
         data-gramm_editor='false'
         data-enable-grammarly='false'
         data-tour='writing-textarea'
-        className='mx-5 h-[min(42vh,360px)] min-h-[200px] shrink-0 resize-y rounded-lg border-[0.5px] border-border bg-background px-5 py-5 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:ring-[3px] focus:ring-blue-500/10 focus:outline-none'
+        className='mx-5 min-h-[200px] flex-1 resize-none rounded-lg border-[0.5px] border-border bg-background px-5 py-5 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:ring-[3px] focus:ring-blue-500/10 focus:outline-none'
         style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}
       />
 
