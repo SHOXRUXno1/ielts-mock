@@ -1,4 +1,21 @@
 import type { Step } from 'react-joyride'
+import {
+  type LucideIcon,
+  BookOpen,
+  Clock,
+  Flag,
+  Hash,
+  Headphones,
+  HelpCircle,
+  ListChecks,
+  MessageCircle,
+  Mic,
+  PenLine,
+  Play,
+  Send,
+  Type,
+  Volume2,
+} from 'lucide-react'
 import type { SectionType } from '../../data/schema'
 
 /**
@@ -9,11 +26,27 @@ import type { SectionType } from '../../data/schema'
  * screen; if the user navigates away mid-tour the step is skipped by
  * ``react-joyride``.
  *
- * Tips are written for a first-time IELTS mock-test student. Keep lines
- * short — the tooltip card is narrow on mobile.
+ * ``data`` carries presentation metadata consumed by the custom glass
+ * tooltip ({@link ./tour-tooltip.tsx}):
+ *   - ``icon`` — a lucide glyph shown in the header badge.
+ *   - ``hint`` — a short spatial cue ("Top bar", "Right panel") so a
+ *     first-time student instantly knows *where* the element lives.
+ *
+ * Instructions are written action-first and kept to one short line — the
+ * tooltip card is narrow on mobile.
  */
 
-const BASE: Pick<Step, 'skipBeacon' | 'blockTargetInteraction' | 'placement'> = {
+export type TourStepData = {
+  icon?: LucideIcon
+  hint?: string
+}
+
+type TourStep = Step & { data?: TourStepData }
+
+const BASE: Pick<
+  TourStep,
+  'skipBeacon' | 'blockTargetInteraction' | 'placement'
+> = {
   // Beacon-first mode adds an extra click; skip straight to the tooltip.
   skipBeacon: true,
   // The student should not accidentally interact with the UI while
@@ -22,200 +55,222 @@ const BASE: Pick<Step, 'skipBeacon' | 'blockTargetInteraction' | 'placement'> = 
   placement: 'auto',
 }
 
-export const LISTENING_STEPS: Step[] = [
+export const LISTENING_STEPS: TourStep[] = [
   {
     ...BASE,
     target: 'body',
     placement: 'center',
+    data: { icon: Headphones },
     title: 'Listening section',
     content:
-      "You'll hear each recording once. Make sure your headphones are on and the volume is comfortable before you begin.",
+      "You'll hear each recording once. Put your headphones on and set a comfortable volume before you begin.",
   },
   {
     ...BASE,
     target: '[data-tour="listening-audio"]',
+    data: { icon: Volume2, hint: 'Top of the panel' },
     title: 'Audio player',
     content:
-      'The recording starts automatically for each part. You can pause or adjust the volume with these controls.',
+      'The recording starts on its own. Use these controls to pause or adjust the volume.',
   },
   {
     ...BASE,
     target: '[data-tour="listening-questions"]',
-    title: 'Answer the questions',
+    data: { icon: ListChecks, hint: 'Main area' },
+    title: 'Type your answers here',
     content:
-      'Type your answers here as you listen. Spelling and grammar count — read instructions carefully for word limits.',
+      'Fill in each answer as you listen. Watch the word limit in the instructions — spelling counts.',
   },
   {
     ...BASE,
     target: '[data-tour="exam-timer"]',
-    title: 'Section timer',
+    data: { icon: Clock, hint: 'Top bar' },
+    title: 'Time remaining',
     content:
-      "You have 30 minutes. When the timer runs out, your answers are submitted automatically — don't wait too long on one question.",
+      'You have 30 minutes. At zero, your answers submit automatically — keep moving.',
   },
   {
     ...BASE,
     target: '[data-tour="submit-test"]',
-    title: 'Submit when done',
+    data: { icon: Send, hint: 'Top-right' },
+    title: 'Submit the section',
     content:
-      "Click Submit after you've answered every question. You can't come back to this section once it's submitted.",
+      "Press Submit when every answer is in. You can't come back to this section afterwards.",
   },
 ]
 
-export const READING_STEPS: Step[] = [
+export const READING_STEPS: TourStep[] = [
   {
     ...BASE,
     target: 'body',
     placement: 'center',
+    data: { icon: BookOpen },
     title: 'Reading section',
     content:
-      'You will read three passages and answer the questions after each one. 60 minutes total — pace yourself.',
+      "Three passages, 60 minutes — about 20 minutes each. Don't get stuck on one question.",
   },
   {
     ...BASE,
     target: '[data-tour="reading-passage"]',
+    data: { icon: BookOpen, hint: 'Left panel' },
     title: 'The passage',
     content:
-      "Read on the left panel. You can select text to highlight important parts — it stays highlighted while you work on the section.",
+      'Read here. Select any text to highlight it — your highlights stay while you work.',
   },
   {
     ...BASE,
     target: '[data-tour="reading-questions"]',
-    title: 'Questions',
+    data: { icon: ListChecks, hint: 'Right panel' },
+    title: 'The questions',
     content:
-      "Answer on the right. The two panels scroll independently — keep the relevant paragraph in view while you answer.",
+      'Answer on the right. The two panels scroll separately, so keep the matching lines in view.',
   },
   {
     ...BASE,
     target: '[data-tour="exam-timer"]',
-    title: 'Section timer',
+    data: { icon: Clock, hint: 'Top bar' },
+    title: 'Time remaining',
     content:
-      'Aim for about 20 minutes per passage. The test moves on automatically when the timer hits zero.',
+      'The test moves on automatically when the timer hits zero. Pace yourself across all three.',
   },
   {
     ...BASE,
     target: '[data-tour="submit-test"]',
-    title: 'Submit when done',
+    data: { icon: Send, hint: 'Top-right' },
+    title: 'Submit the section',
     content:
-      "Click Submit after you've answered every question. You can't come back to this section once it's submitted.",
+      "Press Submit once every answer is in. You can't come back here afterwards.",
   },
 ]
 
-export const WRITING_STEPS: Step[] = [
+export const WRITING_STEPS: TourStep[] = [
   {
     ...BASE,
     target: 'body',
     placement: 'center',
+    data: { icon: PenLine },
     title: 'Writing section',
     content:
-      'Two tasks in 60 minutes. Task 1 is a short report (150 words). Task 2 is a longer essay (250 words).',
+      'Two tasks in 60 minutes. Task 1 is a 150-word report; Task 2 is a 250-word essay.',
   },
   {
     ...BASE,
     target: '[data-tour="writing-prompt"]',
+    data: { icon: BookOpen, hint: 'Top' },
     title: 'Read the task',
     content:
-      'Read the task carefully before you start. Plan what you want to write — a few minutes of planning saves time later.',
+      'Read it carefully first. A couple of minutes of planning saves time later.',
   },
   {
     ...BASE,
     target: '[data-tour="writing-textarea"]',
-    title: 'Write your response here',
+    data: { icon: Type, hint: 'Main area' },
+    title: 'Write your answer here',
     content:
-      'Use varied vocabulary and grammar. Your answer is saved automatically as you type.',
+      'Type your response. It saves automatically as you go — use varied vocabulary and grammar.',
   },
   {
     ...BASE,
     target: '[data-tour="writing-wordcount"]',
+    data: { icon: Hash, hint: 'Below the editor' },
     title: 'Word count',
     content:
-      "Stay above the minimum. Writing less than the required words will lower your band — but filler text will too.",
+      'Stay above the minimum. Too few words lowers your band — and so does filler.',
   },
   {
     ...BASE,
     target: '[data-tour="exam-timer"]',
-    title: 'Section timer',
-    content:
-      'Give yourself ~20 minutes for Task 1 and ~40 minutes for Task 2. Watch the timer.',
+    data: { icon: Clock, hint: 'Top bar' },
+    title: 'Time remaining',
+    content: 'Aim for ~20 minutes on Task 1 and ~40 minutes on Task 2.',
   },
   {
     ...BASE,
     target: '[data-tour="submit-test"]',
-    title: 'Submit when done',
-    content:
-      "Click Submit once both tasks are complete. You can't return to this section.",
+    data: { icon: Send, hint: 'Top-right' },
+    title: 'Submit the section',
+    content: "Press Submit once both tasks are done. You can't return afterwards.",
   },
 ]
 
-export const SPEAKING_STEPS: Step[] = [
+export const SPEAKING_STEPS: TourStep[] = [
   {
     ...BASE,
     target: 'body',
     placement: 'center',
+    data: { icon: Mic },
     title: 'Speaking section',
     content:
-      "You will have a 15-minute conversation with James, an AI examiner. Make sure your microphone and camera work before you start.",
+      'A ~15-minute conversation with James, your AI examiner. Check your mic and camera first.',
   },
   {
     ...BASE,
     target: '[data-tour="speaking-avatar"]',
+    data: { icon: MessageCircle, hint: 'Main video' },
     title: 'Meet James',
     content:
-      "James will ask you questions in three parts: a short interview, a 2-minute talk from a cue card, then a longer discussion.",
+      'He asks questions in three parts: a short interview, a 2-minute talk, then a discussion.',
   },
   {
     ...BASE,
     target: '[data-tour="speaking-mic"]',
+    data: { icon: Mic, hint: 'Bottom bar' },
     title: 'Tap to speak',
     content:
-      "Click this button when you're ready to answer. Speak clearly. Tap again when you finish your answer.",
+      'Press this to answer. Speak clearly, then press again when you finish.',
   },
   {
     ...BASE,
     target: 'body',
     placement: 'center',
+    data: { icon: HelpCircle },
     title: "Didn't catch a question?",
     content:
-      "Just say \"Pardon?\" or \"Could you repeat that?\" and James will repeat the question. This doesn't affect your score.",
+      'Just say "Pardon?" or "Could you repeat that?" — James repeats it, and it won\'t affect your score.',
   },
   {
     ...BASE,
     target: '[data-tour="speaking-end"]',
+    data: { icon: Flag, hint: 'Bottom bar' },
     title: 'End the test',
     content:
-      "Click End Test once James has thanked you and told you the test is over. Your Speaking score will be ready in a minute.",
+      'Press End Test after James says the test is over. Your score is ready within a minute.',
   },
 ]
 
-const SPEAKING_READY_STEPS: Step[] = [
+const SPEAKING_READY_STEPS: TourStep[] = [
   {
     ...BASE,
     target: 'body',
     placement: 'center',
+    data: { icon: Mic },
     title: 'Speaking section',
     content:
-      'You will have a live conversation with James, an AI examiner. Check your microphone before starting.',
+      "A live conversation with James, your AI examiner. Let's check your mic before the timer starts.",
   },
   {
     ...BASE,
     target: '[data-tour="speaking-mic-check"]',
+    data: { icon: Mic, hint: 'Here' },
     title: 'Check your microphone',
     content:
-      'Use this check to make sure James can hear you. You can take your time here; the Speaking timer has not started yet.',
+      'Make sure James can hear you. Take your time — the Speaking timer has not started yet.',
   },
   {
     ...BASE,
     target: '[data-tour="speaking-start"]',
+    data: { icon: Play, hint: 'Here' },
     title: 'Start when ready',
     content:
-      'After the tour, tap Start Speaking Test when you are ready. The timer starts when you begin.',
+      'Press Start Speaking Test when you are set. The timer begins the moment you start.',
   },
 ]
 
 export function stepsForSection(
   type: SectionType,
   isDesktop = true,
-  speakingReady = false,
-): Step[] {
+  speakingReady = false
+): TourStep[] {
   switch (type) {
     case 'listening':
       return isDesktop
@@ -225,8 +280,9 @@ export function stepsForSection(
             {
               ...LISTENING_STEPS[2],
               target: '[data-tour="listening-questions-tab"]',
+              data: { icon: ListChecks, hint: 'Questions tab' },
               content:
-                'On a smaller screen, tap Questions to open the answer area. Switch back to Audio whenever you need the recording.',
+                'Tap Questions to open the answer area. Switch back to Audio whenever you need the recording.',
             },
             ...LISTENING_STEPS.slice(3),
           ]
@@ -238,8 +294,9 @@ export function stepsForSection(
             {
               ...READING_STEPS[2],
               target: '[data-tour="reading-questions-tab"]',
+              data: { icon: ListChecks, hint: 'Questions tab' },
               content:
-                'On a smaller screen, tap Questions to switch from the passage to the answer area. You can return to Passage at any time.',
+                'Tap Questions to switch from the passage to your answers. Tap Passage to go back.',
             },
             ...READING_STEPS.slice(3),
           ]
@@ -257,4 +314,4 @@ export function stepsForSection(
  * Older "seen" flags in localStorage carry a version suffix and become
  * stale on bump — students will see the refreshed tour once more.
  */
-export const TOUR_VERSION = 2
+export const TOUR_VERSION = 3
