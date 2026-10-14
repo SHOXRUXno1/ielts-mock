@@ -197,16 +197,17 @@ export function TourTooltip({
         'shadow-[0_12px_48px_-8px_rgba(2,6,23,0.35)]'
       )}
     >
-      {/* Auto-advance progress bar — thin blue sliver at the top edge. */}
+      {/* Auto-advance progress bar — clearly visible blue stripe at the
+          top of the card, grouped with the icon row above it. */}
       {canAutoAdvance ? (
         <div
           aria-hidden
-          className='absolute inset-x-0 top-0 h-[2px] bg-slate-100 dark:bg-slate-800'
+          className='absolute inset-x-0 top-0 h-1 bg-slate-200/80 dark:bg-slate-700/60'
         >
           <div
             ref={barRef}
             className={cn(
-              'h-full bg-blue-500 transition-opacity',
+              'h-full bg-blue-500 shadow-[0_0_8px_rgba(37,99,235,0.6)] transition-opacity',
               paused && 'opacity-40'
             )}
             style={{ width: '0%' }}
