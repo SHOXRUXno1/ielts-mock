@@ -9,6 +9,7 @@ import {
 } from '@/lib/api/feedback'
 import { cn } from '@/lib/utils'
 import { useIsDesktop } from '@/hooks/use-mobile'
+import { useTestNavigation } from '../../take/use-test-navigation'
 import {
   ResizableHandle,
   ResizablePanel,
@@ -459,6 +460,13 @@ export function WritingSection({
 
   return (
     <div className='flex h-full min-h-0 flex-col bg-background'>
+      {sortedQuestions.length > 1 ? (
+        <WritingTaskTabs
+          questions={sortedQuestions}
+          answers={answers}
+          activeTaskIdx={safeTaskIdx}
+        />
+      ) : null}
       <div className='min-h-0 flex-1'>
         {sortedQuestions.map((q, i) => {
           if (i !== safeTaskIdx) return null
@@ -477,5 +485,62 @@ export function WritingSection({
         })}
       </div>
     </div>
+  )
+}
+
+/**
+ * Writing-only task switcher — lives at the top of the writing surface
+ * so the file-tab mental model lines up (Task 1 is a document, Task 2 is
+ * another document, you switch between them). Positioning the tabs at the
+ * bottom of the viewport read as a status bar and left an awkward empty
+ * strip between the editor and the controls.
+ */
+function WritingTaskTabs({
+  questions,
+  answers,
+  activeTaskIdx,
+}: {
+  questions: Question[]
+  answers: Record<string, Record<string, unknown>>
+  activeTaskIdx: number
+}) {
+  const nav = useTestNavigation()
+  return (
+    <nav
+      aria-label='Writing task tabs'
+      data-tour='writing-tasks'
+      className='flex shrink-0 items-center gap-10 border-b border-border bg-background px-6'
+    >
+      {questions.map((q, i) => {
+        const isActive = i === activeTaskIdx
+        const taskNum = q.task_number ?? i + 1
+        const text =
+          typeof answers[q.id]?.answer === 'string'
+            ? (answers[q.id].answer as string)
+            : ''
+        const words = countWords(text)
+        return (
+          <button
+            key={q.id}
+            type='button'
+            onClick={() => void nav.goToPart(i + 1)}
+            aria-current={isActive ? 'page' : undefined}
+            className={cn(
+              'inline-flex items-center gap-2 border-b-2 py-2.5 text-[13px] font-semibold whitespace-nowrap transition-colors',
+              isActive
+                ? 'border-blue-500 text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Task {taskNum}
+            {words > 0 ? (
+              <span className='text-[11px] font-medium tabular-nums text-muted-foreground'>
+                {words}
+              </span>
+            ) : null}
+          </button>
+        )
+      })}
+    </nav>
   )
 }

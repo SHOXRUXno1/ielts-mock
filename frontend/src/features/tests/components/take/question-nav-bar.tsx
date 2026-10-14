@@ -15,20 +15,6 @@ type PartGroup = {
   partIndex: number
   sectionId: string
   entries: QuestionNavEntry[]
-  /**
-   * Writing only — the task's own question object, carried through so the
-   * segmented control at the bottom can read its response and show a
-   * word-count status dot without a second lookup.
-   */
-  writingQuestion?: Question
-}
-
-/** Count whitespace-delimited words, matching writing-section's own logic. */
-function countWords(text: string): number {
-  return text
-    .trim()
-    .split(/\s+/)
-    .filter((w) => w.length > 0).length
 }
 
 function buildGroups(
@@ -36,23 +22,9 @@ function buildGroups(
   sortedSections: Section[],
   sectionQuestions: Record<string, Question[]>
 ): PartGroup[] {
-  if (currentType === 'speaking') return []
-
-  if (currentType === 'writing') {
-    const writingSec = sortedSections.find((s) => s.type === 'writing')
-    if (!writingSec) return []
-    const qs = [...(sectionQuestions[writingSec.id] ?? [])]
-      .filter((q) => q.question_type === 'essay' || q.task_number != null)
-      .sort((a, b) => (a.task_number ?? a.order) - (b.task_number ?? b.order))
-    return qs.map((q, i) => ({
-      key: q.id,
-      label: `Task ${q.task_number ?? i + 1}`,
-      partIndex: i + 1,
-      sectionId: writingSec.id,
-      entries: [],
-      writingQuestion: q,
-    }))
-  }
+  // Writing shows its own task tabs at the TOP of the editor (see
+  // WritingTaskTabs in writing-section.tsx); nothing to render here.
+  if (currentType === 'speaking' || currentType === 'writing') return []
 
   const siblings = sortedSections
     .filter((s) => s.type === currentType)
@@ -86,7 +58,9 @@ export function QuestionNavBar() {
   const hash = useRouterState({ select: (s) => s.location.hash })
   const focusedNumber = /^#q-(\d+)$/.exec(hash)?.[1]
 
-  if (currentType === 'speaking') return null
+  // Speaking has no navigator; Writing has its own at the top of the
+  // editor — both skip this bottom bar.
+  if (currentType === 'speaking' || currentType === 'writing') return null
 
   let groups = buildGroups(currentType, sortedSections, sectionQuestions)
   if (isPractice && practiceScope === 'part') {
@@ -94,52 +68,6 @@ export function QuestionNavBar() {
   }
   if (groups.length === 0) return null
 
-  const isWriting = currentType === 'writing'
-
-  if (isWriting) {
-    return (
-      <nav
-        aria-label='Writing task navigator'
-        data-tour='question-navigator'
-        className='shrink-0 border-t border-border bg-background pb-[max(0.25rem,env(safe-area-inset-bottom))]'
-      >
-        <div className='mx-auto flex w-max items-center gap-10 px-6'>
-          {groups.map((group) => {
-            const isActive = group.partIndex === currentPart
-            const q = group.writingQuestion
-            const resp = q
-              ? (answers[group.sectionId]?.[q.id] as
-                  | { answer?: string }
-                  | undefined)
-              : undefined
-            const text = typeof resp?.answer === 'string' ? resp.answer : ''
-            const words = countWords(text)
-            return (
-              <button
-                key={group.key}
-                type='button'
-                onClick={() => void nav.goToPart(group.partIndex)}
-                aria-current={isActive ? 'page' : undefined}
-                className={cn(
-                  'inline-flex items-center gap-2 border-b-2 py-2.5 text-[13px] font-semibold whitespace-nowrap transition-colors',
-                  isActive
-                    ? 'border-blue-500 text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {group.label}
-                {words > 0 ? (
-                  <span className='text-[11px] font-medium tabular-nums text-muted-foreground'>
-                    {words}
-                  </span>
-                ) : null}
-              </button>
-            )
-          })}
-        </div>
-      </nav>
-    )
-  }
 
   return (
     <nav
