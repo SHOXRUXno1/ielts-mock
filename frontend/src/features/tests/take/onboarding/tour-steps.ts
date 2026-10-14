@@ -310,7 +310,7 @@ function makeMockFinishSectionStep(nextSection?: SectionType): TourStep {
     ...BASE,
     target: '[data-tour="finish-section"]',
     data: { icon: Flag, hint: 'Top-right' },
-    title: 'Move on when you’re ready',
+    title: 'Move on when you’re done',
     content: nextLabel
       ? `Press Finish section to go to ${nextLabel}. You cannot return to this section once you leave — check your answers first.`
       : 'Press Finish section when you are done. You cannot return to this section once you leave — check your answers first.',
@@ -381,4 +381,4 @@ export function stepsForSection(
  * Older "seen" flags in localStorage carry a version suffix and become
  * stale on bump — students will see the refreshed tour once more.
  */
-export const TOUR_VERSION = 13
+export const TOUR_VERSION = 14
