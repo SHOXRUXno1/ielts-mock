@@ -84,6 +84,7 @@ export function QuestionNavBar() {
   return (
     <nav
       aria-label='Question navigator'
+      data-tour='question-navigator'
       className='shrink-0 border-t border-border bg-gradient-to-b from-background to-muted/50 student-dark:bg-none'
     >
       <div className='[scrollbar-width:thin] overflow-x-auto px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30'>

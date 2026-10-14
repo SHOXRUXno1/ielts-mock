@@ -3,6 +3,7 @@ import {
   type LucideIcon,
   BookOpen,
   Clock,
+  Compass,
   Flag,
   Hash,
   Headphones,
@@ -83,6 +84,14 @@ export const LISTENING_STEPS: TourStep[] = [
   },
   {
     ...BASE,
+    target: '[data-tour="question-navigator"]',
+    data: { icon: Compass, hint: 'Bottom bar' },
+    title: 'Jump between questions',
+    content:
+      'Tap any number to go straight to that question. Numbers are grouped by audio part.',
+  },
+  {
+    ...BASE,
     target: '[data-tour="exam-timer"]',
     data: { icon: Clock, hint: 'Top bar' },
     title: 'Time remaining',
@@ -124,6 +133,14 @@ export const READING_STEPS: TourStep[] = [
     title: 'The questions',
     content:
       'Answer on the right. The two panels scroll separately, so keep the matching lines in view.',
+  },
+  {
+    ...BASE,
+    target: '[data-tour="question-navigator"]',
+    data: { icon: Compass, hint: 'Bottom bar' },
+    title: 'Jump between questions',
+    content:
+      'Tap any number to go straight to that question. Numbers are grouped by passage.',
   },
   {
     ...BASE,
@@ -346,4 +363,4 @@ export function stepsForSection(
  * Older "seen" flags in localStorage carry a version suffix and become
  * stale on bump — students will see the refreshed tour once more.
  */
-export const TOUR_VERSION = 11
+export const TOUR_VERSION = 12
