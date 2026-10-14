@@ -314,4 +314,4 @@ export function stepsForSection(
  * Older "seen" flags in localStorage carry a version suffix and become
  * stale on bump — students will see the refreshed tour once more.
  */
-export const TOUR_VERSION = 9
+export const TOUR_VERSION = 10
