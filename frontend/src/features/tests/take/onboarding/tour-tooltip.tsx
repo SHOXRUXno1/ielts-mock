@@ -44,17 +44,12 @@ export function TourTooltip({
         'relative w-[min(360px,calc(100vw-20px))] max-h-[calc(100svh-32px)] overflow-y-auto',
         'rounded-2xl border p-5 text-left',
         'animate-in fade-in-0 zoom-in-95 duration-200',
-        // Frosted glass — translucent surface + blur, tuned per theme.
-        'border-white/60 bg-white/70 text-slate-900 backdrop-blur-2xl backdrop-saturate-150',
-        'dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-50',
+        // Solid card — crisp white in light, slate in dark.
+        'border-slate-200 bg-white text-slate-900',
+        'dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50',
         'shadow-[0_12px_48px_-8px_rgba(2,6,23,0.35)]'
       )}
     >
-      {/* Top light sheen — the signature glass edge highlight. */}
-      <span
-        aria-hidden
-        className='pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent dark:via-white/25'
-      />
 
       {/* Header: icon badge · spatial hint · step counter */}
       <div className='mb-3 flex items-center justify-between gap-3'>
