@@ -8,6 +8,7 @@ import { TourTooltip } from './tour-tooltip'
 type OnboardingTourProps = {
   section: SectionType | null
   speakingReady: boolean
+  isPractice: boolean
   open: boolean
   preStart?: boolean
   retryToken?: number
@@ -18,6 +19,7 @@ type OnboardingTourProps = {
 function OnboardingTourInner({
   section,
   speakingReady,
+  isPractice,
   open,
   preStart = false,
   retryToken = 0,
@@ -26,8 +28,11 @@ function OnboardingTourInner({
 }: OnboardingTourProps) {
   const isDesktop = useIsDesktop()
   const steps = useMemo(
-    () => (section ? stepsForSection(section, isDesktop, speakingReady) : []),
-    [section, isDesktop, speakingReady]
+    () =>
+      section
+        ? stepsForSection(section, isDesktop, speakingReady, isPractice)
+        : [],
+    [section, isDesktop, speakingReady, isPractice]
   )
 
   if (!section || steps.length === 0) return null

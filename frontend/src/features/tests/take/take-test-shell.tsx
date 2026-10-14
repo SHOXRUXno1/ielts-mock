@@ -1509,6 +1509,7 @@ function ActiveChrome({
           speakingReady={
             !isPractice && stateOf('speaking') === 'not_started'
           }
+          isPractice={isPractice}
           open={tour.isOpen}
           preStart={preStartTour}
           retryToken={tourRetryToken}

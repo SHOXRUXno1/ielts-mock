@@ -266,14 +266,42 @@ const SPEAKING_READY_STEPS: TourStep[] = [
   },
 ]
 
+/**
+ * The final step in a full-mock L/R/W tour.
+ *
+ * In a mock, submitting the whole test only happens after the final section
+ * (usually Speaking). After Listening / Reading / Writing a student instead
+ * clicks "Finish section" to move on, so pointing them at the Submit button
+ * would mislearn the flow. Practice tests (one section) keep the Submit
+ * step because Finish section isn't shown.
+ */
+const MOCK_FINISH_SECTION_STEP: TourStep = {
+  ...BASE,
+  target: '[data-tour="finish-section"]',
+  data: { icon: Flag, hint: 'Top-right' },
+  title: 'Finish this section',
+  content:
+    'Press Finish section once every answer is in — you will move on to the next section automatically.',
+}
+
+/** Swap the trailing "Submit" step for a "Finish section" one in full mock. */
+function withSectionEndStep(
+  baseSteps: TourStep[],
+  isPractice: boolean
+): TourStep[] {
+  if (isPractice) return baseSteps
+  return [...baseSteps.slice(0, -1), MOCK_FINISH_SECTION_STEP]
+}
+
 export function stepsForSection(
   type: SectionType,
   isDesktop = true,
-  speakingReady = false
+  speakingReady = false,
+  isPractice = true
 ): TourStep[] {
   switch (type) {
-    case 'listening':
-      return isDesktop
+    case 'listening': {
+      const base = isDesktop
         ? LISTENING_STEPS
         : [
             ...LISTENING_STEPS.slice(0, 2),
@@ -286,8 +314,10 @@ export function stepsForSection(
             },
             ...LISTENING_STEPS.slice(3),
           ]
-    case 'reading':
-      return isDesktop
+      return withSectionEndStep(base, isPractice)
+    }
+    case 'reading': {
+      const base = isDesktop
         ? READING_STEPS
         : [
             ...READING_STEPS.slice(0, 2),
@@ -300,8 +330,10 @@ export function stepsForSection(
             },
             ...READING_STEPS.slice(3),
           ]
+      return withSectionEndStep(base, isPractice)
+    }
     case 'writing':
-      return WRITING_STEPS
+      return withSectionEndStep(WRITING_STEPS, isPractice)
     case 'speaking':
       return speakingReady ? SPEAKING_READY_STEPS : SPEAKING_STEPS
     default:
@@ -314,4 +346,4 @@ export function stepsForSection(
  * Older "seen" flags in localStorage carry a version suffix and become
  * stale on bump — students will see the refreshed tour once more.
  */
-export const TOUR_VERSION = 10
+export const TOUR_VERSION = 11
