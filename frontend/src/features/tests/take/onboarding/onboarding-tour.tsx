@@ -49,10 +49,10 @@ function OnboardingTourInner({
       continuous
       scrollToFirstStep={true}
       tooltipComponent={TourTooltip}
-      floatingOptions={{ hideArrow: true }}
       options={{
         primaryColor: '#2563eb',
-        overlayColor: 'rgba(15, 23, 42, 0.45)',
+        arrowColor: '#ffffff',
+        overlayColor: 'rgba(15, 23, 42, 0.55)',
         zIndex: 10_000,
         // Backdrop click is inert so a misclick can't dismiss the tour.
         overlayClickAction: false,

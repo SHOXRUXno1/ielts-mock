@@ -64,15 +64,25 @@ function useAutoAdvance({
   const elapsedRef = useRef(0)
   const startRef = useRef(0)
   const onCompleteRef = useRef(onComplete)
+  // A whole-second countdown shown as text ("3s") — this is intentional
+  // state (not a ref) because the number is user-facing and needs to
+  // trigger a re-render. The 1Hz update frequency keeps re-renders cheap.
+  const [secondsLeft, setSecondsLeft] = useState(() =>
+    Math.ceil(AUTO_ADVANCE_MS / 1000)
+  )
 
   useEffect(() => {
     onCompleteRef.current = onComplete
   }, [onComplete])
 
-  // Reset elapsed and the bar whenever the step changes.
+  // Reset elapsed, the bar and the countdown whenever the step changes.
+  // The cascading-render lint doesn't apply here: step changes are
+  // user-paced (max once per 5s), not a loop.
   useEffect(() => {
     elapsedRef.current = 0
     if (barRef.current) barRef.current.style.width = '0%'
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSecondsLeft(Math.ceil(AUTO_ADVANCE_MS / 1000))
   }, [stepKey])
 
   useEffect(() => {
@@ -83,6 +93,7 @@ function useAutoAdvance({
       const total = elapsedRef.current + (now - startRef.current)
       if (total >= AUTO_ADVANCE_MS) {
         if (barRef.current) barRef.current.style.width = '100%'
+        setSecondsLeft(0)
         onCompleteRef.current()
         return
       }
@@ -93,17 +104,26 @@ function useAutoAdvance({
     }
     rafRef.current = requestAnimationFrame(tick)
 
+    // Separate 1Hz timer for the human-readable countdown — avoids
+    // re-rendering the tooltip 60 times a second just to update text.
+    const secondTimer = window.setInterval(() => {
+      const total = elapsedRef.current + (performance.now() - startRef.current)
+      const remain = Math.max(0, Math.ceil((AUTO_ADVANCE_MS - total) / 1000))
+      setSecondsLeft(remain)
+    }, 250)
+
     return () => {
       if (rafRef.current != null) {
         cancelAnimationFrame(rafRef.current)
         rafRef.current = null
       }
+      window.clearInterval(secondTimer)
       // Freeze what we've accumulated so a resume continues cleanly.
       elapsedRef.current += performance.now() - startRef.current
     }
   }, [enabled, paused, stepKey])
 
-  return barRef
+  return { barRef, secondsLeft }
 }
 
 /** Respects the OS "reduce motion" preference. */
@@ -169,7 +189,7 @@ export function TourTooltip({
     controls.next()
   }, [controls])
 
-  const barRef = useAutoAdvance({
+  const { barRef, secondsLeft } = useAutoAdvance({
     stepKey: index,
     enabled: canAutoAdvance,
     paused,
@@ -226,15 +246,7 @@ export function TourTooltip({
             <span />
           )}
           <div className='flex items-center gap-2'>
-            {canAutoAdvance && paused ? (
-              <span
-                aria-label='Paused'
-                className='inline-flex items-center gap-1 rounded-full bg-slate-900/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-white/10 dark:text-slate-300'
-              >
-                <Pause className='size-2.5' />
-                Paused
-              </span>
-            ) : data.hint ? (
+            {data.hint ? (
               <span className='rounded-full bg-slate-900/[0.06] px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:bg-white/10 dark:text-slate-300'>
                 {data.hint}
               </span>
@@ -242,6 +254,26 @@ export function TourTooltip({
             <span className='text-[11px] font-semibold tabular-nums tracking-wider text-slate-400 dark:text-slate-500'>
               {index + 1}/{size}
             </span>
+            {canAutoAdvance ? (
+              <span
+                aria-live='polite'
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums transition-colors',
+                  paused
+                    ? 'bg-slate-900/[0.06] text-slate-500 dark:bg-white/10 dark:text-slate-300'
+                    : 'bg-blue-500/15 text-blue-600 dark:text-blue-300'
+                )}
+              >
+                {paused ? (
+                  <>
+                    <Pause className='size-2.5' />
+                    Paused
+                  </>
+                ) : (
+                  `${secondsLeft}s`
+                )}
+              </span>
+            ) : null}
           </div>
         </div>
 
