@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { TooltipRenderProps } from 'react-joyride'
-import { ArrowLeft, ArrowRight, Check, Pause } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Pause, Timer } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { TourStepData } from './tour-steps'
 
@@ -180,9 +180,11 @@ export function TourTooltip({
 
   // Only the last step stays manual — "Got it" / "Start Speaking" is a
   // commitment (it closes the tour or actually starts the exam), so it must
-  // be an intentional click. Reduced motion disables auto-advance entirely:
-  // students who prefer less motion typically also need more reading time.
-  const canAutoAdvance = !isLastStep && !prefersReducedMotion
+  // be an intentional click. The animated progress bar is suppressed when
+  // the OS asks for less motion — but the countdown text pill still shows,
+  // because a 1Hz status update is information, not animation.
+  const canAutoAdvance = !isLastStep
+  const showProgressBar = canAutoAdvance && !prefersReducedMotion
   const paused = hovered || focused || docHidden
 
   const handleComplete = useCallback(() => {
@@ -218,8 +220,9 @@ export function TourTooltip({
       )}
     >
       {/* Auto-advance progress bar — clearly visible blue stripe at the
-          top of the card, grouped with the icon row above it. */}
-      {canAutoAdvance ? (
+          top of the card, grouped with the icon row above it. Hidden when
+          the OS asks for less motion; the countdown pill still shows. */}
+      {showProgressBar ? (
         <div
           aria-hidden
           className='absolute inset-x-0 top-0 h-1 bg-slate-200/80 dark:bg-slate-700/60'
@@ -258,19 +261,22 @@ export function TourTooltip({
               <span
                 aria-live='polite'
                 className={cn(
-                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums transition-colors',
+                  'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ring-1 ring-inset transition-colors',
                   paused
-                    ? 'bg-slate-900/[0.06] text-slate-500 dark:bg-white/10 dark:text-slate-300'
-                    : 'bg-blue-500/15 text-blue-600 dark:text-blue-300'
+                    ? 'bg-slate-900/[0.06] text-slate-500 ring-slate-900/10 dark:bg-white/10 dark:text-slate-300 dark:ring-white/15'
+                    : 'bg-blue-500 text-white ring-blue-600 shadow-sm shadow-blue-600/30'
                 )}
               >
                 {paused ? (
                   <>
-                    <Pause className='size-2.5' />
+                    <Pause className='size-3' />
                     Paused
                   </>
                 ) : (
-                  `${secondsLeft}s`
+                  <>
+                    <Timer className='size-3' />
+                    {secondsLeft}s
+                  </>
                 )}
               </span>
             ) : null}
