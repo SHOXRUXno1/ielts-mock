@@ -1,10 +1,63 @@
-An earth-shaking discovery
-The discovery of sea floor spreading is earth-shaking, yet those responsible are forgotten, says Anna Grayson.
-In 1963, a paper appeared in the journal Nature that radically changed the way we view this planet and its resources. Its authors, Fred Vine and Drummond Matthews, did for the Earth sciences what Crick and Watson did for biology and Einstein did for physics, and new areas of scientific development are still emerging as a result.
-Yet both men are largely forgotten and unrecognised. What Vine and Matthews did was to provide proof that continents really do drift across the surface of the globe. This understanding profoundly affects the way we use the planet today — it directs the way we prospect for resources such as oil and minerals; it has enabled us to predict most volcanic eruptions and to understand patterns of earthquakes. Incredibly, perhaps, an understanding of the mobile dynamic nature of the Earth is helping an understanding of long-term global climate changes. Despite the significance of their work, neither man received great honour or fame.
-The idea of continental drift was first proposed in a serious way by the German meteorologist Alfred Wegener in 1915. People had noticed the neat jigsaw-like fit between South America and Africa, but Wegener found actual fossil evidence that the two continents were once joined. No one took him seriously; in fact he was ridiculed by most of the geological community. This was partly because, not being a geologist, he was perceived as an outsider. But the main reason for the hostility, according to Vine, was that Wegener was unable to come up with an explanation as to how whole continents could possibly move even an inch, let alone dance to the music of time around the globe.
-In the 1920s, the Scottish geologist Arthur Holmes hypothesised that convection currents within the Earth 'could become sufficiently vigorous to drag the two halves of the original continent apart'. In the late 1950s, an American, Harry Hess, came up with the hypothesis that new sea floor is constantly being generated at the mid-ocean ridges by hot material rising in a convection current. But neither man could find evidence to prove it. It was no more than just a hunch that it had to be right, and a hunch is not enough for science.
-Vine had been fascinated by the apparent fit of the continents since the age of 14, and as a graduate student at Cambridge was assigned a project analysing one of the new magnetic surveys of the ocean floor. He found what he describes as 'parallel zebra stripes of normal and reversed magnetism' around the mid-ocean ridge. Most significantly, these stripes were symmetrical either side of the ridge crests. There had to be a reason for this. The young Vine and his supervisor Matthews proposed that the magnetic stripes were caused by new ocean floor being formed as molten rock rose at the mid-ocean ridges and spread each side of the ridge.
-As the molten rock solidified, it became weakly magnetised parallel to the Earth's magnetic field. It was just becoming recognised in the early 1960s that the Earth's magnetic field flips every so often, so magnetic north becomes a magnetic south pole and vice versa. These flips in magnetic field were being recorded in the new sea floor. It was like a giant tape recording of the ocean floor's history. As new sea floor was made, it pushed the last lot aside, widening the ocean and in turn pushing the continents either side further apart. In other words, they had discovered the mechanism driving drifting continents that was missing from Wegener's work. The science of the Earth was never the same again.
-By the end of the 1960s, confirmation of global sea floor spreading led to plate tectonics — the view of the outside of the Earth comprising just a few rigid plates which are shunted about by growing sea floor. There was a realisation that mountains are formed when two plates collide, and that most volcanoes and earthquakes occur on the edges of these plates. All this was accepted as fact by all but a few diehard dinosaurs in the geological world.
-It is now in the impact of shifting continents on the global environment that Vine feels the most exciting and significant research lies: 'The distribution of continents and the opening and closing of ocean gates between continents has had a profound effect on climates and has caused flips from Ice-house Earth to Green-house Earth.' The recognition that the Earth's hydrosphere, atmosphere and biosphere are all intimately linked with the drifting continents and the goings-on deep within the Earth has spawned the term 'Earth Systems Science'. It is a great oak tree of science that has grown from the acorn of truth supplied by Vine and Matthews. The holistic approach of earth systems science is very much welcomed by Vine: 'I'm rather pleased that this has come together.' He feels that the future for understanding the planet lies in an integrated approach to the sciences, rather than the isolated stance the geologists took throughout the 20th century: 'There was an incredible polarisation of science and I was caught between the boundaries. It was anathema to me — the whole of environmental science should be integrated.'
+Team working
+
+The ability to work in a team is one that is prized by employers and educationalists alike. It
+is often requested in job advertisements and displayed on CVs. When employers list their
+most important skills for promotion, 86% list team working skills. The willingness and ability
+to work with a group of people towards a single target has become increasingly important
+in an era when soft skills like communication, creativity, critical thinking and collaboration
+are essential in work and study. Today's teams are different from those of the past because
+a team is likely to change membership more often, will be more socially diverse and its
+members could be located over a wider area - even globally.
+
+In 1965 psychologist Bruce Tuckman recognised that team building goes through
+different stages, from a collection of individuals to a fully functioning unit. Tuckman did not
+study groups himself; he reviewed articles about group development. He found that the
+articles described two features that all the groups had in common: individual interactions
+and the task activity. Tuckman recognised that groups evolve and he suggested that they
+do so via four stages that he called forming, storming, norming and performing. Briefly, in
+the first stage, ‘forming’, people are getting to know each other and finding their roles in the
+new hierarchy. In the second stage, 'storming', there are conflicts between members as
+differences emerge about issues such as what the team is being asked to do and how to do
+it. In the third phase, 'norming', team members start to work together. They establish
+processes about who will do what, when and how, and there is a growing sense of
+cooperation in the team. In the fourth stage, ‘performing’, the team now has a shared set of
+norms and has learned how to work well together. The individual members focus less on
+their position in the team and how to work together and more on their tasks. Tuckman later
+added a further, final stage, 'adjourning', to his model. In this final stage, the team stops
+working together, celebrates its success and reflects on its performance and achievements.
+
+The value of Tuckman's model is that it enables us to see team working as a process
+dependent on interpersonal relationships and the team's interaction with the task. It gives
+managers and educators a simple, staged model to help them form teams and support the
+team members as they try to understand where they are in the process. According to the
+model, all teams are likely to go through these stages in this order, and although it is also
+possible to go backwards, for example from storming to forming, when a team does this, it
+must go through the other stages in the same order again. However, the model has been
+criticised and alternatives have been proposed. Firstly, Tuckman's model was not based on
+first-hand observations and evidence, and it seems that where the model has been tested,
+the reality was different from that predicted by the model. A study by the Monterey Naval
+Postgraduate School showed that only 2% of the teams observed went through all four
+stages. Furthermore, storming, or conflict, continues throughout the duration of the team's
+
+life and conflict happens frequently. Secondly, Tuckman's model excluded external factors such
+as the nature of the task the group has been given and how this affects progress. Thirdly, the
+model predicts stability and specialisation: the longer the team stays together, the better it
+becomes at its task or tasks. The problem is that when teams become too specialised, this leads
+to silo working, where teams focus on one task and become territorial about sharing ideas,
+knowledge and expertise with others in the organisation. In fact, some researchers, like Klaus
+Schauser at the University of California, have suggested that there is a sixth stage to Tuckman's
+model: stagnation.
+
+Newer companies, especially in the technology sector, require agile - or flexible - teams, and
+have built their company culture around a process called reteaming, or breaking up teams to
+build new ones. This enables team members to move between groups so that teams learn from
+each other. Some online gaming and music streaming companies are noted for their reteaming
+techniques, believing that this gives them the flexibility to move with their markets and to change
+and adapt swiftly. One way to re-organise teams is to create situations where a team has to make
+an effort to recruit new members and there is an ongoing effort to bring in new people. Another
+way is to let a team grow until it is big enough to divide into two teams; the advantage is that both
+teams are used to working with each other and so are now two effective working groups. When
+there is a single temporary problem to solve, volunteers can come together to form a temporary
+task team. After the work on the problem is completed, the team breaks up and the members
+re-join their old group. Finally, team members can swap places between teams in order to share
+learning across the organization.

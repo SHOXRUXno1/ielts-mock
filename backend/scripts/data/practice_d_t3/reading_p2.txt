@@ -1,13 +1,69 @@
-Complementary and alternative medicine
-Is complementary medicine hocus-pocus or does it warrant large-scale scientific investigation? Should science range beyond conventional medicine and conduct research on alternative medicine and the supposed growing links between mind and body? This will be hotly debated at the British Association for the Advancement of Science.
-One Briton in five uses complementary medicine, and according to the most recent Mintel survey, one in ten uses herbalism or homoeopathy. Around £130 million is spent on oils, potions and pills every year in Britain, and the complementary and alternative medicine industry is estimated to be worth £1.6 billion. With the help of Professor Edzard Ernst, Laing chair of complementary medicine at The Peninsula Medical School, Universities of Exeter and Plymouth, we asked scientists their views on complementary and alternative medicine. Seventy-five scientists, in fields ranging from molecular biology to neuroscience, replied.
-Surprisingly, our sample of scientists was twice as likely as the public to use some form of complementary medicine, at around four in 10 compared with two in 10 of the general population. Three quarters of scientific users believed they were effective. Acupuncture, chiropractic and osteopathy were the most commonly used complementary treatments among scientists and more than 55 per cent believed these were more effective than a placebo and should be available to all on the National Health Service.
-Scientists appear to place more trust in the more established areas of complementary and alternative medicine, such as acupuncture, chiropractic and osteopathy, for which there are professional bodies and recognised training, than therapies such as aromatherapy and spiritual healing. 'Osteopathy is now a registered profession requiring a certified four-year degree before you can advertise and practise,' said one neuroscientist who used the therapy.
-Nearly two thirds of the scientists who replied to our survey believed that aromatherapy and homoeopathy were no better than placebos, with almost a half thinking the same of herbalism and spiritual thinking. Some of the comments we received were scathing, even though one in ten of our respondents had used homoeopathy. 'Aromatherapy and homoeopathy are scientifically nonsensical,' said one molecular biologist from the University of Bristol. Dr Romke Bron, a molecular biologist at the Medical Research Council Centre at King's College London, added: 'Homoeopathy is a big scam and I am convinced that if someone walked into a homoeopathic pharmacy and swapped labels, nobody would notice anything.'
-Two centuries after homoeopathy was introduced, it still lacks a watertight demonstration that it works. Scientists are happy that the resulting solutions and sugar pills have no side effects, but are baffled by how they can do anything.
-Both complementary and conventional medicine should be used in routine health care, according to followers of the 'integrated health approach', who want to treat an individual 'as a whole'. But the scientists who responded to our survey expressed serious concerns about this approach, with more than half believing that integrated medicine was an attempt to bypass rigorous scientific testing. Dr Bron said: 'There is an awful lot of bad science going on in alternative medicine and the general public has a hard time to distinguish between scientific myth and fact. It is absolutely paramount to maintain rigorous quality control in health care. Although the majority of alternative health workers mean well, there are just too many frauds out there preying on vulnerable people.'
-One molecular biologist from the University of Warwick admitted that 'by doing this poll I have realised how shamefully little I understand about alternative therapy. Not enough scientific research has been performed. There is enough anecdotal evidence to suggest that at least some of the alternative therapies are effective for some people, suggesting this is an area ripe for research.'
-When asked if complementary and alternative medicine should get more research funding, scientists believed the top three (acupuncture, chiropractic and osteopathy) should get money, as should herbalism. It seems that therapies based on physical manipulation or a known action — like the active ingredients in a herb on a receptor in the body — are the ones that the scientific community has faith in. Less than a quarter thought that therapies such as aromatherapy, homoeopathy and spiritual healing should get any funding.
-Scientists believed that the 'feelgood' counselling effect of complementary medicine and the time taken to listen to patients' problems was what worked, rather than any medicinal effect. In contrast, the average visit to the doctor lasts only eight minutes, says the British Medical Association. Dr Stephen Nurrish, a molecular biologist at University College London, said: 'Much of the benefit people get from complementary medicine is the time to talk to someone and be listened to sympathetically, something that is now lacking from medicine in general.'
-But an anonymous neuroscientist at King's College London had a more withering view of this benefit: 'On the validity of complementary and alternative medicines, no one would dispute that "feeling good" is good for your health, but why discriminate between museum-trip therapy, patting-a-dog therapy and aromatherapy? Is it because only the latter has a cadre of professional "practitioners"?'
-There are other hardline scientists who argue that there should be no such thing as complementary and alternative medicine. As Professor David Moore, director of the Medical Research Council's Institute for Hearing Research, said: 'Either a treatment works or it doesn't. The only way to determine if it works is to test it against appropriate controls (that is, scientifically).'
+Space Junk
+
+Since the Soviet Union successfully launched the first man-made satellite, Sputnik 1, in
+1957, about 5,000 more satellites have been put into orbit around the Earth. About 2,000 of
+these are active and although the rest are now dead, they remain in orbit, together with parts
+from all the rockets that carried them there. These remnants are often referred to as space
+junk, space trash or orbital debris. The debris ranges in size from 1-10 centimetres and there
+are estimated to be around half a million pieces with an additional 23,000 fragments bigger
+than 10 centimetres. These larger pieces can be observed and tracked from the ground. The
+waste is found in all zones of the Earth's orbit: low Earth orbit, which is within 2,000
+kilometres of the Earth's surface; medium orbit, which is between 2,000 and 36,000
+kilometres from the Earth's surface; and high orbit, which is beyond that. Most satellites are
+in low Earth orbit, as is the International Space Station (ISS). The problem is that most of the
+space debris is found there too and this is becoming a huge problem.
+
+Some of the debris in low Earth orbit is eventually captured by the Earth's gravity and
+burns up when it enters the Earth's atmosphere or reaches its surface. However, most of the
+space junk stays in low Earth orbit and this can have several unwanted consequences. In
+2009, almost 500 miles above Siberia, there was a collision between the obsolete Russian
+satellite Cosmos 2251 and the working US communication satellite Iridium 33. The satellites
+collided with each other at a speed of 11.7 kilometres per second and produced more than
+2,000 pieces of debris. This was the first time two satellites were actually observed hitting
+each other in space, and the fragments from that collision could be seen spreading out over
+a very wide area over the following months.
+
+Even though the area within low Earth orbit is vast, the speed at which pieces of junk
+travel means that they are deadly at the infrequent times they encounter another object. In
+2006 a small piece of space junk hit the ISS and damaged one of its windows. Later, in 2014,
+the ISS had to make an emergency manoeuvre to avoid a piece of junk from the Russian
+Cosmos 2251 satellite smashing into it. The potential disaster was only averted because a
+supply vehicle that was docked with the space station fired its thrusters and raised the ISS
+by one kilometre out of the path of the space junk. This example illustrates the first problem
+with the debris: satellites need to carry out important work but are in constant danger of
+being damaged or destroyed. The ISS was designed to withstand impacts from debris up to
+one centimetre in size but in order to prevent it being hit by larger objects, scientists have
+to watch for space junk and try to move the station out of harm's way if necessary; the lives
+of the people on board could be at risk so it is extremely important to monitor the paths of
+
+the pieces of debris. However, it is very difficult to accurately plot the course of a debris
+fragment and so the ISS is only moved when there is probability of a strike. The junk from
+Cosmos 2251 was spotted only six hours before it passed within three kilometres of the ISS's
+position. As debris is broken into smaller and smaller pieces, tracking it becomes increasingly
+difficult. The second problem is what happens when we launch satellites and rockets in the
+future. Some scientists describe space junk as an umbrella or ring around the Earth, which any
+future launch will need to punch through to go into space. No one really knows how bad the
+problem has to get before it prevents us putting objects into space or makes it very expensive
+to do so. The astrophysicist Donald Kessler, who used to work for NASA, calculated that if
+there is enough junk in orbit, collisions between pieces would create high-velocity smaller
+pieces of debris that would then hit even more objects, resulting in a chain reaction, producing
+more and more destructive pieces of debris. The problem is made worse when satellites remain
+in space after their working lives or when they are destroyed deliberately. An anti-satellite test
+in 2007 destroyed an obsolete weather satellite, creating 3,000 pieces of space debris, and a
+missile strike in 2019 scattered thousands more pieces into orbit. The gradual accumulation of
+space junk caused by debris colliding and creating more junk is called the Kessler syndrome
+and it will build up over the next 100 years. Eventually, the time between collisions will become
+shorter and shorter, and it is predicted that a cloud of deadly space junk will circle the planet.
+
+Kessler believes that we need legislation that requires countries to build satellites that re-enter
+the atmosphere after their mission has ended and impose penalties on countries that do not do
+this. The problem is that the damage is already done and even if everyone keeps to the rules,
+collisions are still happening and the amount of debris is growing. This points to a second
+aspect of the potential solution: clean up the biggest pieces. The larger debris could be tracked
+and removed; Kessler believes that if we could take just five objects per year out of orbit, the
+problem would stabilise. Although this sounds simple, satellites travel at great speeds and some
+are very large. Ideas for dealing with inactive satellites include removing them using harpoons
+or nets based on the ISS. A satellite service station that would repair satellites and extend their
+working lives has also been proposed. Whichever solution is brought forward, however, it will
+need international cooperation and this could be more difficult to achieve than catching the
+wayward satellites.

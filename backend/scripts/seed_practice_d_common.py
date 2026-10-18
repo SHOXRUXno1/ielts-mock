@@ -1,4 +1,4 @@
-﻿"""Shared plumbing for seeding Practice Set D (Thomson Exam Essentials).
+﻿"""Shared plumbing for seeding Practice Set D (Collins Practice Tests Vol 3).
 
 Student-facing name stays anonymous. The source book is only named in comments
 and in this module, so a leaked title does not show up in the catalogue.
@@ -19,17 +19,11 @@ from app.models.test import Test
 
 BOOK_NAME = "IELTS Practice Set D"
 BOOK_SLUG = "practice-set-d"
-SOURCE_BOOK = "Thomson Exam Essentials IELTS Practice Tests"
+SOURCE_BOOK = "Collins Practice Tests for IELTS 3 (2021)"
 
 DATA_ROOT = Path(__file__).resolve().parent / "data"
 MEDIA_AUDIO = Path(__file__).resolve().parent.parent / "media" / "audio"
 MEDIA_IMAGES = Path(__file__).resolve().parent.parent / "media" / "images"
-
-THOMSON_ROOT = Path(
-    r"C:\Users\brawl\Desktop\Ielts boosters\Thomson IELTS Practice Tests"
-)
-THOMSON_PDF = THOMSON_ROOT / "Thomson IELTS Practice Tests.pdf"
-THOMSON_AUDIO = THOMSON_ROOT / "Thomson IELTS Practice Tests & Audio"
 
 # Appended to word-bank instructions: students pick a letter, not write on paper.
 SCREEN_LETTER_HINT = "On screen, select the correct letter from the list for each gap."
