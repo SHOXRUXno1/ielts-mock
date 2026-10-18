@@ -434,18 +434,24 @@ async def seed_listening(db: AsyncSession, number: int) -> None:
             {"type": QuestionType.MCQ, "instruction": "Choose the correct letter, A, B or C.", "entries": mcqs([
                 ("The student did not speak with Professor Collins because", ["she did not have time.", "she could not get an appointment.", "he is not around at the moment."], "C"), ("When doing assignments, many students", ["are surprised by how difficult they are to write.", "often fail to get the required grades.", "do not provide a full answer."], "C"), ("Words such as 'analyse', 'discuss' and 'evaluate'", ["each require a completely different response.", "often have the same meaning.", "can be difficult to understand."], "B"), ("The danger of some internet sources is that", ["the assignment may receive a lower grade.", "they are full of promotions and adverts.", "they are sometimes written by politicians."], "A"), ("Books on a reading list", ["express fewer opinions than the internet.", "are more critical of other authors.", "have been assessed by other experts."], "C"),
             ])},
-            {"type": QuestionType.SENTENCE_COMPLETION, "instruction": "Complete the checklist. Write NO MORE THAN TWO WORDS for each answer.", "entries": short([
-                ("Paragraphs should be ... and logically ordered.", ["well constructed", "well-constructed"], 2), ("Points should be ...", ["relevant"], 1), ("Check for ... and spelling.", ["typing mistakes"], 2), ("Check your ... are grammatically correct.", ["sentence structures"], 2), ("Check your ...", ["punctuation"], 1),
-            ])},
+            {"type": QuestionType.SENTENCE_COMPLETION, "instruction": "Complete the checklist. Write NO MORE THAN TWO WORDS for each answer.", "shared": structure("notes", "Essay checklist", 2, [
+                [txt("Paragraphs should be "), gap("t21"), txt(" and logically ordered.")],
+                [txt("Points should be "), gap("t22")],
+                [txt("Check for "), gap("t23"), txt(" and spelling.")],
+                [txt("Check your "), gap("t24"), txt(" are grammatically correct.")],
+                [txt("Check your "), gap("t25")],
+            ]), "entries": gap_entries([("t21", ["well constructed", "well-constructed"], 2), ("t22", ["relevant"], 1), ("t23", ["typing mistakes"], 2), ("t24", ["sentence structures"], 2), ("t25", ["punctuation"], 1)])},
         ])
         await part(4, [
             {"type": QuestionType.MULTI_SELECT, "instruction": "Choose TWO letters, A–E.", "entries": multi("Which TWO things can result from a lack of strength training?", ["A. No benefit from natural activities", "B. A person may not perform as well in their sport as they could", "C. An athlete can no longer practise", "D. A person cannot visit a gym", "E. Injuries will get worse"], ["B", "C"])},
             {"type": QuestionType.MCQ, "instruction": "Choose the correct letter, A, B or C.", "entries": mcqs([
                 ("An injury caused by a fall", ["tends to be unexpected.", "needs to be dealt with urgently.", "is often caused by weak muscles."], "A"), ("Athletes who do more than one sport", ["place too much pressure on their bodies.", "are in particular need of strength training.", "avoid overworking one part of the body."], "C"), ("Injuries can be avoided", ["if an athlete makes fewer repetitive movements.", "if less-used muscles are exercised.", "if an athlete learns to keep their balance."], "B"), ("A strength-training programme", ["should also help you move more freely.", "will reduce daily aches and pains.", "is only suitable for particular sports."], "A"), ("What problem do older athletes face?", ["They eat a poorer diet.", "They cannot continue their chosen sport.", "They lose muscle mass."], "C"),
             ])},
-            {"type": QuestionType.SENTENCE_COMPLETION, "instruction": "Complete the sentences. Write NO MORE THAN TWO WORDS for each answer.", "entries": short([
-                ("Athletes may be less able to practise during the ...", ["winter months"], 2), ("Seeing improvements can help athletes develop a ...", ["positive attitude"], 2), ("Strength training can help athletes remain ... when sport is restricted.", ["motivated"], 1),
-            ])},
+            {"type": QuestionType.SENTENCE_COMPLETION, "instruction": "Complete the sentences. Write NO MORE THAN TWO WORDS for each answer.", "shared": structure("notes", "Strength training", 2, [
+                [txt("Athletes may be less able to practise during the "), gap("t38")],
+                [txt("Seeing improvements can help athletes develop a "), gap("t39")],
+                [txt("Strength training can help athletes remain "), gap("t40"), txt(" when sport is restricted.")],
+            ]), "entries": gap_entries([("t38", ["winter months"], 2), ("t39", ["positive attitude"], 2), ("t40", ["motivated"], 1)])},
         ])
 
     if total_slots != 40:
