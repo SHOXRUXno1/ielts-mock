@@ -380,7 +380,7 @@ async def seed_listening(db: AsyncSession, number: int) -> None:
         plan = {"variant": "notes", "title": "Marston Country Farm", "instruction_words": "NO MORE THAN TWO WORDS", "max_words_per_gap": 2,
             "sections": [{"heading": "", "items": [{"segments": [txt(f"{label}: "), gap(f"m{n}")]} for n, label in enumerate(["Toilets", "Goat shed", "Donkey rides", "Rabbit house", "Insect house", "Picnic area", "Gift shop"], 11)]}]}
         await part(2, [
-                {"type": QuestionType.DIAGRAM_LABELING, "instruction": "Label the plan below. Write NO MORE THAN TWO WORDS for each answer.", "shared": {**plan, "image_url": "/media/images/practice_d_t3_listening_map.png?v=3"}, "entries": gap_entries([(f"m{n}", [answer], 2) for n, answer in zip(range(11,18), ["toilets", "goat shed", "donkey rides", "rabbit house", "insect house", "picnic area", "gift shop"])])},
+                {"type": QuestionType.DIAGRAM_LABELING, "instruction": "Label the plan below. Write NO MORE THAN TWO WORDS for each answer.", "shared": {**plan, "image_url": "/media/images/practice_d_t3_listening_map.png"}, "entries": gap_entries([(f"m{n}", [answer], 2) for n, answer in zip(range(11,18), ["toilets", "goat shed", "donkey rides", "rabbit house", "insect house", "picnic area", "gift shop"])])},
             {"type": QuestionType.MCQ, "instruction": "Choose the correct letter, A, B or C.", "entries": mcqs([
                 ("The duck pond", ["is quite shallow.", "often has people falling in.", "is closed to visitors due to heavy rain."], "A"),
                 ("Visitors to the farm", ["should not handle animals before eating.", "often forget to wash their hands.", "should try to keep hand-wash stations clean."], "C"),
@@ -395,9 +395,12 @@ async def seed_listening(db: AsyncSession, number: int) -> None:
                 ("Students attending an interview", ["should expect it to be formal.", "should prepare for it.", "should chat with the Careers Service first."], "B"),
             ])},
             {"type": QuestionType.MULTI_SELECT, "instruction": "Choose TWO letters, A–E.", "entries": multi("Which TWO things does the Careers Service help with?", ["A. identifying your strengths", "B. dealing with problems at the company", "C. supporting work-based assessments", "D. keeping a record of your experiences", "E. helping with academic work"], ["B", "D"])},
-            {"type": QuestionType.SENTENCE_COMPLETION, "instruction": "Complete the summary. Write ONE WORD ONLY for each answer.", "entries": short([
-                ("Your year in industry will confirm your choice of ...", ["career"], 1), ("It gives you a chance to ... the work you are interested in.", ["reconsider"], 1), ("A positive ... may lead to a job offer.", ["impression"], 1), ("You may make useful ... in the industry.", ["contacts"], 1),
-            ])},
+            {"type": QuestionType.SENTENCE_COMPLETION, "instruction": "Complete the summary. Write ONE WORD ONLY for each answer.", "shared": structure("notes", "A year in industry", 1, [
+                [txt("Your year in industry will confirm your choice of "), gap("l27")],
+                [txt("It gives you a chance to "), gap("l28"), txt(" the work you are interested in.")],
+                [txt("A positive "), gap("l29"), txt(" may lead to a job offer.")],
+                [txt("You may make useful "), gap("l30"), txt(" in the industry.")],
+            ]), "entries": gap_entries([("l27", ["career"], 1), ("l28", ["reconsider"], 1), ("l29", ["impression"], 1), ("l30", ["contacts"], 1)])},
         ])
         methods = ["A. cows' cells", "B. goats' milk", "C. silkworms", "D. synthetic silk"]
         await part(4, [
@@ -478,7 +481,7 @@ async def seed_writing(db: AsyncSession, number: int) -> None:
         id=uuid.uuid4(), section_id=section.id, question_group_id=group.id, order=1,
         question_type=QuestionType.ESSAY, content={"task_description": task1, "task_instruction": task1_instruction, "prompt": f"{task1}\n\n{task1_instruction}"},
         answer_key=None, task_number=1, min_words=150,
-        image_url=f"{CHART_IMAGE_URL.format(test=number)}?v=3", essay_type=None,
+        image_url=CHART_IMAGE_URL.format(test=number), essay_type=None,
     ))
     task2_instruction = get_default_instruction(2, task2_type)
     task2_description = f"{task2_statement}\n\n{task2_question}"
