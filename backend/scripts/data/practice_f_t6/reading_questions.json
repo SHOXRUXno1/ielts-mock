@@ -1,0 +1,132 @@
+{
+  "passage_1": {
+    "title": "Pollination",
+    "question_groups": [
+      {
+        "questions": [1, 2, 3, 4, 5],
+        "type": "summary_completion_options",
+        "instruction": "Complete the summary using the list of words and phrases below. Write the correct letter, A-I.",
+        "word_box": [
+          "A. pollen",
+          "B. flowering plants",
+          "C. roots",
+          "D. grains",
+          "E. spider plants",
+          "F. air",
+          "G. copies",
+          "H. fertilization",
+          "I. time"
+        ],
+        "items": {
+          "1": "Some plants send out new parts such as ___ or bulbs.",
+          "2": "These grow into new plants, which are actually ___ of the original plant.",
+          "3": "The advantage of this form of reproduction is that it does not require a lot of ___ or energy.",
+          "4": "Many ___ reproduce themselves by forming seeds through the process of pollination.",
+          "5": "Others rely on the ___ or animals to carry the pollen from plant to plant."
+        }
+      },
+      {
+        "questions": [6, 7, 8, 9, 10, 11, 12, 13, 14],
+        "type": "true_false_not_given",
+        "instruction": "Do the following statements agree with the information given in the passage?",
+        "items": {
+          "6": "Honeybees eat both nectar and pollen.",
+          "7": "If an attractive flower is very small, a butterfly will land on its leaves.",
+          "8": "Moths are attracted by both color and scent.",
+          "9": "Certain flowers have evolved to be pollinated by hummingbirds.",
+          "10": "Special markings on a flower help bees to locate the nectar.",
+          "11": "Bees rarely respond to scent.",
+          "12": "Most grain crops are pollinated by insects.",
+          "13": "Close to one third of the world's harvest depends on animals for pollination.",
+          "14": "Farmers in certain parts of the world have suffered economically because of the decline in the honeybee population."
+        }
+      }
+    ]
+  },
+  "passage_2": {
+    "title": "Paleolithic Cave Art",
+    "question_groups": [
+      {
+        "questions": [15, 16, 17, 18, 19, 20, 21],
+        "type": "multiple_choice",
+        "instruction": "Choose the correct letter, A, B, or C.",
+        "items": {
+          "15": {
+            "question": "As compared with the Chauvet Cave, the cave art site in Lascaux is",
+            "options": ["A. more well known", "B. less important", "C. more difficult to explore"]
+          },
+          "16": {
+            "question": "The art discovered in the Chauvet Cave differs from other European cave art because",
+            "options": ["A. it does not include images of horses and bison", "B. it shows images of now-extinct animals", "C. it includes images of predatory animals"]
+          },
+          "17": {
+            "question": "According to the passage, a common belief about the function of cave art is that",
+            "options": ["A. it was meant to bring animals to be hunted", "B. it was intended to drive away predatory animals", "C. it was used to warn others about the presence of fearsome animals"]
+          },
+          "18": {
+            "question": "As compared with other European cave art sites, the art in the Chauvet Cave is",
+            "options": ["A. cruder and more primitive", "B. significantly older", "C. more sophisticated in subject matter"]
+          },
+          "19": {
+            "question": "Images found in the Chauvet Cave include",
+            "options": ["A. a crude map", "B. a part-human, part-animal being", "C. a complete drawing of a woman"]
+          },
+          "20": {
+            "question": "In addition to art, other discoveries in the Chauvet Cave include",
+            "options": ["A. implements made of stone", "B. human bones", "C. bison pelts"]
+          },
+          "21": {
+            "question": "No humans had visited the Chauvet Cave for thousands of years because",
+            "options": ["A. cave bears lived inside it", "B. it was declared off limits", "C. the entrance was blocked by rocks"]
+          }
+        }
+      },
+      {
+        "questions": [22, 23, 24, 25, 26, 27],
+        "type": "completion",
+        "instruction": "Complete the sentences below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
+        "items": {
+          "22": "People often believe that Paleolithic art consisted only of ___.",
+          "23": "Ice Age artists used pointed tools to make ___ and sculptures on rocks.",
+          "24": "As well as pictures of animals, ___ are common in most sites.",
+          "25": "Pictures of ___ were sometimes made by wetting the palm with paint.",
+          "26": "It is unusual to see an image of a ___ in European cave art.",
+          "27": "Rather than being symbolic, paintings of animals are ___ images."
+        }
+      }
+    ]
+  },
+  "passage_3": {
+    "title": "The Braille System",
+    "question_groups": [
+      {
+        "questions": [28, 29, 30, 31, 32, 33, 34, 35, 36],
+        "type": "matching_paragraph",
+        "instruction": "Reading Passage 3 has six paragraphs, A-F. Which paragraph contains the following information? You may use any letter more than once.",
+        "options": ["A", "B", "C", "D", "E", "F"],
+        "items": {
+          "28": "a description of the Braille system of representing letters and numbers",
+          "29": "Louis Braille's early education",
+          "30": "how people write in Braille",
+          "31": "when Louis Braille first developed his system",
+          "32": "when the Braille system was officially accepted in France",
+          "33": "a reading system for the blind used when Louis Braille was a child",
+          "34": "how Braille is read",
+          "35": "the reason why Louis Braille was blind",
+          "36": "a description of the method on which Louis Braille based his system"
+        }
+      },
+      {
+        "questions": [37, 38, 39, 40],
+        "type": "true_false_not_given",
+        "instruction": "Do the following statements agree with the information given in the passage?",
+        "items": {
+          "37": "Braille symbols represent letters and numbers only.",
+          "38": "Braille is used in a variety of languages.",
+          "39": "Braille readers can read faster than sighted readers.",
+          "40": "Modern technology has made Braille less important."
+        }
+      }
+    ]
+  }
+}

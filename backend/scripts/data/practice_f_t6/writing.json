@@ -2,6 +2,7 @@
   "task1": {
     "description": "The graphs below show unemployment rates and average earnings according to level of education.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.",
     "visual_type": "bar_chart",
+    "image": "/media/images/practice_f_t6_writing_task1.jpg",
     "visual_description": "Two graphs showing unemployment rates and average earnings broken down by level of education"
   },
   "task2": {

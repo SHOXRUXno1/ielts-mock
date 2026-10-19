@@ -2,6 +2,7 @@
   "task1": {
     "description": "You should spend about 20 minutes on this task.\n\nThe charts below show degrees granted in different fields at the National University in the years 1990, 2000, and 2010.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.",
     "visual_type": "pie_chart",
+    "image": "/media/images/practice_f_t3_writing_task1.jpg",
     "visual_description": "Three pie charts titled 'Degrees Granted at the National University' for 1990, 2000, and 2010. Each chart shows the percentage breakdown of degrees in four fields: Medicine, Law, Business, and Computer Science. In 1990: Computer Science 30%, Business 30%, Medicine 25%, Law 15%. In 2000: Computer Science 40%, Medicine 30%, Business 20%, Law 10%. In 2010: Computer Science 45%, Medicine 25%, Business 15%, Law 15%."
   },
   "task2": {

@@ -18,7 +18,14 @@ from app.core.config import settings  # noqa: E402
 from app.models.question import Question, QuestionType  # noqa: E402
 from app.models.question_group import QuestionGroup  # noqa: E402
 from app.models.section import SectionType  # noqa: E402
-from seed_practice_f_common import CHART_IMAGE_URL, clear_section, data_dir, get_section, get_test  # noqa: E402
+from seed_practice_f_common import (  # noqa: E402
+    CHART_IMAGE_URL,
+    MEDIA_IMAGES,
+    clear_section,
+    data_dir,
+    get_section,
+    get_test,
+)
 
 
 async def main_for_test(test_number: int) -> None:
@@ -34,7 +41,11 @@ async def main_for_test(test_number: int) -> None:
     if not isinstance(task2, dict) or not isinstance(task2.get("question"), str):
         raise SystemExit(f"Task 2 question is missing or invalid: {path}")
 
-    image_path = Path(__file__).resolve().parent.parent / "media" / "images" / f"practice_f_t{test_number}_writing_task1.png"
+    image_url = task1.get("image") or CHART_IMAGE_URL.format(test=test_number)
+    if not isinstance(image_url, str) or not image_url.startswith("/media/images/"):
+        raise SystemExit(f"Task 1 image must be a local /media/images/ path: {path}")
+    image_name = Path(image_url.split("?", maxsplit=1)[0]).name
+    image_path = MEDIA_IMAGES / image_name
     if not image_path.is_file():
         raise SystemExit(f"Task 1 image is required before seeding: {image_path}")
 
@@ -53,7 +64,7 @@ async def main_for_test(test_number: int) -> None:
             task1_prompt = task1["description"].strip()
             task2_prompt = task2["question"].strip()
             for number, prompt, min_words, image_url in (
-                (1, task1_prompt, 150, CHART_IMAGE_URL.format(test=test_number)),
+                (1, task1_prompt, 150, image_url),
                 (2, task2_prompt, 250, None),
             ):
                 db.add(

@@ -51,16 +51,20 @@ SECTION_PLAN: list[tuple[SectionType, int]] = [
 ]
 
 
-def load_plan(test_number: int) -> tuple[str, dict[str, str]]:
+def load_plan(test_number: int) -> tuple[str, dict[str, str], dict[str, str]]:
     path = data_dir(test_number) / "sections.json"
     if not path.exists():
-        return DEFAULT_DESCRIPTION, {}
+        return DEFAULT_DESCRIPTION, {}, {}
     raw = json.loads(path.read_text(encoding="utf-8"))
-    return raw.get("description") or DEFAULT_DESCRIPTION, raw.get("titles") or {}
+    return (
+        raw.get("description") or DEFAULT_DESCRIPTION,
+        raw.get("titles") or {},
+        raw.get("audio_urls") or {},
+    )
 
 
 async def seed(db: AsyncSession, test_number: int) -> None:
-    description, titles = load_plan(test_number)
+    description, titles, audio_urls = load_plan(test_number)
 
     test = (
         await db.execute(
@@ -117,7 +121,10 @@ async def seed(db: AsyncSession, test_number: int) -> None:
 
         if section_type is SectionType.LISTENING:
             listening_part += 1
-            section.audio_url = AUDIO_URL.format(test=test_number, part=listening_part)
+            section.audio_url = audio_urls.get(
+                f"listening:{listening_part}",
+                AUDIO_URL.format(test=test_number, part=listening_part),
+            )
 
         detail = f" audio={section.audio_url}" if section.audio_url else ""
         print(f"  {action} {section_type.value:<9} order={order:<3}{detail}")

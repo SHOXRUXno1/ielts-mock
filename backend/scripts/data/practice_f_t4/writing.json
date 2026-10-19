@@ -2,6 +2,7 @@
   "task1": {
     "description": "The diagram below explains the process of recycling plastic bottles for new uses.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.",
     "visual_type": "process_diagram",
+    "image": "/media/images/practice_f_t4_writing_task1.jpg",
     "visual_description": "A process diagram showing the steps involved in recycling plastic bottles for new uses"
   },
   "task2": {

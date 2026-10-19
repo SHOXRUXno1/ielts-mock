@@ -2,6 +2,7 @@
   "task1": {
     "description": "The chart below shows the cost-of-living averages in two different cities as compared to the national cost-of-living average.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.",
     "visual_type": "bar_chart",
+    "image": "/media/images/practice_f_t5_writing_task1.jpg",
     "visual_description": "A chart comparing the average cost of living in two cities with the national cost-of-living average"
   },
   "task2": {

@@ -2,6 +2,7 @@
   "task1": {
     "description": "You should spend about 20 minutes on this task.\n\nThe graph below shows the percentage of urban/suburban and rural households in a European country that had Internet access between 1999 and 2004.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.",
     "visual_type": "bar_chart",
+    "image": "/media/images/practice_f_t2_writing_task1.jpg",
     "visual_description": "A bar chart titled 'Household Internet Access' comparing urban/suburban and rural households with Internet access from 1999 to 2004. The x-axis shows years (1999, 2000, 2001, 2002, 2003, 2004) and the y-axis shows percentages from 0% to 60%. For each year, two bars are shown: one for Urban/Suburban (lighter) and one for Rural (darker). Both categories show an increasing trend over the period, with urban/suburban consistently higher than rural."
   },
   "task2": {

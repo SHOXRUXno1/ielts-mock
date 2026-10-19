@@ -1,5 +1,11 @@
 {
   "description": "Academic practice test: Listening, Reading, Writing and Speaking.",
+  "audio_urls": {
+    "listening:1": "/media/audio/practice_f_t2_listening_p1.mp3",
+    "listening:2": "/media/audio/practice_f_t2_listening_p2.mp3",
+    "listening:3": "/media/audio/practice_f_t2_listening_p3.mp3",
+    "listening:4": "/media/audio/practice_f_t2_listening_p4.mp3"
+  },
   "titles": {
     "listening:1": "Part 1 — Plainfield Community Center",
     "listening:2": "Part 2 — Preparing for a hiking trip",
