@@ -1,0 +1,160 @@
+{
+  "passage_1": {
+    "title": "The Gulf Stream and Global Warming",
+    "question_groups": [
+      {
+        "questions": [1, 2, 3, 4, 5, 6, 7],
+        "type": "multiple_choice",
+        "instruction": "Choose the correct letter, A, B, or C.",
+        "items": {
+          "1": {
+            "question": "Labrador and London are similar in",
+            "options": ["A. climate.", "B. distance from the North Pole.", "C. abundance of wildlife."]
+          },
+          "2": {
+            "question": "Europe can support a large population because",
+            "options": ["A. it has a lot of fresh water.", "B. it is at the proper latitude.", "C. it has a good climate for farming."]
+          },
+          "3": {
+            "question": "When the Gulf Stream reaches the North Atlantic, it sinks because",
+            "options": ["A. it has become colder.", "B. it has become less salty.", "C. it is blown by the winds."]
+          },
+          "4": {
+            "question": "Ocean currents help make life on Earth possible because they",
+            "options": ["A. enable marine life to travel.", "B. maintain suitable temperatures.", "C. regulate glacial melt."]
+          },
+          "5": {
+            "question": "In 2007, the number of vortices, or chimneys, that pulled the waters of the Gulf Stream down toward the ocean floor was",
+            "options": ["A. zero.", "B. one.", "C. seven."]
+          },
+          "6": {
+            "question": "During the most recent Little Ice Age,",
+            "options": ["A. the Gulf Stream slowed down significantly.", "B. Europe was affected only slightly.", "C. glaciers covered much of North America."]
+          },
+          "7": {
+            "question": "In the past, climate change has happened",
+            "options": ["A. at regular intervals.", "B. gradually over time.", "C. very quickly."]
+          }
+        }
+      },
+      {
+        "questions": [8, 9, 10, 11, 12, 13],
+        "type": "flow_chart_completion",
+        "instruction": "The flow chart below shows a possible effect of global warming on the Gulf Stream. Complete the flow chart using the list of words, A-L, below.",
+        "word_box": ["A. less salty", "B. colder", "C. warmer", "D. sink", "E. rise", "F. weakened", "G. strengthened", "H. heated", "I. food", "J. thaw", "K. air", "L. form"],
+        "items": {
+          "8": "Glaciers ___",
+          "9": "The ocean becomes ___",
+          "10": "The water doesn't ___",
+          "11": "The Gulf Stream current is ___",
+          "12": "The colder water at the southern end doesn't ___",
+          "13": "There is less ___ available for sea life"
+        }
+      }
+    ]
+  },
+  "passage_2": {
+    "title": "Chocolate: Food of the Gods",
+    "question_groups": [
+      {
+        "questions": [14, 15, 16, 17, 18],
+        "type": "true_false_not_given",
+        "instruction": "Do the following statements agree with the information in the passage?",
+        "items": {
+          "14": "The cacao plant originated in the Gulf of Mexico region.",
+          "15": "The cacao plant prefers wet weather.",
+          "16": "Each flower on the cacao plant produces twenty pods.",
+          "17": "Cacao drinks were originally made using the pulp from the pod.",
+          "18": "In ancient Puerto Escondido, cacao drinks were served hot."
+        }
+      },
+      {
+        "questions": [19, 20, 21, 22, 23, 24, 25],
+        "type": "classification",
+        "instruction": "According to the information in Reading Passage 2, which ancient civilizations do the following phrases describe? Write A if it describes the ancient Olmec civilization only, B if it describes the ancient Mayan civilization only, C if it describes both the Olmec and the Mayan civilizations.",
+        "options": ["A. The ancient Olmec civilization only", "B. The ancient Mayan civilization only", "C. Both the Olmec and the Mayan civilizations"],
+        "items": {
+          "19": "collapsed around 2,400 years ago",
+          "20": "was located in Mexico",
+          "21": "grew cacao on large farms",
+          "22": "left behind little concrete evidence of their culture",
+          "23": "influenced the ancient inhabitants of Puerto Escondido",
+          "24": "carved images of cacao pods",
+          "25": "made a drink by mixing cacao with chili powder and cornmeal"
+        }
+      },
+      {
+        "questions": [26, 27],
+        "type": "multiple_choice",
+        "instruction": "Choose the correct letter, A, B, or C.",
+        "items": {
+          "26": {
+            "question": "The ancient Maya used cacao seeds as",
+            "options": ["A. decorations.", "B. a dye.", "C. money."]
+          },
+          "27": {
+            "question": "In April, the ancient Maya celebrated",
+            "options": ["A. dogs.", "B. a god.", "C. stars."]
+          }
+        }
+      }
+    ]
+  },
+  "passage_3": {
+    "title": "The Intelligence of Corvids",
+    "question_groups": [
+      {
+        "questions": [28, 29, 30, 31, 32, 33],
+        "type": "summary_completion_options",
+        "instruction": "Complete the summary using the list of words and phrases, A-N, below. Not all letters are used.",
+        "word_box": ["A. learn from other birds", "B. twigs", "C. humans", "D. repeat", "E. spears", "F. are born knowing", "G. leaves", "H. hooks", "I. try to take away", "J. modify", "K. chimpanzees", "L. grubs", "M. teach her how to make", "N. corvids"],
+        "items": {
+          "28": "Jane Goodall's work in 1960 showed that ___ were not the only ones to make tools.",
+          "29": "Since then, scientists have observed different kinds of animals making tools. New Caledonian crows, for example, make tools in order to retrieve the ___ that they eat in the wild.",
+          "30": "Scientists believe that generally these birds ___ how to make tools.",
+          "31": "In 2002, a captive New Caledonian crow named Betty invented a new tool. Scientists observed Betty use pieces of wire to make ___,",
+          "32": "which she used to retrieve food. The interesting thing is that other crows did not ___ the tools.",
+          "33": "Once the scientists saw Betty make a tool, they tried to get her to ___ the behavior, which she did successfully."
+        }
+      },
+      {
+        "questions": [34, 35, 36],
+        "type": "multiple_choice",
+        "instruction": "Choose the correct letter, A, B, or C.",
+        "items": {
+          "34": {
+            "question": "Researchers wore a mask when working with crows in order to",
+            "options": ["A. conceal their true identity from the crows.", "B. find out whether crows would recognize the mask in another situation.", "C. protect their faces from aggressive crows."]
+          },
+          "35": {
+            "question": "Crows harassed researchers wearing the mask because the researchers",
+            "options": ["A. had worn the mask when handling crows.", "B. were of a size and skin color that crows feared.", "C. took turns wearing the mask while walking around campus."]
+          },
+          "36": {
+            "question": "When researchers removed the mask,",
+            "options": ["A. the crows did not harass them.", "B. they were attacked by the entire flock of crows.", "C. they could more easily tag the crows."]
+          }
+        }
+      },
+      {
+        "questions": [37, 38, 39, 40],
+        "type": "matching_paragraph",
+        "instruction": "Match each corvid action described by researchers below with the information it shows us about corvid intelligence. Write the correct letter, A-F. There are more types of information listed than actions, so you will not use them all.",
+        "options": [
+          "A. Corvids can count.",
+          "B. Corvids recognize individual birds.",
+          "C. Corvids are good at discovering food sources.",
+          "D. Corvids can work together to achieve a goal.",
+          "E. Corvids protect themselves by tricking their enemies.",
+          "F. Corvids are skilled at remembering where they hid things."
+        ],
+        "items": {
+          "37": "Birds opened boxes to obtain food.",
+          "38": "Birds pulled ropes to get food.",
+          "39": "Birds hid food from other birds.",
+          "40": "Birds built a nest that was not real."
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "passage_1": {
+    "title": "The CT Scanner",
+    "question_groups": [
+      {
+        "questions": [1, 2, 3, 4, 5, 6, 7],
+        "type": "heading_match",
+        "instruction": "The following reading passage has seven sections, A-G. Choose the correct heading for each section from the list of headings below. Write the correct number, i-x. There are more headings than sections, so you will not use them all.",
+        "headings": [
+          "i. Scanning the Brain and Chest",
+          "ii. The Role of Computers",
+          "iii. The CT Scan Is Invented",
+          "iv. The High Cost of CT Scans",
+          "v. Risks Associated with CT Scans",
+          "vi. Emergency Room Care",
+          "vii. Faster and More Comfortable",
+          "viii. How Doctors Use CT Scans",
+          "ix. The Patient Is Photographed",
+          "x. Enhancing Scan Images with Dyes"
+        ],
+        "items": {
+          "1": "Section A",
+          "2": "Section B",
+          "3": "Section C",
+          "4": "Section D",
+          "5": "Section E",
+          "6": "Section F",
+          "7": "Section G"
+        }
+      },
+      {
+        "questions": [8, 9, 10],
+        "type": "multiple_choice_multi",
+        "instruction": "Which of the following are facts about the original CT scanner mentioned in the passage? Choose THREE answers from the list below and write the correct letters, A-F.",
+        "options": [
+          "A. It made it difficult for patients to breathe.",
+          "B. It was created to take pictures of the brain.",
+          "C. It was much bigger than current CT scanners.",
+          "D. It was developed in 1972.",
+          "E. It took several hours to produce a completed image.",
+          "F. It produced images in color."
+        ]
+      },
+      {
+        "questions": [11, 12, 13],
+        "type": "multiple_choice_multi",
+        "instruction": "Which of the following are facts about contrast materials used for CT scans mentioned in the passage? Choose THREE answers from the list below and write the correct letters, A-F.",
+        "options": [
+          "A. They are bright in color.",
+          "B. They can be given by injection.",
+          "C. They have a bitter taste.",
+          "D. They might cause a feeling of warmth in the arm.",
+          "E. They are administered only by a specially trained technician.",
+          "F. They may cause allergies in a few patients."
+        ]
+      }
+    ]
+  },
+  "passage_2": {
+    "title": "Nineteenth-Century Paperback Literature",
+    "question_groups": [
+      {
+        "questions": [14, 15, 16, 17, 18, 19],
+        "type": "classification",
+        "instruction": "Which of the characteristics below belongs to which type of literature? Write A if it is characteristic of penny bloods, B if it is characteristic of dime novels, C if it is characteristic of both penny bloods and dime novels.",
+        "options": ["A. Penny bloods", "B. Dime novels", "C. Both"],
+        "items": {
+          "14": "They were popular in America.",
+          "15": "They were popular in Britain.",
+          "16": "They showed members of the upper class as corrupt.",
+          "17": "They were inexpensive.",
+          "18": "They featured tales of the Wild West.",
+          "19": "They were popular among members of the working class."
+        }
+      },
+      {
+        "questions": [20, 21, 22, 23],
+        "type": "matching",
+        "instruction": "Match each year with the event that occurred during that year. Choose the correct event, A-F, from the box below and write the correct letter. There are more events than years, so you will not use them all.",
+        "options": [
+          "A. The first dime novel was published in the United States.",
+          "B. Lord Shaftsbury warned people about the dangers of penny bloods.",
+          "C. Penny bloods were first published.",
+          "D. A law was passed requiring children to attend school.",
+          "E. A law about copyrights was passed.",
+          "F. The first Sweeney Todd story was published."
+        ],
+        "items": {
+          "20": "1870",
+          "21": "1846",
+          "22": "1860",
+          "23": "1890"
+        }
+      },
+      {
+        "questions": [24, 25, 26, 27],
+        "type": "yes_no_not_given",
+        "instruction": "Do the following statements agree with the information in the reading passage?",
+        "items": {
+          "24": "The literacy rate in England rose in the nineteenth century.",
+          "25": "Children's books were popular in the nineteenth century.",
+          "26": "Most people agree that Sweeney Todd was based on a real person.",
+          "27": "Dime novels were popular among Civil War soldiers."
+        }
+      }
+    ]
+  },
+  "passage_3": {
+    "title": "Cosmic Black Holes",
+    "question_groups": [
+      {
+        "questions": [28, 29, 30, 31, 32, 33, 34],
+        "type": "completion",
+        "instruction": "Complete each sentence with the correct ending, A-N, below. Write the correct letter, A-N.",
+        "options": [
+          "A. by observing the matter around them.",
+          "B. suggested the presence of black holes in outer space.",
+          "C. when a single star collapses.",
+          "D. difficult to study.",
+          "E. barely visible light.",
+          "F. an inescapable gravitational pull.",
+          "G. did not apply to most astronomical bodies.",
+          "H. by direct observation.",
+          "I. could not explain Mercury's path around the sun.",
+          "J. caused doubt about the existence of black holes.",
+          "K. lose visibility.",
+          "L. become very hot.",
+          "M. with large event horizons.",
+          "N. at the center of each black hole."
+        ],
+        "items": {
+          "28": "Newton's law of gravitation",
+          "29": "Einstein's theory of relativity",
+          "30": "We define black holes as areas that have",
+          "31": "Scientists study black holes",
+          "32": "Gases that are pulled into a black hole",
+          "33": "Event horizons are",
+          "34": "Compact black holes occur"
+        }
+      },
+      {
+        "questions": [35, 36],
+        "type": "multiple_choice",
+        "instruction": "Choose the correct letter, A, B, or C.",
+        "items": {
+          "35": {
+            "question": "Black holes can be found",
+            "options": ["A. only in the Milky Way.", "B. in most galaxies.", "C. close to the sun."]
+          },
+          "36": {
+            "question": "Sagittarius A* is",
+            "options": ["A. a black hole located 26,000 light years from Earth.", "B. one of thousands of black holes orbiting Earth.", "C. a well-known compact black hole."]
+          }
+        }
+      },
+      {
+        "questions": [37, 38, 39, 40],
+        "type": "true_false_not_given",
+        "instruction": "Do the following statements agree with the information given in the passage?",
+        "items": {
+          "37": "It is not certain when the big bang occurred.",
+          "38": "According to the \"seed\" theory, the first black holes eventually became super-massive black holes.",
+          "39": "The \"seed\" theory has been proven true by computer simulation.",
+          "40": "The black holes that existed in the early universe were all compact black holes."
+        }
+      }
+    ]
+  }
+}
