@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import sys
 import uuid
 from pathlib import Path
@@ -47,6 +48,14 @@ def read_document(test_number: int, name: str) -> dict[str, Any]:
 
 def option_letters(options: list[str]) -> set[str]:
     return {option.split(".", maxsplit=1)[0].strip() for option in options}
+
+
+def choice_texts(options: list[str]) -> list[str]:
+    """The renderer adds A/B/C itself; retain labels only for matching lists."""
+    return [
+        re.sub(rf"^{chr(65 + index)}[.)]\s+", "", text, count=1)
+        for index, text in enumerate(options)
+    ]
 
 
 def build_part(
@@ -114,6 +123,8 @@ def build_part(
                 if not options or correct not in option_letters(options):
                     raise ValueError(f"Key outside options: Q{number}")
                 answer_key = {"correct": correct}
+            if kind in {QuestionType.MCQ, QuestionType.MULTI_SELECT}:
+                content["options"] = choice_texts(content["options"])
             question_order += 1
             group.questions.append(
                 Question(
