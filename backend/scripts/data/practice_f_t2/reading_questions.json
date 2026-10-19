@@ -5,30 +5,25 @@
       {
         "questions": [1, 2, 3, 4, 5],
         "type": "short_answer",
-        "instruction": "Answer each question with one number from the text.",
+        "instruction": "Answer the questions below. Choose ONE NUMBER ONLY from the text for each answer.",
         "items": {
-          "1": "Year Viking warriors raided an abbey on England's northeast coast",
-          "2": "Year Eric the Red was found guilty of a crime",
-          "3": "Year Vikings founded a fort that later became an Irish city",
-          "4": "Year a French king granted land to a Viking chief",
-          "5": "Year Viking warriors defeated an English king"
+          "1": "When did Viking warriors raid an abbey on the coast of England?",
+          "2": "When was Eric the Red convicted of a crime?",
+          "3": "When did Vikings establish a fort in Ireland?",
+          "4": "When was a Viking chief granted lands by a king of France?",
+          "5": "When did Viking warriors defeat an English king?"
         }
       },
       {
         "questions": [6, 7, 8, 9, 10, 11, 12, 13],
         "type": "summary_completion_options",
-        "instruction": "Complete the summary below. Choose your answers from the box.",
+        "instruction": "Complete the summary using the list of words, A–O, below.",
         "word_box": ["A. warriors", "B. an attack", "C. capital", "D. explorers", "E. trade with", "F. conquered", "G. burning objects", "H. settled in", "I. ship", "J. oars", "K. market", "L. a parade", "M. archeologists", "N. silver coins", "O. horse"],
-        "items": {
-          "6": "Reason the people were called 'Vikings'",
-          "7": "What the Vikings from Norway were the first Europeans to do in North America",
-          "8": "What Danish Vikings did to large areas of England and France",
-          "9": "What was thrown at Viking ships in Seville",
-          "10": "What Viking Varangians took part in on Crete",
-          "11": "How Swedish Vikings travelled deep into Asia",
-          "12": "Kiev's role as the Vikings' territorial center",
-          "13": "The Vikings' important activity in Bulgar on the Volga"
-        }
+        "paragraphs": [
+          "The people known as Vikings were given this name because they were {{6}}. Groups of Vikings from Norway traveled west to Britain, Iceland, and beyond. They were the first Europeans who {{7}} North America. Groups from Denmark {{8}} large areas of England and France. Other groups of Vikings raided areas of Portugal and Spain. The people of Seville, Spain, drove the Vikings away by throwing {{9}} at them.",
+          "Large numbers of Vikings left Scandinavia for the Byzantine Empire, and many of these joined the Byzantine military. At one point, they took part in {{10}} on the Greek island of Crete. Groups of Swedish Vikings crossed the Baltic Sea to explore the lands beyond. They traveled down Russian rivers, then journeyed deep into Asia by {{11}}. After settling in northwest Russia, they expanded their territories toward the south.",
+          "Kiev, Ukraine, eventually became the Vikings' territorial {{12}}. The Vikings also had an important {{13}} in the town of Bulgar on the Volga River."
+        ]
       }
     ]
   },
@@ -40,25 +35,25 @@
         "type": "yes_no_not_given",
         "instruction": "Do the following statements agree with the information given in Reading Passage 2?",
         "items": {
-          "14": "Dyslexia is related to intelligence.",
-          "15": "Dyslexia is usually diagnosed in a child's first years of school.",
+          "14": "Dyslexia is a disorder related to intelligence.",
+          "15": "Dyslexia is usually diagnosed during a child's first years of school.",
           "16": "People with dyslexia often read in reverse.",
-          "17": "Dyslexia tends to occur in twins.",
-          "18": "Scientists are researching a drug treatment for dyslexia.",
-          "19": "Dyslexic children often have behavioral problems.",
-          "20": "People with dysgraphia have difficulty with mathematics."
+          "17": "There is a tendency for dyslexia between twins.",
+          "18": "Scientists are looking for a drug treatment for dyslexia.",
+          "19": "Dyslexia in children is often accompanied by behavioral problems.",
+          "20": "People with dysgraphia have difficulty with math."
         }
       },
       {
         "questions": [21, 22, 23],
         "type": "multiple_choice_multi",
-        "instruction": "Choose THREE answers that are signs of dyslexia mentioned in the passage.",
-        "options": ["A. Speaking later than average", "B. Trouble learning new vocabulary", "C. Leaving large gaps between words", "D. Problems following directions", "E. Difficulty turning the pages of a book", "F. Inability to give commands"]
+        "instruction": "Which of the following are signs of dyslexia mentioned in the passage? Choose THREE answers from the list below.",
+        "options": ["A. learning to talk at a later than normal age", "B. trouble with new vocabulary", "C. leaving big spaces between words", "D. problems following directions", "E. difficulty turning the pages of a book", "F. inability to give commands"]
       },
       {
         "questions": [24, 25, 26],
         "type": "multiple_choice_multi",
-        "instruction": "Choose THREE answers that are treatments for dyslexia mentioned in the passage.",
+        "instruction": "Which of the following are treatments for dyslexia mentioned in the passage? Choose THREE answers from the list below.",
         "options": ["A. Using special computers", "B. Learning to identify sounds", "C. Wearing eyeglasses", "D. Attending a special school", "E. Covering one eye while reading", "F. Listening to tapes"]
       }
     ]
@@ -69,29 +64,25 @@
       {
         "questions": [27, 28, 29, 30, 31, 32],
         "type": "note_completion_options",
-        "instruction": "Complete the notes below. Choose your answers from the box.",
+        "instruction": "Complete the notes using the list of words, A–K, below.",
         "word_box": ["A. short", "B. small", "C. Charles Darwin", "D. long", "E. definite", "F. disasters", "G. James Hutton", "H. mysterious", "I. Walter Alvarez", "J. evolution", "K. Georges Cuvier"],
-        "items": {
-          "27": "Who first introduced the catastrophe theory",
-          "28": "What major events proposed by catastrophe theory shaped Earth",
-          "29": "The type of history catastrophe theory supports for Earth",
-          "30": "Who first introduced the gradualist theory",
-          "31": "What kind of changes gradualism says shaped Earth's surface",
-          "32": "The length of time over which gradual changes occurred"
-        }
+        "notes_sections": [
+          {"heading": "Catastrophe Theory", "items": ["First introduced by {{27}}", "Proposes that major {{28}} have given Earth its shape.", "Supports the idea that the Earth has a {{29}} history."]},
+          {"heading": "Gradualist Theory", "items": ["First introduced by {{30}}", "Proposes that many {{31}} changes in the shape of the Earth happened over a {{32}} period of time."]}
+        ]
       },
       {
         "questions": [33, 34, 35, 36, 37, 38, 39],
         "type": "matching_paragraph",
-        "instruction": "Which paragraph contains the following information? Write the correct letter, A-F.",
+        "instruction": "The passage has six paragraphs, A–F. Which paragraph mentions the following information? You may use any paragraph more than once.",
         "items": {
-          "33": "Proof that not all Earth changes were gradual",
-          "34": "A theory explaining iridium found in a layer of Earth's crust",
-          "35": "Publication of a book on the gradualist theory",
-          "36": "Discovery of a large crater possibly caused by an asteroid",
-          "37": "Evidence of a large flood in Earth's past",
-          "38": "Renewed interest in the catastrophe theory",
-          "39": "Ideas about how quickly ice-age glaciers disappeared"
+          "33": "proof that not all changes on Earth have occurred gradually",
+          "34": "a theory explaining the presence of iridium beneath Earth's surface",
+          "35": "publication of a book about the gradualist theory",
+          "36": "discovery of a large crater that could have been caused by an asteroid",
+          "37": "evidence of the occurrence of a large flood in Earth's past",
+          "38": "recurrence of interest in the catastrophe theory",
+          "39": "ideas about how quickly ice age glaciers disappeared"
         }
       },
       {

@@ -7,6 +7,7 @@ import json
 import re
 import sys
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -19,9 +20,10 @@ from app.core.config import settings  # noqa: E402
 from app.models.question import Question, QuestionType  # noqa: E402
 from app.models.question_group import QuestionGroup  # noqa: E402
 from app.models.section import SectionType  # noqa: E402
-from app.services.compound import validate_compound_structure  # noqa: E402
+from app.services.compound import extract_gap_ids, validate_compound_structure  # noqa: E402
 from app.services.seed_compound import gap_answer_key  # noqa: E402
 from seed_practice_f_common import clear_section, data_dir, get_section, get_test  # noqa: E402
+from seed_practice_f_listening import choice_texts  # noqa: E402
 
 
 PASSAGE_ORDERS = (10, 11, 12)
@@ -73,13 +75,17 @@ def _gap_segments(prompt: str, gap_id: str) -> list[dict[str, str]]:
 
 def _answers_for_group(
     answers: dict[str, Any], group: dict[str, Any]
-) -> dict[str, str]:
-    result: dict[str, str] = {}
+) -> dict[str, str | list[str]]:
+    result: dict[str, str | list[str]] = {}
     for number in group.get("questions", []):
         item = answers.get(str(number))
         if not isinstance(item, dict) or not isinstance(item.get("answer"), str):
             raise ValueError(f"Missing string answer for question {number}")
-        result[str(number)] = item["answer"].strip()
+        aliases = item.get("alternatives", [])
+        if not isinstance(aliases, list) or not all(isinstance(x, str) and x.strip() for x in aliases):
+            raise ValueError(f"Invalid answer alternatives for question {number}")
+        correct = list(dict.fromkeys([item["answer"].strip(), *(x.strip() for x in aliases)]))
+        result[str(number)] = correct if aliases else correct[0]
     return result
 
 
@@ -92,15 +98,70 @@ def _options(group: dict[str, Any]) -> list[str] | None:
     return raw
 
 
+@dataclass
+class BuiltPassage:
+    title: str
+    passage: str
+    groups: list[QuestionGroup]
+    question_numbers: list[int]
+
+
+def _numbered_segments(text: str) -> list[dict[str, str]]:
+    """Source context keeps every sentence; {{N}} identifies an IELTS blank."""
+    return [
+        {"type": "gap", "gap_id": f"q{piece[2:-2]}"}
+        if re.fullmatch(r"\{\{\d+\}\}", piece)
+        else {"type": "text", "value": piece}
+        for piece in re.split(r"(\{\{\d+\}\})", text) if piece
+    ]
+
+
+def _source_structure(group: dict[str, Any], options: list[str] | None) -> tuple[QuestionType, dict[str, Any]] | None:
+    """Build existing compound UI structures, preserving complete source context."""
+    kind = group["type"]
+    structure: dict[str, Any] = {
+        "instruction_words": group["instruction"],
+        "max_words_per_gap": 1 if options else _max_words(group["instruction"]),
+    }
+    if options:
+        structure["options"] = options
+    if "paragraphs" in group:
+        question_type = QuestionType.SUMMARY_COMPLETION
+        structure.update(variant="summary", paragraphs=[{"segments": _numbered_segments(p)} for p in group["paragraphs"]])
+    elif "notes_sections" in group:
+        question_type = QuestionType.NOTE_COMPLETION
+        structure.update(variant="notes", sections=[
+            {"heading": section["heading"], "items": [{"segments": _numbered_segments(text)} for text in section["items"]]}
+            for section in group["notes_sections"]
+        ])
+    elif kind == "table_completion" and "table_rows" in group:
+        question_type = QuestionType.TABLE_COMPLETION
+        structure.update(variant="table", headers=group["headers"], rows=[
+            [{"variant": "plain", "segments": _numbered_segments(cell)} for cell in row]
+            for row in group["table_rows"]
+        ])
+    else:
+        return None
+    validate_compound_structure(question_type.value, structure)
+    expected = [f"q{n}" for n in group["questions"]]
+    if extract_gap_ids(structure) != expected:
+        raise ValueError(f"Source structure gaps must match question numbers in order: {expected}")
+    # extract_gap_ids deduplicates IDs; a duplicated blank would hide a content error.
+    all_segments = json.dumps(structure)
+    if any(all_segments.count(f'"gap_id": "{gap}"') != 1 for gap in expected):
+        raise ValueError("Each source question must occur exactly once in its structure")
+    return question_type, structure
+
+
 class PassageWriter:
-    def __init__(self, db: AsyncSession, section_id: uuid.UUID) -> None:
-        self.db = db
+    def __init__(self, section_id: uuid.UUID) -> None:
         self.section_id = section_id
+        self.groups: list[QuestionGroup] = []
         self.group_order = 0
         self.question_order = 0
         self.question_numbers: list[int] = []
 
-    async def add_group(
+    def add_group(
         self,
         question_type: QuestionType,
         instruction: str,
@@ -117,13 +178,12 @@ class PassageWriter:
             instruction=instruction,
             options_shared=options_shared,
         )
-        self.db.add(group)
-        await self.db.flush()
+        self.groups.append(group)
         self.group_order += 1
         for number, content, key in entries:
             self.question_order += 1
             self.question_numbers.append(number)
-            self.db.add(
+            group.questions.append(
                 Question(
                     id=uuid.uuid4(),
                     section_id=self.section_id,
@@ -136,20 +196,19 @@ class PassageWriter:
             )
 
 
-async def _seed_passage(
-    db: AsyncSession,
+def build_passage(
     test_number: int,
     passage_index: int,
+    section_id: uuid.UUID,
     questions_doc: dict[str, Any],
     answers_doc: dict[str, Any],
-) -> list[int]:
+) -> BuiltPassage:
     passage_key = f"passage_{passage_index}"
     passage_data = questions_doc.get(passage_key)
     answer_data = answers_doc.get(passage_key)
     if not isinstance(passage_data, dict) or not isinstance(answer_data, dict):
         raise ValueError(f"Missing {passage_key} in question/answer JSON")
 
-    section = await get_section(db, (await get_test(db, test_number)).id, SectionType.READING, PASSAGE_ORDERS[passage_index - 1])
     passage_path = data_dir(test_number) / f"reading_p{passage_index}.txt"
     if not passage_path.is_file():
         raise ValueError(f"Passage text is missing: {passage_path}")
@@ -162,10 +221,7 @@ async def _seed_passage(
     if not source_title or not passage_body:
         raise ValueError(f"Passage file is empty or has no body: {passage_path}")
 
-    section.title = source_title
-    section.passage = passage_body
-    section.passage_subtitle = None
-    writer = PassageWriter(db, section.id)
+    writer = PassageWriter(section_id)
     passage_answers = answer_data.get("questions", {})
     if not isinstance(passage_answers, dict):
         raise ValueError(f"{passage_key}.questions must be an object")
@@ -183,14 +239,22 @@ async def _seed_passage(
         options = _options(raw_group)
         entries: list[tuple[int, dict[str, Any], dict[str, Any] | None]] = []
 
+        source_structure = _source_structure(raw_group, options)
+        if source_structure is not None:
+            question_type, structure = source_structure
+            for number in numbers:
+                entries.append((number, {"gap_id": f"q{number}"}, gap_answer_key(answers[str(number)], max_words=structure["max_words_per_gap"])))
+            writer.add_group(question_type, instruction, entries, structure)
+            continue
+
         if kind in {"multiple_choice", "mcq"}:
             question_type = QuestionType.MCQ
             for number in numbers:
                 item = items.get(str(number))
                 if not isinstance(item, dict) or not isinstance(item.get("question"), str) or not isinstance(item.get("options"), list):
                     raise ValueError(f"Malformed MCQ item {number}")
-                entries.append((number, {"question": item["question"], "options": item["options"]}, {"correct": answers[str(number)]}))
-            await writer.add_group(question_type, instruction, entries)
+                entries.append((number, {"question": item["question"], "options": choice_texts(item["options"])}, {"correct": answers[str(number)]}))
+            writer.add_group(question_type, instruction, entries)
             continue
 
         if kind == "multiple_choice_multi":
@@ -198,6 +262,8 @@ async def _seed_passage(
             if options is None:
                 raise ValueError("Multiple-select group has no options")
             answer_values = [answers[str(number)] for number in numbers]
+            if not all(isinstance(value, str) for value in answer_values):
+                raise ValueError("Multi-select keys must be letters, not text alternatives")
             if len(set(answer_values)) != 1:
                 raise ValueError(f"Multi-select answer keys disagree for questions {numbers}")
             correct = [value.strip() for value in answer_values[0].split(",") if value.strip()]
@@ -206,8 +272,8 @@ async def _seed_passage(
             split = re.search(r"\bChoose\s+(?:TWO|THREE|FOUR|\d+)\b", instruction, re.I)
             prompt = instruction[: split.start()].strip() if split else instruction
             group_instruction = instruction[split.start() :].strip() if split else ""
-            entries.append((numbers[0], {"question": prompt, "options": options, "choose_n": len(correct)}, {"correct": correct}))
-            await writer.add_group(question_type, group_instruction, entries)
+            entries.append((numbers[0], {"question": prompt, "options": choice_texts(options), "choose_n": len(correct)}, {"correct": correct}))
+            writer.add_group(question_type, group_instruction, entries)
             writer.question_numbers.extend(numbers[1:])
             continue
 
@@ -227,7 +293,7 @@ async def _seed_passage(
                     raise ValueError(f"Malformed matching item {number}")
                 content_key = "statement" if question_type in {QuestionType.YES_NO_NG, QuestionType.TRUE_FALSE_NG} else "question"
                 entries.append((number, {content_key: prompt}, {"correct": answers[str(number)]}))
-            await writer.add_group(question_type, instruction, entries, shared)
+            writer.add_group(question_type, instruction, entries, shared)
             continue
 
         if kind in {"summary_completion_options", "note_completion_options", "flow_chart_completion"}:
@@ -257,8 +323,8 @@ async def _seed_passage(
                 else:
                     structure["steps"] = [{"segments": segment} for segment in segments]
                 for number in numbers:
-                    entries.append((number, {"gap_id": f"q{number}"}, gap_answer_key([answers[str(number)]], max_words=1)))
-                await writer.add_group(question_type, instruction, entries, structure)
+                    entries.append((number, {"gap_id": f"q{number}"}, gap_answer_key(answers[str(number)], max_words=1)))
+                writer.add_group(question_type, instruction, entries, structure)
             else:
                 if options is None:
                     raise ValueError(f"{kind} group has no word box/options")
@@ -267,7 +333,7 @@ async def _seed_passage(
                     if not isinstance(prompt, str):
                         raise ValueError(f"Malformed option-matching item {number}")
                     entries.append((number, {"question": prompt}, {"correct": answers[str(number)]}))
-                await writer.add_group(QuestionType.MATCHING_FEATURES, instruction, entries, {"options": options})
+                writer.add_group(QuestionType.MATCHING_FEATURES, instruction, entries, {"options": options})
             continue
 
         if kind in {"completion", "short_answer"}:
@@ -280,12 +346,23 @@ async def _seed_passage(
                 else:
                     max_words = _max_words(instruction)
                     entries.append((number, {"prompt": prompt, "question": prompt, "max_words": max_words}, {"correct": answers[str(number)], "max_words": max_words, "case_sensitive": False}))
-            await writer.add_group(QuestionType.MATCHING_FEATURES if options is not None else QuestionType.SHORT_ANSWER, instruction, entries, {"options": options} if options is not None else None)
+            writer.add_group(QuestionType.MATCHING_FEATURES if options is not None else QuestionType.SHORT_ANSWER, instruction, entries, {"options": options} if options is not None else None)
             continue
 
         raise ValueError(f"Unsupported question group type {kind!r} in {passage_key}")
 
-    return writer.question_numbers
+    return BuiltPassage(source_title, passage_body, writer.groups, writer.question_numbers)
+
+
+async def _seed_passage(db: AsyncSession, test_number: int, passage_index: int,
+                        questions_doc: dict[str, Any], answers_doc: dict[str, Any]) -> list[int]:
+    section = await get_section(db, (await get_test(db, test_number)).id, SectionType.READING, PASSAGE_ORDERS[passage_index - 1])
+    built = build_passage(test_number, passage_index, section.id, questions_doc, answers_doc)
+    section.title = built.title
+    section.passage = built.passage
+    section.passage_subtitle = None
+    db.add_all(built.groups)
+    return built.question_numbers
 
 
 async def seed(db: AsyncSession, test_number: int) -> None:
@@ -307,6 +384,9 @@ async def seed(db: AsyncSession, test_number: int) -> None:
             raise SystemExit(f"Question/key mismatch in {key}: questions={sorted(expected)} keys={actual}")
 
     sections = [await get_section(db, test.id, SectionType.READING, order) for order in PASSAGE_ORDERS]
+    # Compile all structures before the destructive seed path touches existing data.
+    for passage_index, section in enumerate(sections, start=1):
+        build_passage(test_number, passage_index, section.id, questions_doc, answers_doc)
     for section in sections:
         await clear_section(db, section.id)
     all_numbers: list[int] = []

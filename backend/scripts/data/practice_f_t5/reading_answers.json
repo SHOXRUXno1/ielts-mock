@@ -14,13 +14,13 @@
       "10": {"answer": "D", "type": "multiple_choice"},
       "11": {"answer": "B", "type": "multiple_choice"},
       "12": {"answer": "D", "type": "multiple_choice"},
-      "13": {"answer": "D", "type": "multiple_choice"}
+      "13": {"answer": "D", "type": "multiple_choice"},
+      "14": {"answer": "B", "type": "matching"}
     }
   },
   "passage_2": {
     "title": "Caffeine",
     "questions": {
-      "14": {"answer": "B", "type": "multiple_choice"},
       "15": {"answer": "NOT GIVEN", "type": "true_false_not_given"},
       "16": {"answer": "FALSE", "type": "true_false_not_given"},
       "17": {"answer": "TRUE", "type": "true_false_not_given"},
@@ -40,12 +40,12 @@
     "title": "Animal Camouflage",
     "questions": {
       "28": {"answer": "predators and prey", "type": "completion"},
-      "29": {"answer": "protective coloring", "type": "completion"},
+      "29": {"answer": "protective coloring", "alternatives": ["protective colouring"], "type": "completion"},
       "30": {"answer": "blend in", "type": "completion"},
-      "31": {"answer": "alter their coloring", "type": "completion"},
-      "32": {"answer": "on many backgrounds", "type": "completion"},
+      "31": {"answer": "alter their coloring", "alternatives": ["alter coloring", "alter their colouring", "alter colouring"], "type": "completion"},
+      "32": {"answer": "on many backgrounds", "alternatives": ["on backgrounds"], "type": "completion"},
       "33": {"answer": "stripes or spots", "type": "completion"},
-      "34": {"answer": "color-blind", "type": "completion"},
+      "34": {"answer": "color-blind", "alternatives": ["colorblind", "colourblind", "colour-blind"], "type": "completion"},
       "35": {"answer": "countershading", "type": "completion"},
       "36": {"answer": "black backs", "type": "completion"},
       "37": {"answer": "TRUE", "type": "true_false_not_given"},

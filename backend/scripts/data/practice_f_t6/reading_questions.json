@@ -17,13 +17,7 @@
           "H. fertilization",
           "I. time"
         ],
-        "items": {
-          "1": "Some plants send out new parts such as ___ or bulbs.",
-          "2": "These grow into new plants, which are actually ___ of the original plant.",
-          "3": "The advantage of this form of reproduction is that it does not require a lot of ___ or energy.",
-          "4": "Many ___ reproduce themselves by forming seeds through the process of pollination.",
-          "5": "Others rely on the ___ or animals to carry the pollen from plant to plant."
-        }
+        "paragraphs": ["The reproduction of plants occurs in different ways. Some plants send out new parts such as {{1}} or bulbs. These grow into new plants, which are actually {{2}} of the original plant. The advantage of this form of reproduction is that it does not require a lot of {{3}} or energy. Many {{4}} reproduce themselves by forming seeds through the process of pollination. Some plants pollinate themselves. Others rely on the {{5}} or animals to carry the pollen from plant to plant."]
       },
       {
         "questions": [6, 7, 8, 9, 10, 11, 12, 13, 14],

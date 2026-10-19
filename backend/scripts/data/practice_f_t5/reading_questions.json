@@ -22,7 +22,7 @@
         }
       },
       {
-        "questions": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+        "questions": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
         "type": "classification",
         "instruction": "Classify the following as descriptive of A. paraffin, B. beeswax, C. tallow, or D. bayberry wax.",
         "options": ["A. Paraffin", "B. Beeswax", "C. Tallow", "D. Bayberry wax"],
@@ -36,7 +36,8 @@
           "10": "is bluish in color",
           "11": "was brought to colonial America by European settlers",
           "12": "was often reserved for holiday use",
-          "13": "has a pleasing aroma"
+          "13": "has a pleasing aroma",
+          "14": "was often used for trading in place of money"
         }
       }
     ]
@@ -44,17 +45,6 @@
   "passage_2": {
     "title": "Caffeine",
     "question_groups": [
-      {
-        "questions": [14],
-        "type": "multiple_choice",
-        "instruction": "Choose the correct letter, A, B, or C.",
-        "items": {
-          "14": {
-            "question": "What is the main idea of the passage?",
-            "options": ["A. Caffeine is harmful to health.", "B. Caffeine has both positive and negative effects.", "C. People should limit caffeine consumption."]
-          }
-        }
-      },
       {
         "questions": [15, 16, 17, 18, 19, 20, 21, 22, 23],
         "type": "true_false_not_given",
@@ -103,17 +93,7 @@
         "questions": [28, 29, 30, 31, 32, 33, 34, 35, 36],
         "type": "completion",
         "instruction": "Complete the summary below. Choose NO MORE THAN THREE WORDS from the passage for each answer.",
-        "items": {
-          "28": "Camouflage helps animals hide from both ___.",
-          "29": "Animals pass on their ___ through their genes.",
-          "30": "In background matching, an animal's appearance helps it ___ with its environment.",
-          "31": "The arctic fox and snowshoe hare are examples of animals that ___ with the seasons.",
-          "32": "Many use a different strategy, having camouflage that helps them disguise themselves ___.",
-          "33": "Animals with disruptive coloration have markings such as ___ that make it difficult for a predator to discern the shape of the body.",
-          "34": "Although zebras are black and white, they can hide in tall grass because their major predator is ___.",
-          "35": "___ is a type of camouflage that helps hide animals that are seen from above or below.",
-          "36": "Penguins, for example, have ___, which help them blend in with the dark water from the point of view of an observer standing above."
-        }
+        "paragraphs": ["Camouflage helps animals hide from both {{28}}. Animals pass on their {{29}} through their genes. There are four different types of camouflage. In background matching, an animal's appearance helps it {{30}} with its environment. The arctic fox and snowshoe hare are examples of animals that {{31}} with the seasons. However, not all animals can easily change their appearance. Many use a different strategy, having camouflage that helps them disguise themselves {{32}}. Animals with disruptive coloration have marking such as {{33}} that make it difficult for a predator to discern the shape of the body. Therefore, the predator has a hard time targeting one animal out of a group. Although zebras are black and white, they can hide in tall grass because their major predator is {{34}}. {{35}} is a type of camouflage that helps hide animals that are seen from above or below. Penguins, for example, have {{36}}, which help them blend in with the dark water from the point of view of an observer standing above."]
       },
       {
         "questions": [37, 38, 39, 40],

@@ -32,8 +32,8 @@
       "23": {"answer": "engravings", "type": "completion"},
       "24": {"answer": "geometrical designs", "type": "completion"},
       "25": {"answer": "hands", "type": "completion"},
-      "26": {"answer": "full human", "type": "completion"},
-      "27": {"answer": "detailed", "type": "completion"}
+      "26": {"answer": "full human", "alternatives": ["human"], "type": "completion"},
+      "27": {"answer": "detailed", "alternatives": ["realistic", "detailed realistic", "detailed,realistic"], "type": "completion"}
     }
   },
   "passage_3": {
