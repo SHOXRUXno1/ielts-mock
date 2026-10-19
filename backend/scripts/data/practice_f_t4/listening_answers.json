@@ -1,0 +1,198 @@
+{
+  "part_1": {
+    "questions": {
+      "1": {
+        "correct": [
+          "Kramer"
+        ]
+      },
+      "2": {
+        "correct": [
+          "58"
+        ]
+      },
+      "3": {
+        "correct": [
+          "residential"
+        ]
+      },
+      "4": {
+        "correct": [
+          "office manager"
+        ]
+      },
+      "5": {
+        "correct": [
+          "6375559014"
+        ]
+      },
+      "6": {
+        "correct": [
+          "nine years",
+          "9 years"
+        ]
+      },
+      "7": {
+        "correct": [
+          "long distance",
+          "long-distance service",
+          "long-distance"
+        ]
+      },
+      "8": {
+        "correct": [
+          "Internet service",
+          "Internet"
+        ]
+      },
+      "9": {
+        "correct": [
+          "Friday"
+        ]
+      },
+      "10": {
+        "correct": [
+          "morning"
+        ]
+      }
+    }
+  },
+  "part_2": {
+    "questions": {
+      "11": {
+        "correct": "B"
+      },
+      "12": {
+        "correct": "C"
+      },
+      "13": {
+        "correct": "B"
+      },
+      "14": {
+        "correct": "A"
+      },
+      "15": {
+        "correct": [
+          "clown"
+        ]
+      },
+      "16": {
+        "correct": [
+          "concert"
+        ]
+      },
+      "17": {
+        "correct": [
+          "singing"
+        ]
+      },
+      "18": {
+        "correct": [
+          "international"
+        ]
+      },
+      "19": {
+        "correct": [
+          "games"
+        ]
+      },
+      "20": {
+        "correct": [
+          "crafts"
+        ]
+      }
+    }
+  },
+  "part_3": {
+    "questions": {
+      "21": {
+        "correct": [
+          "university catalog",
+          "university catalogue"
+        ]
+      },
+      "22": {
+        "correct": [
+          "a summary"
+        ]
+      },
+      "23": {
+        "correct": [
+          "work supervisor"
+        ]
+      },
+      "24": {
+        "correct": "C"
+      },
+      "25": {
+        "correct": "A"
+      },
+      "26": {
+        "correct": "B"
+      },
+      "27": {
+        "correct": "A"
+      },
+      "28": {
+        "correct": "C"
+      },
+      "29": {
+        "correct": "B"
+      },
+      "30": {
+        "correct": "A"
+      }
+    }
+  },
+  "part_4": {
+    "questions": {
+      "31": {
+        "correct": [
+          "forested areas",
+          "forested area"
+        ]
+      },
+      "32": {
+        "correct": [
+          "plant foods"
+        ]
+      },
+      "33": {
+        "correct": [
+          "animal foods",
+          "insects",
+          "fish",
+          "insects fish",
+          "insects,fish"
+        ]
+      },
+      "34": {
+        "correct": [
+          "the winter",
+          "winter"
+        ]
+      },
+      "35": {
+        "correct": [
+          "twenty-five years",
+          "25 years"
+        ]
+      },
+      "36": {
+        "correct": "A"
+      },
+      "37": {
+        "correct": "B"
+      },
+      "38": {
+        "correct": "B"
+      },
+      "39": {
+        "correct": "A"
+      },
+      "40": {
+        "correct": "A"
+      }
+    }
+  }
+}

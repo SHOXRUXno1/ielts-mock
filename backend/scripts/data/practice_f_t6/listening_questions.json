@@ -1,0 +1,716 @@
+{
+  "part_1": {
+    "title": "City Library",
+    "source_url": "https://engnovate.com/ielts-listening-answers/city-library/",
+    "question_groups": [
+      {
+        "type": "note_completion",
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "instruction": "Complete the information below.\nWrite NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+        "items": {
+          "1": {
+            "gap_id": "q1"
+          },
+          "2": {
+            "gap_id": "q2"
+          },
+          "3": {
+            "gap_id": "q3"
+          },
+          "4": {
+            "gap_id": "q4"
+          },
+          "5": {
+            "gap_id": "q5"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+          "max_words_per_gap": 2,
+          "title": "City Library",
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Head Librarian: Example: Mrs. Phillips"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Hours: "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q1"
+                    },
+                    {
+                      "type": "text",
+                      "value": " to 4:30"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "heading": "Books:",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Ground floor: "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q2"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Second floor: Adult collection"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Third floor: "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q3"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "heading": "Book carts:",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Brown cart: books to re-shelve"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Black cart: books to "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q4"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "White cart: books to "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q5"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "table_completion",
+        "questions": [
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "instruction": "Complete the library schedule below.\nWrite NO MORE THAN ONE WORD AND/OR A NUMBER for each answer.",
+        "items": {
+          "6": {
+            "gap_id": "q6"
+          },
+          "7": {
+            "gap_id": "q7"
+          },
+          "8": {
+            "gap_id": "q8"
+          },
+          "9": {
+            "gap_id": "q9"
+          },
+          "10": {
+            "gap_id": "q10"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN ONE WORD AND/OR A NUMBER for each answer.",
+          "max_words_per_gap": 1,
+          "headers": [
+            "Activity",
+            "Location",
+            "Day and Time"
+          ],
+          "variant": "table",
+          "rows": [
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Story Time"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Children’s Room"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q6"
+                  },
+                  {
+                    "type": "text",
+                    "value": " at 11:00"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q7"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Reference Room"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Saturday at "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q8"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Lecture Series"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q9"
+                  },
+                  {
+                    "type": "text",
+                    "value": " Room"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Friday at "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q10"
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "part_2": {
+    "title": "Golden Lake Resort",
+    "source_url": "https://engnovate.com/ielts-listening-answers/golden-lake-resort/",
+    "question_groups": [
+      {
+        "type": "multi_select",
+        "questions": [
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "instruction": "Choose FIVE letters, A–I.",
+        "items": {
+          "11": {
+            "question": "Which FIVE activities are available at Golden Lake Resort?",
+            "options": [
+              "A. swimming",
+              "B. boating",
+              "C. waterskiing",
+              "D. fishing",
+              "E. tennis",
+              "F. golf",
+              "G. horseback riding",
+              "H. hiking",
+              "I. arts and crafts"
+            ],
+            "choose_n": 5
+          }
+        }
+      },
+      {
+        "type": "table_completion",
+        "questions": [
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "instruction": "Complete the schedule below.\nWrite NO MORE THAN ONE WORD for each answer.",
+        "items": {
+          "16": {
+            "gap_id": "q16"
+          },
+          "17": {
+            "gap_id": "q17"
+          },
+          "18": {
+            "gap_id": "q18"
+          },
+          "19": {
+            "gap_id": "q19"
+          },
+          "20": {
+            "gap_id": "q20"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN ONE WORD for each answer.",
+          "max_words_per_gap": 1,
+          "headers": [
+            "Night",
+            "Activity"
+          ],
+          "variant": "table",
+          "rows": [
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Sunday"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q16"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Monday"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Dessert Night"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Tuesday"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q17"
+                  },
+                  {
+                    "type": "text",
+                    "value": " Night"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Wednesday"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q18"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Thursday"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q19"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Friday"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Talent Show"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Saturday"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q20"
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "part_3": {
+    "title": "Wild Bird Rescue and Rehabilitation",
+    "source_url": "https://engnovate.com/ielts-listening-answers/wild-bird-rescue-and-rehabilitation/",
+    "question_groups": [
+      {
+        "type": "multi_select",
+        "questions": [
+          21,
+          22,
+          23
+        ],
+        "instruction": "Choose THREE letters, A–F.",
+        "items": {
+          "21": {
+            "question": "Which THREE things are the students required to submit to their professor?",
+            "options": [
+              "A. a written summary",
+              "B. maps",
+              "C. a case study",
+              "D. charts and graphs",
+              "E. a list of resources used",
+              "F. a video"
+            ],
+            "choose_n": 3
+          }
+        }
+      },
+      {
+        "type": "short_answer",
+        "questions": [
+          24,
+          25
+        ],
+        "instruction": "Answer the questions below.\nWrite NO MORE THAN THREE WORDS for each answer.",
+        "items": {
+          "24": {
+            "question": "What two sources of information will the students use when preparing their presentation?"
+          },
+          "25": {
+            "question": "What will the students show during their presentation?"
+          }
+        },
+        "max_words": 3
+      },
+      {
+        "type": "mcq",
+        "questions": [
+          26,
+          27,
+          28,
+          29,
+          30
+        ],
+        "instruction": "Choose the correct letter, A, B, or C.",
+        "items": {
+          "26": {
+            "question": "Only rescue birds that are",
+            "options": [
+              "A. all alone.",
+              "B. obviously hurt.",
+              "C. sitting on the ground."
+            ]
+          },
+          "27": {
+            "question": "Protect yourself by wearing",
+            "options": [
+              "A. gloves.",
+              "B. a hat.",
+              "C. protective glasses."
+            ]
+          },
+          "28": {
+            "question": "Put the bird in a",
+            "options": [
+              "A. cage.",
+              "B. box.",
+              "C. bag."
+            ]
+          },
+          "29": {
+            "question": "Keep the bird calm by",
+            "options": [
+              "A. petting it.",
+              "B. talking to it.",
+              "C. leaving it alone."
+            ]
+          },
+          "30": {
+            "question": "When transporting the bird,",
+            "options": [
+              "A. speak quietly.",
+              "B. play music.",
+              "C. drive very slowly."
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "part_4": {
+    "title": "The Great Barrier Reef",
+    "source_url": "https://engnovate.com/ielts-listening-answers/the-great-barrier-reef/",
+    "question_groups": [
+      {
+        "type": "summary_completion",
+        "questions": [
+          31,
+          32,
+          33
+        ],
+        "instruction": "Complete the information about the Great Barrier Reef.\nWrite NO MORE THAN TWO WORDS for each answer.",
+        "items": {
+          "31": {
+            "gap_id": "q31"
+          },
+          "32": {
+            "gap_id": "q32"
+          },
+          "33": {
+            "gap_id": "q33"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS for each answer.",
+          "max_words_per_gap": 2,
+          "variant": "summary",
+          "paragraphs": [
+            {
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "The Great Barrier Reef is made up of 3,000 "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q31"
+                },
+                {
+                  "type": "text",
+                  "value": " and 600 "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q32"
+                },
+                {
+                  "type": "text",
+                  "value": " . Over 400 kinds of "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q33"
+                },
+                {
+                  "type": "text",
+                  "value": " can be found there."
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "multi_select",
+        "questions": [
+          34,
+          35,
+          36,
+          37,
+          38
+        ],
+        "instruction": "Choose FIVE letters, A–I.",
+        "items": {
+          "34": {
+            "question": "Which FIVE of these kinds of animals inhabiting the Great Barrier Reef are mentioned?",
+            "options": [
+              "A. sharks",
+              "B. starfish",
+              "C. seahorses",
+              "D. clams",
+              "E. whales",
+              "F. dolphins",
+              "G. sea turtles",
+              "H. crocodiles",
+              "I. frogs"
+            ],
+            "choose_n": 5
+          }
+        }
+      },
+      {
+        "type": "short_answer",
+        "questions": [
+          39,
+          40
+        ],
+        "instruction": "Answer the questions below.\nWrite NO MORE THAN THREE WORDS for each answer.",
+        "items": {
+          "39": {
+            "question": "What causes coral bleaching?"
+          },
+          "40": {
+            "question": "What has been one response to this problem?"
+          }
+        },
+        "max_words": 3
+      }
+    ]
+  }
+}

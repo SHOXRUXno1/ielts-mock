@@ -1,0 +1,790 @@
+{
+  "part_1": {
+    "title": "ClearPoint Telephone Company",
+    "source_url": "https://engnovate.com/ielts-listening-answers/clearpoint-telephone-company/",
+    "question_groups": [
+      {
+        "type": "form_completion",
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "instruction": "Complete the form below.\nWrite NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+        "items": {
+          "1": {
+            "gap_id": "q1"
+          },
+          "2": {
+            "gap_id": "q2"
+          },
+          "3": {
+            "gap_id": "q3"
+          },
+          "4": {
+            "gap_id": "q4"
+          },
+          "5": {
+            "gap_id": "q5"
+          },
+          "6": {
+            "gap_id": "q6"
+          },
+          "7": {
+            "gap_id": "q7"
+          },
+          "8": {
+            "gap_id": "q8"
+          },
+          "9": {
+            "gap_id": "q9"
+          },
+          "10": {
+            "gap_id": "q10"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+          "max_words_per_gap": 2,
+          "variant": "form",
+          "form_title": "ClearPoint Telephone Company",
+          "fields": [
+            {
+              "type": "gap_line",
+              "label": "",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "Customer Order Form"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Order taken by",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "Ms. Jones"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Name",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "Harold "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q1"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Address",
+              "segments": [
+                {
+                  "type": "gap",
+                  "gap_id": "q2"
+                },
+                {
+                  "type": "text",
+                  "value": " Fulton Avenue, apartment 12"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Type of service",
+              "segments": [
+                {
+                  "type": "gap",
+                  "gap_id": "q3"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Employer",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "Wrightsville Medical Group"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Occupation",
+              "segments": [
+                {
+                  "type": "gap",
+                  "gap_id": "q4"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Work phone",
+              "segments": [
+                {
+                  "type": "gap",
+                  "gap_id": "q5"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Time at current job",
+              "segments": [
+                {
+                  "type": "gap",
+                  "gap_id": "q6"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Special services",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": " "
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "- "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q7"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "- "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q8"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Installation scheduled for",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": " "
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "- Day",
+              "segments": [
+                {
+                  "type": "gap",
+                  "gap_id": "q9"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "- Time of day",
+              "segments": [
+                {
+                  "type": "gap",
+                  "gap_id": "q10"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "part_2": {
+    "title": "City Fair",
+    "source_url": "https://engnovate.com/ielts-listening-answers/city-fair/",
+    "question_groups": [
+      {
+        "type": "mcq",
+        "questions": [
+          11,
+          12,
+          13,
+          14
+        ],
+        "instruction": "Choose the correct letter, A, B, or C.",
+        "items": {
+          "11": {
+            "question": "The fair will take place at the",
+            "options": [
+              "A. fairgrounds.",
+              "B. park.",
+              "C. school."
+            ]
+          },
+          "12": {
+            "question": "The fair will begin on Friday",
+            "options": [
+              "A. morning.",
+              "B. afternoon.",
+              "C. evening."
+            ]
+          },
+          "13": {
+            "question": "The fair will begin with a",
+            "options": [
+              "A. parade.",
+              "B. dance performance.",
+              "C. speech by the mayor."
+            ]
+          },
+          "14": {
+            "question": "There will be free admission on",
+            "options": [
+              "A. Friday.",
+              "B. Saturday.",
+              "C. Sunday."
+            ]
+          }
+        }
+      },
+      {
+        "type": "table_completion",
+        "questions": [
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "instruction": "Complete the chart below.\nWrite NO MORE THAN ONE WORD for each answer.",
+        "items": {
+          "15": {
+            "gap_id": "q15"
+          },
+          "16": {
+            "gap_id": "q16"
+          },
+          "17": {
+            "gap_id": "q17"
+          },
+          "18": {
+            "gap_id": "q18"
+          },
+          "19": {
+            "gap_id": "q19"
+          },
+          "20": {
+            "gap_id": "q20"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN ONE WORD for each answer.",
+          "max_words_per_gap": 1,
+          "headers": [
+            "Day/Time",
+            "Event"
+          ],
+          "variant": "table",
+          "rows": [
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Saturday afternoon"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q15"
+                  },
+                  {
+                    "type": "text",
+                    "value": " show"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Saturday evening"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q16"
+                  },
+                  {
+                    "type": "text",
+                    "value": " by the lake"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Sunday afternoon"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q17"
+                  },
+                  {
+                    "type": "text",
+                    "value": " contest"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "All weekend"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q18"
+                  },
+                  {
+                    "type": "text",
+                    "value": " food"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": " "
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q19"
+                  },
+                  {
+                    "type": "text",
+                    "value": " for children"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": " "
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q20"
+                  },
+                  {
+                    "type": "text",
+                    "value": " for sale"
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "part_3": {
+    "title": "How To Get Academic Credit for Work Experience",
+    "source_url": "https://engnovate.com/ielts-listening-answers/how-to-get-academic-credit-for-work-experience/",
+    "question_groups": [
+      {
+        "type": "note_completion",
+        "questions": [
+          21,
+          22,
+          23
+        ],
+        "instruction": "Complete the information below.\nWrite NO MORE THAN TWO WORDS for each answer.",
+        "items": {
+          "21": {
+            "gap_id": "q21"
+          },
+          "22": {
+            "gap_id": "q22"
+          },
+          "23": {
+            "gap_id": "q23"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS for each answer.",
+          "max_words_per_gap": 2,
+          "title": "How to get academic credit for work experience",
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "First, read the "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q21"
+                    },
+                    {
+                      "type": "text",
+                      "value": " . Find courses that match your work experience. Then write "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q22"
+                    },
+                    {
+                      "type": "text",
+                      "value": " of your work experience. Submit that together with a letter from your "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q23"
+                    },
+                    {
+                      "type": "text",
+                      "value": " to the university admissions office."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "matching_features",
+        "questions": [
+          24,
+          25,
+          26,
+          27,
+          28
+        ],
+        "instruction": "Where can the items listed below be found?",
+        "items": {
+          "24": {
+            "question": "university catalog"
+          },
+          "25": {
+            "question": "application for admission form"
+          },
+          "26": {
+            "question": "requirements list"
+          },
+          "27": {
+            "question": "recommendation forms"
+          },
+          "28": {
+            "question": "job listings"
+          }
+        },
+        "options_shared": {
+          "options": [
+            "A. admissions office",
+            "B. counseling center",
+            "C. library"
+          ]
+        }
+      },
+      {
+        "type": "mcq",
+        "questions": [
+          29,
+          30
+        ],
+        "instruction": "Choose the correct letters, A, B, or C.",
+        "items": {
+          "29": {
+            "question": "What are full-time students eligible for?",
+            "options": [
+              "A. Discounted books",
+              "B. The work-study program",
+              "C. A free bus pass"
+            ]
+          },
+          "30": {
+            "question": "How can a student get financial assistance?",
+            "options": [
+              "A. Speak with a counselor",
+              "B. Apply to the admissions office",
+              "C. Make arrangements with a bank"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "part_4": {
+    "title": "The Black Bear",
+    "source_url": "https://engnovate.com/ielts-listening-answers/the-black-bear/",
+    "question_groups": [
+      {
+        "type": "table_completion",
+        "questions": [
+          31,
+          32,
+          33,
+          34,
+          35
+        ],
+        "instruction": "Complete the chart with information about the black bear.\nWrite NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+        "items": {
+          "31": {
+            "gap_id": "q31"
+          },
+          "32": {
+            "gap_id": "q32"
+          },
+          "33": {
+            "gap_id": "q33"
+          },
+          "34": {
+            "gap_id": "q34"
+          },
+          "35": {
+            "gap_id": "q35"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+          "max_words_per_gap": 2,
+          "headers": [
+            "",
+            ""
+          ],
+          "variant": "table",
+          "rows": [
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Range"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Lives in "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q31"
+                  },
+                  {
+                    "type": "text",
+                    "value": " of North America"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Diet"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Ninety percent of diet consists of "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q32"
+                  },
+                  {
+                    "type": "text",
+                    "value": " . Also eats "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q33"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Cubs"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Baby bear cubs are born in "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q34"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Life span"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Black bears live for about "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q35"
+                  },
+                  {
+                    "type": "text",
+                    "value": " in the wild."
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "type": "matching_features",
+        "questions": [
+          36,
+          37,
+          38,
+          39,
+          40
+        ],
+        "instruction": "Which characteristics fit black bears and which fit grizzly bears?\nWrite A if it is a characteristic of black bears. Write B if it is a characteristic of grizzly bears.",
+        "items": {
+          "36": {
+            "question": "Has a patch of light fur on its chest"
+          },
+          "37": {
+            "question": "Weighs 225 kilos"
+          },
+          "38": {
+            "question": "Has a shoulder hump"
+          },
+          "39": {
+            "question": "Has pointed ears"
+          },
+          "40": {
+            "question": "Has shorter claws"
+          }
+        },
+        "options_shared": {
+          "options": [
+            "A. characteristic of black bears",
+            "B. characteristic of grizzly bears"
+          ]
+        }
+      }
+    ]
+  }
+}

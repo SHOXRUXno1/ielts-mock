@@ -1,0 +1,230 @@
+{
+  "part_1": {
+    "questions": {
+      "1": {
+        "correct": [
+          "February"
+        ]
+      },
+      "2": {
+        "correct": [
+          "one",
+          "1"
+        ]
+      },
+      "3": {
+        "correct": [
+          "Wilson"
+        ]
+      },
+      "4": {
+        "correct": [
+          "2336189872"
+        ]
+      },
+      "5": {
+        "correct": "C"
+      },
+      "6": {
+        "correct": "F"
+      },
+      "7": {
+        "correct": "G"
+      },
+      "8": {
+        "correct": "C"
+      },
+      "9": {
+        "correct": "A"
+      },
+      "10": {
+        "correct": "C"
+      }
+    }
+  },
+  "part_2": {
+    "questions": {
+      "11": {
+        "correct": [
+          "18"
+        ]
+      },
+      "12": {
+        "correct": [
+          "9"
+        ]
+      },
+      "13": {
+        "correct": [
+          "Hill Park"
+        ]
+      },
+      "14": {
+        "correct": [
+          "Bay Bridge"
+        ]
+      },
+      "15": {
+        "correct": [
+          "Green Street"
+        ]
+      },
+      "16": {
+        "correct": [
+          "view"
+        ]
+      },
+      "17": {
+        "correct": [
+          "boats"
+        ]
+      },
+      "18": {
+        "correct": [
+          "eat"
+        ]
+      },
+      "19": {
+        "correct": [
+          "baskets"
+        ]
+      },
+      "20": {
+        "correct": [
+          "theater",
+          "theatre"
+        ]
+      }
+    }
+  },
+  "part_3": {
+    "questions": {
+      "21": {
+        "correct": [
+          "in three weeks",
+          "in 3 weeks",
+          "three more weeks",
+          "3 more weeks"
+        ]
+      },
+      "22": {
+        "correct": [
+          "a shopping mall",
+          "the shopping mall"
+        ]
+      },
+      "23": {
+        "correct": [
+          "thirty",
+          "30",
+          "at least thirty",
+          "at least 30"
+        ]
+      },
+      "24": {
+        "correct": [
+          "a government study",
+          "the government study"
+        ]
+      },
+      "25": {
+        "correct": [
+          "questionnaire"
+        ]
+      },
+      "26": {
+        "correct": [
+          "approval",
+          "approval for questionnaire"
+        ]
+      },
+      "27": {
+        "correct": [
+          "conduct interviews",
+          "conduct the interviews"
+        ]
+      },
+      "28": {
+        "correct": [
+          "analyze results",
+          "analyse results",
+          "analyze the results",
+          "analyse the results"
+        ]
+      },
+      "29": {
+        "correct": [
+          "some charts",
+          "charts",
+          "charts showing results"
+        ]
+      },
+      "30": {
+        "correct": [
+          "the class presentation",
+          "class presentation"
+        ]
+      }
+    }
+  },
+  "part_4": {
+    "questions": {
+      "31": {
+        "correct": [
+          "born"
+        ]
+      },
+      "32": {
+        "correct": [
+          "support her family",
+          "support the family"
+        ]
+      },
+      "33": {
+        "correct": [
+          "the first novel",
+          "her first novel",
+          "The Inheritance"
+        ]
+      },
+      "34": {
+        "correct": [
+          "1862"
+        ]
+      },
+      "35": {
+        "correct": [
+          "after the war"
+        ]
+      },
+      "36": {
+        "correct": [
+          "1866"
+        ]
+      },
+      "37": {
+        "correct": [
+          "1868"
+        ]
+      },
+      "38": {
+        "correct": [
+          "May",
+          "her youngest sister",
+          "Alcott's sister",
+          "Alcott's youngest sister"
+        ]
+      },
+      "39": {
+        "correct": [
+          "1882"
+        ]
+      },
+      "40": {
+        "correct": [
+          "died"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,959 @@
+{
+  "part_1": {
+    "title": "Globetrotters Language School",
+    "source_url": "https://engnovate.com/ielts-listening-answers/globetrotters-language-school/",
+    "question_groups": [
+      {
+        "type": "note_completion",
+        "questions": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "instruction": "Complete the schedule below.\nWrite NO MORE THAN THREE WORDS for each answer.",
+        "items": {
+          "1": {
+            "gap_id": "q1"
+          },
+          "2": {
+            "gap_id": "q2"
+          },
+          "3": {
+            "gap_id": "q3"
+          },
+          "4": {
+            "gap_id": "q4"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN THREE WORDS for each answer.",
+          "max_words_per_gap": 3,
+          "title": "Globetrotters Language School",
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "Class Schedule",
+              "items": []
+            },
+            {
+              "heading": "Chinese",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Level: Advanced"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Days: "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q1"
+                    },
+                    {
+                      "type": "text",
+                      "value": " evenings"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "heading": "Japanese",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Level: "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q2"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Days: Tuesday and Thursday mornings"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Level: "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q3"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Days: Monday, Wednesday, and Friday mornings"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "heading": "French",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Level: Intermediate"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Days: Friday "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q4"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "table_completion",
+        "questions": [
+          5,
+          6,
+          7,
+          8
+        ],
+        "instruction": "Complete the information below.\nWrite NO MORE THAN ONE NUMBER for each answer.",
+        "items": {
+          "5": {
+            "gap_id": "q5"
+          },
+          "6": {
+            "gap_id": "q6"
+          },
+          "7": {
+            "gap_id": "q7"
+          },
+          "8": {
+            "gap_id": "q8"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN ONE NUMBER for each answer.",
+          "max_words_per_gap": 1,
+          "title": "Tuition Information",
+          "headers": [
+            "",
+            ""
+          ],
+          "variant": "table",
+          "rows": [
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "One week"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "$ "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q5"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Four weeks"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "$ "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q6"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Six weeks"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "$ "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q7"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Twelve weeks"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "$ "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q8"
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "type": "sentence_completion",
+        "questions": [
+          9,
+          10
+        ],
+        "instruction": "Complete the sentences below.\nWrite NO MORE THAN THREE WORDS for each answer.",
+        "items": {
+          "9": {
+            "gap_id": "q9"
+          },
+          "10": {
+            "gap_id": "q10"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN THREE WORDS for each answer.",
+          "max_words_per_gap": 3,
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Students can register for a class by visiting "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q9"
+                    },
+                    {
+                      "type": "text",
+                      "value": " ."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "gap",
+                      "gap_id": "q10"
+                    },
+                    {
+                      "type": "text",
+                      "value": " is in charge of student registration."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "part_2": {
+    "title": "City Shopping District",
+    "source_url": "https://engnovate.com/ielts-listening-answers/city-shopping-district/",
+    "question_groups": [
+      {
+        "type": "map_labeling",
+        "questions": [
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "instruction": "Label the map below.\nWrite the correct letter, A–I, next to questions 11–15.",
+        "items": {
+          "11": {
+            "question": "Harbor View Bookstore"
+          },
+          "12": {
+            "question": "Pear Café"
+          },
+          "13": {
+            "question": "Souvenir Store"
+          },
+          "14": {
+            "question": "Art Gallery"
+          },
+          "15": {
+            "question": "Harbor Park"
+          }
+        },
+        "options_shared": {
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G",
+            "H",
+            "I"
+          ],
+          "image_url": "/media/images/practice_f_t1_listening_map.jpg"
+        }
+      },
+      {
+        "type": "sentence_completion",
+        "questions": [
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "instruction": "Complete the sentences below.\nWrite ONE WORD ONLY for each answer.",
+        "items": {
+          "16": {
+            "gap_id": "q16"
+          },
+          "17": {
+            "gap_id": "q17"
+          },
+          "18": {
+            "gap_id": "q18"
+          },
+          "19": {
+            "gap_id": "q19"
+          },
+          "20": {
+            "gap_id": "q20"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write ONE WORD ONLY for each answer.",
+          "max_words_per_gap": 1,
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "The park was built in "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q16"
+                    },
+                    {
+                      "type": "text",
+                      "value": " ."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "A "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q17"
+                    },
+                    {
+                      "type": "text",
+                      "value": " stands in the center of the park."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Take the path through the "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q18"
+                    },
+                    {
+                      "type": "text",
+                      "value": " ."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "In the middle of the garden is a "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q19"
+                    },
+                    {
+                      "type": "text",
+                      "value": " ."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "A "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q20"
+                    },
+                    {
+                      "type": "text",
+                      "value": " takes you down to the harbor and a view of the boats."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "part_3": {
+    "title": "The City Archives",
+    "source_url": "https://engnovate.com/ielts-listening-answers/the-city-archives/",
+    "question_groups": [
+      {
+        "type": "note_completion",
+        "questions": [
+          21,
+          22,
+          23,
+          24
+        ],
+        "instruction": "Complete the information about the archives.\nWrite NO MORE THAN THREE WORDS AND/OR A NUMBER for each answer.",
+        "items": {
+          "21": {
+            "gap_id": "q21"
+          },
+          "22": {
+            "gap_id": "q22"
+          },
+          "23": {
+            "gap_id": "q23"
+          },
+          "24": {
+            "gap_id": "q24"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN THREE WORDS AND/OR A NUMBER for each answer.",
+          "max_words_per_gap": 3,
+          "title": "Welcome to City Archives",
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "The following people may use the archives:"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "University students with a valid "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q21"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "City residents with payment of "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q22"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "All others: Special permission from the director is required."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Hours:"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Days: "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q23"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Hours: 9:30 A.M. until "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q24"
+                    },
+                    {
+                      "type": "text",
+                      "value": " P.M."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "matching_features",
+        "questions": [
+          25,
+          26,
+          27,
+          28,
+          29,
+          30
+        ],
+        "instruction": "What can be found on each floor of the archives building?\nWrite the correct letter, A–G next to questions 25–30.",
+        "items": {
+          "25": {
+            "question": "basement"
+          },
+          "26": {
+            "question": "ground floor"
+          },
+          "27": {
+            "question": "second floor"
+          },
+          "28": {
+            "question": "third floor"
+          },
+          "29": {
+            "question": "fourth floor"
+          },
+          "30": {
+            "question": "fifth floor"
+          }
+        },
+        "options_shared": {
+          "options": [
+            "A. nineteenth-century documents",
+            "B. maps",
+            "C. personal papers",
+            "D. photographs",
+            "E. books about the city",
+            "F. newspapers",
+            "G. information about the woolen mill"
+          ]
+        }
+      }
+    ]
+  },
+  "part_4": {
+    "title": "Historical Uses of Wind Power",
+    "source_url": "https://engnovate.com/ielts-listening-answers/historical-uses-of-wind-power/",
+    "question_groups": [
+      {
+        "type": "table_completion",
+        "questions": [
+          31,
+          32,
+          33
+        ],
+        "instruction": "Complete the notes below.\nWrite NO MORE THAN TWO WORDS for each answer.",
+        "items": {
+          "31": {
+            "gap_id": "q31"
+          },
+          "32": {
+            "gap_id": "q32"
+          },
+          "33": {
+            "gap_id": "q33"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS for each answer.",
+          "max_words_per_gap": 2,
+          "title": "Historical Uses of Wind Power",
+          "headers": [
+            "",
+            ""
+          ],
+          "variant": "table",
+          "rows": [
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Ancient China"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Windmills were used to "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q31"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Ancient Persia"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Farmers used wind power to "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q32"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "The Netherlands"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "People used windmills to "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q33"
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "type": "table_completion",
+        "questions": [
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40
+        ],
+        "instruction": "Complete the chart below.\nWrite NO MORE THAN TWO WORDS for each answer.",
+        "items": {
+          "34": {
+            "gap_id": "q34"
+          },
+          "35": {
+            "gap_id": "q35"
+          },
+          "36": {
+            "gap_id": "q36"
+          },
+          "37": {
+            "gap_id": "q37"
+          },
+          "38": {
+            "gap_id": "q38"
+          },
+          "39": {
+            "gap_id": "q39"
+          },
+          "40": {
+            "gap_id": "q40"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS for each answer.",
+          "max_words_per_gap": 2,
+          "title": "Wind Power",
+          "headers": [
+            "Advantages",
+            "Disadvantages"
+          ],
+          "variant": "table",
+          "rows": [
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Unlike oil and coal, wind power does not cause "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q34"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "The cost of the initial investment is high."
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "There are limited supplies of oil and coal, but wind is a "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q35"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "The "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q37"
+                  },
+                  {
+                    "type": "text",
+                    "value": " of the wind is not constant."
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "It "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q36"
+                  },
+                  {
+                    "type": "text",
+                    "value": " to generate electricity with the wind."
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Wind turbines are usually located far from "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q38"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Wind turbines do not take up much land."
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Wind turbines may spoil "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q39"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": " "
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Wind turbines create as much "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q40"
+                  },
+                  {
+                    "type": "text",
+                    "value": " as a high-speed car."
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

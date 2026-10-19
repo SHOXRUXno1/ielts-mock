@@ -1,0 +1,208 @@
+{
+  "part_1": {
+    "questions": {
+      "1": {
+        "correct": [
+          "Wednesday and Friday",
+          "Friday and Wednesday",
+          "Wednesday Friday",
+          "Wednesday,Friday"
+        ]
+      },
+      "2": {
+        "correct": [
+          "intermediate"
+        ]
+      },
+      "3": {
+        "correct": [
+          "beginning"
+        ]
+      },
+      "4": {
+        "correct": [
+          "mornings"
+        ]
+      },
+      "5": {
+        "correct": [
+          "125"
+        ]
+      },
+      "6": {
+        "correct": [
+          "410"
+        ]
+      },
+      "7": {
+        "correct": [
+          "575"
+        ]
+      },
+      "8": {
+        "correct": [
+          "1 050",
+          "1,050",
+          "1050"
+        ]
+      },
+      "9": {
+        "correct": [
+          "the school office"
+        ]
+      },
+      "10": {
+        "correct": [
+          "Mr. Lindsay"
+        ]
+      }
+    }
+  },
+  "part_2": {
+    "questions": {
+      "11": {
+        "correct": "A"
+      },
+      "12": {
+        "correct": "C"
+      },
+      "13": {
+        "correct": "F"
+      },
+      "14": {
+        "correct": "H"
+      },
+      "15": {
+        "correct": "I"
+      },
+      "16": {
+        "correct": [
+          "1876"
+        ]
+      },
+      "17": {
+        "correct": [
+          "statue"
+        ]
+      },
+      "18": {
+        "correct": [
+          "woods"
+        ]
+      },
+      "19": {
+        "correct": [
+          "fountain"
+        ]
+      },
+      "20": {
+        "correct": [
+          "staircase"
+        ]
+      }
+    }
+  },
+  "part_3": {
+    "questions": {
+      "21": {
+        "correct": [
+          "identification card",
+          "ID"
+        ]
+      },
+      "22": {
+        "correct": [
+          "an annual fee"
+        ]
+      },
+      "23": {
+        "correct": [
+          "Tuesday Sunday",
+          "Tuesday,Sunday",
+          "Tuesday through Sunday",
+          "Tuesday thru Sunday"
+        ]
+      },
+      "24": {
+        "correct": [
+          "8:30",
+          "8.30"
+        ]
+      },
+      "25": {
+        "correct": "D"
+      },
+      "26": {
+        "correct": "A"
+      },
+      "27": {
+        "correct": "F"
+      },
+      "28": {
+        "correct": "B"
+      },
+      "29": {
+        "correct": "G"
+      },
+      "30": {
+        "correct": "C"
+      }
+    }
+  },
+  "part_4": {
+    "questions": {
+      "31": {
+        "correct": [
+          "pump water"
+        ]
+      },
+      "32": {
+        "correct": [
+          "grind grain"
+        ]
+      },
+      "33": {
+        "correct": [
+          "drain lakes"
+        ]
+      },
+      "34": {
+        "correct": [
+          "pollution"
+        ]
+      },
+      "35": {
+        "correct": [
+          "renewable resource"
+        ]
+      },
+      "36": {
+        "correct": [
+          "costs less"
+        ]
+      },
+      "37": {
+        "correct": [
+          "strength"
+        ]
+      },
+      "38": {
+        "correct": [
+          "cities"
+        ]
+      },
+      "39": {
+        "correct": [
+          "the scenery",
+          "scenery",
+          "local scenery"
+        ]
+      },
+      "40": {
+        "correct": [
+          "noise"
+        ]
+      }
+    }
+  }
+}

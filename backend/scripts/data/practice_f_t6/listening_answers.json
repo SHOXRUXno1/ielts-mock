@@ -1,0 +1,196 @@
+{
+  "part_1": {
+    "questions": {
+      "1": {
+        "correct": [
+          "8:30",
+          "8.30"
+        ]
+      },
+      "2": {
+        "correct": [
+          "reference books"
+        ]
+      },
+      "3": {
+        "correct": [
+          "children’s books"
+        ]
+      },
+      "4": {
+        "correct": [
+          "be repaired",
+          "repair"
+        ]
+      },
+      "5": {
+        "correct": [
+          "be sold",
+          "sell"
+        ]
+      },
+      "6": {
+        "correct": [
+          "Thursday"
+        ]
+      },
+      "7": {
+        "correct": [
+          "family movies",
+          "movies"
+        ]
+      },
+      "8": {
+        "correct": [
+          "2:30",
+          "2.30"
+        ]
+      },
+      "9": {
+        "correct": [
+          "meeting"
+        ]
+      },
+      "10": {
+        "correct": [
+          "6:30",
+          "6.30"
+        ]
+      }
+    }
+  },
+  "part_2": {
+    "questions": {
+      "11": {
+        "correct": "A"
+      },
+      "12": {
+        "correct": "B"
+      },
+      "13": {
+        "correct": "D"
+      },
+      "14": {
+        "correct": "G"
+      },
+      "15": {
+        "correct": "I"
+      },
+      "16": {
+        "correct": [
+          "film",
+          "movie"
+        ]
+      },
+      "17": {
+        "correct": [
+          "discussion"
+        ]
+      },
+      "18": {
+        "correct": [
+          "lectures"
+        ]
+      },
+      "19": {
+        "correct": [
+          "games"
+        ]
+      },
+      "20": {
+        "correct": [
+          "dance"
+        ]
+      }
+    }
+  },
+  "part_3": {
+    "questions": {
+      "21": {
+        "correct": "A"
+      },
+      "22": {
+        "correct": "C"
+      },
+      "23": {
+        "correct": "E"
+      },
+      "24": {
+        "correct": [
+          "interviews journal articles",
+          "interviews,journal articles",
+          "journal articles interviews",
+          "journal articles,interviews"
+        ]
+      },
+      "25": {
+        "correct": [
+          "photos of birds",
+          "photos"
+        ]
+      },
+      "26": {
+        "correct": "B"
+      },
+      "27": {
+        "correct": "A"
+      },
+      "28": {
+        "correct": "B"
+      },
+      "29": {
+        "correct": "C"
+      },
+      "30": {
+        "correct": "A"
+      }
+    }
+  },
+  "part_4": {
+    "questions": {
+      "31": {
+        "correct": [
+          "individual reefs",
+          "coral reefs"
+        ]
+      },
+      "32": {
+        "correct": [
+          "islands"
+        ]
+      },
+      "33": {
+        "correct": [
+          "corals",
+          "coral"
+        ]
+      },
+      "34": {
+        "correct": "A"
+      },
+      "35": {
+        "correct": "D"
+      },
+      "36": {
+        "correct": "E"
+      },
+      "37": {
+        "correct": "H"
+      },
+      "38": {
+        "correct": "I"
+      },
+      "39": {
+        "correct": [
+          "rising sea temperatures"
+        ]
+      },
+      "40": {
+        "correct": [
+          "shading the reef",
+          "shading certain areas"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "part_1": {
+    "questions": {
+      "1": {
+        "correct": [
+          "tutoring sessions"
+        ]
+      },
+      "2": {
+        "correct": [
+          "Sunday"
+        ]
+      },
+      "3": {
+        "correct": [
+          "teens adults",
+          "teens,adults"
+        ]
+      },
+      "4": {
+        "correct": [
+          "Yoga"
+        ]
+      },
+      "5": {
+        "correct": [
+          "adults"
+        ]
+      },
+      "6": {
+        "correct": [
+          "75"
+        ]
+      },
+      "7": {
+        "correct": [
+          "225"
+        ]
+      },
+      "8": {
+        "correct": [
+          "Eliot"
+        ]
+      },
+      "9": {
+        "correct": [
+          "across the street",
+          "in a garage"
+        ]
+      },
+      "10": {
+        "correct": [
+          "Monday"
+        ]
+      }
+    }
+  },
+  "part_2": {
+    "questions": {
+      "11": {
+        "correct": "A"
+      },
+      "12": {
+        "correct": "D"
+      },
+      "13": {
+        "correct": "E"
+      },
+      "14": {
+        "correct": "F"
+      },
+      "15": {
+        "correct": "I"
+      },
+      "16": {
+        "correct": [
+          "sweep",
+          "rear leader"
+        ]
+      },
+      "17": {
+        "correct": [
+          "intersection"
+        ]
+      },
+      "18": {
+        "correct": [
+          "rocks"
+        ]
+      },
+      "19": {
+        "correct": [
+          "feed"
+        ]
+      },
+      "20": {
+        "correct": [
+          "water"
+        ]
+      }
+    }
+  },
+  "part_3": {
+    "questions": {
+      "21": {
+        "correct": "A"
+      },
+      "22": {
+        "correct": "B"
+      },
+      "23": {
+        "correct": "D"
+      },
+      "24": {
+        "correct": "F"
+      },
+      "25": {
+        "correct": "B"
+      },
+      "26": {
+        "correct": [
+          "term paper topic"
+        ]
+      },
+      "27": {
+        "correct": [
+          "first evaluation"
+        ]
+      },
+      "28": {
+        "correct": [
+          "student teacher conference"
+        ]
+      },
+      "29": {
+        "correct": [
+          "the term paper",
+          "term paper"
+        ]
+      },
+      "30": {
+        "correct": [
+          "a semester review",
+          "the semester review",
+          "semester review"
+        ]
+      }
+    }
+  },
+  "part_4": {
+    "questions": {
+      "31": {
+        "correct": "A"
+      },
+      "32": {
+        "correct": "C"
+      },
+      "33": {
+        "correct": "A"
+      },
+      "34": {
+        "correct": "B"
+      },
+      "35": {
+        "correct": "C"
+      },
+      "36": {
+        "correct": [
+          "spend money"
+        ]
+      },
+      "37": {
+        "correct": [
+          "leave faster"
+        ]
+      },
+      "38": {
+        "correct": [
+          "security"
+        ]
+      },
+      "39": {
+        "correct": [
+          "younger people"
+        ]
+      },
+      "40": {
+        "correct": [
+          "older people"
+        ]
+      }
+    }
+  }
+}

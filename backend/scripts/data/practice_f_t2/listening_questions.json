@@ -1,0 +1,848 @@
+{
+  "part_1": {
+    "title": "Plainfield Community Center",
+    "source_url": "https://engnovate.com/ielts-listening-answers/plainfield-community-center/",
+    "question_groups": [
+      {
+        "type": "table_completion",
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "instruction": "Complete the chart below.\nWrite NO MORE THAN TWO WORDS for each answer.",
+        "items": {
+          "1": {
+            "gap_id": "q1"
+          },
+          "2": {
+            "gap_id": "q2"
+          },
+          "3": {
+            "gap_id": "q3"
+          },
+          "4": {
+            "gap_id": "q4"
+          },
+          "5": {
+            "gap_id": "q5"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS for each answer.",
+          "max_words_per_gap": 2,
+          "headers": [
+            "Days",
+            "Class/Activity",
+            "Age Group"
+          ],
+          "variant": "table",
+          "rows": [
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Wednesday, Saturday"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q1"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "children, teens"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q2"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Tennis"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q3"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Tuesday, Thursday"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q4"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "children, teens, adults"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Friday"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Book club"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q5"
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "type": "note_completion",
+        "questions": [
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "instruction": "Complete the notes below.\nWrite NO MORE THAN THREE WORDS AND/OR A NUMBER for each answer.",
+        "items": {
+          "6": {
+            "gap_id": "q6"
+          },
+          "7": {
+            "gap_id": "q7"
+          },
+          "8": {
+            "gap_id": "q8"
+          },
+          "9": {
+            "gap_id": "q9"
+          },
+          "10": {
+            "gap_id": "q10"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN THREE WORDS AND/OR A NUMBER for each answer.",
+          "max_words_per_gap": 3,
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Membership fees $ "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q6"
+                    },
+                    {
+                      "type": "text",
+                      "value": " (individual)"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "$ "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q7"
+                    },
+                    {
+                      "type": "text",
+                      "value": " (family)"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Located at 107 "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q8"
+                    },
+                    {
+                      "type": "text",
+                      "value": " Street"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Parking is located "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q9"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "The Center is closed on "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q10"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "part_2": {
+    "title": "Annual Week-Long Hiking Trip",
+    "source_url": "https://engnovate.com/ielts-listening-answers/annual-week-long-hiking-trip/",
+    "question_groups": [
+      {
+        "type": "multi_select",
+        "questions": [
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "instruction": "Choose FIVE letters, A–J.",
+        "items": {
+          "11": {
+            "question": "Which FIVE things should hikers take on the hiking trip?",
+            "options": [
+              "A. sleeping bag",
+              "B. tent",
+              "C. food",
+              "D. dishes",
+              "E. hiking boots",
+              "F. backpack",
+              "G. walking poles",
+              "H. maps",
+              "I. jacket",
+              "J. first-aid kit"
+            ],
+            "choose_n": 5
+          }
+        }
+      },
+      {
+        "type": "sentence_completion",
+        "questions": [
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "instruction": "Complete the sentences below.\nWrite NO MORE THAN TWO WORDS for each answer.",
+        "items": {
+          "16": {
+            "gap_id": "q16"
+          },
+          "17": {
+            "gap_id": "q17"
+          },
+          "18": {
+            "gap_id": "q18"
+          },
+          "19": {
+            "gap_id": "q19"
+          },
+          "20": {
+            "gap_id": "q20"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS for each answer.",
+          "max_words_per_gap": 2,
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Always stay ahead of the "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q16"
+                    },
+                    {
+                      "type": "text",
+                      "value": " ."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Stop and wait at any "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q17"
+                    },
+                    {
+                      "type": "text",
+                      "value": " ."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Don't try to climb "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q18"
+                    },
+                    {
+                      "type": "text",
+                      "value": " ."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Don't "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q19"
+                    },
+                    {
+                      "type": "text",
+                      "value": " wild animals."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Always carry "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q20"
+                    },
+                    {
+                      "type": "text",
+                      "value": " with you."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "part_3": {
+    "title": "Requirements for Student Teaching",
+    "source_url": "https://engnovate.com/ielts-listening-answers/requirements-for-student-teaching/",
+    "question_groups": [
+      {
+        "type": "multi_select",
+        "questions": [
+          21,
+          22,
+          23,
+          24
+        ],
+        "instruction": "Choose FOUR letters, A–G.",
+        "items": {
+          "21": {
+            "question": "Which FOUR of the following are required of student teachers?",
+            "options": [
+              "A. weekly journal",
+              "B. sample lesson plans",
+              "C. meetings with other student teachers",
+              "D. observing other teachers",
+              "E. evaluation from supervising teacher",
+              "F. portfolio",
+              "G. final exam"
+            ],
+            "choose_n": 4
+          }
+        }
+      },
+      {
+        "type": "mcq",
+        "questions": [
+          25
+        ],
+        "instruction": "Choose the correct letter, A, B, or C.",
+        "items": {
+          "25": {
+            "question": "Who has to sign the agreement form?",
+            "options": [
+              "A. the student teacher",
+              "B. the supervising teacher",
+              "C. the advisor"
+            ]
+          }
+        }
+      },
+      {
+        "type": "table_completion",
+        "questions": [
+          26,
+          27,
+          28,
+          29,
+          30
+        ],
+        "instruction": "Complete the schedule below.\nWrite NO MORE THAN THREE WORDS for each answer.",
+        "items": {
+          "26": {
+            "gap_id": "q26"
+          },
+          "27": {
+            "gap_id": "q27"
+          },
+          "28": {
+            "gap_id": "q28"
+          },
+          "29": {
+            "gap_id": "q29"
+          },
+          "30": {
+            "gap_id": "q30"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN THREE WORDS for each answer.",
+          "max_words_per_gap": 3,
+          "headers": [
+            "",
+            ""
+          ],
+          "variant": "table",
+          "rows": [
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "First week"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q26"
+                  },
+                  {
+                    "type": "text",
+                    "value": " due"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Fourth week"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q27"
+                  },
+                  {
+                    "type": "text",
+                    "value": " meeting"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Seventh week"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q28"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Fourteenth week"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q29"
+                  },
+                  {
+                    "type": "text",
+                    "value": " due"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Fifteenth week"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q30"
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "part_4": {
+    "title": "Customer Psychology",
+    "source_url": "https://engnovate.com/ielts-listening-answers/customer-psychology/",
+    "question_groups": [
+      {
+        "type": "mcq",
+        "questions": [
+          31,
+          32,
+          33,
+          34,
+          35
+        ],
+        "instruction": "Choose the correct letter, A, B, or C.",
+        "items": {
+          "31": {
+            "question": "Retailers place popular items",
+            "options": [
+              "A. in the back of the store.",
+              "B. near the front entrance.",
+              "C. at the end of the aisle."
+            ]
+          },
+          "32": {
+            "question": "Carpet patterns are used to",
+            "options": [
+              "A. help shoppers feel comfortable.",
+              "B. appeal to shoppers' decorative sense.",
+              "C. encourage shoppers to walk in certain directions."
+            ]
+          },
+          "33": {
+            "question": "Retailers can keep customers in the store longer by",
+            "options": [
+              "A. providing places to sit.",
+              "B. keeping the doors closed.",
+              "C. lowering the prices."
+            ]
+          },
+          "34": {
+            "question": "Music is used in stores to",
+            "options": [
+              "A. entertain customers.",
+              "B. slow customers down.",
+              "C. make customers shop faster."
+            ]
+          },
+          "35": {
+            "question": "The scent of vanilla has been used in",
+            "options": [
+              "A. ice cream shops.",
+              "B. bakeries.",
+              "C. clothing stores."
+            ]
+          }
+        }
+      },
+      {
+        "type": "table_completion",
+        "questions": [
+          36,
+          37,
+          38,
+          39,
+          40
+        ],
+        "instruction": "Complete the chart about the effects of color.\nWrite NO MORE THAN TWO WORDS for each answer.",
+        "items": {
+          "36": {
+            "gap_id": "q36"
+          },
+          "37": {
+            "gap_id": "q37"
+          },
+          "38": {
+            "gap_id": "q38"
+          },
+          "39": {
+            "gap_id": "q39"
+          },
+          "40": {
+            "gap_id": "q40"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS for each answer.",
+          "max_words_per_gap": 2,
+          "headers": [
+            "Color",
+            "Effect"
+          ],
+          "variant": "table",
+          "rows": [
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Purple"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "encourages people to "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q36"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Orange"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "makes restaurant customers "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q37"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Blue"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "conveys a sense of "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q38"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Bright colors"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "appeal to "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q39"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Soft colors"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "appeal to "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q40"
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

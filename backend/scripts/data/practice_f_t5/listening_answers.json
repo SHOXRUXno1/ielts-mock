@@ -1,0 +1,176 @@
+{
+  "part_1": {
+    "questions": {
+      "1": {
+        "correct": [
+          "June"
+        ]
+      },
+      "2": {
+        "correct": [
+          "Karla"
+        ]
+      },
+      "3": {
+        "correct": [
+          "257"
+        ]
+      },
+      "4": {
+        "correct": [
+          "vegetarian"
+        ]
+      },
+      "5": {
+        "correct": "B"
+      },
+      "6": {
+        "correct": "A"
+      },
+      "7": {
+        "correct": "C"
+      },
+      "8": {
+        "correct": "A"
+      },
+      "9": {
+        "correct": "D"
+      },
+      "10": {
+        "correct": "E"
+      }
+    }
+  },
+  "part_2": {
+    "questions": {
+      "11": {
+        "correct": "B"
+      },
+      "12": {
+        "correct": "E"
+      },
+      "13": {
+        "correct": "A"
+      },
+      "14": {
+        "correct": "F"
+      },
+      "15": {
+        "correct": "C"
+      },
+      "16": {
+        "correct": [
+          "swimming lessons"
+        ]
+      },
+      "17": {
+        "correct": [
+          "tennis competition"
+        ]
+      },
+      "18": {
+        "correct": [
+          "party",
+          "club party"
+        ]
+      },
+      "19": {
+        "correct": "B"
+      },
+      "20": {
+        "correct": "C"
+      }
+    }
+  },
+  "part_3": {
+    "questions": {
+      "21": {
+        "correct": "B"
+      },
+      "22": {
+        "correct": "C"
+      },
+      "23": {
+        "correct": "F"
+      },
+      "24": {
+        "correct": "G"
+      },
+      "25": {
+        "correct": "I"
+      },
+      "26": {
+        "correct": [
+          "1895"
+        ]
+      },
+      "27": {
+        "correct": [
+          "new wing"
+        ]
+      },
+      "28": {
+        "correct": [
+          "local artists"
+        ]
+      },
+      "29": {
+        "correct": [
+          "art history"
+        ]
+      },
+      "30": {
+        "correct": [
+          "concerts",
+          "concert series"
+        ]
+      }
+    }
+  },
+  "part_4": {
+    "questions": {
+      "31": {
+        "correct": "C"
+      },
+      "32": {
+        "correct": "C"
+      },
+      "33": {
+        "correct": "B"
+      },
+      "34": {
+        "correct": "A"
+      },
+      "35": {
+        "correct": "A"
+      },
+      "36": {
+        "correct": [
+          "gardener's calendar",
+          "calendar"
+        ]
+      },
+      "37": {
+        "correct": [
+          "served tomatoes"
+        ]
+      },
+      "38": {
+        "correct": [
+          "in public"
+        ]
+      },
+      "39": {
+        "correct": [
+          "tomato recipe",
+          "tomato recipes"
+        ]
+      },
+      "40": {
+        "correct": [
+          "raw tomatoes"
+        ]
+      }
+    }
+  }
+}

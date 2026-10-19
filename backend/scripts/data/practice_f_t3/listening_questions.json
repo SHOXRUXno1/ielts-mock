@@ -1,0 +1,828 @@
+{
+  "part_1": {
+    "title": "Grandview Hotel",
+    "source_url": "https://engnovate.com/ielts-listening-answers/grandview-hotel/",
+    "question_groups": [
+      {
+        "type": "form_completion",
+        "questions": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "instruction": "Complete the form below.\nWrite NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+        "items": {
+          "1": {
+            "gap_id": "q1"
+          },
+          "2": {
+            "gap_id": "q2"
+          },
+          "3": {
+            "gap_id": "q3"
+          },
+          "4": {
+            "gap_id": "q4"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+          "max_words_per_gap": 2,
+          "variant": "form",
+          "form_title": "Grandview Hotel",
+          "fields": [
+            {
+              "type": "gap_line",
+              "label": "",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "Reservation Form"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Arrival date",
+              "segments": [
+                {
+                  "type": "gap",
+                  "gap_id": "q1"
+                },
+                {
+                  "type": "text",
+                  "value": " 13th. Number of nights: 2"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Number of guests",
+              "segments": [
+                {
+                  "type": "gap",
+                  "gap_id": "q2"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Guest name",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "Roxanne "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q3"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "Credit card number "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q4"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "multi_select",
+        "questions": [
+          5,
+          6,
+          7
+        ],
+        "instruction": "Choose THREE letters, A–G.",
+        "items": {
+          "5": {
+            "question": "Which THREE places will the caller visit?",
+            "options": [
+              "A. art museum",
+              "B. science museum",
+              "C. shopping mall",
+              "D. monument",
+              "E. post office",
+              "F. restaurant",
+              "G. park"
+            ],
+            "choose_n": 3
+          }
+        }
+      },
+      {
+        "type": "mcq",
+        "questions": [
+          8,
+          9,
+          10
+        ],
+        "instruction": "Choose the correct letters, A, B, or C.",
+        "items": {
+          "8": {
+            "question": "When will the caller arrive at the airport?",
+            "options": [
+              "A. In the morning",
+              "B. In the afternoon",
+              "C. At night"
+            ]
+          },
+          "9": {
+            "question": "How will the caller get to the hotel?",
+            "options": [
+              "A. Subway",
+              "B. Bus",
+              "C. Taxi"
+            ]
+          },
+          "10": {
+            "question": "What time does the hotel front desk close?",
+            "options": [
+              "A. 10:00",
+              "B. 12:00",
+              "C. 2:00"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "part_2": {
+    "title": "City Tours",
+    "source_url": "https://engnovate.com/ielts-listening-answers/city-tours/",
+    "question_groups": [
+      {
+        "type": "form_completion",
+        "questions": [
+          11,
+          12
+        ],
+        "instruction": "Complete the information below.\nWrite ONE NUMBER for each answer.",
+        "items": {
+          "11": {
+            "gap_id": "q11"
+          },
+          "12": {
+            "gap_id": "q12"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write ONE NUMBER for each answer.",
+          "max_words_per_gap": 1,
+          "variant": "form",
+          "form_title": "City Tours",
+          "fields": [
+            {
+              "type": "gap_line",
+              "label": "",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "Fare Information"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Adult All-Day Pass",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "$ "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q11"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Children ages 5–12 All-Day Pass",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "$ "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q12"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Children under age 5",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "Free"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "diagram_labeling",
+        "questions": [
+          13,
+          14,
+          15
+        ],
+        "instruction": "Label the map below.\nWrite NO MORE THAN TWO WORDS for each answer.",
+        "items": {
+          "13": {
+            "gap_id": "q13"
+          },
+          "14": {
+            "gap_id": "q14"
+          },
+          "15": {
+            "gap_id": "q15"
+          }
+        },
+        "options_shared": {
+          "variant": "notes",
+          "image_url": "/media/images/practice_f_t3_listening_map.jpg",
+          "instruction_words": "Write NO MORE THAN TWO WORDS for each answer.",
+          "max_words_per_gap": 2,
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "gap",
+                      "gap_id": "q13"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "gap",
+                      "gap_id": "q14"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "gap",
+                      "gap_id": "q15"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "table_completion",
+        "questions": [
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "instruction": "Complete the chart below.\nWrite NO MORE THAN ONE WORD for each answer.",
+        "items": {
+          "16": {
+            "gap_id": "q16"
+          },
+          "17": {
+            "gap_id": "q17"
+          },
+          "18": {
+            "gap_id": "q18"
+          },
+          "19": {
+            "gap_id": "q19"
+          },
+          "20": {
+            "gap_id": "q20"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN ONE WORD for each answer.",
+          "max_words_per_gap": 1,
+          "headers": [
+            "Place",
+            "Activity"
+          ],
+          "variant": "table",
+          "rows": [
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "First stop"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Enjoy the "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q16"
+                  },
+                  {
+                    "type": "text",
+                    "value": " of the bay"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Second stop"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Look at the "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q17"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Third stop"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "gap",
+                    "gap_id": "q18"
+                  },
+                  {
+                    "type": "text",
+                    "value": " fish."
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Fourth stop"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Purchase "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q19"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Fifth stop"
+                  }
+                ]
+              },
+              {
+                "variant": "plain",
+                "segments": [
+                  {
+                    "type": "text",
+                    "value": "Visit the "
+                  },
+                  {
+                    "type": "gap",
+                    "gap_id": "q20"
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "part_3": {
+    "title": "Planning a Research Project",
+    "source_url": "https://engnovate.com/ielts-listening-answers/planning-a-research-project/",
+    "question_groups": [
+      {
+        "type": "short_answer",
+        "questions": [
+          21,
+          22,
+          23
+        ],
+        "instruction": "Answer the questions below.\nWrite NO MORE THAN THREE WORDS AND/OR A NUMBER for each answer.",
+        "items": {
+          "21": {
+            "question": "When is the research project due?"
+          },
+          "22": {
+            "question": "Where will the students conduct the interviews?"
+          },
+          "23": {
+            "question": "How many interviews will they complete all together?"
+          }
+        },
+        "max_words": 3
+      },
+      {
+        "type": "note_completion",
+        "questions": [
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30
+        ],
+        "instruction": "Complete the outline showing the steps the students will take to complete their projects.\nWrite NO MORE THAN THREE WORDS for each answer.",
+        "items": {
+          "24": {
+            "gap_id": "q24"
+          },
+          "25": {
+            "gap_id": "q25"
+          },
+          "26": {
+            "gap_id": "q26"
+          },
+          "27": {
+            "gap_id": "q27"
+          },
+          "28": {
+            "gap_id": "q28"
+          },
+          "29": {
+            "gap_id": "q29"
+          },
+          "30": {
+            "gap_id": "q30"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN THREE WORDS for each answer.",
+          "max_words_per_gap": 3,
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "A. Read "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q24"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "B. design the "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q25"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "C. Get professor's "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q26"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "D. "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q27"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "E. Get together to "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q28"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "F. Prepare "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q29"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "G. Give "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q30"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "part_4": {
+    "title": "Louisa May Alcott",
+    "source_url": "https://engnovate.com/ielts-listening-answers/louisa-may-alcott/",
+    "question_groups": [
+      {
+        "type": "note_completion",
+        "questions": [
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40
+        ],
+        "instruction": "Complete the timeline below. Write NO MORE THAN THREE WORDS AND/OR A NUMBER for each answer.",
+        "items": {
+          "31": {
+            "gap_id": "q31"
+          },
+          "32": {
+            "gap_id": "q32"
+          },
+          "33": {
+            "gap_id": "q33"
+          },
+          "34": {
+            "gap_id": "q34"
+          },
+          "35": {
+            "gap_id": "q35"
+          },
+          "36": {
+            "gap_id": "q36"
+          },
+          "37": {
+            "gap_id": "q37"
+          },
+          "38": {
+            "gap_id": "q38"
+          },
+          "39": {
+            "gap_id": "q39"
+          },
+          "40": {
+            "gap_id": "q40"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Complete the timeline below. Write NO MORE THAN THREE WORDS AND/OR A NUMBER for each answer.",
+          "max_words_per_gap": 3,
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "In 1832, Alcott was "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q31"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "In her teens, Alcott worked to "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q32"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "At age 17, Alcott wrote "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q33"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "In "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q34"
+                    },
+                    {
+                      "type": "text",
+                      "value": " , Alcott enlisted as an army nurse."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "gap",
+                      "gap_id": "q35"
+                    },
+                    {
+                      "type": "text",
+                      "value": " , Alcott published her letters in a book called Hospital Sketches."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "In "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q36"
+                    },
+                    {
+                      "type": "text",
+                      "value": " , Alcott returned from her trip to Europe."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "In "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q37"
+                    },
+                    {
+                      "type": "text",
+                      "value": " , Alcott published Little Women."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "In 1879, "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q38"
+                    },
+                    {
+                      "type": "text",
+                      "value": " died."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "In "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q39"
+                    },
+                    {
+                      "type": "text",
+                      "value": " , Alcott set up a home for her family in Boston."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "In 1888, Alcott "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q40"
+                    },
+                    {
+                      "type": "text",
+                      "value": " ."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

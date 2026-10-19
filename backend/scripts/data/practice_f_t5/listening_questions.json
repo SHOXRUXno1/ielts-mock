@@ -1,0 +1,640 @@
+{
+  "part_1": {
+    "title": "Global Bicycle Tours",
+    "source_url": "https://engnovate.com/ielts-listening-answers/global-bicycle-tours/",
+    "question_groups": [
+      {
+        "type": "form_completion",
+        "questions": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "instruction": "Complete the form below.\nWrite NO MORE THAN ONE WORD AND/OR A NUMBER for each answer.",
+        "items": {
+          "1": {
+            "gap_id": "q1"
+          },
+          "2": {
+            "gap_id": "q2"
+          },
+          "3": {
+            "gap_id": "q3"
+          },
+          "4": {
+            "gap_id": "q4"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN ONE WORD AND/OR A NUMBER for each answer.",
+          "max_words_per_gap": 1,
+          "variant": "form",
+          "form_title": "Global Bicycle Tours",
+          "fields": [
+            {
+              "type": "gap_line",
+              "label": "Tour name",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "River Valley tour Tour month: "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q1"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Customer Name",
+              "segments": [
+                {
+                  "type": "gap",
+                  "gap_id": "q2"
+                },
+                {
+                  "type": "text",
+                  "value": " Schmidt"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Address",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "P.O. Box "
+                },
+                {
+                  "type": "gap",
+                  "gap_id": "q3"
+                },
+                {
+                  "type": "text",
+                  "value": " Manchester"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "",
+              "segments": [
+                {
+                  "type": "text",
+                  "value": "Bicycle rental required? ___ Yes X No"
+                }
+              ]
+            },
+            {
+              "type": "gap_line",
+              "label": "Dietary restrictions",
+              "segments": [
+                {
+                  "type": "gap",
+                  "gap_id": "q4"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "mcq",
+        "questions": [
+          5,
+          6,
+          7
+        ],
+        "instruction": "Choose the correct letters, A, B, or C.",
+        "items": {
+          "5": {
+            "question": "What size deposit does the caller have to pay?",
+            "options": [
+              "A. 5 percent",
+              "B. 30 percent",
+              "C. 50 percent"
+            ]
+          },
+          "6": {
+            "question": "When does the deposit have to be paid?",
+            "options": [
+              "A. Two weeks from now",
+              "B. Four weeks from now",
+              "C. Six weeks from now"
+            ]
+          },
+          "7": {
+            "question": "How will the luggage be carried?",
+            "options": [
+              "A. By bus",
+              "B. By bicycle",
+              "C. By van"
+            ]
+          }
+        }
+      },
+      {
+        "type": "multi_select",
+        "questions": [
+          8,
+          9,
+          10
+        ],
+        "instruction": "Choose THREE letters, A–F.",
+        "items": {
+          "8": {
+            "question": "Which THREE things should the caller take on the tour?",
+            "options": [
+              "A. raincoat",
+              "B. spare tire",
+              "C. maps",
+              "D. water bottle",
+              "E. camera",
+              "F. guide book"
+            ],
+            "choose_n": 3
+          }
+        }
+      }
+    ]
+  },
+  "part_2": {
+    "title": "Newly Renovated Health Club",
+    "source_url": "https://engnovate.com/ielts-listening-answers/newly-renovated-health-club/",
+    "question_groups": [
+      {
+        "type": "matching_features",
+        "questions": [
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "instruction": "What change has been made to each part of the health club?\nWrite the correct letter, A–F next to questions 11–15.",
+        "items": {
+          "11": {
+            "question": "swimming pools"
+          },
+          "12": {
+            "question": "locker rooms"
+          },
+          "13": {
+            "question": "exercise room"
+          },
+          "14": {
+            "question": "tennis court"
+          },
+          "15": {
+            "question": "club store"
+          }
+        },
+        "options_shared": {
+          "options": [
+            "A. installed a new floor",
+            "B. repainted",
+            "C. moved to a new location",
+            "D. rebuilt",
+            "E. enlarged",
+            "F. replaced the equipment"
+          ]
+        }
+      },
+      {
+        "type": "sentence_completion",
+        "questions": [
+          16,
+          17,
+          18
+        ],
+        "instruction": "Complete the sentences below.\nWrite NO MORE THAN TWO WORDS for each answer.",
+        "items": {
+          "16": {
+            "gap_id": "q16"
+          },
+          "17": {
+            "gap_id": "q17"
+          },
+          "18": {
+            "gap_id": "q18"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS for each answer.",
+          "max_words_per_gap": 2,
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Tomorrow, "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q16"
+                    },
+                    {
+                      "type": "text",
+                      "value": " for adults and children will start."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "On Wednesday, there will be a "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q17"
+                    },
+                    {
+                      "type": "text",
+                      "value": " ."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "A "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q18"
+                    },
+                    {
+                      "type": "text",
+                      "value": " is planned for next weekend."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "mcq",
+        "questions": [
+          19,
+          20
+        ],
+        "instruction": "Answer the questions below.\nChoose the correct letter, A, B, or C.",
+        "items": {
+          "19": {
+            "question": "How many months did it take to complete the renovation work?",
+            "options": [
+              "A. three",
+              "B. nine",
+              "C. twelve"
+            ]
+          },
+          "20": {
+            "question": "What project is planned for next year?",
+            "options": [
+              "A. An indoor pool",
+              "B. An outdoor tennis court",
+              "C. An outdoor pool"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "part_3": {
+    "title": "Museum’s Internship Program",
+    "source_url": "https://engnovate.com/ielts-listening-answers/museums-internship-program/",
+    "question_groups": [
+      {
+        "type": "multi_select",
+        "questions": [
+          21,
+          22,
+          23,
+          24,
+          25
+        ],
+        "instruction": "Choose FIVE letters, A–I.",
+        "items": {
+          "21": {
+            "question": "What FIVE things will the students do during their museum internship?",
+            "options": [
+              "A. art conservation",
+              "B. administrative duties",
+              "C. guide tours",
+              "D. attend board meetings",
+              "E. give classes",
+              "F. research",
+              "G. write brochures",
+              "H. plan a reception",
+              "I. meet artists"
+            ],
+            "choose_n": 5
+          }
+        }
+      },
+      {
+        "type": "note_completion",
+        "questions": [
+          26,
+          27,
+          28,
+          29,
+          30
+        ],
+        "instruction": "Complete the notes below.\nWrite NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+        "items": {
+          "26": {
+            "gap_id": "q26"
+          },
+          "27": {
+            "gap_id": "q27"
+          },
+          "28": {
+            "gap_id": "q28"
+          },
+          "29": {
+            "gap_id": "q29"
+          },
+          "30": {
+            "gap_id": "q30"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+          "max_words_per_gap": 2,
+          "title": "City Art Museum",
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "The main part of museum was built in "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q26"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "The "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q27"
+                    },
+                    {
+                      "type": "text",
+                      "value": " was built sixty years later."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Collections: modern art, works by "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q28"
+                    },
+                    {
+                      "type": "text",
+                      "value": " , sculpture, European art."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Classes: "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q29"
+                    },
+                    {
+                      "type": "text",
+                      "value": " classes for adults"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Arts and crafts workshops for children"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "Weekly "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q30"
+                    },
+                    {
+                      "type": "text",
+                      "value": " in the fall and winter"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "part_4": {
+    "title": "The History of the Tomato",
+    "source_url": "https://engnovate.com/ielts-listening-answers/the-history-of-the-tomato/",
+    "question_groups": [
+      {
+        "type": "mcq",
+        "questions": [
+          31,
+          32,
+          33,
+          34,
+          35
+        ],
+        "instruction": "Choose the correct letter, A, B, or C.",
+        "items": {
+          "31": {
+            "question": "The tomato originally came from",
+            "options": [
+              "A. Mexico.",
+              "B. Spain.",
+              "C. Peru."
+            ]
+          },
+          "32": {
+            "question": "The original color of the tomato was",
+            "options": [
+              "A. red.",
+              "B. green.",
+              "C. yellow."
+            ]
+          },
+          "33": {
+            "question": "The Aztec word for tomato means",
+            "options": [
+              "A. golden apple.",
+              "B. plump thing.",
+              "C. small fruit."
+            ]
+          },
+          "34": {
+            "question": "In the 1500s, people in Spain and Italy",
+            "options": [
+              "A. enjoyed eating tomatoes.",
+              "B. used tomatoes as ornamental plants.",
+              "C. made medicine from tomatoes."
+            ]
+          },
+          "35": {
+            "question": "In the 1600s, the British",
+            "options": [
+              "A. saw tomatoes as poisonous.",
+              "B. published tomato recipes.",
+              "C. ate tomato sauce daily."
+            ]
+          }
+        }
+      },
+      {
+        "type": "note_completion",
+        "questions": [
+          36,
+          37,
+          38,
+          39,
+          40
+        ],
+        "instruction": "Complete the timeline with information about the history of the tomato in the United States.\nWrite NO MORE THAN TWO WORDS for each answer.",
+        "items": {
+          "36": {
+            "gap_id": "q36"
+          },
+          "37": {
+            "gap_id": "q37"
+          },
+          "38": {
+            "gap_id": "q38"
+          },
+          "39": {
+            "gap_id": "q39"
+          },
+          "40": {
+            "gap_id": "q40"
+          }
+        },
+        "options_shared": {
+          "instruction_words": "Write NO MORE THAN TWO WORDS for each answer.",
+          "max_words_per_gap": 2,
+          "variant": "notes",
+          "sections": [
+            {
+              "heading": "",
+              "items": [
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "1806, Tomatoes were mentioned as food in a "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q36"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "1809, Thomas Jefferson "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q37"
+                    },
+                    {
+                      "type": "text",
+                      "value": " at his home in Virginia."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "1820, A man proved that tomatoes were not poisonous by eating them "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q38"
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "1830s, "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q39"
+                    },
+                    {
+                      "type": "text",
+                      "value": " appeared in newspapers and magazines."
+                    }
+                  ]
+                },
+                {
+                  "segments": [
+                    {
+                      "type": "text",
+                      "value": "1930s, People began to eat "
+                    },
+                    {
+                      "type": "gap",
+                      "gap_id": "q40"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
