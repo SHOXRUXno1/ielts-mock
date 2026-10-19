@@ -62,7 +62,7 @@ async def main_for_test(test_number: int) -> None:
                         order=number, question_type=QuestionType.ESSAY,
                         content={"task_description": prompt, "task_instruction": "", "prompt": prompt},
                         answer_key=None, task_number=number, min_words=min_words,
-                        image_url=image_url, essay_type=None,
+                        image_url=image_url, essay_type="opinion" if number == 2 else None,
                     )
                 )
             await db.commit()

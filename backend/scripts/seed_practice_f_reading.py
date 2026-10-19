@@ -225,7 +225,8 @@ async def _seed_passage(
                     prompt = prompt.get("question")
                 if not isinstance(prompt, str):
                     raise ValueError(f"Malformed matching item {number}")
-                entries.append((number, {"question": prompt}, {"correct": answers[str(number)]}))
+                content_key = "statement" if question_type in {QuestionType.YES_NO_NG, QuestionType.TRUE_FALSE_NG} else "question"
+                entries.append((number, {content_key: prompt}, {"correct": answers[str(number)]}))
             await writer.add_group(question_type, instruction, entries, shared)
             continue
 
