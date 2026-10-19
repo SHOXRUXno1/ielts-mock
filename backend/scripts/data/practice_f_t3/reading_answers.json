@@ -1,0 +1,57 @@
+{
+  "passage_1": {
+    "title": "The CT Scanner",
+    "questions": {
+      "1": {"answer": "iii", "type": "heading_match"},
+      "2": {"answer": "vii", "type": "heading_match"},
+      "3": {"answer": "ix", "type": "heading_match"},
+      "4": {"answer": "ii", "type": "heading_match"},
+      "5": {"answer": "viii", "type": "heading_match"},
+      "6": {"answer": "x", "type": "heading_match"},
+      "7": {"answer": "v", "type": "heading_match"},
+      "8": {"answer": "B, D, E", "type": "multiple_choice_multi"},
+      "9": {"answer": "B, D, E", "type": "multiple_choice_multi"},
+      "10": {"answer": "B, D, E", "type": "multiple_choice_multi"},
+      "11": {"answer": "B, D, F", "type": "multiple_choice_multi"},
+      "12": {"answer": "B, D, F", "type": "multiple_choice_multi"},
+      "13": {"answer": "B, D, F", "type": "multiple_choice_multi"}
+    }
+  },
+  "passage_2": {
+    "title": "Nineteenth-Century Paperback Literature",
+    "questions": {
+      "14": {"answer": "B", "type": "multiple_choice"},
+      "15": {"answer": "A", "type": "multiple_choice"},
+      "16": {"answer": "A", "type": "multiple_choice"},
+      "17": {"answer": "C", "type": "multiple_choice"},
+      "18": {"answer": "B", "type": "multiple_choice"},
+      "19": {"answer": "C", "type": "multiple_choice"},
+      "20": {"answer": "C", "type": "multiple_choice"},
+      "21": {"answer": "F", "type": "matching"},
+      "22": {"answer": "A", "type": "matching"},
+      "23": {"answer": "E", "type": "matching"},
+      "24": {"answer": "YES", "type": "yes_no_not_given"},
+      "25": {"answer": "NO", "type": "yes_no_not_given"},
+      "26": {"answer": "NO", "type": "yes_no_not_given"},
+      "27": {"answer": "YES", "type": "yes_no_not_given"}
+    }
+  },
+  "passage_3": {
+    "title": "Cosmic Black Holes",
+    "questions": {
+      "28": {"answer": "I", "type": "completion"},
+      "29": {"answer": "B", "type": "completion"},
+      "30": {"answer": "F", "type": "completion"},
+      "31": {"answer": "A", "type": "completion"},
+      "32": {"answer": "L", "type": "completion"},
+      "33": {"answer": "D", "type": "matching_paragraph"},
+      "34": {"answer": "C", "type": "matching_paragraph"},
+      "35": {"answer": "B", "type": "matching_paragraph"},
+      "36": {"answer": "A", "type": "matching_paragraph"},
+      "37": {"answer": "NOT GIVEN", "type": "true_false_not_given"},
+      "38": {"answer": "TRUE", "type": "true_false_not_given"},
+      "39": {"answer": "FALSE", "type": "true_false_not_given"},
+      "40": {"answer": "FALSE", "type": "true_false_not_given"}
+    }
+  }
+}

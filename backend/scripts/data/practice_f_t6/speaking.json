@@ -1,0 +1,34 @@
+{
+  "part1": {
+    "topic": "Shopping & Food",
+    "questions": [
+      "How often do you go shopping?",
+      "What kinds of shops are there in your neighborhood?",
+      "What kinds of things do you usually shop for?",
+      "Do you enjoy shopping? Why or why not?",
+      "What are some of your favorite foods?",
+      "Who does the cooking at your house?",
+      "Do you prefer eating at home or in restaurants? Why?",
+      "What kinds of restaurants do you enjoy eating in?"
+    ]
+  },
+  "part2": {
+    "topic": "Tell about a place you would like to visit",
+    "prompt": "Tell about a place you would like to visit.\n\nYou should say:\n- the name of the place and where it is\n- what kind of a place it is\n- what things you would do there\nand explain why you want to go there.",
+    "bullet_points": [
+      "the name of the place and where it is",
+      "what kind of a place it is",
+      "what things you would do there",
+      "and explain why you want to go there"
+    ]
+  },
+  "part3": {
+    "topic": "Travel",
+    "questions": [
+      "What are some popular places to visit in your country? Why are they popular?",
+      "Why do people travel?",
+      "Do you think parents should make a point of taking their children to see a variety of different places? Why or why not?",
+      "How do you think travel will be different in the future?"
+    ]
+  }
+}

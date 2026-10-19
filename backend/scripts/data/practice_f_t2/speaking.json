@@ -1,0 +1,34 @@
+{
+  "part1": {
+    "topic": "Leisure Time & Music",
+    "questions": [
+      "When and how much leisure time do you generally have in a week?",
+      "Who do you generally spend your leisure time with?",
+      "What are some activities you enjoy in your leisure time?",
+      "What do you like about these activities?",
+      "What kinds of music do you like listening to?",
+      "Have you learned to play a musical instrument? Why or why not?",
+      "Tell me about any traditional music in your country.",
+      "Do you think that traditional music will be popular in the future? Why or why not?"
+    ]
+  },
+  "part2": {
+    "topic": "Describe a movie that you saw recently",
+    "prompt": "Describe a movie that you saw recently.\n\nYou should say:\n- the title of the movie and what it was about\n- when and where you saw it\n- who you saw it with\nand explain why you enjoyed/didn't enjoy seeing this movie.",
+    "bullet_points": [
+      "the title of the movie and what it was about",
+      "when and where you saw it",
+      "who you saw it with",
+      "explain why you enjoyed/didn't enjoy seeing this movie"
+    ]
+  },
+  "part3": {
+    "topic": "Movies",
+    "questions": [
+      "What kinds of movies are popular these days? Why do you think they are popular?",
+      "What can we learn from watching movies?",
+      "How are movies different from live theater?",
+      "How do you think movies will be different in the future?"
+    ]
+  }
+}

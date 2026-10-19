@@ -1,0 +1,57 @@
+{
+  "passage_1": {
+    "title": "Candle Making in Colonial America",
+    "questions": {
+      "1": {"answer": "A", "type": "multiple_choice"},
+      "2": {"answer": "C", "type": "multiple_choice"},
+      "3": {"answer": "C", "type": "multiple_choice"},
+      "4": {"answer": "C", "type": "multiple_choice"},
+      "5": {"answer": "D", "type": "multiple_choice"},
+      "6": {"answer": "C", "type": "multiple_choice"},
+      "7": {"answer": "A", "type": "multiple_choice"},
+      "8": {"answer": "B", "type": "multiple_choice"},
+      "9": {"answer": "C", "type": "multiple_choice"},
+      "10": {"answer": "D", "type": "multiple_choice"},
+      "11": {"answer": "B", "type": "multiple_choice"},
+      "12": {"answer": "D", "type": "multiple_choice"},
+      "13": {"answer": "D", "type": "multiple_choice"}
+    }
+  },
+  "passage_2": {
+    "title": "Caffeine",
+    "questions": {
+      "14": {"answer": "B", "type": "multiple_choice"},
+      "15": {"answer": "NOT GIVEN", "type": "true_false_not_given"},
+      "16": {"answer": "FALSE", "type": "true_false_not_given"},
+      "17": {"answer": "TRUE", "type": "true_false_not_given"},
+      "18": {"answer": "TRUE", "type": "true_false_not_given"},
+      "19": {"answer": "TRUE", "type": "true_false_not_given"},
+      "20": {"answer": "FALSE", "type": "true_false_not_given"},
+      "21": {"answer": "TRUE", "type": "true_false_not_given"},
+      "22": {"answer": "FALSE", "type": "true_false_not_given"},
+      "23": {"answer": "TRUE", "type": "true_false_not_given"},
+      "24": {"answer": "C", "type": "multiple_choice"},
+      "25": {"answer": "A", "type": "multiple_choice"},
+      "26": {"answer": "C", "type": "multiple_choice"},
+      "27": {"answer": "B", "type": "multiple_choice"}
+    }
+  },
+  "passage_3": {
+    "title": "Animal Camouflage",
+    "questions": {
+      "28": {"answer": "predators and prey", "type": "completion"},
+      "29": {"answer": "protective coloring", "type": "completion"},
+      "30": {"answer": "blend in", "type": "completion"},
+      "31": {"answer": "alter their coloring", "type": "completion"},
+      "32": {"answer": "on many backgrounds", "type": "completion"},
+      "33": {"answer": "stripes or spots", "type": "completion"},
+      "34": {"answer": "color-blind", "type": "completion"},
+      "35": {"answer": "countershading", "type": "completion"},
+      "36": {"answer": "black backs", "type": "completion"},
+      "37": {"answer": "TRUE", "type": "true_false_not_given"},
+      "38": {"answer": "TRUE", "type": "true_false_not_given"},
+      "39": {"answer": "FALSE", "type": "true_false_not_given"},
+      "40": {"answer": "NOT GIVEN", "type": "true_false_not_given"}
+    }
+  }
+}

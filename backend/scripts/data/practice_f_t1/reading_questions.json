@@ -1,0 +1,118 @@
+{
+  "passage_1": {
+    "title": "Odonata",
+    "question_groups": [
+      {
+        "questions": [1, 2, 3, 4, 5, 6],
+        "type": "classification",
+        "instruction": "Classify the following statements as referring to dragonflies only (A), damselflies only (B), or both dragonflies and damselflies (C).",
+        "options": ["A. Dragonflies", "B. Damselflies", "C. Both"],
+        "items": {
+          "1": "Have sawlike jaws",
+          "2": "Hold wings on their backs while resting",
+          "3": "Have a gap between their eyes",
+          "4": "Can be found in fields, away from water",
+          "5": "The largest living species has a 19 cm wingspan",
+          "6": "The largest fossil has a 75 cm wingspan"
+        }
+      },
+      {
+        "questions": [7, 8, 9, 10, 11, 12, 13],
+        "type": "summary_completion_options",
+        "instruction": "Complete the notes on the odonata life cycle. Choose your answers from the box below.",
+        "word_box": ["A. in the air", "B. with their lips", "C. tadpoles", "D. fliers", "E. near the water's surface", "F. nymphs", "G. at the bottom of a pond", "H. months or years", "I. weeks or months", "J. swimmers", "K. with their wings"],
+        "items": {
+          "7": "Eggs are laid ___",
+          "8": "Young are called ___",
+          "9": "Young live underwater for a few ___",
+          "10": "They catch food ___",
+          "11": "Adults live for only a few ___",
+          "12": "Adults are skilled ___",
+          "13": "Adults catch prey ___"
+        }
+      }
+    ]
+  },
+  "passage_2": {
+    "title": "History of Fire Fighting and Prevention",
+    "question_groups": [
+      {
+        "questions": [14, 15, 16, 17, 18, 19, 20],
+        "type": "completion",
+        "instruction": "Complete the cause-and-effect chart below. Choose NO MORE THAN THREE WORDS from the passage for each answer.",
+        "items": {
+          "14": "Fire had no ___ (cause: men pulled down buildings near the fire)",
+          "15": "King ordered people to ___ their cooking fires each night (cause: thatched houses burned easily)",
+          "16": "Weather at the time of the Great Fire was ___ (effect: fire spread quickly)",
+          "17": "Mayor thought it too costly to ___ (effect: told people not to pull down buildings)",
+          "18": "New London buildings were made of ___ (cause: most of the city was destroyed)",
+          "19": "London had many ___ over time (effect: people began buying insurance)",
+          "20": "Insurance companies hired men to ___ (cause: did not want to pay to rebuild)"
+        }
+      },
+      {
+        "questions": [21, 22, 23],
+        "type": "multiple_choice",
+        "instruction": "Choose the correct letter, A, B or C.",
+        "items": {
+          "21": {
+            "question": "The first fire engines",
+            "options": ["A. carried water to the fire site", "B. used hand pumps", "C. had very long hoses"]
+          },
+          "22": {
+            "question": "In 1865",
+            "options": ["A. London was destroyed by a series of fires", "B. fire brigades began to join forces", "C. the Metropolitan Fire Brigade was established"]
+          },
+          "23": {
+            "question": "Firemen who worked for the Metropolitan Fire Brigade",
+            "options": ["A. earned low salaries", "B. lived at the fire station", "C. were not allowed to marry"]
+          }
+        }
+      },
+      {
+        "questions": [24, 25, 26],
+        "type": "yes_no_not_given",
+        "instruction": "Do the following statements agree with the information given in Reading Passage 2?",
+        "items": {
+          "24": "Leather fire hoses were made by machine.",
+          "25": "Steam fire engines were used until the early 1900s.",
+          "26": "Fires caused a great deal of damage in London during World War I."
+        }
+      }
+    ]
+  },
+  "passage_3": {
+    "title": "The Luddites",
+    "question_groups": [
+      {
+        "questions": [27, 28, 29, 30, 31, 32],
+        "type": "matching_cause_effect",
+        "instruction": "Match each cause with its effect. Choose from List B. You may use any letter more than once.",
+        "list_b": ["A. Troops were sent into the area", "B. Weavers stopped working at home and moved to factories", "C. Rioters often wore disguises", "D. Workers destroyed factory equipment", "E. Many rioters were hanged", "F. Charlotte Brontë wrote a novel about the Luddites", "G. Prices rose and wages fell", "H. Factory owners no longer needed skilled weavers", "I. Luddite rioting briefly resumed", "J. People compared Ned Ludd to Robin Hood"],
+        "items": {
+          "27": "The new weaving machines were expensive to buy.",
+          "28": "The new weaving machines were easy to operate.",
+          "29": "Workers' demands for better pay and conditions were not met.",
+          "30": "Rioting spread to many towns.",
+          "31": "A law was passed against destroying factory equipment.",
+          "32": "Economic conditions worsened in 1816."
+        }
+      },
+      {
+        "questions": [33, 34, 35, 36, 37, 38, 39, 40],
+        "type": "true_false_not_given",
+        "instruction": "Do the following statements agree with the information given in Reading Passage 3?",
+        "items": {
+          "33": "A Luddite opposes new technology.",
+          "34": "Before the nineteenth century, weavers made lace by hand.",
+          "35": "Factory owners as well as workers died in Luddite riots.",
+          "36": "The Luddite movement did not spread beyond England.",
+          "37": "No one knows for certain who Ned Ludd was.",
+          "38": "Worker protests during the 1816 downturn were nonviolent.",
+          "39": "Luddite activity lasted for many years.",
+          "40": "Neo-Luddites do not use computers."
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "passage_1": {
+    "title": "Odonata",
+    "questions": {
+      "1": {"answer": "C", "type": "multiple_choice"},
+      "2": {"answer": "B", "type": "multiple_choice"},
+      "3": {"answer": "B", "type": "multiple_choice"},
+      "4": {"answer": "A", "type": "multiple_choice"},
+      "5": {"answer": "C", "type": "multiple_choice"},
+      "6": {"answer": "A", "type": "multiple_choice"},
+      "7": {"answer": "E", "type": "matching"},
+      "8": {"answer": "F", "type": "matching"},
+      "9": {"answer": "H", "type": "matching"},
+      "10": {"answer": "B", "type": "matching"},
+      "11": {"answer": "I", "type": "matching"},
+      "12": {"answer": "D", "type": "matching"},
+      "13": {"answer": "A", "type": "matching"}
+    }
+  },
+  "passage_2": {
+    "title": "History of Fire Fighting and Prevention",
+    "questions": {
+      "14": {"answer": "fuel", "type": "completion"},
+      "15": {"answer": "extinguish", "type": "completion"},
+      "16": {"answer": "hot and dry", "type": "completion"},
+      "17": {"answer": "rebuild the city", "type": "completion"},
+      "18": {"answer": "stone and brick", "type": "completion"},
+      "19": {"answer": "fires", "type": "completion"},
+      "20": {"answer": "extinguish fires", "type": "completion"},
+      "21": {"answer": "A", "type": "multiple_choice"},
+      "22": {"answer": "C", "type": "multiple_choice"},
+      "23": {"answer": "B", "type": "multiple_choice"},
+      "24": {"answer": "NO", "type": "yes_no_not_given"},
+      "25": {"answer": "YES", "type": "yes_no_not_given"},
+      "26": {"answer": "NOT GIVEN", "type": "yes_no_not_given"}
+    }
+  },
+  "passage_3": {
+    "title": "The Luddites",
+    "questions": {
+      "27": {"answer": "B", "type": "matching"},
+      "28": {"answer": "H", "type": "matching"},
+      "29": {"answer": "D", "type": "matching"},
+      "30": {"answer": "A", "type": "matching"},
+      "31": {"answer": "E", "type": "matching"},
+      "32": {"answer": "I", "type": "matching"},
+      "33": {"answer": "TRUE", "type": "true_false_not_given"},
+      "34": {"answer": "TRUE", "type": "true_false_not_given"},
+      "35": {"answer": "TRUE", "type": "true_false_not_given"},
+      "36": {"answer": "NOT GIVEN", "type": "true_false_not_given"},
+      "37": {"answer": "TRUE", "type": "true_false_not_given"},
+      "38": {"answer": "FALSE", "type": "true_false_not_given"},
+      "39": {"answer": "FALSE", "type": "true_false_not_given"},
+      "40": {"answer": "NOT GIVEN", "type": "true_false_not_given"}
+    }
+  }
+}

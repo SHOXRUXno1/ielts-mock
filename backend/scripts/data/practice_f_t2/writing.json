@@ -1,0 +1,10 @@
+{
+  "task1": {
+    "description": "You should spend about 20 minutes on this task.\n\nThe graph below shows the percentage of urban/suburban and rural households in a European country that had Internet access between 1999 and 2004.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.",
+    "visual_type": "bar_chart",
+    "visual_description": "A bar chart titled 'Household Internet Access' comparing urban/suburban and rural households with Internet access from 1999 to 2004. The x-axis shows years (1999, 2000, 2001, 2002, 2003, 2004) and the y-axis shows percentages from 0% to 60%. For each year, two bars are shown: one for Urban/Suburban (lighter) and one for Rural (darker). Both categories show an increasing trend over the period, with urban/suburban consistently higher than rural."
+  },
+  "task2": {
+    "question": "You should spend about 40 minutes on this task.\n\nWrite about the following topic:\n\nBecause of the busy pace of modern life, many children spend most of their time indoors and have little exposure to the natural world.\n\nHow important is it for children to learn to understand and appreciate nature?\n\nGive reasons for your answer and include any relevant examples from your own knowledge or experience.\n\nWrite at least 250 words."
+  }
+}

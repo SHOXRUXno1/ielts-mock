@@ -1,0 +1,10 @@
+{
+  "task1": {
+    "description": "The graphs below show unemployment rates and average earnings according to level of education.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.",
+    "visual_type": "bar_chart",
+    "visual_description": "Two graphs showing unemployment rates and average earnings broken down by level of education"
+  },
+  "task2": {
+    "question": "In your opinion, should young people choose their professions, or should their parents choose for them?\n\nGive reasons for your answer and include any relevant examples from your own knowledge or experience.\n\nWrite at least 250 words."
+  }
+}

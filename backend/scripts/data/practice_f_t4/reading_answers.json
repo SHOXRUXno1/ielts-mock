@@ -1,0 +1,57 @@
+{
+  "passage_1": {
+    "title": "The Gulf Stream and Global Warming",
+    "questions": {
+      "1": {"answer": "B", "type": "multiple_choice"},
+      "2": {"answer": "C", "type": "multiple_choice"},
+      "3": {"answer": "A", "type": "multiple_choice"},
+      "4": {"answer": "B", "type": "multiple_choice"},
+      "5": {"answer": "A", "type": "multiple_choice"},
+      "6": {"answer": "A", "type": "multiple_choice"},
+      "7": {"answer": "C", "type": "multiple_choice"},
+      "8": {"answer": "J", "type": "matching"},
+      "9": {"answer": "A", "type": "matching"},
+      "10": {"answer": "D", "type": "matching"},
+      "11": {"answer": "F", "type": "matching"},
+      "12": {"answer": "E", "type": "matching"},
+      "13": {"answer": "I", "type": "matching"}
+    }
+  },
+  "passage_2": {
+    "title": "Chocolate: Food of the Gods",
+    "questions": {
+      "14": {"answer": "FALSE", "type": "true_false_not_given"},
+      "15": {"answer": "TRUE", "type": "true_false_not_given"},
+      "16": {"answer": "FALSE", "type": "true_false_not_given"},
+      "17": {"answer": "TRUE", "type": "true_false_not_given"},
+      "18": {"answer": "NOT GIVEN", "type": "true_false_not_given"},
+      "19": {"answer": "A", "type": "multiple_choice"},
+      "20": {"answer": "C", "type": "multiple_choice"},
+      "21": {"answer": "B", "type": "multiple_choice"},
+      "22": {"answer": "A", "type": "multiple_choice"},
+      "23": {"answer": "A", "type": "multiple_choice"},
+      "24": {"answer": "B", "type": "multiple_choice"},
+      "25": {"answer": "B", "type": "multiple_choice"},
+      "26": {"answer": "C", "type": "multiple_choice"},
+      "27": {"answer": "B", "type": "multiple_choice"}
+    }
+  },
+  "passage_3": {
+    "title": "The Intelligence of Corvids",
+    "questions": {
+      "28": {"answer": "C", "type": "multiple_choice"},
+      "29": {"answer": "L", "type": "completion"},
+      "30": {"answer": "A", "type": "completion"},
+      "31": {"answer": "H", "type": "completion"},
+      "32": {"answer": "M", "type": "completion"},
+      "33": {"answer": "D", "type": "matching_paragraph"},
+      "34": {"answer": "B", "type": "matching_paragraph"},
+      "35": {"answer": "A", "type": "matching_paragraph"},
+      "36": {"answer": "A", "type": "matching_paragraph"},
+      "37": {"answer": "A", "type": "matching_paragraph"},
+      "38": {"answer": "D", "type": "matching_paragraph"},
+      "39": {"answer": "B", "type": "matching_paragraph"},
+      "40": {"answer": "E", "type": "matching_paragraph"}
+    }
+  }
+}

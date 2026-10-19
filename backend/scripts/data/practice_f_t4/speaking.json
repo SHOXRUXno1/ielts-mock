@@ -1,0 +1,34 @@
+{
+  "part1": {
+    "topic": "The Ocean & Indoor/Outdoor Leisure",
+    "questions": [
+      "How much time have you spent by the ocean?",
+      "Why do people like being near the ocean?",
+      "What do you like about the ocean?",
+      "Would you like to live near the ocean?",
+      "Do you prefer to spend your leisure time indoors or outdoors?",
+      "Is there anything you don't like about being indoors (outdoors)?",
+      "What are some activities you do indoors (outdoors)?",
+      "What do you enjoy about these activities?"
+    ]
+  },
+  "part2": {
+    "topic": "Describe a book you read recently",
+    "prompt": "Describe a book you read recently.\n\nYou should say:\n- the title and author of the book\n- what the book was about\n- why you decided to read it\nand explain why you enjoyed/didn't enjoy reading it.",
+    "bullet_points": [
+      "the title and author of the book",
+      "what the book was about",
+      "why you decided to read it",
+      "and explain why you enjoyed/didn't enjoy reading it"
+    ]
+  },
+  "part3": {
+    "topic": "Reading",
+    "questions": [
+      "Why do people read?",
+      "How important do you think reading is?",
+      "What kinds of things are popular to read these days?",
+      "How do you think reading will be different in the future?"
+    ]
+  }
+}

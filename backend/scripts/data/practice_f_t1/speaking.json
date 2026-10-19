@@ -1,0 +1,34 @@
+{
+  "part1": {
+    "topic": "Neighborhood & Walking",
+    "questions": [
+      "Describe the neighborhood where you live.",
+      "What do you like about living there?",
+      "What do you dislike about your neighborhood?",
+      "What kind of neighborhood would you like to live in?",
+      "Do you like walking? Why or why not?",
+      "Are there places you can walk near your house?",
+      "Do people in your country like walking? Why or why not?",
+      "What other kinds of exercise do you enjoy?"
+    ]
+  },
+  "part2": {
+    "topic": "Describe a friend who is important to you",
+    "prompt": "Describe a friend who is important to you.\n\nYou should say:\n- the name of your friend\n- when and where you met this friend\n- what kinds of things you and this friend like to do together\nand explain why this friend is important to you.",
+    "bullet_points": [
+      "the name of your friend",
+      "when and where you met this friend",
+      "what kinds of things you and this friend like to do together",
+      "explain why this friend is important to you"
+    ]
+  },
+  "part3": {
+    "topic": "Friendships",
+    "questions": [
+      "Generally, friendships are important to people?",
+      "How can friends help each other?",
+      "Do people spend more time with friends or with relatives?",
+      "How do our friendships change as we grow older?"
+    ]
+  }
+}

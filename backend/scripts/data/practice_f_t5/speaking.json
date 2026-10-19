@@ -1,0 +1,33 @@
+{
+  "part1": {
+    "topic": "Computers, Internet & Shopping",
+    "questions": [
+      "How much time do you spend using a computer?",
+      "Do you use a computer more for work, study, or personal reasons?",
+      "What different kinds of things do you do on the computer?",
+      "What are some things you like and dislike about using computers?",
+      "How often do you use the Internet?",
+      "What are some things you do on the Internet?",
+      "Do you prefer shopping online or in real stores? Why?"
+    ]
+  },
+  "part2": {
+    "topic": "Describe your favourite subject",
+    "prompt": "Describe your favourite subject.\n\nYou should say:\n- what it is\n- what it is concerned with\n- when you learned it\nand explain why you like this subject.",
+    "bullet_points": [
+      "what it is",
+      "what it is concerned with",
+      "when you learned it",
+      "and explain why you like this subject"
+    ]
+  },
+  "part3": {
+    "topic": "School Subjects",
+    "questions": [
+      "What subjects should be required in school?",
+      "Do you think math and science are more important subjects than literature and art? Why or why not?",
+      "At what age should students be allowed to choose their own subjects?",
+      "What subjects should schools offer in the future that they don't offer now?"
+    ]
+  }
+}

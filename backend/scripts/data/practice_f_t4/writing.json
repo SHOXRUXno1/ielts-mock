@@ -1,0 +1,10 @@
+{
+  "task1": {
+    "description": "The diagram below explains the process of recycling plastic bottles for new uses.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.",
+    "visual_type": "process_diagram",
+    "visual_description": "A process diagram showing the steps involved in recycling plastic bottles for new uses"
+  },
+  "task2": {
+    "question": "The proliferation of private cars on the roads in many parts of the world has led to serious problems of pollution and may also contribute to global warming.\n\nSome people think that governments should spend money for the development of public transportation systems in order to help alleviate this problem. Others think it is better to spend money for the development of electric and other types of cars that may cause less pollution.\n\nDo you think it is better for governments to spend money developing public transportation or developing new kinds of cars? Why or why not?\n\nGive reasons for your answer and include any relevant examples from your own knowledge or experience.\n\nWrite at least 250 words."
+  }
+}

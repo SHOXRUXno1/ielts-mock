@@ -1,0 +1,34 @@
+{
+  "part1": {
+    "topic": "Free Time Places & Parks",
+    "questions": [
+      "Describe a place in your city or town where you like to go in your free time.",
+      "Why do you like to go there?",
+      "Is there anything you don't like about it?",
+      "Is it a popular place for people in your city? Why or why not?",
+      "Describe a park in your neighborhood or city.",
+      "What are some things people can do there?",
+      "Do you enjoy spending time there? Why or why not?",
+      "Are parks important? Why or why not?"
+    ]
+  },
+  "part2": {
+    "topic": "Describe a hobby you enjoy doing",
+    "prompt": "Describe a hobby you enjoy doing.\n\nYou should say:\n- what the hobby is\n- what materials or tools you need for it\n- how you learned to do it\nand explain why you enjoy it.",
+    "bullet_points": [
+      "what the hobby is",
+      "what materials or tools you need for it",
+      "how you learned to do it",
+      "explain why you enjoy it"
+    ]
+  },
+  "part3": {
+    "topic": "Hobbies",
+    "questions": [
+      "Why do people have hobbies?",
+      "Are there any hobbies you think are not worthwhile?",
+      "What can we learn from hobbies?",
+      "Is it important to teach hobbies to children? Why or why not?"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+A
+
+The computed tomography scanner, better known as the CT scanner, was originally designed to provide cross-sectional images of the brain. The word tomography comes from the Greek word tomos, meaning "section," and graphia, meaning "picture." Godfrey Hounsfield developed the technique in 1972 and was later knighted and awarded the Nobel Peace Prize for his contribution to the medical field. Within four years of this development, CT scans, also called CAT scans (computed axial tomography), were restructured, allowing technicians to scan the entire body for evidence of tumors, injuries, and other abnormalities. Rather than taking a single picture as in an X ray, a CT scanner sends several beams into an area and takes photographs from many different angles.
+
+B
+
+While the original CT scans took Hounsfield several hours to reconstruct into a useful image, today's machines can produce an in-depth image in a fraction of a second. Creating a scanner that could produce images at a faster rate was crucial in the development of tomography, as it reduced the degree of distortion in an image caused when patients breathed and moved. As well as providing images with better resolution, today's scanners also provide more comfort for the patient.
+
+C
+
+During a CT scan, a patient must lie still on a special table while the radiology technician locates the specific area that needs to be photographed. The table slides into a round tunnel (gantry), where it can be rotated or moved forward and backward in order to obtain the necessary view. Inside the donut-shaped machine, a number of X rays are taken, each producing a small slice of the image that doctors require. When passing through dense tissue such as a bone, the X-ray beams are weak and appear white in the CT images. Tissues such as those found in the brain are less dense and appear gray. Images that appear black denote organs such as lungs or others that can fill with air.
+
+D
+
+The CT scanner is made up of several computer systems, including the host computer, which organizes the entire process. One of the computers converts the raw data into an image, while another allows the technician to control the rotation of the gantry. After the information is processed, it is displayed on a monitor for radiologists and physicians to analyze. The information is also saved and printed to keep in a doctor's records and to share and discuss with patients and their family members.
+
+E
+
+Physicians order CT scans for a number of different reasons, including searching for and assessing tumors, cysts, kidney stones, and bone injuries. Without this technology, surgeons would have to perform many needless and costly operations. Brain, chest, and abdominal CT scans are the most common, though physicians also rely on the CT scanner to guide their needles while draining an abscess or performing a biopsy. Most emergency or shock-treatment centers contain a CT scanner in order to assess trauma victims. CT scans can pinpoint internal bleeding both in the brain and throughout the body.
+
+F
+
+In many cases, a patient must be given a contrast material before undergoing a CT scan. During "dynamic CT scanning," iodine dye is either injected into the blood or added to a drink that the patient must ingest approximately forty-five minutes before entering the scanner. The liquid X-ray dye makes it easier to see the organs and blood vessels when the pictures are developed. The intravenous contrast material is typically used for chest or pelvic scans, while oral-contrast material is used for abdominal scans. In some cases, physicians request that pictures be taken both before and after the contrast material enters the patient's body. Patients who receive contrast material in the arm often report feeling a warm sensation, and in rare cases an allergic reaction occurs. Contrast material causes water loss and is avoided when scanning patients who suffer from kidney failure.
+
+G
+
+The danger of radiation exposure caused by X-ray beams is generally considered minimal compared to the benefits that a CT scan can provide. In many cases, especially in the detection of tumors and internal bleeding, CT scans provide information that can save a person's life. Full-body scanning, which is saved for serious conditions such as coronary artery disease, remains a controversial procedure as prolonged exposure to radiation is linked to cancer. Pregnant women are excluded from receiving CT scans, as the X rays can be harmful to the fetus. When pregnant woman require an evaluation, most physicians favor using other procedures such as an ultrasound or an MRI.

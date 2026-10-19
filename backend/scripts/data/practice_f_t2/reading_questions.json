@@ -1,0 +1,110 @@
+{
+  "passage_1": {
+    "title": "The Vikings' Wayfaring Ways",
+    "question_groups": [
+      {
+        "questions": [1, 2, 3, 4, 5],
+        "type": "short_answer",
+        "instruction": "Answer each question with one number from the text.",
+        "items": {
+          "1": "Year Viking warriors raided an abbey on England's northeast coast",
+          "2": "Year Eric the Red was found guilty of a crime",
+          "3": "Year Vikings founded a fort that later became an Irish city",
+          "4": "Year a French king granted land to a Viking chief",
+          "5": "Year Viking warriors defeated an English king"
+        }
+      },
+      {
+        "questions": [6, 7, 8, 9, 10, 11, 12, 13],
+        "type": "summary_completion_options",
+        "instruction": "Complete the summary below. Choose your answers from the box.",
+        "word_box": ["A. warriors", "B. an attack", "C. capital", "D. explorers", "E. trade with", "F. conquered", "G. burning objects", "H. settled in", "I. ship", "J. oars", "K. market", "L. a parade", "M. archeologists", "N. silver coins", "O. horse"],
+        "items": {
+          "6": "Reason the people were called 'Vikings'",
+          "7": "What the Vikings from Norway were the first Europeans to do in North America",
+          "8": "What Danish Vikings did to large areas of England and France",
+          "9": "What was thrown at Viking ships in Seville",
+          "10": "What Viking Varangians took part in on Crete",
+          "11": "How Swedish Vikings travelled deep into Asia",
+          "12": "Kiev's role as the Vikings' territorial center",
+          "13": "The Vikings' important activity in Bulgar on the Volga"
+        }
+      }
+    ]
+  },
+  "passage_2": {
+    "title": "Dyslexia",
+    "question_groups": [
+      {
+        "questions": [14, 15, 16, 17, 18, 19, 20],
+        "type": "yes_no_not_given",
+        "instruction": "Do the following statements agree with the information given in Reading Passage 2?",
+        "items": {
+          "14": "Dyslexia is related to intelligence.",
+          "15": "Dyslexia is usually diagnosed in a child's first years of school.",
+          "16": "People with dyslexia often read in reverse.",
+          "17": "Dyslexia tends to occur in twins.",
+          "18": "Scientists are researching a drug treatment for dyslexia.",
+          "19": "Dyslexic children often have behavioral problems.",
+          "20": "People with dysgraphia have difficulty with mathematics."
+        }
+      },
+      {
+        "questions": [21, 22, 23],
+        "type": "multiple_choice_multi",
+        "instruction": "Choose THREE answers that are signs of dyslexia mentioned in the passage.",
+        "options": ["A. Speaking later than average", "B. Trouble learning new vocabulary", "C. Leaving large gaps between words", "D. Problems following directions", "E. Difficulty turning the pages of a book", "F. Inability to give commands"]
+      },
+      {
+        "questions": [24, 25, 26],
+        "type": "multiple_choice_multi",
+        "instruction": "Choose THREE answers that are treatments for dyslexia mentioned in the passage.",
+        "options": ["A. Using special computers", "B. Learning to identify sounds", "C. Wearing eyeglasses", "D. Attending a special school", "E. Covering one eye while reading", "F. Listening to tapes"]
+      }
+    ]
+  },
+  "passage_3": {
+    "title": "Catastrophe Theory",
+    "question_groups": [
+      {
+        "questions": [27, 28, 29, 30, 31, 32],
+        "type": "note_completion_options",
+        "instruction": "Complete the notes below. Choose your answers from the box.",
+        "word_box": ["A. short", "B. small", "C. Charles Darwin", "D. long", "E. definite", "F. disasters", "G. James Hutton", "H. mysterious", "I. Walter Alvarez", "J. evolution", "K. Georges Cuvier"],
+        "items": {
+          "27": "Who first introduced the catastrophe theory",
+          "28": "What major events proposed by catastrophe theory shaped Earth",
+          "29": "The type of history catastrophe theory supports for Earth",
+          "30": "Who first introduced the gradualist theory",
+          "31": "What kind of changes gradualism says shaped Earth's surface",
+          "32": "The length of time over which gradual changes occurred"
+        }
+      },
+      {
+        "questions": [33, 34, 35, 36, 37, 38, 39],
+        "type": "matching_paragraph",
+        "instruction": "Which paragraph contains the following information? Write the correct letter, A-F.",
+        "items": {
+          "33": "Proof that not all Earth changes were gradual",
+          "34": "A theory explaining iridium found in a layer of Earth's crust",
+          "35": "Publication of a book on the gradualist theory",
+          "36": "Discovery of a large crater possibly caused by an asteroid",
+          "37": "Evidence of a large flood in Earth's past",
+          "38": "Renewed interest in the catastrophe theory",
+          "39": "Ideas about how quickly ice-age glaciers disappeared"
+        }
+      },
+      {
+        "questions": [40],
+        "type": "multiple_choice",
+        "instruction": "Choose the correct letter, A, B or C.",
+        "items": {
+          "40": {
+            "question": "Most scientists now agree that",
+            "options": ["A. The gradualist theory is correct", "B. Catastrophic events occur regularly on the Moon", "C. A major catastrophe caused the dinosaurs to disappear"]
+          }
+        }
+      }
+    ]
+  }
+}

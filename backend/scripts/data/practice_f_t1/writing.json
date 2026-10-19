@@ -1,0 +1,10 @@
+{
+  "task1": {
+    "description": "You should spend about 20 minutes on this task.\n\nThe diagram below explains the process of making wood pellets, used to heat buildings.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWood pellets manufactured by this process are suitable for use in both pellet stoves and pellet furnaces.\n\nWrite at least 150 words.",
+    "visual_type": "process_diagram",
+    "visual_description": "A flow chart titled 'How Wood Pellets Are Made' showing a 7-step process: (1) Sawdust arrives from sawmill, (2) Sawdust is hammered into fibers of uniform length in a hammer mill, (3) Fibers are dampened with steam, (4) Fibers are forced through holes in a pellet machine, forming into pellets, (5) Pellets are cooled, (6) Loose dust is vacuumed off, (7) Pellets are packed into 18 kilo (40 pound bags) for sale."
+  },
+  "task2": {
+    "question": "You should spend about 40 minutes on this task.\n\nWrite about the following topic:\n\nEverybody should be allowed admission to university study programs regardless of their level of academic ability.\n\nTo what extent do you agree or disagree with this statement? Give reasons for your answer and include any relevant examples from your own knowledge or experience.\n\nWrite at least 250 words."
+  }
+}

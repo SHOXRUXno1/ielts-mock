@@ -1,0 +1,10 @@
+{
+  "task1": {
+    "description": "The chart below shows the cost-of-living averages in two different cities as compared to the national cost-of-living average.\n\nSummarize the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.",
+    "visual_type": "bar_chart",
+    "visual_description": "A chart comparing the average cost of living in two cities with the national cost-of-living average"
+  },
+  "task2": {
+    "question": "Life now is better than it was 100 years ago.\n\nTo what extent do you agree or disagree with this statement?\n\nGive reasons for your answer and include any relevant examples from your own knowledge or experience.\n\nWrite at least 250 words."
+  }
+}
