@@ -257,7 +257,6 @@ function buildRenderGroups(apiGroups: QuestionGroup[], questions: Question[]): R
 // ── Group header ──────────────────────────────────────────────────────────────
 
 function ListeningGroupHeader({ group }: { group: RenderGroup }) {
-  const compactForm = group.type === 'compound' && group.structure?.variant === 'form'
   const starts = group.questions.map((q) => q.order)
   const ends = group.questions.map((q) => {
     const e = q.content?.display_slot_end
@@ -283,16 +282,7 @@ function ListeningGroupHeader({ group }: { group: RenderGroup }) {
   return (
     <div className='mb-4'>
       <QuestionRangeTitle min={minQ} max={maxQ} />
-      {rawInstruction && compactForm && (
-        <div className='mt-2 border-l-2 border-primary py-0.5 pl-3 text-[14px] leading-6 text-foreground'>
-          {rawInstruction.split('\n').map((line, i) => (
-            <p key={i} className={i > 0 ? 'mt-1' : ''}>
-              {highlightCaps(line)}
-            </p>
-          ))}
-        </div>
-      )}
-      {rawInstruction && !compactForm && (
+      {rawInstruction && (
         <InstructionBlock className='mt-2'>
           {rawInstruction.split('\n').map((line, i) => (
             <p key={i} className={i > 0 ? 'mt-1' : ''}>
@@ -507,7 +497,6 @@ export function ListeningSection({
                   answers={answers}
                   onAnswer={onAnswer}
                   previewMode={previewMode}
-                  compactForm
                 />
               )}
 

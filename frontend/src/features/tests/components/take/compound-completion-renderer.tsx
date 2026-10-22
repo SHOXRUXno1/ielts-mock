@@ -627,7 +627,6 @@ function FormCompletion({
   onAnswer,
   readOnly,
   previewMode,
-  compact,
 }: {
   structure: FormStructure
   questions: Question[]
@@ -635,59 +634,31 @@ function FormCompletion({
   onAnswer: OnAnswer
   readOnly?: boolean
   previewMode?: boolean
-  compact?: boolean
 }) {
   const gapToQ = buildGapMap(questions)
   const maxWords = structure.max_words_per_gap
-  const firstField = structure.fields[0]
-  const subtitle = compact && firstField?.type === 'gap_line' &&
-    !firstField.label && firstField.segments.length === 1 &&
-    firstField.segments[0].type === 'text'
-    ? firstField.segments[0].value
-    : null
-  const fields = subtitle ? structure.fields.slice(1) : structure.fields
 
   return (
-    <div className={compact
-      ? 'mx-auto max-w-xl border-t border-border pt-4'
-      : 'mx-auto max-w-xl rounded-lg border border-border bg-card p-6'}>
-      <p className={compact
-        ? 'mb-0.5 text-[16px] font-semibold text-foreground'
-        : 'mb-6 text-center text-sm font-medium tracking-wide whitespace-pre-line text-foreground uppercase'}>
+    <div className='mx-auto max-w-xl rounded-lg border border-border bg-card p-6'>
+      <p className='mb-6 text-center text-sm font-medium tracking-wide whitespace-pre-line text-foreground uppercase'>
         {structure.form_title}
       </p>
-      {subtitle && <p className='mb-3 text-[13px] text-muted-foreground'>{subtitle}</p>}
-      <div className={compact ? 'space-y-2.5' : 'space-y-4'}>
-        {fields.map((field, fi) => {
-          const inlineLabel = compact && field.type === 'gap_line' &&
-            !field.label && field.segments.length > 1 &&
-            field.segments[0].type === 'text' &&
-            field.segments.some((segment) => segment.type === 'gap')
-            ? field.segments[0].value.trim()
-            : ''
-          const segments = field.type === 'gap_line' && inlineLabel
-            ? field.segments.slice(1)
-            : field.type === 'gap_line' ? field.segments : []
-          const label = field.label || inlineLabel
-          return (
+      <div className='space-y-4'>
+        {structure.fields.map((field, fi) => (
           <div
             key={fi}
-            className={compact
-              ? 'grid grid-cols-1 items-center gap-x-3 gap-y-1 text-[14px] sm:grid-cols-[150px_minmax(0,1fr)]'
-              : 'grid grid-cols-[auto_1fr] items-baseline gap-x-3 text-[14px]'}
+            className='grid grid-cols-[auto_1fr] items-baseline gap-x-3 text-[14px]'
           >
-            <span className={compact ? 'font-normal text-foreground' : 'font-semibold text-foreground'}>
-              {label}
-              {label ? ':' : ''}
+            <span className='font-semibold text-foreground'>
+              {field.label}
+              {field.label ? ':' : ''}
             </span>
             {field.type === 'static' ? (
               <span className='text-muted-foreground'>{field.value}</span>
             ) : (
-              <span className={compact
-                ? '[&_input]:h-8 [&_input]:w-[116px] [&_input]:min-w-[116px] [&_input]:max-w-[116px] [&_input]:text-left [&_input]:text-[14px] [&_input]:shadow-none'
-                : undefined}>
+              <span>
                 {renderSegments(
-                  segments,
+                  field.segments,
                   gapToQ,
                   answers,
                   onAnswer,
@@ -698,8 +669,7 @@ function FormCompletion({
               </span>
             )}
           </div>
-          )
-        })}
+        ))}
       </div>
     </div>
   )
@@ -930,7 +900,6 @@ export function CompoundCompletionRenderer({
   readOnly = false,
   highlightCell = null,
   previewMode = false,
-  compactForm = false,
 }: {
   structure: CompoundStructure
   questions: Question[]
@@ -939,7 +908,6 @@ export function CompoundCompletionRenderer({
   readOnly?: boolean
   highlightCell?: { row: number; col: number } | null
   previewMode?: boolean
-  compactForm?: boolean
 }) {
   const body = (() => {
     switch (structure.variant) {
@@ -975,7 +943,6 @@ export function CompoundCompletionRenderer({
             onAnswer={onAnswer}
             readOnly={readOnly}
             previewMode={previewMode}
-            compact={compactForm}
           />
         )
       case 'summary':
