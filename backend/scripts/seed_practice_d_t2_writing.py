@@ -1,10 +1,10 @@
 """Seed Practice Set D Test 2 Writing.
 
-Task 1: table — the five best small companies to work for.
-Task 2: opinion — advantages and disadvantages of international travel
-        and mass media.
+Task 1: two charts — percentage of mothers and fathers with a youngest
+        child aged 3-4 in part-time and full-time employment in England.
+Task 2: loneliness and isolation amongst the older generation.
 
-Wording is taken from the printed paper (pp.84-87). Teaching tip strips
+Wording is taken from the printed paper (pp.46-47). Teaching tip strips
 are not part of the exam and are omitted.
 
 Usage:
@@ -30,32 +30,32 @@ from app.models.question_group import QuestionGroup  # noqa: E402
 from app.models.section import SectionType  # noqa: E402
 from app.services.writing_presets import get_default_instruction  # noqa: E402
 from seed_practice_d_common import (  # noqa: E402
-    CHART_IMAGE_URL,
     clear_section,
     get_section,
     get_test,
 )
 
 TEST_NUMBER = 2
+TASK1_IMAGE_URL = "/media/images/practice_d_t2_writing_task1_v2.jpg"
 
 TASK1_DESCRIPTION = (
-    "The table below gives information about the five small companies "
-    "in Britain that came top in a survey of staff conducted by a "
-    "national newspaper to find out which companies are the best to "
-    "work for.\n\n"
-    "Write a report for a university lecturer describing the "
-    "information below."
+    "The two charts below show the percentage of mothers and fathers with "
+    "a youngest child aged 3-4 years old in part-time and full-time "
+    "employment in England between 1997 and 2017.\n\n"
+    "Summarise the information by selecting and reporting the main "
+    "features, and make comparisons where relevant."
 )
 
 TASK2_STATEMENT = (
-    "The ease of international travel and the spread of various kinds "
-    "of mass media all over the world have made it more possible than "
-    "ever for people to know how other people live in other countries."
+    "The problem of loneliness and isolation amongst the older generation "
+    "and the impact of this on mental health is a major concern in many "
+    "countries around the world."
 )
 TASK2_QUESTION = (
-    "Do the advantages of this development outweigh the disadvantages?"
+    "What can lead to a person feeling isolated, and is there anything "
+    "that can be done to avoid this?"
 )
-TASK2_ESSAY_TYPE = "advantages_disadvantages"
+TASK2_ESSAY_TYPE = "double_question"
 
 
 async def seed(db: AsyncSession) -> None:
@@ -79,9 +79,7 @@ async def seed(db: AsyncSession) -> None:
     await db.flush()
 
     task1_instruction = get_default_instruction(1)
-    task1_description = (
-        f"{TASK1_DESCRIPTION}"
-    )
+    task1_description = TASK1_DESCRIPTION
     db.add(
         Question(
             id=uuid.uuid4(),
@@ -97,7 +95,7 @@ async def seed(db: AsyncSession) -> None:
             answer_key=None,
             task_number=1,
             min_words=150,
-            image_url=CHART_IMAGE_URL.format(test=TEST_NUMBER),
+            image_url=TASK1_IMAGE_URL,
             essay_type=None,
         )
     )
@@ -128,7 +126,9 @@ async def seed(db: AsyncSession) -> None:
     )
 
     await db.commit()
-    print("\nDone. Writing seeded (Task 1 + Task 2).")
+    print(f"  Task 1  chart {TASK1_IMAGE_URL}  min 150 words")
+    print(f"  Task 2  {TASK2_ESSAY_TYPE}  min 250 words")
+    print("\nDone. Writing seeded.")
 
 
 async def main() -> None:
