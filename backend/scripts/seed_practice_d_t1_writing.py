@@ -1,11 +1,12 @@
 """Seed Practice Set D Test 1 Writing.
 
-Task 1: bar charts — French regional languages spoken to children by
-        parents vs adults who speak a regional language to their own children.
-Task 2: discuss both views — stress (past vs present).
+Source: Collins Practice Tests for IELTS 3 (2021), Test 1 (pp.25-26).
 
-Wording is taken from the printed paper (pp.44-46). Teaching tip strips
-are not part of the exam and are omitted.
+Task 1: table — projected growth of global freight by 2050 and
+        projected carbon dioxide emissions (Air, Road, Rail, Sea for
+        2010 and 2050 with growth percentages).
+Task 2: discuss both views — e-books replacing paper books vs both
+        existing side by side.
 
 Usage:
     cd backend
@@ -30,30 +31,25 @@ from app.models.question_group import QuestionGroup  # noqa: E402
 from app.models.section import SectionType  # noqa: E402
 from app.services.writing_presets import get_default_instruction  # noqa: E402
 from seed_practice_d_common import (  # noqa: E402
-    CHART_IMAGE_URL,
     clear_section,
     get_section,
     get_test,
 )
 
 TEST_NUMBER = 1
+TASK1_IMAGE_URL = "/media/images/practice_d_t1_writing_task1_v2.svg?v=2"
 
 TASK1_DESCRIPTION = (
-    "The charts below show the number of French adults whose parents "
-    "spoke a French regional language to them when they were children "
-    "and the number who speak a French regional language to their own "
-    "children.\n\n"
-    "Write a report for a university lecturer describing the information "
-    "below."
+    "The table below shows the projected growth of global freight by "
+    "2050 and how this will affect carbon dioxide (CO₂) emissions.\n\n"
+    "Summarise the information by selecting and reporting the main "
+    "features, and make comparisons where relevant."
 )
 
 TASK2_STATEMENT = (
-    "In some societies, stress is now regarded as a major problem, and "
-    "it is thought that people suffer from more stress than they did in "
-    "the past.\n\n"
-    "However, others feel that the amount of stress people have today "
-    "is exaggerated. They say that previous generations were under more "
-    "pressure, but the idea of suffering from stress did not exist."
+    "Some people think that e-books will eventually replace traditional "
+    "paper-based books. Others, however, believe that both versions will "
+    "continue to exist side by side."
 )
 TASK2_QUESTION = "Discuss both these views and give your own opinion."
 TASK2_ESSAY_TYPE = "discussion"
@@ -80,9 +76,7 @@ async def seed(db: AsyncSession) -> None:
     await db.flush()
 
     task1_instruction = get_default_instruction(1)
-    task1_description = (
-        f"{TASK1_DESCRIPTION}"
-    )
+    task1_description = TASK1_DESCRIPTION
     db.add(
         Question(
             id=uuid.uuid4(),
@@ -98,7 +92,7 @@ async def seed(db: AsyncSession) -> None:
             answer_key=None,
             task_number=1,
             min_words=150,
-            image_url=CHART_IMAGE_URL.format(test=TEST_NUMBER),
+            image_url=TASK1_IMAGE_URL,
             essay_type=None,
         )
     )
@@ -129,7 +123,9 @@ async def seed(db: AsyncSession) -> None:
     )
 
     await db.commit()
-    print("\nDone. Writing seeded (Task 1 + Task 2).")
+    print(f"  Task 1  chart {TASK1_IMAGE_URL}  min 150 words")
+    print(f"  Task 2  {TASK2_ESSAY_TYPE}  min 250 words")
+    print("\nDone. Writing seeded.")
 
 
 async def main() -> None:

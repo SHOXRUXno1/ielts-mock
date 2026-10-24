@@ -20,16 +20,38 @@ PUBLISH="${2:-}"
 C=ielts-mock-backend-1
 STAGE=/tmp/pd_stage
 
+case "$N" in
+  1) TASK1_ASSET=practice_d_t1_writing_task1_v2.svg ;;
+  2) TASK1_ASSET=practice_d_t2_writing_task1_v2.jpg ;;
+  3|4) TASK1_ASSET="practice_d_t${N}_writing_task1.png" ;;
+  *) TASK1_ASSET= ;;
+esac
+if [ -n "$TASK1_ASSET" ]; then
+  docker exec "$C" test -f "/app/scripts/assets/$TASK1_ASSET" || {
+    echo "Missing canonical Writing Task 1 image: $TASK1_ASSET" >&2
+    exit 1
+  }
+fi
+
 echo "=== media ==="
 shopt -s nullglob
 for f in "$STAGE"/media/practice_d_t${N}_*.mp3; do
   docker cp "$f" $C:/app/media/audio/
   echo "  audio  $(basename "$f")"
 done
-for f in "$STAGE"/media/practice_d_t${N}_*.png; do
+for f in "$STAGE"/media/practice_d_t${N}_*.png \
+         "$STAGE"/media/practice_d_t${N}_*.jpg \
+         "$STAGE"/media/practice_d_t${N}_*.jpeg \
+         "$STAGE"/media/practice_d_t${N}_*.svg; do
   docker cp "$f" $C:/app/media/images/
   echo "  image  $(basename "$f")"
 done
+# Canonical Writing Task 1 assets ship with the backend image. Apply them last
+# so stale manually staged files cannot silently restore an unrelated chart.
+if [ -n "$TASK1_ASSET" ]; then
+  docker exec "$C" cp "/app/scripts/assets/$TASK1_ASSET" /app/media/images/
+  echo "  image  $TASK1_ASSET (canonical)"
+fi
 
 echo
 echo "=== scripts ==="
