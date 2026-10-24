@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="595" viewBox="0 0 1500 595" role="img" aria-labelledby="title description">
+  <title id="title">Growth of global freight by 2050 and projected carbon emissions</title>
+  <desc id="description">Table comparing air, road, rail and sea freight volume and carbon dioxide emissions in 2010 and 2050, with percentage growth.</desc>
+  <rect width="1500" height="595" fill="#fff"/>
+  <style>
+    .heading { font: 32px Arial, sans-serif; fill: #111; }
+    .group { font: 29px Arial, sans-serif; fill: #111; }
+    .unit { font: 25px Arial, sans-serif; fill: #111; }
+    .year { font: bold 27px Arial, sans-serif; fill: #111; }
+    .label { font: bold 27px Arial, sans-serif; fill: #111; }
+    .value { font: 27px Arial, sans-serif; fill: #111; }
+    .line { stroke: #333; stroke-width: 1.5; }
+  </style>
+  <text class="heading" x="750" y="58" text-anchor="middle">Growth of global freight by 2050 and projected carbon emissions</text>
+  <rect x="50" y="90" width="1400" height="435" fill="#f2f2f2"/>
+  <rect x="50" y="90" width="1400" height="105" fill="#d9d9d9"/>
+  <path class="line" d="M50 90H1450V525H50Z M50 195H1450 M50 250H1450 M50 305H1450 M50 360H1450 M50 415H1450 M50 470H1450 M210 90V525 M630 90V525 M790 90V525 M1210 90V525 M420 195V525 M1000 195V525"/>
+  <text class="group" x="420" y="132" text-anchor="middle">Freight volume</text>
+  <text class="unit" x="420" y="171" text-anchor="middle">[in billion tons/km]</text>
+  <text class="group" x="710" y="132" text-anchor="middle">Growth</text>
+  <text class="unit" x="710" y="171" text-anchor="middle">[in %]</text>
+  <text class="group" x="1000" y="132" text-anchor="middle">CO₂ emission</text>
+  <text class="unit" x="1000" y="171" text-anchor="middle">(in million tons)</text>
+  <text class="group" x="1330" y="132" text-anchor="middle">Growth</text>
+  <text class="unit" x="1330" y="171" text-anchor="middle">[in %]</text>
+  <text class="year" x="315" y="235" text-anchor="middle">2010</text>
+  <text class="year" x="525" y="235" text-anchor="middle">2050</text>
+  <text class="year" x="895" y="235" text-anchor="middle">2010</text>
+  <text class="year" x="1105" y="235" text-anchor="middle">2050</text>
+  <text class="label" x="130" y="289" text-anchor="middle">Air</text>
+  <text class="value" x="315" y="289" text-anchor="middle">191</text>
+  <text class="value" x="525" y="289" text-anchor="middle">1 111</text>
+  <text class="value" x="710" y="289" text-anchor="middle">482</text>
+  <text class="value" x="895" y="289" text-anchor="middle">150</text>
+  <text class="value" x="1105" y="289" text-anchor="middle">767</text>
+  <text class="value" x="1330" y="289" text-anchor="middle">411</text>
+  <text class="label" x="130" y="344" text-anchor="middle">Road</text>
+  <text class="value" x="315" y="344" text-anchor="middle">6 388</text>
+  <text class="value" x="525" y="344" text-anchor="middle">30 945</text>
+  <text class="value" x="710" y="344" text-anchor="middle">384</text>
+  <text class="value" x="895" y="344" text-anchor="middle">1 118</text>
+  <text class="value" x="1105" y="344" text-anchor="middle">4 519</text>
+  <text class="value" x="1330" y="344" text-anchor="middle">304</text>
+  <text class="label" x="130" y="399" text-anchor="middle">Rail</text>
+  <text class="value" x="315" y="399" text-anchor="middle">4 262</text>
+  <text class="value" x="525" y="399" text-anchor="middle">19 126</text>
+  <text class="value" x="710" y="399" text-anchor="middle">349</text>
+  <text class="value" x="895" y="399" text-anchor="middle">62</text>
+  <text class="value" x="1105" y="399" text-anchor="middle">217</text>
+  <text class="value" x="1330" y="399" text-anchor="middle">250</text>
+  <text class="label" x="130" y="454" text-anchor="middle">Sea</text>
+  <text class="value" x="315" y="454" text-anchor="middle">60 053</text>
+  <text class="value" x="525" y="454" text-anchor="middle">256 433</text>
+  <text class="value" x="710" y="454" text-anchor="middle">327</text>
+  <text class="value" x="895" y="454" text-anchor="middle">779</text>
+  <text class="value" x="1105" y="454" text-anchor="middle">2 630</text>
+  <text class="value" x="1330" y="454" text-anchor="middle">238</text>
+  <text class="value" x="315" y="509" text-anchor="middle">70 894</text>
+  <text class="value" x="525" y="509" text-anchor="middle">307 615</text>
+  <text class="value" x="710" y="509" text-anchor="middle">334</text>
+  <text class="value" x="895" y="509" text-anchor="middle">2 108</text>
+  <text class="value" x="1105" y="509" text-anchor="middle">8 132</text>
+  <text class="value" x="1330" y="509" text-anchor="middle">286</text>
+</svg>
