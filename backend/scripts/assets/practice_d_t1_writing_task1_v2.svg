@@ -9,7 +9,7 @@
     .year { font: bold 27px Arial, sans-serif; fill: #111; }
     .label { font: bold 27px Arial, sans-serif; fill: #111; }
     .value { font: 27px Arial, sans-serif; fill: #111; }
-    .line { stroke: #333; stroke-width: 1.5; }
+    .line { fill: none; stroke: #333; stroke-width: 1.5; }
   </style>
   <text class="heading" x="750" y="58" text-anchor="middle">Growth of global freight by 2050 and projected carbon emissions</text>
   <rect x="50" y="90" width="1400" height="435" fill="#f2f2f2"/>

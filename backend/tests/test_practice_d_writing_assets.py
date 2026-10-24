@@ -11,6 +11,7 @@ ASSETS = Path(__file__).resolve().parents[1] / "scripts" / "assets"
 def test_test1_freight_table_has_all_source_values() -> None:
     chart = ASSETS / "practice_d_t1_writing_task1_v2.svg"
     root = ElementTree.parse(chart).getroot()
+    assert "fill: none" in root.find("{http://www.w3.org/2000/svg}style").text
     labels = [element.text for element in root.iter() if element.tag.endswith("text")]
 
     assert labels[:13] == [

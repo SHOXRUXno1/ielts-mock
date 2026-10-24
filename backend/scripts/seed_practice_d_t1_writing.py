@@ -37,7 +37,7 @@ from seed_practice_d_common import (  # noqa: E402
 )
 
 TEST_NUMBER = 1
-TASK1_IMAGE_URL = "/media/images/practice_d_t1_writing_task1_v2.svg"
+TASK1_IMAGE_URL = "/media/images/practice_d_t1_writing_task1_v2.svg?v=2"
 
 TASK1_DESCRIPTION = (
     "The table below shows the projected growth of global freight by "
